@@ -176,19 +176,19 @@ export default Index;
 /* ---------------------------------- */
 /* 🔹 Reusable Compact Stat Row       */
 /* ---------------------------------- */
-function QuickStatItem({
-  label,
-  value,
-  badgeVariant = "default",
-}: {
-  label: string;
-  value: number;
-  badgeVariant?: "default" | "outline" | "secondary" | "destructive";
-}) {
-  return (
-    <div className="flex justify-between items-center">
-      <span className="text-sm">{label}</span>
-      <Badge variant={badgeVariant}>{value}</Badge>
-    </div>
-  );
-}
+// function QuickStatItem({
+//   label,
+//   value,
+//   badgeVariant = "default",
+// }: {
+//   label: string;
+//   value: number;
+//   badgeVariant?: "default" | "outline" | "secondary" | "destructive";
+// }) {
+//   return (
+//     <div className="flex justify-between items-center">
+//       <span className="text-sm">{label}</span>
+//       <Badge variant={badgeVariant}>{value}</Badge>
+//     </div>
+//   );
+// }
