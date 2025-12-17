@@ -20,7 +20,7 @@ import ModelProvider from "./providers/ModelProvider";
 import SuperAdminLogin from "./pages/auth/login";
 import { DashboardLayout } from "./components/layouts/DashboardLayout";
 import { SidebarProvider } from "./components/ui/sidebar";
-import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute";
+// import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute";
 
 const queryClient = new QueryClient();
 

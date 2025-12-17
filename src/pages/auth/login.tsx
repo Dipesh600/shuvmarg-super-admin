@@ -11,12 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Fingerprint, Lock } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
- const  SuperAdminLogin = ()=> {
+const SuperAdminLogin = () => {
   const [loading, setLoading] = useState(false);
-
+  const navigate = useNavigate();
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    navigate("/admin/dashboard");
     setLoading(true);
     setTimeout(() => setLoading(false), 1500);
   };
@@ -115,6 +117,6 @@ import { motion } from "framer-motion";
       </motion.div>
     </div>
   );
-}
+};
 
 export default SuperAdminLogin;
