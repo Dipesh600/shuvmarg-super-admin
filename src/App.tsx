@@ -32,8 +32,8 @@ const App = () => (
       <ModelProvider />
       <BrowserRouter>
         <Routes>
-          <Route path="/superAdmin/login" element={<SuperAdminLogin />} />
-          <Route element={<ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />}>
+          <Route path="/" element={<SuperAdminLogin />} />
+          {/* <Route element={<ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />}> */}
             <Route
               path="/admin"
               
@@ -56,7 +56,7 @@ const App = () => (
               <Route path="security" element={<Security />} />
               <Route path="settings" element={<Settings />} />
             </Route>
-          </Route>
+          {/* </Route> */}
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
