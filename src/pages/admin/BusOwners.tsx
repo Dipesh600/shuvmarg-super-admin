@@ -1,11 +1,10 @@
 "use client";
 
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Bus, Building2, TrendingUp } from "lucide-react";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { useModal } from "@/hooks/use-model-store";
 
 const busOwners = [
   { id: "OWN-001", company: "Nepal Express Travels", owner: "Deepak Adhikari", fleet: 24, revenue: "Rs. 8,45,000", status: "Verified", type: "Large" },
@@ -15,16 +14,16 @@ const busOwners = [
 ];
 
 const BusOwners = () => {
+  const {onOpen} = useModal()
   return (
-    <SidebarProvider>
-      <DashboardLayout>
+    <>
         {/* PAGE HEADER */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Bus Owner Management</h2>
             <p className="text-muted-foreground mt-1">Manage bus owners and fleet operations</p>
           </div>
-          <Button className="gap-2 w-full sm:w-auto">
+          <Button onClick={()=>onOpen("addBusOwner")} className="gap-2 active:bg-blue-800 cursor-pointer w-full sm:w-auto">
             <Building2 className="h-4 w-4" />
             Add Owner
           </Button>
@@ -145,8 +144,7 @@ const BusOwners = () => {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
-    </SidebarProvider>
+    </>
   );
 };
 

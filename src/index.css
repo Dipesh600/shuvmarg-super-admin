@@ -155,3 +155,31 @@
   background-size: 300% 300%;
   animation: sheen 8s linear infinite;
 }
+
+
+/* sidebar css */
+
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;          /* scrollbar width */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;   /* track color */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3B3B3F;       /* thumb color */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #5a5a60;        /* hover color */
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #3B3B3F transparent;
+}

@@ -21,13 +21,10 @@ import {
 } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 const Index = () => {
   return (
-    <SidebarProvider>
-    <DashboardLayout>
+    <>
       {/* Welcome Section */}
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Dashboard Overview</h2>
@@ -166,8 +163,7 @@ const Index = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
-</SidebarProvider>
+</>
   );
 };
 

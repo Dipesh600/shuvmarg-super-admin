@@ -1,9 +1,7 @@
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Lock, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 const securityLogs = [
   { id: 1, type: "Login", user: "SUMA-ADM-001", action: "Successful admin login", status: "Success", timestamp: "2024-01-28 14:32:15" },
@@ -15,8 +13,7 @@ const securityLogs = [
 
 const Security = () => {
   return (
-    <SidebarProvider>
-      <DashboardLayout>
+    <>
         {/* Header */}
         <div className="mb-4">
           <h2 className="text-3xl font-bold tracking-tight">Security & Access Control</h2>
@@ -168,8 +165,7 @@ const Security = () => {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
-    </SidebarProvider>
+    </>
   );
 };
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { TrendingUp, Users, DollarSign, Bus } from "lucide-react";
@@ -38,7 +37,6 @@ const routePerformanceData = [
 const Analytics = () => {
   return (
     <SidebarProvider>
-      <DashboardLayout>
         {/* ==================== PAGE HEADER ==================== */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
           <div>
@@ -241,7 +239,6 @@ const Analytics = () => {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
     </SidebarProvider>
   );
 };

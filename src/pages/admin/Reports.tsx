@@ -1,30 +1,79 @@
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Calendar, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { useModal } from "@/hooks/use-model-store";
 
 const reports = [
-  { name: "Daily Revenue Report", description: "Complete revenue breakdown by routes and payment methods", frequency: "Daily", lastGenerated: "2024-01-28 06:00 AM", size: "2.4 MB" },
-  { name: "User Analytics Report", description: "User registration, engagement, and retention metrics", frequency: "Weekly", lastGenerated: "2024-01-27 11:00 PM", size: "5.1 MB" },
-  { name: "Fleet Performance Report", description: "Bus utilization, maintenance schedules, and route efficiency", frequency: "Weekly", lastGenerated: "2024-01-27 11:00 PM", size: "3.8 MB" },
-  { name: "Agent Commission Report", description: "Agent performance and commission calculations", frequency: "Monthly", lastGenerated: "2024-01-01 12:00 AM", size: "8.2 MB" },
-  { name: "Financial Reconciliation", description: "Complete financial reconciliation with transaction details", frequency: "Monthly", lastGenerated: "2024-01-01 12:00 AM", size: "12.5 MB" },
-  { name: "Compliance Report", description: "Regulatory compliance and document verification status", frequency: "Quarterly", lastGenerated: "2024-01-01 12:00 AM", size: "15.3 MB" },
+  {
+    name: "Daily Revenue Report",
+    description: "Complete revenue breakdown by routes and payment methods",
+    frequency: "Daily",
+    lastGenerated: "2024-01-28 06:00 AM",
+    size: "2.4 MB",
+  },
+  {
+    name: "User Analytics Report",
+    description: "User registration, engagement, and retention metrics",
+    frequency: "Weekly",
+    lastGenerated: "2024-01-27 11:00 PM",
+    size: "5.1 MB",
+  },
+  {
+    name: "Fleet Performance Report",
+    description: "Bus utilization, maintenance schedules, and route efficiency",
+    frequency: "Weekly",
+    lastGenerated: "2024-01-27 11:00 PM",
+    size: "3.8 MB",
+  },
+  {
+    name: "Agent Commission Report",
+    description: "Agent performance and commission calculations",
+    frequency: "Monthly",
+    lastGenerated: "2024-01-01 12:00 AM",
+    size: "8.2 MB",
+  },
+  {
+    name: "Financial Reconciliation",
+    description: "Complete financial reconciliation with transaction details",
+    frequency: "Monthly",
+    lastGenerated: "2024-01-01 12:00 AM",
+    size: "12.5 MB",
+  },
+  {
+    name: "Compliance Report",
+    description: "Regulatory compliance and document verification status",
+    frequency: "Quarterly",
+    lastGenerated: "2024-01-01 12:00 AM",
+    size: "15.3 MB",
+  },
 ];
 
 const Reports = () => {
+  const { onOpen } = useModal();
+
   return (
-    <SidebarProvider>
-      <DashboardLayout>
+    <>
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Reports & Documentation</h2>
-            <p className="text-muted-foreground mt-1">Generate and download platform reports</p>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Reports & Documentation
+            </h2>
+            <p className="text-muted-foreground mt-1">
+              Generate and download platform reports
+            </p>
           </div>
-          <Button className="gap-2 w-full md:w-auto">
+          <Button
+            onClick={() => onOpen("addCustomReport")}
+            className="gap-2 cursor-pointer active:bg-blue-800 w-full md:w-auto"
+          >
             <FileText className="h-4 w-4" />
             Custom Report
           </Button>
@@ -41,7 +90,9 @@ const Reports = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">234</div>
-              <p className="text-xs text-muted-foreground">Generated this month</p>
+              <p className="text-xs text-muted-foreground">
+                Generated this month
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -91,14 +142,19 @@ const Reports = () => {
           <CardContent>
             <div className="flex flex-col gap-4">
               {reports.map((report, index) => (
-                <div key={index} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors gap-4">
+                <div
+                  key={index}
+                  className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors gap-4"
+                >
                   <div className="flex-1">
                     <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-2 flex-wrap">
                       <FileText className="h-5 w-5 text-primary" />
                       <h3 className="font-semibold">{report.name}</h3>
                       <Badge variant="outline">{report.frequency}</Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">{report.description}</p>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {report.description}
+                    </p>
                     <div className="flex flex-col sm:flex-row gap-2 text-xs text-muted-foreground">
                       <span>Last generated: {report.lastGenerated}</span>
                       <span>•</span>
@@ -106,11 +162,19 @@ const Reports = () => {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                    <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 w-full sm:w-auto"
+                    >
                       <Download className="h-4 w-4" />
                       Download
                     </Button>
-                    <Button variant="ghost" size="sm" className="w-full sm:w-auto">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                    >
                       View
                     </Button>
                   </div>
@@ -170,8 +234,7 @@ const Reports = () => {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
-    </SidebarProvider>
+    </>
   );
 };
 

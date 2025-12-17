@@ -1,6 +1,5 @@
 "use client";
 
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import {
   Card,
   CardContent,
@@ -11,7 +10,7 @@ import {
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserCog, CheckCircle, Clock, XCircle } from "lucide-react";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { useModal } from "@/hooks/use-model-store";
 
 const agents = [
   {
@@ -62,9 +61,9 @@ const agents = [
 ];
 
 const Agents = () => {
+  const {onOpen} = useModal()
   return (
-    <SidebarProvider>
-      <DashboardLayout>
+    <>
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
           <div>
@@ -75,7 +74,7 @@ const Agents = () => {
               Manage agents and verify applications
             </p>
           </div>
-          <Button className="gap-2 w-full sm:w-auto">
+          <Button onClick={()=>onOpen("addAgent")} className="gap-2 active:bg-blue-800 cursor-pointer w-full sm:w-auto">
             <UserCog className="h-4 w-4" /> New Agent
           </Button>
         </div>
@@ -210,8 +209,7 @@ const Agents = () => {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
-    </SidebarProvider>
+    </>
   );
 };
 

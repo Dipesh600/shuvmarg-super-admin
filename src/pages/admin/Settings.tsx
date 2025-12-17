@@ -1,16 +1,13 @@
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Settings as SettingsIcon, Bell, Lock, Database, Mail } from "lucide-react";
-import { SidebarProvider } from "@/components/ui/sidebar";
 
 const Settings = () => {
   return (
-    <SidebarProvider>
-      <DashboardLayout>
+    <>
         <div className="mb-4">
           <h2 className="text-3xl font-bold tracking-tight">Platform Settings</h2>
           <p className="text-muted-foreground mt-1">Manage system configuration and preferences</p>
@@ -152,8 +149,7 @@ const Settings = () => {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
-    </SidebarProvider>
+    </>
   );
 };
 

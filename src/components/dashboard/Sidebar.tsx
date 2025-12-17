@@ -30,53 +30,60 @@ import {
 import { NavLink, useLocation } from "react-router-dom";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "User Management", url: "/users", icon: Users },
-  { title: "Agent Management", url: "/agents", icon: UserCog },
-  { title: "Bus Owners", url: "/bus-owners", icon: Bus },
-  { title: "Fleet Management", url: "/fleet", icon: MapPin },
-  { title: "Financial", url: "/financial", icon: DollarSign },
-  { title: "Transactions", url: "/transactions", icon: Ticket },
-  { title: "Disputes", url: "/disputes", icon: AlertCircle },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Reports", url: "/reports", icon: FileText },
-  { title: "Security", url: "/security", icon: Shield },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "User Management", url: "/admin/users", icon: Users },
+  { title: "Agent Management", url: "/admin/agents", icon: UserCog },
+  { title: "Bus Owners", url: "/admin/bus-owners", icon: Bus },
+  { title: "Fleet Management", url: "/admin/fleet", icon: MapPin },
+  { title: "Financial", url: "/admin/financial", icon: DollarSign },
+  { title: "Transactions", url: "/admin/transactions", icon: Ticket },
+  { title: "Disputes", url: "/admin/disputes", icon: AlertCircle },
+  { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
+  { title: "Reports", url: "/admin/reports", icon: FileText },
+  { title: "Security", url: "/admin/security", icon: Shield },
+  { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
 export default function AppSidebar() {
   const { pathname } = useLocation();
-const { open, isMobile } = useSidebar();
+  const { open, isMobile } = useSidebar();
   return (
     <Sidebar
       collapsible="icon"
-      className={cn("border-r border-sidebar-border bg-card transition-all  duration-300",open  || isMobile ? "w-64" : "w-16") }
+      className={cn(
+        "border-r border-sidebar-border  bg-card transition-all sidebar  duration-300",
+        open || isMobile ? "w-64" : "w-16"
+      )}
     >
       {/* HEADER */}
-       <SidebarHeader className=" flex items-center gap-2 border  border-b border-sidebar-border pl-3 py-3">
+      <SidebarHeader className=" flex items-center gap-2 border  border-b border-sidebar-border pl-3 py-3">
         <div className="flex items-center gap-3 py-0.5">
           <div className="h-9 w-9 rounded-full  bg-primary flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-sm">S</span>
           </div>
 
           {/* Hidden on very small screens */}
-          { open &&<div className="flex flex-col">
-            <h1 className="text-md font-bold text-foreground">Shubha Margha Platform</h1>
-            <p className="text-xs text-muted-foreground">
-              Super Admin Portal v1.0
-            </p>
-          </div>}
+          {open && (
+            <div className="flex flex-col">
+              <h1 className="text-md font-bold text-foreground">
+                Shubha Margha Platform
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Super Admin Portal v1.0
+              </p>
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
       {/* CONTENT */}
-      <SidebarContent className="flex-1 px-2">
+      <SidebarContent className="flex-1 px-2 overflow-y-scroll custom-scrollbar ">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {menuItems.map((item) => {
                 const isActive =
-                  item.url === "/"
+                  item.url === "/dashboard"
                     ? pathname === item.url
                     : pathname.startsWith(item.url);
 
@@ -110,14 +117,16 @@ const { open, isMobile } = useSidebar();
 
       {/* FOOTER */}
       <SidebarFooter className="p-4 border-t border-sidebar-border">
-       {open && <div className="rounded-lg bg-sidebar-accent p-3">
-          <p className="text-xs font-medium text-sidebar-accent-foreground">
-            Need Help?
-          </p>
-          <p className="text-xs text-sidebar-foreground/70 mt-1">
-            Check documentation
-          </p>
-        </div>}
+        {open && (
+          <div className="rounded-lg bg-sidebar-accent p-3">
+            <p className="text-xs font-medium text-sidebar-accent-foreground">
+              Need Help?
+            </p>
+            <p className="text-xs text-sidebar-foreground/70 mt-1">
+              Check documentation
+            </p>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

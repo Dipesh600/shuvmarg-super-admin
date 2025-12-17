@@ -1,14 +1,10 @@
-import React from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import AppSideBar from "@/components/dashboard/Sidebar";
 import { useSidebar } from "../ui/sidebar";
 import { cn } from "@/lib/utils";
+import { Outlet } from "react-router-dom";
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
-
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout() {
   const { open, isMobile } = useSidebar();
 
   return (
@@ -33,7 +29,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Page Content */}
         <main className="pt-6 w-full overflow-y-auto">
-          <div className="w-full  px-4 sm:px-6 py-6 space-y-6">{children}</div>
+          <div className="w-full  px-4 sm:px-6 py-6 space-y-6">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

@@ -1,6 +1,4 @@
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { DollarSign, TrendingUp, Percent, Clock } from "lucide-react";
 import {
   Area,
@@ -25,8 +23,7 @@ const revenueData = [
 
 const Financial = () => {
   return (
-    <SidebarProvider>
-      <DashboardLayout>
+    <>
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
             Financial Management
@@ -232,8 +229,7 @@ const Financial = () => {
             </div>
           </CardContent>
         </Card>
-      </DashboardLayout>
-    </SidebarProvider>
+    </>
   );
 };
 
