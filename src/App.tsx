@@ -20,7 +20,7 @@ import ModelProvider from "./providers/ModelProvider";
 import SuperAdminLogin from "./pages/auth/login";
 import { DashboardLayout } from "./components/layouts/DashboardLayout";
 import { SidebarProvider } from "./components/ui/sidebar";
-// import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute";
+import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +33,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<SuperAdminLogin />} />
-          {/* <Route element={<ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />}> */}
+          <Route element={<ProtectedRoute allowedRoles={["SUPER_ADMIN"]} />}>
             <Route
               path="/admin"
               
@@ -56,7 +56,7 @@ const App = () => (
               <Route path="security" element={<Security />} />
               <Route path="settings" element={<Settings />} />
             </Route>
-          {/* </Route> */}
+          </Route>
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

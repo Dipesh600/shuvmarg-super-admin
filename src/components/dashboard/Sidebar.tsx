@@ -83,7 +83,7 @@ export default function AppSidebar() {
             <SidebarMenu className="space-y-1">
               {menuItems.map((item) => {
                 const isActive =
-                  item.url === "/dashboard"
+                  item.url === "/admin"
                     ? pathname === item.url
                     : pathname.startsWith(item.url);
 

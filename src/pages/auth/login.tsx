@@ -18,7 +18,7 @@ const SuperAdminLogin = () => {
   const navigate = useNavigate();
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/admin/dashboard");
+    navigate("/admin");
     setLoading(true);
     setTimeout(() => setLoading(false), 1500);
   };
