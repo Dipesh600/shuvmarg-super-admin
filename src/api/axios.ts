@@ -9,9 +9,9 @@ const processQueue = (error: any, token: string | null = null) => {
   );
   failedQueue = [];
 };
-
+const apiUrl = import.meta.env.VITE_API_URL;
 export const api = axios.create({
-  baseURL: "http://localhost:4000/api/admin",
+  baseURL: `${apiUrl}/api/admin`,
   withCredentials: true, // 🔑 refresh token cookie
 });
 

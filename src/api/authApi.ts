@@ -1,6 +1,6 @@
 import axios from "axios";
 import { api } from "./axios";
-
+const apiUrl = import.meta.env.VITE_API_URL;
 export type Admin = {
   id: string;
   name: string;
@@ -15,7 +15,7 @@ type LoginType = {
 
 const loginAdmin = async ({ email, password, adminCode }: LoginType) => {
   const { data } = await axios.post(
-    "http://localhost:4000/api/admin/auth/login",
+    `${apiUrl}api/admin/auth/login`,
     { email, password, adminCode },
     {
       headers: {
