@@ -15,7 +15,7 @@ type LoginType = {
 
 const loginAdmin = async ({ email, password, adminCode }: LoginType) => {
   const { data } = await axios.post(
-    `${apiUrl}api/admin/auth/login`,
+    `${apiUrl}/api/admin/auth/login`,
     { email, password, adminCode },
     {
       headers: {
