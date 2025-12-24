@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -12,15 +11,47 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, Fingerprint, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/providers/AuthProvider";
+import { useMutation } from "@tanstack/react-query";
+import { loginAdmin } from "@/api/authApi";
+import { toast } from "sonner";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  adminLoginSchema,
+  type SuperAdminLoginForm,
+} from "@/validators/adminlogin.schema";
+import DotsLoader from "@/components/ui/dotsLoader";
 
 const SuperAdminLogin = () => {
-  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate("/admin");
-    setLoading(true);
-    setTimeout(() => setLoading(false), 1500);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SuperAdminLoginForm>({
+    resolver: zodResolver(adminLoginSchema),
+  });
+
+  const { mutate, isPending } = useMutation({
+    mutationKey: ["login"],
+    mutationFn: loginAdmin,
+    onSuccess: (data) => {
+      login(data.accessToken);
+      toast.success("Login successful");
+      navigate("/admin");
+    },
+    onError: (error: any) => {
+      // console.log(error)
+      toast.error(error?.response?.data?.message || "Login failed");
+    },
+  });
+
+  const onSubmit = (values: SuperAdminLoginForm) => {
+    mutate(values);
   };
 
   return (
@@ -45,61 +76,79 @@ const SuperAdminLogin = () => {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Admin ID */}
               <div className="space-y-2">
-                <Label htmlFor="adminId" className="text-slate-300">
-                  Admin ID
-                </Label>
+                <Label className="text-slate-300">Admin ID</Label>
                 <Input
-                  id="adminId"
+                  {...register("adminCode")}
                   placeholder="SUMA-ADM-001"
-                  required
                   className="bg-slate-900 border-slate-700 text-white"
                 />
+                {errors.adminCode && (
+                  <p className="text-xs text-red-500">
+                    {errors.adminCode.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-300">Email</Label>
+                <Input
+                  {...register("email")}
+                  placeholder="Enter your email.."
+                  className="bg-slate-900 border-slate-700 text-white"
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-500">{errors.email.message}</p>
+                )}
               </div>
 
               {/* Password */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-300">
-                  Password
-                </Label>
+                <Label className="text-slate-300">Password</Label>
                 <Input
-                  id="password"
+                  {...register("password")}
                   type="password"
-                  required
+                  placeholder="Enter your pass.."
                   className="bg-slate-900 border-slate-700 text-white"
                 />
-                <p className="text-xs text-slate-500 flex items-center gap-1">
-                  <Lock className="h-3 w-3" /> Minimum 8 characters, uppercase,
-                  number & symbol
-                </p>
+                {errors.password ? (
+                  <p className="text-xs text-red-500">
+                    {errors.password.message}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500 flex items-center gap-1">
+                    <Lock className="h-3 w-3" /> Minimum 8 characters,
+                    uppercase, number & symbol
+                  </p>
+                )}
               </div>
 
-              {/* 2FA */}
+              {/* OTP */}
               <div className="space-y-2">
-                <Label htmlFor="otp" className="text-slate-300">
-                  2FA Code
-                </Label>
+                <Label className="text-slate-300">2FA Code</Label>
                 <Input
-                  id="otp"
+                  {...register("otp")}
                   placeholder="123456"
-                  required
                   className="bg-slate-900 border-slate-700 text-white"
                 />
-                <p className="text-xs text-slate-500">
-                  Generated via Google Authenticator or SMS
-                </p>
+                {errors.otp ? (
+                  <p className="text-xs text-red-500">{errors.otp.message}</p>
+                ) : (
+                  <p className="text-xs text-slate-500">
+                    Generated via Google Authenticator or SMS
+                  </p>
+                )}
               </div>
 
               {/* Buttons */}
               <div className="space-y-3">
                 <Button
                   type="submit"
-                  disabled={loading}
-                  className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={isPending}
+                  className="w-full rounded-xl cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
-                  {loading ? "Verifying..." : "Secure Login"}
+                  {isPending ? <DotsLoader /> : "Secure Login"}
                 </Button>
 
                 <Button

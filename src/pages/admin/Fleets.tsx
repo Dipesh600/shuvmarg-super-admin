@@ -84,7 +84,7 @@ const Fleet = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">245</div>
-              <p className="text-xs dark:text-blue-500/40 text-blue-500">
+              <p className="text-xs dark:text-blue-500 text-blue-500">
                 Registered fleet
               </p>
             </CardContent>
@@ -98,7 +98,7 @@ const Fleet = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">189</div>
-              <p className="text-xs text-green-500 darkt:text-green-500/40">
+              <p className="text-xs text-green-500 darkt:text-green-500">
                 77% operational
               </p>
             </CardContent>
@@ -120,13 +120,13 @@ const Fleet = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-orange-500 dark:text-orange-500/40" />{" "}
+                <AlertTriangle className="h-4 w-4 text-orange-500 dark:text-orange-500" />{" "}
                 Pending
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">33</div>
-              <p className="text-xs text-orange-500 dark:text-orange-500/40">
+              <p className="text-xs text-orange-500 dark:text-orange-500">
                 Awaiting verification
               </p>
             </CardContent>

@@ -5,13 +5,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus, Filter, Download } from "lucide-react";
+import {  UserPlus, Filter, Download } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
+import { UserDataTable } from "@/components/data_tables/users/data_table";
+import { columns } from "@/components/data_tables/users/columns";
 
-const users = [
+type User = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  status: string;
+  bookings: number;
+  joined: string;
+};
+
+const users: User[] = [
   {
     id: "USR-001",
     name: "Rajesh Kumar",
@@ -141,19 +152,11 @@ const Users = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="mb-4 w-full sm:max-w-md">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, phone, email, or ID..."
-                className="pl-9 w-full"
-              />
-            </div>
-          </div>
-
+         
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full min-w-[700px]">
+            <UserDataTable columns={columns as any} data={users}  />
+            {/* <table className="w-full min-w-[700px]">
               <thead>
                 <tr>
                   <th className="text-left p-2">User ID</th>
@@ -197,7 +200,7 @@ const Users = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table> */}
           </div>
 
           {/* Mobile Cards */}
