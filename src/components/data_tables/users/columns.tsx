@@ -55,14 +55,14 @@ export const columns: ColumnDef<User>[] = [
     header: "Name",
   },
   {
-    accessorKey: "phone",
+    accessorKey: "email",
     header: "Contact",
     cell: ({ row }) => {
       const { phone, email } = row.original;
       return (
         <div className="text-sm">
-          <div>{phone}</div>
-          <div className="text-muted-foreground">{email}</div>
+          <div>{email}</div>
+          <div className="text-muted-foreground">{phone}</div>
         </div>
       );
     },

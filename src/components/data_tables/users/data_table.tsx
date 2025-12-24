@@ -42,7 +42,8 @@ export function UserDataTable<TData, TValue>({
 }: UserDataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [rowSelection, setRowSelection] = useState({})
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [rowSelection, setRowSelection] = useState({});
   const table = useReactTable({
     data,
     columns,
@@ -51,12 +52,14 @@ export function UserDataTable<TData, TValue>({
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
      onRowSelectionChange: setRowSelection,
     getFilteredRowModel: getFilteredRowModel(),
     
     state: {
       sorting,
       columnFilters,
+      globalFilter ,
        rowSelection,
     },
   });
@@ -69,10 +72,12 @@ export function UserDataTable<TData, TValue>({
           <Input
             placeholder="Search by name, phone, email, or ID..."
             className="pl-9 w-full"
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
+            value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+            // value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+            // onChange={(event) =>
+              // table.getColumn("name")?.setFilterValue(event.target.value)
+            // }
           />
         </div>
         <DropdownMenu>
