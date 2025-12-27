@@ -25,6 +25,7 @@ import {
   Ticket,
   FileText,
   Settings,
+  AlertCircleIcon,
 } from "lucide-react";
 
 import { NavLink, useLocation } from "react-router-dom";
@@ -34,8 +35,10 @@ const menuItems = [
   { title: "User Management", url: "/admin/users", icon: Users },
   { title: "Agent Management", url: "/admin/agents", icon: UserCog },
   { title: "Bus Owners", url: "/admin/bus-owners", icon: Bus },
-  { title: "Fleet Management", url: "/admin/fleet", icon: MapPin },
-  { title: "Financial", url: "/admin/financial", icon: DollarSign },
+  { title: "Fleet Management", url: "/admin/fleets", icon: MapPin },
+  { title: "Financial", url: "/admin/financial", icon: DollarSign },  
+  { title: "Commissions", url: "/admin/commissions", icon: DollarSign },  
+  { title: "Refunds", url: "/admin/refunds", icon: AlertCircleIcon },
   { title: "Transactions", url: "/admin/transactions", icon: Ticket },
   { title: "Disputes", url: "/admin/disputes", icon: AlertCircle },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },

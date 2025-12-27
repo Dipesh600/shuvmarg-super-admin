@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -9,21 +9,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export type User = {
+type Owner = {
   id: string;
-  name: string;
-  phone: string;
-  bookings: number;
-  joined: string;
-  status: "Active" | "suspended" | "inActive";
-  email: string;
+  operator: string;
+  route: string;
+  status: string;
+  capacity: number;
+  gps: string;
+  lastService: string;
 };
 
-export const columns: ColumnDef<User>[] = [
+export const columns: ColumnDef<Owner>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -48,45 +48,46 @@ export const columns: ColumnDef<User>[] = [
   },
   {
     accessorKey: "id",
-    header: "OwnerId",
+    header: "Bus Id",
   },
   {
-    accessorKey: "name",
-    header: "Name",
+    accessorKey: "operator",
+    header: "Operator",
   },
   {
-    accessorKey: "email",
-    header: "Contact",
-    cell: ({ row }) => {
-      const { phone, email } = row.original;
-      return (
-        <div className="text-sm">
-          <div>{email}</div>
-          <div className="text-muted-foreground">{phone}</div>
-        </div>
-      );
-    },
+    accessorKey: "route",
+    header: "Route",
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
       const { status } = row.original;
+      return <Badge variant={status as BadgeProps["variant"]}>{status}</Badge>;
+    },
+  },
+  {
+    accessorKey: "capacity",
+    header: "Capacity",
+  },
+  {
+    accessorKey: "gps",
+    header: "GPS",
+    cell: ({ row }) => {
+      const { gps } = row.original;
       return (
-        <Badge variant={status === "Active" ? "default" : "destructive"}>
-          {status}
+        <Badge variant={gps === "Online" ? "default" : "destructive"}>
+          {gps}
         </Badge>
       );
     },
   },
+
   {
-    accessorKey: "bookings",
-    header: "Bookings",
+    accessorKey: "lastService",
+    header: "Last Service",
   },
-  {
-    accessorKey: "joined",
-    header: "Joined",
-  },
+
   {
     id: "actions",
     header: "Actions",
@@ -103,12 +104,13 @@ export const columns: ColumnDef<User>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigate(`${window.location}/${id}`)}>
+            <DropdownMenuItem
+              onClick={() => navigate(`${window.location}/${id}`)}
+            >
               View Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {/* <DropdownMenuItem>View customer</DropdownMenuItem> */}
-            {/* <DropdownMenuItem>View payment details</DropdownMenuItem> */}
+            
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {  UserPlus, Filter, Download } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
-import { UserDataTable } from "@/components/data_tables/users/data_table";
 import { columns } from "@/components/data_tables/users/columns";
+import { DataTable } from "@/components/DataTable";
 
 type User = {
   id: string;
@@ -155,7 +155,7 @@ const Users = () => {
          
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-            <UserDataTable columns={columns as any} data={users}  />
+            <DataTable columns={columns as any} data={users}  />
             {/* <table className="w-full min-w-[700px]">
               <thead>
                 <tr>

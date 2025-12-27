@@ -27,7 +27,7 @@ import DotsLoader from "@/components/ui/dotsLoader";
 const SuperAdminLogin = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-
+  
   const {
     register,
     handleSubmit,
@@ -40,7 +40,8 @@ const SuperAdminLogin = () => {
     mutationKey: ["login"],
     mutationFn: loginAdmin,
     onSuccess: (data) => {
-      login(data.accessToken);
+      login(data.accessToken, data.admin);
+      // console.log("Login successful:", data);
       toast.success("Login successful");
       navigate("/admin");
     },
@@ -81,13 +82,13 @@ const SuperAdminLogin = () => {
               <div className="space-y-2">
                 <Label className="text-slate-300">Admin ID</Label>
                 <Input
-                  {...register("adminCode")}
+                  {...register("adminId")}
                   placeholder="SUMA-ADM-001"
                   className="bg-slate-900 border-slate-700 text-white"
                 />
-                {errors.adminCode && (
+                {errors.adminId && (
                   <p className="text-xs text-red-500">
-                    {errors.adminCode.message}
+                    {errors.adminId.message}
                   </p>
                 )}
               </div>

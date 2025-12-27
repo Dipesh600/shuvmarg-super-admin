@@ -1,22 +1,25 @@
 import axios from "axios";
 import { api } from "./axios";
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = "http://34.229.93.103";
 export type Admin = {
   id: string;
-  name: string;
+  adminId: string;
+  // name: string;
   email: string;
   role: string;
 };
 type LoginType = {
   email: string;
   password: string;
-  adminCode: string;
+  adminId: string;
+  otp:string;
 };
 
-const loginAdmin = async ({ email, password, adminCode }: LoginType) => {
+const loginAdmin = async ({ adminId, email, password, otp }: LoginType) => {
   const { data } = await axios.post(
     `${apiUrl}/api/admin/auth/login`,
-    { email, password, adminCode },
+    
+    { email, password, adminId, otp },
     {
       headers: {
         "Content-Type": "application/json",
@@ -27,7 +30,7 @@ const loginAdmin = async ({ email, password, adminCode }: LoginType) => {
 };
 
 const getAdmin = async () => {
-  const { data } = await api.get("/auth/profile");
+  const { data } = await api.get("/api/admin/accountStatus");
   return data;
 };
 

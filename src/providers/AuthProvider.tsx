@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type Admin, getAdmin } from "../api/authApi";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 type AuthContextType = {
   admin: Admin | null;
   isAuthenticated: boolean;
-  login: (token: string) => void;
+  login: (token: string, data: Admin) => void;
   logout: () => void;
 
   loading: boolean;
@@ -15,19 +15,25 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AuthProvider = ({ children }: { children: ReactNode }) => {
+const [isLoading, setLoading] = useState(true);
   const qc = useQueryClient();
   const token = localStorage.getItem("token");
+  const adminData = JSON.parse(localStorage.getItem("adminData")!) as Admin | null;
   const navigate = useNavigate();
-  const { data, isLoading } = useQuery({
-    queryKey: ["me"],
-    queryFn: getAdmin,
-    enabled: !!token,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const login = (token: string) => {
+  // const { data, isLoading } = useQuery({
+  //   queryKey: ["admin"],
+  //   queryFn: getAdmin,
+  //   enabled: !!token,
+  //   staleTime: 5 * 60 * 1000,
+  // });
+  setTimeout(() => {
+    setLoading(false);
+  },2000)
+  const login = (token: string, data: Admin) => {
+    
     localStorage.setItem("token", token);
-    qc.invalidateQueries({ queryKey: ["me"]});
+    localStorage.setItem("adminData", JSON.stringify(data));
+    qc.invalidateQueries({ queryKey: ["admin"]});
   };
 
   const logout = () => {
@@ -36,18 +42,17 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     navigate("/auth/login", { replace: true });
   };
   useEffect(() => {
-    if (data && token) {
+    if (adminData && token) {
       navigate("/admin", { replace: true });
     }
-  }, [token, data]);
+  }, [token]);
   return (
     <AuthContext.Provider
       value={{
-        admin: data ?? null,
-        isAuthenticated: !!data,
+        admin: adminData,
+        isAuthenticated: !!token,
         login,
         logout,
-
         loading: isLoading,
       }}
     >

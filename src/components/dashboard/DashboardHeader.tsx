@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import type { MouseEvent } from "react";
 
 export function DashboardHeader() {
-  const { logout } = useAuth();
+  const { logout,admin } = useAuth();
   const {isPending,mutate} = useMutation({
     mutationFn: logoutAdmin,
     mutationKey: ["logout"],
@@ -80,14 +80,14 @@ export function DashboardHeader() {
           <div className="flex items-center gap-2 pl-3 border-l border-muted">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary text-primary-foreground">
-                SA
+                {admin?.adminId.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
             {/* Hide User Text on small screens */}
             <div className="hidden lg:block">
               <p className="text-sm font-medium text-foreground">Super Admin</p>
-              <p className="text-xs text-muted-foreground">SUMA-ADM-001</p>
+              <p className="text-xs text-muted-foreground">{admin?.adminId}</p>
             </div>
           </div>
 

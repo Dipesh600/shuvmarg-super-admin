@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const adminLoginSchema = z.object({
-  adminCode: z
+  adminId: z
     .string()
     .min(5, "Admin Code is required")
     // .regex(/^SUMA-ADM-\d+$/, "Invalid Admin ID format"),

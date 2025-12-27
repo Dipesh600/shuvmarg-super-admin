@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -9,21 +9,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { type ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Bus, MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export type User = {
+type Agent = {
   id: string;
-  name: string;
-  phone: string;
-  bookings: number;
-  joined: string;
-  status: "Active" | "suspended" | "inActive";
-  email: string;
+  company:string
+  owner: string;
+  status: string;
+  fleet: number;
+  revenue: string;
+  type: number;
 };
 
-export const columns: ColumnDef<User>[] = [
+export const columns: ColumnDef<Agent>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -48,45 +48,44 @@ export const columns: ColumnDef<User>[] = [
   },
   {
     accessorKey: "id",
-    header: "OwnerId",
+    header: "Owner Id",
   },
   {
-    accessorKey: "name",
-    header: "Name",
+    accessorKey: "company",
+    header: "Company",
   },
   {
-    accessorKey: "email",
-    header: "Contact",
-    cell: ({ row }) => {
-      const { phone, email } = row.original;
-      return (
-        <div className="text-sm">
-          <div>{email}</div>
-          <div className="text-muted-foreground">{phone}</div>
-        </div>
-      );
-    },
+    accessorKey: "fleet",
+    header: "Fleet Size",
+    cell:({row})=>{
+        const {fleet} = row.original;
+        return(
+            <div className="flex items-center gap-1">
+             <Bus className="h-4 w-4 text-muted-foreground" />
+             {fleet}
+            </div>
+        )
+    }
+  },
+  {
+    accessorKey: "type",
+    header: "Type",
+  },
+  {
+    accessorKey: "revenue",
+    header: "Monthly Revenue",
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
       const { status } = row.original;
-      return (
-        <Badge variant={status === "Active" ? "default" : "destructive"}>
-          {status}
-        </Badge>
-      );
+      return <Badge variant={status as BadgeProps["variant"]}>{status}</Badge>;
     },
   },
-  {
-    accessorKey: "bookings",
-    header: "Bookings",
-  },
-  {
-    accessorKey: "joined",
-    header: "Joined",
-  },
+  
+  
+  
   {
     id: "actions",
     header: "Actions",
