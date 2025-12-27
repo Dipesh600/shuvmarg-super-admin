@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Admin, getAdmin } from "../api/authApi";
+import {  useQueryClient } from "@tanstack/react-query";
+import { type Admin } from "../api/authApi";
 import { useNavigate } from "react-router-dom";
 
 type AuthContextType = {
