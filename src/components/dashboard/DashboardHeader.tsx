@@ -5,28 +5,28 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ModeToggle } from "../mode-toggle";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useAuth } from "@/providers/AuthProvider";
-import { useMutation } from "@tanstack/react-query";
-import { logoutAdmin } from "@/api/authApi";
-import { toast } from "sonner";
-import type { MouseEvent } from "react";
+// import { useMutation } from "@tanstack/react-query";
+// import { logoutAdmin } from "@/api/authApi";
+// import { toast } from "sonner";
+// import type { MouseEvent } from "react";
 
 export function DashboardHeader() {
   const { logout,admin } = useAuth();
-  const {isPending,mutate} = useMutation({
-    mutationFn: logoutAdmin,
-    mutationKey: ["logout"],
-    onSuccess: () => {
-      toast.success("Logout Successfull!");
-      logout();
-    },
-    onError: (error: any) => {
-      toast.error(error.response.data.message || "Logout Failed");
-    },
-  });
-  const handleLogout = (e:MouseEvent<HTMLButtonElement>)=>{
-    e.preventDefault();
-    mutate();
-  }
+  // const {isPending,mutate} = useMutation({
+  //   mutationFn: logoutAdmin,
+  //   mutationKey: ["logout"],
+  //   onSuccess: () => {
+  //     toast.success("Logout Successfull!");
+  //     logout();
+  //   },
+  //   onError: (error: any) => {
+  //     toast.error(error.response.data.message || "Logout Failed");
+  //   },
+  // });
+  // const handleLogout = (e:MouseEvent<HTMLButtonElement>)=>{
+  //   e.preventDefault();
+  //   mutate();
+  // }
   return (
     <header
       className="
@@ -92,7 +92,7 @@ export function DashboardHeader() {
           </div>
 
           {/* Logout */}
-          <Button className="cursor-pointer" disabled={isPending} onClick={handleLogout} variant="ghost" size="icon">
+          <Button className="cursor-pointer"  onClick={()=>logout()} variant="ghost" size="icon">
             <LogOut className="h-4 w-4 text-foreground" />
           </Button>
         </div>

@@ -29,17 +29,31 @@ import {
 import { useModal } from "@/hooks/use-model-store";
 import { SuspendDialog } from "@/components/models/suspended-model";
 import { useState } from "react";
-   const userData = {
-  id: "USR-001",
-  firstName: "Rajesh",
-  lastName: "Kumar",
-  email: "rajesh@example.com",
-  phone: "+977-9841234567",
-  status: "Active",
-  verified: true,
-  joined: "2024-01-15",
-  address: "Kathmandu, Nepal",
+import { useQuery } from "@tanstack/react-query";
+import { getUserById } from "@/api/userApi";
+
+
+
+const UserDetail = () => {
+  const { id } = useParams();
+   const {data,isLoading,error,isError} = useQuery({
+     queryKey:["user",id],
+     queryFn:()=>getUserById(id as string),
+     enabled:!!id,
+     staleTime:5*60*1000,
+ })
+     const userData = {
+  id: data?.data._id,
+  name: data?.data.name,
+  email: data?.data.email,
+  phone: data?.data.phone,
+  status: data?.data.status,
+  verified: data?.data.isVerified,
+  joined: data?.data.createdAt.split("T")[0],
+  address: data?.data.address || "Kathmandu,Nepal",
   totalBookings: 12,
+  role:data?.data.role, 
+  profileImg:data?.data.profilePicture || "",
   totalSpent: "NPR 24,500",
   lastLogin: "2024-01-28 10:30 AM",
   bookings: [
@@ -53,73 +67,20 @@ import { useState } from "react";
     { id: "TXN-003", type: "Refund", amount: "NPR 500", date: "2024-01-22", method: "Wallet" },
   ],
 };
-// const userData = {
-//   id: "USR-001",
-//   firstName: "Rajesh",
-//   lastName: "Kumar",
-//   email: "rajesh@example.com",
-//   phone: "+977-9841234567",
-//   status: "Active",
-//   verified: true,
-//   joined: "2024-01-15",
-//   address: "Kathmandu, Nepal",
-//   totalBookings: 12,
-//   totalSpent: "NPR 24,500",
-//   lastLogin: "2024-01-28 10:30 AM",
-//   bookings: [
-//     {
-//       id: "BK-001",
-//       route: "Kathmandu - Pokhara",
-//       date: "2024-01-20",
-//       amount: "NPR 1,200",
-//       status: "Completed",
-//     },
-//     {
-//       id: "BK-002",
-//       route: "Pokhara - Chitwan",
-//       date: "2024-01-25",
-//       amount: "NPR 800",
-//       status: "Completed",
-//     },
-//     {
-//       id: "BK-003",
-//       route: "Kathmandu - Biratnagar",
-//       date: "2024-02-01",
-//       amount: "NPR 1,500",
-//       status: "Upcoming",
-//     },
-//   ],
-//   transactions: [
-//     {
-//       id: "TXN-001",
-//       type: "Payment",
-//       amount: "NPR 1,200",
-//       date: "2024-01-20",
-//       method: "Khalti",
-//     },
-//     {
-//       id: "TXN-002",
-//       type: "Payment",
-//       amount: "NPR 800",
-//       date: "2024-01-25",
-//       method: "eSewa",
-//     },
-//     {
-//       id: "TXN-003",
-//       type: "Refund",
-//       amount: "NPR 500",
-//       date: "2024-01-22",
-//       method: "Wallet",
-//     },
-//   ],
-// };
-
-const UserDetail = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
   const [userStatus, setUserStatus] = useState(userData.status);
-    const {onOpen}= useModal();
- 
+  const {onOpen}= useModal();
+
+ if (isError) {
+    return (
+      <div>
+        Error: {error instanceof Error ? error.message : "An error occurred"}
+      </div>
+    );
+  }
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
@@ -131,13 +92,13 @@ const UserDetail = () => {
           <p className="text-muted-foreground">User ID: {id || userData.id}</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={()=>onOpen("editUser")} variant="outline" className="gap-2">
+          <Button onClick={()=>onOpen("editUser",{data:userData})} variant="outline" className="gap-2">
             <Edit className="h-4 w-4" />
             Edit
           </Button>
           <SuspendDialog
             entityType="user"
-            entityName={`${userData.firstName} ${userData.lastName}`}
+            entityName={`${userData.name}`}
             currentStatus={userStatus}
             onStatusChange={setUserStatus}
           />
@@ -151,7 +112,7 @@ const UserDetail = () => {
               Profile
               <Badge
                 variant={
-                  userData.status === "Active" ? "default" : "destructive"
+                  userData.status === "active" ? "default" : "destructive"
                 }
               >
                 {userData.status}
@@ -160,19 +121,19 @@ const UserDetail = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
-                {userData.firstName[0]}
-                {userData.lastName[0]}
+              <div className="w-24 h-24 overflow-hidden rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
+                {/* {userData.name[0]} */}
+                <img src={userData.profileImg} alt="profile_img" className="w-full rounded-full object-cover " />
               </div>
             </div>
             <div className="text-center">
               <h3 className="text-xl font-semibold">
-                {userData.firstName} {userData.lastName}
+                {userData.name}
               </h3>
               {userData.verified && (
                 <div className="flex items-center justify-center gap-1 text-success text-sm mt-1">
-                  <CheckCircle className="h-4 w-4" />
-                  Verified User
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  Verified {userData.role}
                 </div>
               )}
             </div>

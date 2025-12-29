@@ -8,18 +8,31 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { SuspendDialog } from "@/components/models/suspended-model";
 import { useState } from "react";
 import { useModal } from "@/hooks/use-model-store";
+import { useQuery } from "@tanstack/react-query";
+import { getAgentById } from "@/api/agentApi";
 
-const agentData = {
-  id: "AGT-001",
-  name: "Ram Bahadur",
-  email: "ram@agency.com",
-  phone: "+977-9841234567",
+
+
+const AgentDetail = () => {
+  const { id } = useParams();
+  const {data,isLoading,error,isError} = useQuery({
+     queryKey:["user",id],
+     queryFn:()=>getAgentById(id as string),
+     enabled:!!id,
+     staleTime:5*60*1000,
+ })
+ const agentData = {
+  id: data?.data?.agentDetails.agentId,
+  name: data?.data?.profile.name,
+  email: data?.data?.profile.email,
+  phone: data?.data?.profile.phone,
   agencyName: "Nepal Travels Agency",
-  location: "Kathmandu",
+  profileImg:data?.data?.profile.profilePicture,
+  location: data?.data?.profile.address,
   status: "Verified",
   commission: "5.2%",
   performance: "Excellent",
-  joined: "2023-06-15",
+  joined: data?.data?.profile.createdAt?.split("T")[0],
   panNumber: "123456789",
   bankDetails: "Nepal Bank - 1234567890",
   totalApplications: 234,
@@ -36,12 +49,20 @@ const agentData = {
     { id: "PAY-003", amount: "NPR 15,200", date: "2024-01-11", status: "Completed", method: "Bank Transfer" },
   ],
 };
-
-const AgentDetail = () => {
-  const { id } = useParams();
   const {onOpen} = useModal();
   const navigate = useNavigate();
   const [agentStatus, setAgentStatus] = useState(agentData.status);
+  if (isError) {
+    return (
+      <div>
+        Error: {error instanceof Error ? error.message : "An error occurred"}
+      </div>
+    );
+  }
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
@@ -50,7 +71,7 @@ const AgentDetail = () => {
         </Button>
         <div className="flex-1">
           <h2 className="text-2xl font-bold tracking-tight">Agent Details</h2>
-          <p className="text-muted-foreground">Agent ID: {id || agentData.id}</p>
+          <p className="text-muted-foreground">Agent ID: { agentData.id}</p>
         </div>
         <div className="flex gap-2">
           <Button  onClick={()=>onOpen("editAgent")} variant="outline" className="gap-2">
@@ -78,8 +99,8 @@ const AgentDetail = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
-                {agentData.name.split(" ").map(n => n[0]).join("")}
+               <div className="w-24 h-24 overflow-hidden rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
+                <img src={agentData.profileImg} alt="profile_img" className="w-full rounded-full object-cover " />
               </div>
             </div>
             <div className="text-center">

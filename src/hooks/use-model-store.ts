@@ -5,7 +5,8 @@ export type ModalType = "addUser" | "addAgent" | "addBusOwner" | "addBus" | "add
 interface ModalStore {
   type: ModalType | null;
   isOpen: boolean;
-  onOpen: (type: ModalType) => void;
+  data?:any
+  onOpen: (type: ModalType,data?:any) => void;
   onClose: () => void;
 }
 
@@ -13,6 +14,6 @@ export const useModal = create<ModalStore>((set) => ({
   type: null,
   data: {},
   isOpen: false,
-  onOpen: (type) => set({ isOpen: true, type }),
+  onOpen: (type,data) => set({ isOpen: true, type, data }),
   onClose: () => set({ type: null, isOpen: false }),
 }));

@@ -21,6 +21,7 @@ type Agent = {
   commission: string;
   performance: string;
   applications: number;
+  profileImg:string;
 };
 
 export const columns: ColumnDef<Agent>[] = [
@@ -47,8 +48,20 @@ export const columns: ColumnDef<Agent>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "id",
-    header: "Agent Id",
+    accessorKey: "profileImg",
+    header: "Profile Image",
+    cell: ({ row }) => {
+      const { profileImg } = row.original;
+      return (
+        <div className="flex justify-center items-center">
+          <img
+            src={profileImg}
+            alt="Profile"
+            className="w-8 h-8 rounded-full object-cover"
+          />
+        </div>
+      );
+    },
   },
   {
     accessorKey: "name",
@@ -63,7 +76,7 @@ export const columns: ColumnDef<Agent>[] = [
     header: "Status",
     cell: ({ row }) => {
       const { status } = row.original;
-      return <Badge variant={status as BadgeProps["variant"]}>{status}</Badge>;
+      return <Badge variant={status ? "Verified" :"Rejected" as BadgeProps["variant"]}>{status ? "Verified" : "Rejected"}</Badge>;
     },
   },
   {

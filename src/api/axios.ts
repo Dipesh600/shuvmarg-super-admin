@@ -14,7 +14,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 export const api = axios.create({
   baseURL: `${apiUrl}/api/admin`,
-  withCredentials: true, // 🔑 refresh token cookie
+  // withCredentials: true, // 🔑 refresh token cookie
 });
 
 api.interceptors.request.use((config) => {

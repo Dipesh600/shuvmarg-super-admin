@@ -7,10 +7,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {  UserPlus, Filter, Download } from "lucide-react";
+import { UserPlus, Filter, Download } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/users/columns";
 import { DataTable } from "@/components/DataTable";
+import { useQuery } from "@tanstack/react-query";
+import { getAllUsers } from "@/api/userApi";
+import { useAuth } from "@/providers/AuthProvider";
+import { useMemo } from "react";
 
 type User = {
   id: string;
@@ -72,6 +76,47 @@ const users: User[] = [
 
 const Users = () => {
   const { onOpen } = useModal();
+  const { token } = useAuth();
+  // useQuery to fetch users can be added here
+  const { data, isLoading, error, isError } = useQuery({
+    queryKey: ["users"],
+    queryFn: getAllUsers,
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+  console.log("Fetched Users:", data);
+  const userTableData = data?.data.map((user: any) => {
+    return {
+      id: user._id,
+      name: user.name,
+      phone: user.phone,
+      profileImg: user.profilePicture,
+      email: user.email,
+      status: user.status,
+      verified: user.verified,
+      bookings: 15,
+      joined: user.createdAt,
+    };
+  });
+  const ActiveUserCount = useMemo(() => {
+    return userTableData?.filter(
+      (user: any) => user.status?.toLowerCase() === "active"
+    ).length;
+  }, [userTableData]);
+  const VerifiedUsers = useMemo(() => {
+    return userTableData?.filter((user: any) => user.verified === true).length;
+  }, [userTableData]);
+  if (isError) {
+    return (
+      <div>
+        Error: {error instanceof Error ? error.message : "An error occurred"}
+      </div>
+    );
+  }
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
       {/* Header */}
@@ -98,7 +143,7 @@ const Users = () => {
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12,450</div>
+            <div className="text-2xl font-bold">{userTableData?.length}</div>
             <p className="text-xs text-muted-foreground">+234 this month</p>
           </CardContent>
         </Card>
@@ -107,7 +152,7 @@ const Users = () => {
             <CardTitle className="text-sm font-medium">Active Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8,967</div>
+            <div className="text-2xl font-bold">{ActiveUserCount}</div>
             <p className="text-xs text-muted-foreground">Last 30 days</p>
           </CardContent>
         </Card>
@@ -125,8 +170,8 @@ const Users = () => {
             <CardTitle className="text-sm font-medium">Verified</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">11,234</div>
-            <p className="text-xs text-muted-foreground">90.2%</p>
+            <div className="text-2xl font-bold">{VerifiedUsers}</div>
+            <p className="text-xs text-muted-foreground">90.96%</p>
           </CardContent>
         </Card>
       </div>
@@ -152,55 +197,9 @@ const Users = () => {
           </div>
         </CardHeader>
         <CardContent>
-         
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-            <DataTable columns={columns as any} data={users}  />
-            {/* <table className="w-full min-w-[700px]">
-              <thead>
-                <tr>
-                  <th className="text-left p-2">User ID</th>
-                  <th className="text-left p-2">Name</th>
-                  <th className="text-left p-2">Contact</th>
-                  <th className="text-left p-2">Status</th>
-                  <th className="text-left p-2">Bookings</th>
-                  <th className="text-left p-2">Joined</th>
-                  <th className="text-left p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id} className="border-b">
-                    <td className="p-2 font-medium">{user.id}</td>
-                    <td className="p-2">{user.name}</td>
-                    <td className="p-2">
-                      <div className="text-sm">
-                        <div>{user.phone}</div>
-                        <div className="text-muted-foreground">
-                          {user.email}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-2">
-                      <Badge
-                        variant={
-                          user.status === "Active" ? "default" : "destructive"
-                        }
-                      >
-                        {user.status}
-                      </Badge>
-                    </td>
-                    <td className="p-2">{user.bookings}</td>
-                    <td className="p-2">{user.joined}</td>
-                    <td className="p-2">
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table> */}
+            <DataTable columns={columns as any} data={userTableData} />
           </div>
 
           {/* Mobile Cards */}

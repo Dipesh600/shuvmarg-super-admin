@@ -15,11 +15,12 @@ import { useNavigate } from "react-router-dom";
 
 export type User = {
   id: string;
+  profileImg:string;
   name: string;
   phone: string;
   bookings: number;
   joined: string;
-  status: "Active" | "suspended" | "inActive";
+  status: "active" | "suspended" | "inActive";
   email: string;
 };
 
@@ -47,8 +48,20 @@ export const columns: ColumnDef<User>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "id",
-    header: "OwnerId",
+    accessorKey: "profileImg",
+    header: "Profile Image",
+    cell: ({ row }) => {
+      const { profileImg } = row.original;
+      return (
+        <div className="flex justify-center items-center">
+          <img
+            src={profileImg}
+            alt="Profile"
+            className="w-8 h-8 rounded-full object-cover"
+          />
+        </div>
+      );
+    },
   },
   {
     accessorKey: "name",
@@ -73,7 +86,7 @@ export const columns: ColumnDef<User>[] = [
     cell: ({ row }) => {
       const { status } = row.original;
       return (
-        <Badge variant={status === "Active" ? "default" : "destructive"}>
+        <Badge variant={status === "active" ? "default" : "destructive"}>
           {status}
         </Badge>
       );
@@ -86,6 +99,11 @@ export const columns: ColumnDef<User>[] = [
   {
     accessorKey: "joined",
     header: "Joined",
+    cell:({row})=>{
+      const {joined} = row.original;
+      const date = new Date(joined);
+      return date.toLocaleDateString();
+    }
   },
   {
     id: "actions",

@@ -13,6 +13,10 @@ import { UserCog, CheckCircle, Clock, XCircle } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/agents/columns";
 import { DataTable } from "@/components/DataTable";
+import { useMemo } from "react";
+import { getAllAgents } from "@/api/agentApi";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/providers/AuthProvider";
 
 const agents = [
   {
@@ -64,6 +68,46 @@ const agents = [
 
 const Agents = () => {
   const { onOpen } = useModal();
+   const { token } = useAuth();
+  // useQuery to fetch users can be added here
+  const { data, isLoading, error, isError } = useQuery({
+    queryKey: ["agents"],
+    queryFn: getAllAgents,
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+  const agentTableData = data?.data.map((agent: any) => {
+    return {
+      id: agent._id,
+      name: agent.name,
+      // phone: user.phone,
+      profileImg: agent.profilePicture,
+      email: agent.email,
+      location:agent.address,
+      status: agent.isVerified,
+      // verified: agent.verified,
+      commission: agent.rewardPoints,
+      performance:"90%",
+      applications:67
+
+      // joined: agent.createdAt,
+
+    };
+  });
+ 
+  const VerifiedAgents = useMemo(() => {
+    return agentTableData?.filter((agent: any) => agent.status === true).length;
+  }, [agentTableData]);
+  if (isError) {
+    return (
+      <div>
+        Error: {error instanceof Error ? error.message : "An error occurred"}
+      </div>
+    );
+  }
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
   return (
     <>
       {/* Header */}
@@ -93,7 +137,7 @@ const Agents = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,245</div>
+            <div className="text-2xl font-bold">{agentTableData.length}</div>
             <p className="text-xs  dark:text-blue-500/40 text-blue-500 ">
               Registered agents
             </p>
@@ -107,7 +151,7 @@ const Agents = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">890</div>
+            <div className="text-2xl font-bold">{VerifiedAgents}</div>
             <p className="text-xs dark:text-green-500/40 text-green-500">
               71% of total
             </p>
@@ -152,7 +196,7 @@ const Agents = () => {
         <CardContent>
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-            <DataTable columns={columns} data={agents} />
+            <DataTable columns={columns} data={agentTableData} />
           </div>
 
           {/* Mobile Cards */}

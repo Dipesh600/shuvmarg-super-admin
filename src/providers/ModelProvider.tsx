@@ -8,31 +8,7 @@ import { EditBusDialog } from "@/components/models/edit-bus-model";
 import { EditBusOwnerDialog } from "@/components/models/edit-bus-owner-model";
 import { EditUserDialog } from "@/components/models/edit-user-model";
 import { useState, useEffect } from "react";
-// import { useAuth } from "./AuthProvider";
-const userData = {
-  id: "USR-001",
-  firstName: "Rajesh",
-  lastName: "Kumar",
-  email: "rajesh@example.com",
-  phone: "+977-9841234567",
-  status: "Active",
-  verified: true,
-  joined: "2024-01-15",
-  address: "Kathmandu, Nepal",
-  totalBookings: 12,
-  totalSpent: "NPR 24,500",
-  lastLogin: "2024-01-28 10:30 AM",
-  bookings: [
-    { id: "BK-001", route: "Kathmandu - Pokhara", date: "2024-01-20", amount: "NPR 1,200", status: "Completed" },
-    { id: "BK-002", route: "Pokhara - Chitwan", date: "2024-01-25", amount: "NPR 800", status: "Completed" },
-    { id: "BK-003", route: "Kathmandu - Biratnagar", date: "2024-02-01", amount: "NPR 1,500", status: "Upcoming" },
-  ],
-  transactions: [
-    { id: "TXN-001", type: "Payment", amount: "NPR 1,200", date: "2024-01-20", method: "Khalti" },
-    { id: "TXN-002", type: "Payment", amount: "NPR 800", date: "2024-01-25", method: "eSewa" },
-    { id: "TXN-003", type: "Refund", amount: "NPR 500", date: "2024-01-22", method: "Wallet" },
-  ],
-};
+
 const agentData = {
   id: "AGT-001",
   name: "Ram Bahadur",
@@ -133,7 +109,7 @@ const ModelProvider = () => {
       <AddAgentDialog />
       <AddBusOwnerDialog />
       <AddBusDialog />
-      <EditUserDialog user={userData}/>
+      <EditUserDialog />
       <EditAgentDialog  agent={agentData}/>
       <EditBusOwnerDialog owner={ownerData}/>
       <EditBusDialog bus={busData}/>

@@ -1,16 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-const data = [
-  { month: "Jan", revenue: 850000 },
-  { month: "Feb", revenue: 920000 },
-  { month: "Mar", revenue: 1050000 },
-  { month: "Apr", revenue: 1180000 },
-  { month: "May", revenue: 1320000 },
-  { month: "Jun", revenue: 1545600 },
-];
 
-export function RevenueChart() {
+export function RevenueChart({revenueData}: {revenueData?: { label: string; revenue: number }[]}) {
   return (
     <Card className="col-span-full lg:col-span-2 w-full">
       <CardHeader className="pb-2">
@@ -23,7 +15,7 @@ export function RevenueChart() {
       <CardContent className="pt-0">
         <div className="w-full h-[220px] sm:h-[260px] md:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+            <AreaChart data={revenueData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -47,17 +39,18 @@ export function RevenueChart() {
               <Tooltip
                 formatter={(value: number) => [`Rs. ${value.toLocaleString("en-IN")}`, "Revenue"]}
                 contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
+                  backgroundColor:"#8884d8",
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "0.5rem",
+                  color:"#fff"
                 }}
               />
 
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="hsl(var(--primary))"
-                fill="url(#revenueGradient)"
+                stroke="#fff"
+                fill="#2A7DFF"
                 strokeWidth={2}
               />
             </AreaChart>

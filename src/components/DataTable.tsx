@@ -71,7 +71,7 @@ export function DataTable<TData, TValue>({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name, phone, email, or ID..."
-            className="pl-9 w-full"
+            className="pl-9 w-full outline-none focus-visible:ring-0"
             value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
             // value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}

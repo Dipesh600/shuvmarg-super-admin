@@ -21,13 +21,33 @@ import {
 } from "@/components/ui/card";
 
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { getDashBoardData } from "@/api/dashboardApi";
 
 const Index = () => {
+  const { data, isLoading, error, isError } = useQuery({
+    queryKey: ["dashboardData"],
+    queryFn: getDashBoardData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  if (isLoading) {
+    return <div>Loading dashboard data...</div>;
+  }
+  if (isError) {
+    return <div>Error loading dashboard data: {(error as Error).message}</div>;
+  }
+  const summaryData = data?.data.summary;
+  const revenueData = data?.data.revenueOverview.map((item: any) => ({
+    month: item.label,
+    revenue: item.revenue,
+  }));
   return (
     <>
       {/* Welcome Section */}
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard Overview</h2>
+        <h2 className="text-3xl font-bold tracking-tight">
+          Dashboard Overview
+        </h2>
         <p className="text-muted-foreground mt-1">
           Welcome back! Here's what's happening with the Sumarg Platform today.
         </p>
@@ -37,19 +57,19 @@ const Index = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Revenue"
-          value="Rs. 15,45,600"
-          change="+18.5% from last month"
+          value={`Rs. ${summaryData.revenue.totalRevenue.toLocaleString()}`}
+          change={`${summaryData.revenue.revenueChangeText}`}
           changeType="positive"
           icon={DollarSign}
-          subtitle="Target: 89% achieved"
+          subtitle={`Target: ${summaryData.revenue.revenueTargetAchievedPercent}% achieved`}
         />
         <StatCard
           title="Active Users"
-          value="12,450"
-          change="+12.3% growth rate"
+          value={summaryData.users.activeUsers.toString()}
+          change={`+${summaryData.users.activeUsersGrowthRate}% growth rate`}
           changeType="positive"
           icon={Users}
-          subtitle="45 new today"
+          subtitle={`${summaryData.users.newActiveUsersToday} new today`}
         />
         <StatCard
           title="Fleet Statistics"
@@ -61,17 +81,21 @@ const Index = () => {
         />
         <StatCard
           title="Transaction Volume"
-          value="Rs. 45,67,890"
-          change="98.7% success rate"
+          value={`Rs. ${summaryData.transactions.transactionVolume.toLocaleString()}`}
+          change={`${summaryData.transactions.transactionSuccessRate.toFixed(
+            2
+          )}% success rate`}
           changeType="positive"
           icon={TrendingUp}
-          subtitle="Avg: Rs. 1,450"
+          subtitle={`Avg: Rs. ${summaryData.transactions.averageTransactionAmount.toFixed(
+            2
+          )} per transaction`}
         />
       </div>
 
       {/* Charts and Activity */}
       <div className="grid gap-4 md:grid-cols-3">
-        <RevenueChart />
+        <RevenueChart  revenueData={revenueData}/>
         <ActivityFeed />
       </div>
 
@@ -87,8 +111,12 @@ const Index = () => {
               <MapPin className="h-5 w-5 text-primary mt-1" />
               <div>
                 <p className="font-semibold">Province 3 (Bagmati)</p>
-                <p className="text-sm text-muted-foreground">145 active buses</p>
-                <Badge variant="secondary" className="mt-2">Highest revenue</Badge>
+                <p className="text-sm text-muted-foreground">
+                  145 active buses
+                </p>
+                <Badge variant="secondary" className="mt-2">
+                  Highest revenue
+                </Badge>
               </div>
             </div>
             <div className="flex items-start gap-3 p-4 rounded-lg bg-muted">
@@ -96,7 +124,9 @@ const Index = () => {
               <div>
                 <p className="font-semibold">Province 4 (Gandaki)</p>
                 <p className="text-sm text-muted-foreground">67 active buses</p>
-                <Badge variant="secondary" className="mt-2">Growing market</Badge>
+                <Badge variant="secondary" className="mt-2">
+                  Growing market
+                </Badge>
               </div>
             </div>
             <div className="flex items-start gap-3 p-4 rounded-lg bg-muted">
@@ -104,7 +134,9 @@ const Index = () => {
               <div>
                 <p className="font-semibold">Province 1 (Koshi)</p>
                 <p className="text-sm text-muted-foreground">33 active buses</p>
-                <Badge variant="secondary" className="mt-2">New expansion</Badge>
+                <Badge variant="secondary" className="mt-2">
+                  New expansion
+                </Badge>
               </div>
             </div>
           </div>
@@ -163,7 +195,7 @@ const Index = () => {
           </CardContent>
         </Card>
       </div>
-</>
+    </>
   );
 };
 

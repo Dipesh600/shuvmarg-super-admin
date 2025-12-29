@@ -8,6 +8,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   login: (token: string, data: Admin) => void;
   logout: () => void;
+  token:string | null
 
   loading: boolean;
 };
@@ -28,7 +29,7 @@ const [isLoading, setLoading] = useState(true);
   // });
   setTimeout(() => {
     setLoading(false);
-  },2000)
+  },1000)
   const login = (token: string, data: Admin) => {
     
     localStorage.setItem("token", token);
@@ -38,12 +39,13 @@ const [isLoading, setLoading] = useState(true);
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("adminData")
     qc.clear();
     navigate("/auth/login", { replace: true });
   };
   useEffect(() => {
     if (adminData && token) {
-      navigate("/admin", { replace: true });
+      navigate(`${window.location.pathname === "/auth/login"? "/admin":window.location.pathname}`,{replace:true});
     }
   }, [token]);
   return (
@@ -52,6 +54,7 @@ const [isLoading, setLoading] = useState(true);
         admin: adminData,
         isAuthenticated: !!token,
         login,
+        token,
         logout,
         loading: isLoading,
       }}
