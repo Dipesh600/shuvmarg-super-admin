@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useModal } from "@/hooks/use-model-store";
 
 const disputes = [
   {
@@ -58,8 +59,15 @@ const disputes = [
     assignedTo: "Team C",
   },
 ];
-
+// id: string;
+    // user: string;
+    // type: string;
+    // priority: string;
+    // status: string;
+    // created: string;
+    // assignedTo: string;
 const Disputes = () => {
+  const {onOpen} = useModal();
   return (
     <>
         <div>
@@ -260,7 +268,15 @@ const Disputes = () => {
                     <TableCell>{dispute.created}</TableCell>
                     <TableCell>{dispute.assignedTo}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
+                      <Button
+                      onClick={()=>onOpen("editResolveDisputes",{// id: string;
+                          user: dispute.user,
+                          type: dispute.type,
+                          priority: dispute.priority,
+                          status: dispute.status,
+                          created:dispute.created,
+                          assignedTo: dispute.assignedTo})}
+                      variant="ghost" size="sm">
                         Resolve
                       </Button>
                     </TableCell>

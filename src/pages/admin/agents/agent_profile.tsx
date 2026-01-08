@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useModal } from "@/hooks/use-model-store";
 import { useQuery } from "@tanstack/react-query";
 import { getAgentById } from "@/api/agentApi";
+import AgentDetailSkeleton from "@/components/Skeletion_Loading/AgentDetailSkeleton";
 
 
 
@@ -22,7 +23,7 @@ const AgentDetail = () => {
      staleTime:5*60*1000,
  })
  const agentData = {
-  id: data?.data?.agentDetails.agentId,
+  id: data?.data?.agentDetails?.agentId ?? "N/A",
   name: data?.data?.profile.name,
   email: data?.data?.profile.email,
   phone: data?.data?.profile.phone,
@@ -60,7 +61,7 @@ const AgentDetail = () => {
     );
   }
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <AgentDetailSkeleton/>;
   }
   
   return (
@@ -71,7 +72,7 @@ const AgentDetail = () => {
         </Button>
         <div className="flex-1">
           <h2 className="text-2xl font-bold tracking-tight">Agent Details</h2>
-          <p className="text-muted-foreground">Agent ID: { agentData.id}</p>
+          <p className="text-muted-foreground">Agent ID: { agentData?.id}</p>
         </div>
         <div className="flex gap-2">
           <Button  onClick={()=>onOpen("editAgent")} variant="outline" className="gap-2">
@@ -92,7 +93,7 @@ const AgentDetail = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Profile
-              <Badge variant={agentData.status === "Verified" ? "default" : "secondary"}>
+              <Badge variant={agentData.status === "Verified" ? "Success" : "Failed"}>
                 {agentData.status}
               </Badge>
             </CardTitle>
@@ -108,7 +109,7 @@ const AgentDetail = () => {
               <p className="text-sm text-muted-foreground">{agentData.agencyName}</p>
               {agentData.status === "Verified" && (
                 <div className="flex items-center justify-center gap-1 text-success text-sm mt-1">
-                  <CheckCircle className="h-4 w-4" />
+                  <CheckCircle className="h-4 w- text-green-500" />
                   Verified Agent
                 </div>
               )}

@@ -23,6 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { getDashBoardData } from "@/api/dashboardApi";
+import DashboardSkeleton from "@/components/Skeletion_Loading/DashboardSkeletion";
 
 const Index = () => {
   const { data, isLoading, error, isError } = useQuery({
@@ -31,7 +32,7 @@ const Index = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
   if (isLoading) {
-    return <div>Loading dashboard data...</div>;
+    return <DashboardSkeleton/>;
   }
   if (isError) {
     return <div>Error loading dashboard data: {(error as Error).message}</div>;

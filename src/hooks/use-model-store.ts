@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ModalType = "addUser" | "addAgent" | "addBusOwner" | "addBus" | "addCustomReport" | "editUser" | "editAgent" | "editBus" | "editBusOwner" ;
+export type ModalType = "addUser" | "addAgent" | "addBusOwner" | "addBus" | "addCustomReport" | "editUser" | "editAgent" | "editBus" | "editBusOwner" | "editCommisionRate" | "editRefundProccess" | "editResolveDisputes";
 
 interface ModalStore {
   type: ModalType | null;

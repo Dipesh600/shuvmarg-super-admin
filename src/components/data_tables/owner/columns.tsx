@@ -13,17 +13,15 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Bus, MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-type Agent = {
-  id: string;
-  company:string
-  owner: string;
-  status: string;
-  fleet: number;
-  revenue: string;
-  type: number;
-};
-
-export const columns: ColumnDef<Agent>[] = [
+type BusOwner = {
+  id: string,
+      name: string,
+      phone:string
+      profileImg: string
+      email:string
+      verified:string  
+        status:string}
+ export const columns: ColumnDef<BusOwner>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -47,40 +45,54 @@ export const columns: ColumnDef<Agent>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "id",
-    header: "Owner Id",
+    accessorKey: "profileImg",
+    header: "Profile Image",
+    cell: ({ row }) => {
+      const { profileImg } = row.original;
+      return (
+        <div className="flex justify-center items-center">
+          <img
+            src={profileImg}
+            alt="Profile"
+            className="w-8 h-8 rounded-full object-cover"
+          />
+        </div>
+      );
+    },
   },
   {
-    accessorKey: "company",
-    header: "Company",
+    accessorKey:"name",
+    header:"Bus Owner"
   },
   {
-    accessorKey: "fleet",
-    header: "Fleet Size",
-    cell:({row})=>{
-        const {fleet} = row.original;
-        return(
-            <div className="flex items-center gap-1">
-             <Bus className="h-4 w-4 text-muted-foreground" />
-             {fleet}
-            </div>
-        )
-    }
+    accessorKey: "email",
+    header: "Contact",
+    cell: ({ row }) => {
+      const { phone, email } = row.original;
+      return (
+        <div className="text-sm">
+          <div>{email}</div>
+          <div className="text-muted-foreground">{phone}</div>
+        </div>
+      );
+    },
   },
-  {
-    accessorKey: "type",
-    header: "Type",
-  },
-  {
-    accessorKey: "revenue",
-    header: "Monthly Revenue",
-  },
+  
+  
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
       const { status } = row.original;
       return <Badge variant={status as BadgeProps["variant"]}>{status}</Badge>;
+    },
+  },
+  {
+    accessorKey: "verified",
+    header: "Verified",
+    cell: ({ row }) => {
+      const { verified } = row.original;
+      return <Badge variant={verified ? "Verified" :"Pending" }>{ verified ? "verified" :"pending"}</Badge>;
     },
   },
   

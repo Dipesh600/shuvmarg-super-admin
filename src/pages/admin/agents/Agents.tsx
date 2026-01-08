@@ -17,6 +17,7 @@ import { useMemo } from "react";
 import { getAllAgents } from "@/api/agentApi";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/providers/AuthProvider";
+import AgentsSkeleton from "@/components/Skeletion_Loading/AgentsSkeletion";
 
 const agents = [
   {
@@ -106,7 +107,7 @@ const Agents = () => {
     );
   }
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <AgentsSkeleton/>;
   }
   return (
     <>

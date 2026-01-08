@@ -27,9 +27,13 @@ const [isLoading, setLoading] = useState(true);
   //   enabled: !!token,
   //   staleTime: 5 * 60 * 1000,
   // });
-  setTimeout(() => {
+ useEffect(() => {
+  const timer = setTimeout(() => {
     setLoading(false);
-  },1000)
+  }, 1000);
+
+  return () => clearTimeout(timer); // cleanup on unmount
+}, []);
   const login = (token: string, data: Admin) => {
     
     localStorage.setItem("token", token);

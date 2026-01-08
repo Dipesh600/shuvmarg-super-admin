@@ -26,6 +26,7 @@ import {
   FileText,
   Settings,
   AlertCircleIcon,
+  ClipboardCheck,
 } from "lucide-react";
 
 import { NavLink, useLocation } from "react-router-dom";
@@ -36,6 +37,7 @@ const menuItems = [
   { title: "Agent Management", url: "/admin/agents", icon: UserCog },
   { title: "Bus Owners", url: "/admin/bus-owners", icon: Bus },
   { title: "Fleet Management", url: "/admin/fleets", icon: MapPin },
+  { title: "KYC Verification", url: "/admin/kyc", icon: ClipboardCheck },
   { title: "Financial", url: "/admin/financial", icon: DollarSign },  
   { title: "Commissions", url: "/admin/commissions", icon: DollarSign },  
   { title: "Refunds", url: "/admin/refunds", icon: AlertCircleIcon },

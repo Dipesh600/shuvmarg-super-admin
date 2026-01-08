@@ -28,59 +28,104 @@ import {
 } from "@/components/ui/table";
 import { useModal } from "@/hooks/use-model-store";
 import { SuspendDialog } from "@/components/models/suspended-model";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserById } from "@/api/userApi";
+import UserDetailSkeleton from "@/components/Skeletion_Loading/UserDetailSkeleton";
 
 
 
 const UserDetail = () => {
   const { id } = useParams();
+  const {onOpen} = useModal();
+  const navigate = useNavigate();
+   const [userStatus, setUserStatus] = useState("");
+  
+ 
    const {data,isLoading,error,isError} = useQuery({
      queryKey:["user",id],
      queryFn:()=>getUserById(id as string),
      enabled:!!id,
      staleTime:5*60*1000,
  })
-     const userData = {
-  id: data?.data._id,
-  name: data?.data.name,
-  email: data?.data.email,
-  phone: data?.data.phone,
-  status: data?.data.status,
-  verified: data?.data.isVerified,
-  joined: data?.data.createdAt.split("T")[0],
-  address: data?.data.address || "Kathmandu,Nepal",
-  totalBookings: 12,
-  role:data?.data.role, 
-  profileImg:data?.data.profilePicture || "",
-  totalSpent: "NPR 24,500",
-  lastLogin: "2024-01-28 10:30 AM",
-  bookings: [
-    { id: "BK-001", route: "Kathmandu - Pokhara", date: "2024-01-20", amount: "NPR 1,200", status: "Completed" },
-    { id: "BK-002", route: "Pokhara - Chitwan", date: "2024-01-25", amount: "NPR 800", status: "Completed" },
-    { id: "BK-003", route: "Kathmandu - Biratnagar", date: "2024-02-01", amount: "NPR 1,500", status: "Upcoming" },
-  ],
-  transactions: [
-    { id: "TXN-001", type: "Payment", amount: "NPR 1,200", date: "2024-01-20", method: "Khalti" },
-    { id: "TXN-002", type: "Payment", amount: "NPR 800", date: "2024-01-25", method: "eSewa" },
-    { id: "TXN-003", type: "Refund", amount: "NPR 500", date: "2024-01-22", method: "Wallet" },
-  ],
-};
-  const navigate = useNavigate();
-  const [userStatus, setUserStatus] = useState(userData.status);
-  const {onOpen}= useModal();
+  useEffect(() => {
+    setUserStatus(data?.data.status);
+  }, [data?.data.status]);
+ if (isLoading) return <UserDetailSkeleton/>
 
- if (isError) {
+  if (isError) {
     return (
       <div>
-        Error: {error instanceof Error ? error.message : "An error occurred"}
+        Error: {error instanceof Error ? error.message : "Something went wrong"}
       </div>
     );
   }
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  const user = data?.data;
+
+  const userData = {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    status: user.status,
+    verified: user.isVerified,
+    joined: user.createdAt?.split("T")[0],
+    address: user.address || "Kathmandu, Nepal",
+    role: user.role,
+    profileImg: user.profilePicture || "",
+    totalBookings: 12,
+    totalSpent: "NPR 24,500",
+    lastLogin: "2024-01-28 10:30 AM",
+    bookings: [
+      {
+        id: "BK-001",
+        route: "Kathmandu - Pokhara",
+        date: "2024-01-20",
+        amount: "NPR 1,200",
+        status: "Completed",
+      },
+      {
+        id: "BK-002",
+        route: "Pokhara - Chitwan",
+        date: "2024-01-25",
+        amount: "NPR 800",
+        status: "Completed",
+      },
+      {
+        id: "BK-003",
+        route: "Kathmandu - Biratnagar",
+        date: "2024-02-01",
+        amount: "NPR 1,500",
+        status: "Upcoming",
+      },
+    ],
+    transactions: [
+      {
+        id: "TXN-001",
+        type: "Payment",
+        amount: "NPR 1,200",
+        date: "2024-01-20",
+        method: "Khalti",
+      },
+      {
+        id: "TXN-002",
+        type: "Payment",
+        amount: "NPR 800",
+        date: "2024-01-25",
+        method: "eSewa",
+      },
+      {
+        id: "TXN-003",
+        type: "Refund",
+        amount: "NPR 500",
+        date: "2024-01-22",
+        method: "Wallet",
+      },
+    ],
+  };
+
+ 
+
   return (
     <>
       <div className="flex items-center gap-4 mb-6">

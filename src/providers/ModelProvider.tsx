@@ -6,6 +6,9 @@ import { AddUserDialog } from "@/components/models/create-user-model";
 import { EditAgentDialog } from "@/components/models/edit-agent-model";
 import { EditBusDialog } from "@/components/models/edit-bus-model";
 import { EditBusOwnerDialog } from "@/components/models/edit-bus-owner-model";
+import { EditCommissionRateDialog } from "@/components/models/edit-commission-model";
+import { ReviewRefundDialog } from "@/components/models/edit-refund-model";
+import { ResolveDisputeDialog } from "@/components/models/edit-resolve-disputes";
 import { EditUserDialog } from "@/components/models/edit-user-model";
 import { useState, useEffect } from "react";
 
@@ -114,6 +117,9 @@ const ModelProvider = () => {
       <EditBusOwnerDialog owner={ownerData}/>
       <EditBusDialog bus={busData}/>
       <CustomReportDialog />
+      <EditCommissionRateDialog />
+      <ReviewRefundDialog/>
+      <ResolveDisputeDialog/>
     </>
   );
 };

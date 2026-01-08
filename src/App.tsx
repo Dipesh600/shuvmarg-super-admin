@@ -30,6 +30,10 @@ import Commissions from "./pages/admin/commissions/commission";
 import Refunds from "./pages/admin/refunds/refunds";
 import FleetTracking from "./pages/admin/fleets/live_tracking";
 import BusMaintenance from "./pages/admin/fleets/fleet_maintenance";
+import KYCVerification from "./pages/admin/kyc/KYCVerification";
+import KYCBusOwnerDetail from "./pages/admin/kyc/KYCBusOwnerDetail";
+import KYCAgentDetail from "./pages/admin/kyc/KYCAgentDetail";
+import KYCFleetDetail from "./pages/admin/kyc/KYCFleetDetail";
 
 const queryClient = new QueryClient();
 
@@ -63,7 +67,17 @@ const App = () => (
                 <Route path="fleets" element={<Fleet />} />
                 <Route path="fleets/tracking" element={<FleetTracking />} />
                 <Route path="fleets/:id" element={<BusDetail />} />
-                <Route path="fleets/:id/maintenance" element={<BusMaintenance />} />
+                <Route
+                  path="fleets/:id/maintenance"
+                  element={<BusMaintenance />}
+                />
+                <Route path="kyc" element={<KYCVerification />} />
+                <Route
+                  path="kyc/bus-owner/:id"
+                  element={<KYCBusOwnerDetail />}
+                />
+                <Route path="kyc/agent/:id" element={<KYCAgentDetail />} />
+                <Route path="kyc/fleet/:id" element={<KYCFleetDetail />} />
                 <Route path="financial" element={<Financial />} />
                 <Route path="transactions" element={<Transactions />} />
                 <Route path="commissions" element={<Commissions />} />

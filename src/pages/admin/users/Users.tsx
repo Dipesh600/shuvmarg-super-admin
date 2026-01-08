@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAllUsers } from "@/api/userApi";
 import { useAuth } from "@/providers/AuthProvider";
 import { useMemo } from "react";
+import UsersSkeleton from "@/components/Skeletion_Loading/UserSkeletion";
 
 type User = {
   id: string;
@@ -84,7 +85,6 @@ const Users = () => {
     enabled: !!token,
     staleTime: 5 * 60 * 1000,
   });
-  console.log("Fetched Users:", data);
   const userTableData = data?.data.map((user: any) => {
     return {
       id: user._id,
@@ -114,7 +114,7 @@ const Users = () => {
     );
   }
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <UsersSkeleton/>;
   }
 
   return (

@@ -18,7 +18,7 @@ const badgeVariants = cva(
         Verified: "bg-green-600 text-white hover:bg-green-700",
         Pending: "bg-yellow-500 text-white hover:bg-yellow-700",
         Rejected: "bg-red-600 text-white hover:bg-red-700",
-        Active: "bg-green-500 text-white hover:bg-green-600",
+        active: "bg-blue-500 text-white hover:bg-green-600",
         Maintenance: "bg-yellow-500 text-white hover:bg-yellow-600",
         Pending_Maintenance: "bg-organe-500 text-white hover:bg-orange-600",
         Success: "bg-green-700 text-white hover:bg-green-800",

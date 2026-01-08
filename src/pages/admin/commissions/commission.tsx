@@ -5,6 +5,7 @@ import { Percent, TrendingUp, Wallet, Clock, Download, Filter } from "lucide-rea
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useModal } from "@/hooks/use-model-store";
 
 const commissionRates = [
   { id: 1, type: "Standard Agent", rate: 5, transactions: 1250, earned: "Rs. 1,25,000" },
@@ -29,6 +30,7 @@ const commissionHistory = [
 ];
 
 const Commissions = () => {
+  const {onOpen}= useModal();
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -129,7 +131,7 @@ const Commissions = () => {
                         <Progress value={(rate.transactions / 6000) * 100} className="h-2" />
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm">Edit Rate</Button>
+                        <Button variant="ghost" onClick={()=>onOpen("editCommisionRate",{id:rate.id,type:rate.type,rate:rate.rate})} size="sm">Edit Rate</Button>
                       </TableCell>
                     </TableRow>
                   ))}

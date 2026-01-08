@@ -7,6 +7,10 @@ import { Building2, TrendingUp } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/owner/columns";
 import { DataTable } from "@/components/DataTable";
+import { useAuth } from "@/providers/AuthProvider";
+import { useQuery } from "@tanstack/react-query";
+import { getAllBusOwners } from "@/api/busOwnerApi";
+import AgentsSkeleton from "@/components/Skeletion_Loading/AgentsSkeletion";
 
 const busOwners = [
   {
@@ -49,6 +53,40 @@ const busOwners = [
 
 const BusOwners = () => {
   const { onOpen } = useModal();
+   const { token } = useAuth();
+  // useQuery to fetch users can be added here
+  const { data, isLoading, error, isError } = useQuery({
+    queryKey: ["busOwners"],
+    queryFn: getAllBusOwners,
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+  const BusOwnerTableData = data?.data.map((busOwner: any) => {
+    return {
+      id: busOwner._id,
+      name: busOwner.name,
+      phone: busOwner.phone,
+      profileImg: busOwner.profilePicture,
+      email: busOwner.email,
+      verified:busOwner.isVerified,
+      status: busOwner.status,
+      // verified: agent.verified,
+
+      // joined: agent.createdAt,
+
+    };
+  });
+ 
+  if (isError) {
+    return (
+      <div>
+        Error: {error instanceof Error ? error.message : "An error occurred"}
+      </div>
+    );
+  }
+  if (isLoading) {
+    return <AgentsSkeleton/>;
+  }
   return (
     <>
       {/* PAGE HEADER */}
@@ -77,7 +115,7 @@ const BusOwners = () => {
             <CardTitle className="text-sm font-medium">Total Owners</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">156</div>
+            <div className="text-2xl font-bold">{BusOwnerTableData?.length ?? 0}</div>
             <p className="text-xs text-muted-foreground">
               Registered companies
             </p>
@@ -131,7 +169,7 @@ const BusOwners = () => {
         <CardContent>
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-            <DataTable columns={columns} data={busOwners as any} />
+            <DataTable columns={columns} data={BusOwnerTableData} />
           </div>
 
           {/* Mobile Cards */}
