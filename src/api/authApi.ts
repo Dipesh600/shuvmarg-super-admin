@@ -1,7 +1,7 @@
 import axios from "axios";
 import { api } from "./axios";
-// const apiUrl = "http://34.229.93.103";
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = "http://34.229.93.103";
+// const apiUrl = import.meta.env.VITE_API_URL;
 export type Admin = {
   id: string;
   adminId: string;

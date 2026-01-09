@@ -5,6 +5,7 @@ import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const transactions = [
   {
@@ -168,9 +169,11 @@ const Transactions = () => {
                       {txn.date}
                     </td>
                     <td className="p-2 text-right">
-                      <Button variant="ghost" size="sm">
-                        Details
-                      </Button>
+                     <Link to={`/admin/transactions/${txn.id}`}>
+                  <Button variant="ghost" size="sm" className="w-full">
+                    Details
+                  </Button>
+                </Link>
                     </td>
                   </tr>
                 ))}
@@ -206,9 +209,11 @@ const Transactions = () => {
                   <div>Method: {txn.method}</div>
                   <div>Date: {txn.date}</div>
                 </div>
-                <Button variant="ghost" size="sm" className="w-full">
-                  Details
-                </Button>
+                <Link to={`/transaction/${txn.id}`}>
+                  <Button variant="ghost" size="sm" className="w-full">
+                    Details
+                  </Button>
+                </Link>
               </div>
             ))}
           </div>

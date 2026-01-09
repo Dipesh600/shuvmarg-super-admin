@@ -9,7 +9,7 @@ import Users from "./pages/admin/users/Users";
 import Agents from "./pages/admin/agents/Agents";
 import BusOwners from "./pages/admin/busowners/BusOwners";
 import Fleet from "./pages/admin/fleets/Fleets";
-import Transactions from "./pages/admin/Transcations";
+import Transactions from "./pages/admin/transactions/Transcations";
 import Disputes from "./pages/admin/Disputes";
 import Analytics from "./pages/admin/Analytics";
 import Reports from "./pages/admin/Reports";
@@ -34,6 +34,9 @@ import KYCVerification from "./pages/admin/kyc/KYCVerification";
 import KYCBusOwnerDetail from "./pages/admin/kyc/KYCBusOwnerDetail";
 import KYCAgentDetail from "./pages/admin/kyc/KYCAgentDetail";
 import KYCFleetDetail from "./pages/admin/kyc/KYCFleetDetail";
+import TransactionDetail from "./pages/admin/transactions/TransactionDetail";
+import ReportView from "./pages/admin/reports/ReportView";
+import ReportEdit from "./pages/admin/reports/ReportEdit";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +83,9 @@ const App = () => (
                 <Route path="kyc/fleet/:id" element={<KYCFleetDetail />} />
                 <Route path="financial" element={<Financial />} />
                 <Route path="transactions" element={<Transactions />} />
+                          <Route path="transactions/:id" element={<TransactionDetail />} />
+                          <Route path="reports/:id" element={<ReportView />} />
+          <Route path="reports/:id/edit" element={<ReportEdit />} />
                 <Route path="commissions" element={<Commissions />} />
                 <Route path="refunds" element={<Refunds />} />
                 <Route path="disputes" element={<Disputes />} />

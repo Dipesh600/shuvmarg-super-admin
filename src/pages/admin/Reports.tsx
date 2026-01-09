@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Download, Calendar, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useModal } from "@/hooks/use-model-store";
+import { Link } from "react-router-dom";
 
 const reports = [
   {
@@ -170,6 +171,7 @@ const Reports = () => {
                       <Download className="h-4 w-4" />
                       Download
                     </Button>
+                    <Link to={"/admin/reports/1"}>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -177,6 +179,7 @@ const Reports = () => {
                     >
                       View
                     </Button>
+                    </Link>
                   </div>
                 </div>
               ))}
