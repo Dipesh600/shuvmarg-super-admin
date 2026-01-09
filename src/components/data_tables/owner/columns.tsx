@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Bus, MoreHorizontal } from "lucide-react";
+import {  MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type BusOwner = {

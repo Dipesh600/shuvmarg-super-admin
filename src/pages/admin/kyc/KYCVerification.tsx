@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, Users, Bus, Search, Clock, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Building2, Users, Bus, Search } from "lucide-react";
 
 const busOwnerKYC = [
   { id: "KYC001", company: "Nepal Express", owner: "Ram Bahadur", submittedAt: "2026-01-02", status: "pending", documents: 4 },
@@ -54,18 +54,7 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "approved":
-      return <CheckCircle2 className="h-5 w-5 text-green-600" />;
-    case "rejected":
-      return <XCircle className="h-5 w-5 text-destructive" />;
-    case "under_review":
-      return <AlertCircle className="h-5 w-5 text-blue-600" />;
-    default:
-      return <Clock className="h-5 w-5 text-yellow-600" />;
-  }
-};
+
 
 export default function KYCVerification() {
   const navigate = useNavigate();

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,6 @@ import { useModal } from "@/hooks/use-model-store";
 
 
 export function ResolveDisputeDialog() {
-  const [open, setOpen] = useState(false);
   const {onClose,data,type,isOpen} = useModal();
   const [resolution, setResolution] = useState("");
   const [resolutionType, setResolutionType] = useState("");
@@ -35,7 +34,7 @@ export function ResolveDisputeDialog() {
       title: "Dispute Resolved",
       description: `Dispute ${data.id} has been marked as resolved.`,
     });
-    setOpen(false);
+    onClose()
     setResolution("");
     setResolutionType("");
     setNotes("");
