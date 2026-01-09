@@ -9,8 +9,8 @@ const processQueue = (error: any, token: string | null = null) => {
   );
   failedQueue = [];
 };
-const apiUrl = "http://34.229.93.103";
-// const apiUrl = import.meta.env.VITE_API_URL;
+// const apiUrl = "http://34.229.93.103";
+const apiUrl = import.meta.env.VITE_API_URL;
 
 export const api = axios.create({
   baseURL: `${apiUrl}/api/admin`,
