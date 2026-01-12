@@ -32,6 +32,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserById } from "@/api/userApi";
 import UserDetailSkeleton from "@/components/Skeletion_Loading/UserDetailSkeleton";
+import { useUserBookings } from "@/hooks/useUserBookings";
 
 
 
@@ -40,8 +41,7 @@ const UserDetail = () => {
   const {onOpen} = useModal();
   const navigate = useNavigate();
    const [userStatus, setUserStatus] = useState("");
-  
- 
+ const {data:bookings,isLoading:bookingLoading} = useUserBookings(id);
    const {data,isLoading,error,isError} = useQuery({
      queryKey:["user",id],
      queryFn:()=>getUserById(id as string),
@@ -50,7 +50,7 @@ const UserDetail = () => {
  })
   useEffect(() => {
     setUserStatus(data?.data.status);
-  }, [data?.data.status]);
+  }, [data?.data.status,id]);
  if (isLoading) return <UserDetailSkeleton/>
 
   if (isError) {
@@ -145,13 +145,13 @@ const UserDetail = () => {
             entityType="user"
             entityName={`${userData.name}`}
             currentStatus={userStatus}
-            onStatusChange={setUserStatus}
+            entityId={userData.id}
           />
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 h-fit">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Profile
@@ -247,14 +247,14 @@ const UserDetail = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {userData.bookings.map((booking) => (
-                      <TableRow key={booking.id}>
+                    {bookings?.data?.map((booking:any) => (
+                      <TableRow key={booking._id}>
                         <TableCell className="font-medium">
-                          {booking.id}
+                          {booking._id}
                         </TableCell>
-                        <TableCell>{booking.route}</TableCell>
-                        <TableCell>{booking.date}</TableCell>
-                        <TableCell>{booking.amount}</TableCell>
+                        <TableCell>{booking.boardingPoint ?? "N/A"}</TableCell>
+                        <TableCell>{booking.createdAt?.split("T")[0] ?? "N/A"}</TableCell>
+                        <TableCell>NPR.{booking.totalAmount}</TableCell>
                         <TableCell>
                           <Badge
                             variant={
@@ -283,21 +283,21 @@ const UserDetail = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {userData.transactions.map((txn) => (
-                      <TableRow key={txn.id}>
-                        <TableCell className="font-medium">{txn.id}</TableCell>
+                    {bookings?.data?.map((booking:any) => (
+                      <TableRow key={booking.transactionId}>
+                        <TableCell className="font-medium">{booking.transactionId}</TableCell>
                         <TableCell>
                           <Badge
                             variant={
-                              txn.type === "Payment" ? "default" : "outline"
+                              booking.refundStatus === "none" ? "default" : "outline"
                             }
                           >
-                            {txn.type}
+                            {booking.refundStatus  === "none" ? "Payment" : "refund"}
                           </Badge>
                         </TableCell>
-                        <TableCell>{txn.amount}</TableCell>
-                        <TableCell>{txn.date}</TableCell>
-                        <TableCell>{txn.method}</TableCell>
+                        <TableCell>NPR.{booking.totalAmount}</TableCell>
+                        <TableCell>{booking.bookedAt?.split("T")[0]?? "N/A"}</TableCell>
+                        <TableCell>{booking.gateway}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
