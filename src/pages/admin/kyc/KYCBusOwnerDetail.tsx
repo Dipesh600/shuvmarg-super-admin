@@ -167,13 +167,13 @@ export default function KYCBusOwnerDetail() {
   const handleFinalApproval = () => {
     toast.success("KYC application approved successfully!");
     setFinalApprovalDialog(false);
-    // navigate("/kyc");
+    navigate("/admin/kyc");
   };
 
   const handleFinalRejection = () => {
     toast.error("KYC application rejected");
     setFinalRejectionDialog(false);
-    // navigate("/kyc");
+    navigate("/admin/kyc");
   };
 
   return (

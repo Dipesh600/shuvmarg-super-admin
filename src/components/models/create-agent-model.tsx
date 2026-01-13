@@ -14,7 +14,7 @@ export const AddAgentDialog = () => {
   };
   return (
     <Dialog open={isModelOpen} onOpenChange={()=>onClose()}> 
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] ">
         <DialogHeader>
           <DialogTitle>Add New Agent</DialogTitle>
           <DialogDescription>

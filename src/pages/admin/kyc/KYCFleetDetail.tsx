@@ -201,13 +201,13 @@ export default function KYCFleetDetail() {
   const handleFinalApproval = () => {
     toast.success("Fleet KYC approved! Bus is ready for operations.");
     setFinalApprovalDialog(false);
-    navigate("/kyc");
+    navigate("/admin/kyc");
   };
 
   const handleFinalRejection = () => {
     toast.error("Fleet KYC application rejected");
     setFinalRejectionDialog(false);
-    navigate("/kyc");
+    navigate("/admin/kyc");
   };
 
   return (

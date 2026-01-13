@@ -2,7 +2,6 @@
 import { getUserBookings } from "@/api/suspendApi";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
-
 export function useUserBookings(id:string | undefined) {
   const { token } = useAuth();
   return useQuery({

@@ -14,7 +14,7 @@ const {isOpen,type,onClose} = useModal();
   return (
     <Dialog open={isModelOpen} onOpenChange={()=>onClose()}>
         
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[550px] ">
         <DialogHeader>
           <DialogTitle>Add Bus Owner</DialogTitle>
           <DialogDescription>

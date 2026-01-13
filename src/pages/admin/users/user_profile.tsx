@@ -33,6 +33,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserById } from "@/api/userApi";
 import UserDetailSkeleton from "@/components/Skeletion_Loading/UserDetailSkeleton";
 import { useUserBookings } from "@/hooks/useUserBookings";
+import DeleteModel from "@/components/models/delete-model";
 
 
 
@@ -41,7 +42,7 @@ const UserDetail = () => {
   const {onOpen} = useModal();
   const navigate = useNavigate();
    const [userStatus, setUserStatus] = useState("");
- const {data:bookings,isLoading:bookingLoading} = useUserBookings(id);
+ const {data:bookings} = useUserBookings(id);
    const {data,isLoading,error,isError} = useQuery({
      queryKey:["user",id],
      queryFn:()=>getUserById(id as string),
@@ -76,52 +77,7 @@ const UserDetail = () => {
     totalBookings: 12,
     totalSpent: "NPR 24,500",
     lastLogin: "2024-01-28 10:30 AM",
-    bookings: [
-      {
-        id: "BK-001",
-        route: "Kathmandu - Pokhara",
-        date: "2024-01-20",
-        amount: "NPR 1,200",
-        status: "Completed",
-      },
-      {
-        id: "BK-002",
-        route: "Pokhara - Chitwan",
-        date: "2024-01-25",
-        amount: "NPR 800",
-        status: "Completed",
-      },
-      {
-        id: "BK-003",
-        route: "Kathmandu - Biratnagar",
-        date: "2024-02-01",
-        amount: "NPR 1,500",
-        status: "Upcoming",
-      },
-    ],
-    transactions: [
-      {
-        id: "TXN-001",
-        type: "Payment",
-        amount: "NPR 1,200",
-        date: "2024-01-20",
-        method: "Khalti",
-      },
-      {
-        id: "TXN-002",
-        type: "Payment",
-        amount: "NPR 800",
-        date: "2024-01-25",
-        method: "eSewa",
-      },
-      {
-        id: "TXN-003",
-        type: "Refund",
-        amount: "NPR 500",
-        date: "2024-01-22",
-        method: "Wallet",
-      },
-    ],
+    
   };
 
  
@@ -129,7 +85,7 @@ const UserDetail = () => {
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/users")}>
+        <Button className="cursor-pointer" variant="ghost" size="icon" onClick={() => navigate("/admin/users")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
@@ -137,7 +93,13 @@ const UserDetail = () => {
           <p className="text-muted-foreground">User ID: {id || userData.id}</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={()=>onOpen("editUser",{data:userData})} variant="outline" className="gap-2">
+          <DeleteModel
+          entityId={userData.id}
+          entityType="user"
+          
+          />
+          
+          <Button onClick={()=>onOpen("editUser",{data:userData})} variant="outline" className="gap-2 cursor-pointer">
             <Edit className="h-4 w-4" />
             Edit
           </Button>

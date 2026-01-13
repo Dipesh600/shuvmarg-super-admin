@@ -11,6 +11,7 @@ import { useModal } from "@/hooks/use-model-store";
 import { useQuery } from "@tanstack/react-query";
 import { getAgentById } from "@/api/agentApi";
 import AgentDetailSkeleton from "@/components/Skeletion_Loading/AgentDetailSkeleton";
+import DeleteModel from "@/components/models/delete-model";
 
 
 
@@ -52,7 +53,7 @@ const AgentDetail = () => {
 };
   const {onOpen} = useModal();
   const navigate = useNavigate();
-  const [agentStatus, setAgentStatus] = useState(agentData.status);
+  const [agentStatus, _] = useState(agentData.status);
   if (isError) {
     return (
       <div>
@@ -75,6 +76,10 @@ const AgentDetail = () => {
           <p className="text-muted-foreground">Agent ID: { agentData?.id}</p>
         </div>
         <div className="flex gap-2">
+          <DeleteModel
+          entityId={agentData.id}
+          entityType="agent"
+          />
           <Button  onClick={()=>onOpen("editAgent")} variant="outline" className="gap-2">
             <Edit className="h-4 w-4" />
             Edit
@@ -83,7 +88,7 @@ const AgentDetail = () => {
             entityType="agent"
             entityName={agentData.name}
             currentStatus={agentStatus}
-            onStatusChange={setAgentStatus}
+            entityId={agentData.id}
           />
         </div>
       </div>
