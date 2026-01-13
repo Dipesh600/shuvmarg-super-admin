@@ -68,7 +68,7 @@ const ownerData = {
 const BusOwnerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-   const [ownerStatus, setOwnerStatus] = useState(ownerData.status);
+   const [ownerStatus, _] = useState(ownerData.status);
   const {onOpen} = useModal();
   return (
     <>
@@ -89,7 +89,7 @@ const BusOwnerDetail = () => {
             entityType="bus owner"
             entityName={ownerData.company}
             currentStatus={ownerStatus}
-            onStatusChange={setOwnerStatus}
+            entityId={id ?? ""}
           />
         </div>
       </div>

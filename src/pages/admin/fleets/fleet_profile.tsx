@@ -51,7 +51,7 @@ const BusDetail = () => {
     "USB Charging": <Usb className="h-4 w-4" />,
   };
   const {onOpen} = useModal();
-    const [busStatus, setBusStatus] = useState(busData.status);
+    const [busStatus, _] = useState(busData.status);
 
   return (
     <>
@@ -76,7 +76,7 @@ const BusDetail = () => {
             entityType="bus"
             entityName={busData.id}
             currentStatus={busStatus}
-            onStatusChange={setBusStatus}
+            entityId={id??""}
           />
           <Button onClick={()=>navigate(`/admin/fleets/${id}/maintenance`)} variant="secondary" className="gap-2">
             <Wrench className="h-4 w-4" />
