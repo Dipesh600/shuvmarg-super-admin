@@ -72,7 +72,7 @@ const Reports = () => {
             </p>
           </div>
           <Button
-            onClick={() => onOpen("addCustomReport")}
+            onClick={() => onOpen("addCustomReport",{})}
             className="gap-2 cursor-pointer active:bg-blue-800 w-full md:w-auto"
           >
             <FileText className="h-4 w-4" />

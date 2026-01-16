@@ -69,7 +69,7 @@ const Fleet = () => {
           </p>
         </div>
         <Button
-          onClick={() => onOpen("addBus")}
+          onClick={() => onOpen("addBus",{})}
           className="gap-2 w-full md:w-auto"
         >
           <Bus className="h-4 w-4" /> Add Bus

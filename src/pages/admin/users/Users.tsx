@@ -128,7 +128,7 @@ const Users = () => {
           </p>
         </div>
         <Button
-          onClick={() => onOpen("addUser")}
+          onClick={() => onOpen("addUser",{})}
           className="gap-2 cursor-pointer active:bg-blue-900 w-full md:w-auto"
         >
           <UserPlus className="h-4 w-4" />

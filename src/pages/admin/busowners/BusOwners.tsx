@@ -100,7 +100,7 @@ const BusOwners = () => {
           </p>
         </div>
         <Button
-          onClick={() => onOpen("addBusOwner")}
+          onClick={() => onOpen("addBusOwner",{})}
           className="gap-2 active:bg-blue-800 cursor-pointer w-full sm:w-auto"
         >
           <Building2 className="h-4 w-4" />

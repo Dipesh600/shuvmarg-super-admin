@@ -122,7 +122,7 @@ const Agents = () => {
           </p>
         </div>
         <Button
-          onClick={() => onOpen("addAgent")}
+          onClick={() => onOpen("addAgent",{})}
           className="gap-2 active:bg-blue-800 cursor-pointer w-full sm:w-auto"
         >
           <UserCog className="h-4 w-4" /> New Agent
