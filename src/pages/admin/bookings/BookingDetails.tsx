@@ -1,8 +1,7 @@
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Printer, RefreshCw, XCircle, CheckCircle, Clock, AlertTriangle, User, MapPin, Calendar, Bus, CreditCard, Ticket } from "lucide-react";
+import { ArrowLeft, Download, Printer, RefreshCw, XCircle, CheckCircle, Clock, User, MapPin, Calendar, Bus, CreditCard,  } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
