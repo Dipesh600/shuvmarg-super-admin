@@ -52,7 +52,7 @@ export function EditCommissionRateDialog() {
         <DialogHeader>
           <DialogTitle>Edit Commission Rate</DialogTitle>
           <DialogDescription>
-            Modify the commission rate for {data.type}
+            Modify the commission rate for {data?.type}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">

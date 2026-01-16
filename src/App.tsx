@@ -37,6 +37,8 @@ import KYCFleetDetail from "./pages/admin/kyc/KYCFleetDetail";
 import TransactionDetail from "./pages/admin/transactions/TransactionDetail";
 import ReportView from "./pages/admin/reports/ReportView";
 import ReportEdit from "./pages/admin/reports/ReportEdit";
+import Bookings from "./pages/admin/bookings/Bookings";
+import BookingDetail from "./pages/admin/bookings/BookingDetails";
 
 const queryClient = new QueryClient();
 
@@ -83,9 +85,14 @@ const App = () => (
                 <Route path="kyc/fleet/:id" element={<KYCFleetDetail />} />
                 <Route path="financial" element={<Financial />} />
                 <Route path="transactions" element={<Transactions />} />
-                          <Route path="transactions/:id" element={<TransactionDetail />} />
-                          <Route path="reports/:id" element={<ReportView />} />
-          <Route path="reports/:id/edit" element={<ReportEdit />} />
+                <Route
+                  path="transactions/:id"
+                  element={<TransactionDetail />}
+                />
+                <Route path="bookings" element={<Bookings />} />
+                <Route path="bookings/:id" element={<BookingDetail />} />
+                <Route path="reports/:id" element={<ReportView />} />
+                <Route path="reports/:id/edit" element={<ReportEdit />} />
                 <Route path="commissions" element={<Commissions />} />
                 <Route path="refunds" element={<Refunds />} />
                 <Route path="disputes" element={<Disputes />} />

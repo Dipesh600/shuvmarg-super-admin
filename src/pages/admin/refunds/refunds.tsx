@@ -14,6 +14,7 @@ import {
   XCircle,
   Filter,
   Download,
+  PlusCircle,
 } from "lucide-react";
 import {
   Table,
@@ -24,8 +25,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { useModal } from "@/hooks/use-model-store";
+import { useRefundPolicies } from "@/hooks/useRefundPolicy";
+import { DataTable } from "@/components/DataTable";
+import { refundPolicyColumns } from "@/components/data_tables/refunds/refundPolicyColumns";
 
 const refundRequests = [
   {
@@ -119,49 +122,30 @@ const refundHistory = [
   },
 ];
 
-const refundPolicies = [
-  {
-    id: 1,
-    name: "24h Before Departure",
-    refundPercent: 100,
-    deduction: "Rs. 0",
-    applicable: "Full refund",
-  },
-  {
-    id: 2,
-    name: "12-24h Before Departure",
-    refundPercent: 75,
-    deduction: "25%",
-    applicable: "Partial refund",
-  },
-  {
-    id: 3,
-    name: "6-12h Before Departure",
-    refundPercent: 50,
-    deduction: "50%",
-    applicable: "Half refund",
-  },
-  {
-    id: 4,
-    name: "Less than 6h",
-    refundPercent: 0,
-    deduction: "100%",
-    applicable: "No refund",
-  },
-];
+interface RefundPolicy {
+  _id: string;
+  policyName: string;
+  refundPercentage: number;
+  deductionPercentage: number;
+  description: string;
+  minHours: number;
+  maxHours: number | null;
+  color: string;
+}
 
-// refund: {
-//     id: string;
-//     booking: string;
-//     user: string;
-//     amount: string;
-//     reason: string;
-//     date: string;
-//     status: string;
-//     priority: string;
-//   };
 const Refunds = () => {
   const { onOpen } = useModal();
+  const { data: policies } = useRefundPolicies();
+  const policiesTableData = policies?.data?.map((policy: RefundPolicy) => ({
+    id: policy._id,
+    policyName: policy.policyName,
+    refundPercentage: policy.refundPercentage,
+    deductionPercentage: policy.deductionPercentage,
+    description: policy.description,
+    minHours: policy.minHours,
+    maxHours: policy.maxHours,
+    color: policy.color,
+  }));
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -382,52 +366,26 @@ const Refunds = () => {
 
         <TabsContent value="policies">
           <Card>
-            <CardHeader>
-              <CardTitle>Refund Policy Configuration</CardTitle>
-              <CardDescription>
-                Manage refund policies based on cancellation timing
-              </CardDescription>
+            <CardHeader className="flex  flex-row justify-between items-center">
+              <div>
+                <CardTitle>Refund Policy Configuration</CardTitle>
+                <CardDescription>
+                  Manage refund policies based on cancellation timing
+                </CardDescription>
+              </div>
+              <Button
+                onClick={() => onOpen("addRefundPolicy", {})}
+                className="cursor-pointer"
+              >
+                <PlusCircle />
+                <span className="capitalize">Add refund policy</span>
+              </Button>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Policy Name</TableHead>
-                    <TableHead>Refund %</TableHead>
-                    <TableHead>Deduction</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Visual</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {refundPolicies.map((policy) => (
-                    <TableRow key={policy.id}>
-                      <TableCell className="font-medium">
-                        {policy.name}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {policy.refundPercent}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{policy.deduction}</TableCell>
-                      <TableCell>{policy.applicable}</TableCell>
-                      <TableCell className="w-[150px]">
-                        <Progress
-                          value={policy.refundPercent}
-                          className="h-2"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">
-                          Edit
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable
+                columns={refundPolicyColumns}
+                data={policiesTableData}
+              />
             </CardContent>
           </Card>
         </TabsContent>

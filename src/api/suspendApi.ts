@@ -21,7 +21,7 @@ export async function suspendEntity(payload: SuspendPayload) {
 }
 export async function getUserBookings(id:string) {
   try {
-    const { data } = await api.post("/getUserBookings",{id});
+    const { data } = await api.post("/getBookingsByUser",{userId:id});
     return data;
   } catch (error) {
     throw new Error("Failed to fetch bookings");

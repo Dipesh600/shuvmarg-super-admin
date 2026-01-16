@@ -74,10 +74,7 @@ export function DataTable<TData, TValue>({
             className="pl-9 w-full outline-none focus-visible:ring-0"
             value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
-            // value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            // onChange={(event) =>
-              // table.getColumn("name")?.setFilterValue(event.target.value)
-            // }
+           
           />
         </div>
         <DropdownMenu>

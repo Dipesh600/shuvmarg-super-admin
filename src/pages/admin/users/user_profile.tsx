@@ -18,14 +18,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
 import { useModal } from "@/hooks/use-model-store";
 import { SuspendDialog } from "@/components/models/suspended-model";
 import { useEffect, useState } from "react";
@@ -34,25 +27,26 @@ import { getUserById } from "@/api/userApi";
 import UserDetailSkeleton from "@/components/Skeletion_Loading/UserDetailSkeleton";
 import { useUserBookings } from "@/hooks/useUserBookings";
 import DeleteModel from "@/components/models/delete-model";
-
-
+import { DataTable } from "@/components/DataTable";
+import { UserBooking } from "@/components/data_tables/users/bookingColumns";
+import { UserTranscation } from "@/components/data_tables/users/transactionColumns";
 
 const UserDetail = () => {
   const { id } = useParams();
-  const {onOpen} = useModal();
+  const { onOpen } = useModal();
   const navigate = useNavigate();
-   const [userStatus, setUserStatus] = useState("");
- const {data:bookings} = useUserBookings(id);
-   const {data,isLoading,error,isError} = useQuery({
-     queryKey:["user",id],
-     queryFn:()=>getUserById(id as string),
-     enabled:!!id,
-     staleTime:5*60*1000,
- })
+  const [userStatus, setUserStatus] = useState("");
+  const { data: bookings } = useUserBookings(id ?? "");
+  const { data, isLoading, error, isError } = useQuery({
+    queryKey: ["user", id],
+    queryFn: () => getUserById(id as string),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
   useEffect(() => {
     setUserStatus(data?.data.status);
-  }, [data?.data.status,id]);
- if (isLoading) return <UserDetailSkeleton/>
+  }, [data?.data.status, id]);
+  if (isLoading) return <UserDetailSkeleton />;
 
   if (isError) {
     return (
@@ -74,18 +68,36 @@ const UserDetail = () => {
     address: user.address || "Kathmandu, Nepal",
     role: user.role,
     profileImg: user.profilePicture || "",
-    totalBookings: 12,
-    totalSpent: "NPR 24,500",
     lastLogin: "2024-01-28 10:30 AM",
-    
   };
-
- 
+  const userBookings = bookings?.data?.map((booking: any) => ({
+    id: booking._id,
+    scheduleRoute: {
+      from: booking?.scheduleInfo.route.from,
+      to: booking?.scheduleInfo.route.to,
+    },
+    bookedAt: booking?.createdAt,
+    amount: booking?.totalAmount,
+    status: booking?.status,
+  }));
+  const userTranscations = bookings?.data?.map((booking: any) => ({
+    id: booking._id,
+    transactionId: booking?.transactionId,
+    type: booking?.refundStatus,
+    paymentDate:booking.bookedAt,
+    amount: booking?.totalAmount,
+    method: booking?.gateway,
+  }));
 
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
-        <Button className="cursor-pointer" variant="ghost" size="icon" onClick={() => navigate("/admin/users")}>
+        <Button
+          className="cursor-pointer"
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/admin/users")}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
@@ -93,13 +105,13 @@ const UserDetail = () => {
           <p className="text-muted-foreground">User ID: {id || userData.id}</p>
         </div>
         <div className="flex gap-2">
-          <DeleteModel
-          entityId={userData.id}
-          entityType="user"
-          
-          />
-          
-          <Button onClick={()=>onOpen("editUser",{data:userData})} variant="outline" className="gap-2 cursor-pointer">
+          <DeleteModel entityId={userData.id} entityType="user" />
+
+          <Button
+            onClick={() => onOpen("editUser", { data: userData })}
+            variant="outline"
+            className="gap-2 cursor-pointer"
+          >
             <Edit className="h-4 w-4" />
             Edit
           </Button>
@@ -130,13 +142,15 @@ const UserDetail = () => {
             <div className="flex items-center justify-center">
               <div className="w-24 h-24 overflow-hidden rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
                 {/* {userData.name[0]} */}
-                <img src={userData.profileImg} alt="profile_img" className="w-full rounded-full object-cover " />
+                <img
+                  src={userData.profileImg}
+                  alt="profile_img"
+                  className="w-full rounded-full object-cover "
+                />
               </div>
             </div>
             <div className="text-center">
-              <h3 className="text-xl font-semibold">
-                {userData.name}
-              </h3>
+              <h3 className="text-xl font-semibold">{userData.name}</h3>
               {userData.verified && (
                 <div className="flex items-center justify-center gap-1 text-success text-sm mt-1">
                   <CheckCircle className="h-4 w-4 text-green-600" />
@@ -176,14 +190,16 @@ const UserDetail = () => {
             <div className="grid gap-4 md:grid-cols-3 mb-6">
               <div className="p-4 bg-muted/50 rounded-lg text-center">
                 <div className="text-2xl font-bold">
-                  {userData.totalBookings}
+                  {bookings?.totalBookings ?? 0}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   Total Bookings
                 </div>
               </div>
               <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <div className="text-2xl font-bold">{userData.totalSpent}</div>
+                <div className="text-2xl font-bold">
+                  NPR.{bookings?.totalBookingAmount ?? 0}
+                </div>
                 <div className="text-sm text-muted-foreground">Total Spent</div>
               </div>
               <div className="p-4 bg-muted/50 rounded-lg text-center">
@@ -193,77 +209,15 @@ const UserDetail = () => {
             </div>
 
             <Tabs defaultValue="bookings">
-              <TabsList className="w-full justify-start">
+              <TabsList className="w-fit justify-start">
                 <TabsTrigger value="bookings">Bookings</TabsTrigger>
                 <TabsTrigger value="transactions">Transactions</TabsTrigger>
               </TabsList>
               <TabsContent value="bookings" className="mt-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Booking ID</TableHead>
-                      <TableHead>Route</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bookings?.data?.map((booking:any) => (
-                      <TableRow key={booking._id}>
-                        <TableCell className="font-medium">
-                          {booking._id}
-                        </TableCell>
-                        <TableCell>{booking.boardingPoint ?? "N/A"}</TableCell>
-                        <TableCell>{booking.createdAt?.split("T")[0] ?? "N/A"}</TableCell>
-                        <TableCell>NPR.{booking.totalAmount}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              booking.status === "Completed"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {booking.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DataTable columns={UserBooking} data={userBookings ?? []} />
               </TabsContent>
               <TabsContent value="transactions" className="mt-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Transaction ID</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Method</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bookings?.data?.map((booking:any) => (
-                      <TableRow key={booking.transactionId}>
-                        <TableCell className="font-medium">{booking.transactionId}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              booking.refundStatus === "none" ? "default" : "outline"
-                            }
-                          >
-                            {booking.refundStatus  === "none" ? "Payment" : "refund"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>NPR.{booking.totalAmount}</TableCell>
-                        <TableCell>{booking.bookedAt?.split("T")[0]?? "N/A"}</TableCell>
-                        <TableCell>{booking.gateway}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DataTable columns={UserTranscation} data={userTranscations ?? []} />
               </TabsContent>
             </Tabs>
           </CardContent>
