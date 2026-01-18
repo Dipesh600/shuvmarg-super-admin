@@ -27,6 +27,7 @@ import {
   Settings,
   AlertCircleIcon,
   ClipboardCheck,
+  Bell,
 } from "lucide-react";
 
 import { NavLink, useLocation } from "react-router-dom";
@@ -45,6 +46,7 @@ const menuItems = [
   { title: "Transactions", url: "/admin/transactions", icon: Ticket },
   { title: "Disputes", url: "/admin/disputes", icon: AlertCircle },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
+  {title:"Push Notifications",url:"/admin/notifications",icon:Bell},
   { title: "Reports", url: "/admin/reports", icon: FileText },
   { title: "Security", url: "/admin/security", icon: Shield },
   { title: "Settings", url: "/admin/settings", icon: Settings },

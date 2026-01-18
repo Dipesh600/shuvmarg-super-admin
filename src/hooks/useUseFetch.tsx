@@ -1,25 +1,19 @@
 import { getAllUsers } from "@/api/userApi";
 import { useAuth } from "@/providers/AuthProvider";
+import { useQuery } from "@tanstack/react-query";
 
 const useUsersFetch = () => {
-  const { admin, isAuthenticated } = useAuth();
-  
-  // Your implementation here
-  const fetchUsers = async () => {
-    try {
-       // Fetch users logic
-    if (isAuthenticated && admin) {
+  const { token } = useAuth();
+  return useQuery({
+    queryKey: ["allUsers"],
+    enabled: !!token,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 100, // 5min
+    queryFn: async () => {
       const { data } = await getAllUsers();
-      console.log("Fetched users : " ,data); 
-     return data;
-    } 
-    } catch (error) {
-        console.error("Error fetching users:",error);
-    }
-    
-  };
-
-  fetchUsers()
+      return data;
+    },
+  });
 };
 
 export default useUsersFetch;

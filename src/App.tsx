@@ -39,6 +39,7 @@ import ReportView from "./pages/admin/reports/ReportView";
 import ReportEdit from "./pages/admin/reports/ReportEdit";
 import Bookings from "./pages/admin/bookings/Bookings";
 import BookingDetail from "./pages/admin/bookings/BookingDetails";
+import PushNotifications from "./pages/admin/push_notification/PushNotification";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="kyc/agent/:id" element={<KYCAgentDetail />} />
                 <Route path="kyc/fleet/:id" element={<KYCFleetDetail />} />
                 <Route path="financial" element={<Financial />} />
+                <Route path="notifications" element={<PushNotifications/>}/>
                 <Route path="transactions" element={<Transactions />} />
                 <Route
                   path="transactions/:id"
