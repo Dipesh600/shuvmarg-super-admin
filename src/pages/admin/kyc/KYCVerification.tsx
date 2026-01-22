@@ -23,6 +23,7 @@ export default function KYCVerification() {
       .filter((k: any) => k.kyctype === "busowner")
       .map((k: any) => ({
         busownerId: k.busownerId,
+        ownerId:k.data._id,
         companyname: k.companyname,
         owner: k.owner,
         submitdate: k.submitdate,

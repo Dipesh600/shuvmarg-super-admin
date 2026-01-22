@@ -56,7 +56,7 @@ export const busOwnerColumns: ColumnDef<any>[] = [
           variant="outline"
           size="sm"
           onClick={() =>
-            navigate(`/admin/kyc/bus-owner/${row.original.busownerId}`)
+            navigate(`/admin/kyc/bus-owner/${row.original.ownerId}`)
           }
         >
           Review

@@ -8,6 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useModal } from "@/hooks/use-model-store";
 import { useState } from "react";
 import { SuspendDialog } from "@/components/models/suspended-model";
+import { useFetchOwnerDetail } from "@/hooks/useFetchBusOwner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BusOwnerDetailSkeleton } from "@/components/Skeletion_Loading/BusOwnerDetailSkeleton";
 // const ownerData = {
 //   id: "OWN-001",
 //   company: "Nepal Express Pvt. Ltd.",
@@ -64,12 +67,23 @@ const ownerData = {
     { id: "SET-003", amount: "NPR 520,000", date: "2024-01-11", status: "Completed", period: "Jan Week 2" },
   ],
 };
-
 const BusOwnerDetail = () => {
   const { id } = useParams();
+  const {onOpen} = useModal();
+  const {data,isLoading,isError,error}= useFetchOwnerDetail(id);
   const navigate = useNavigate();
    const [ownerStatus, _] = useState(ownerData.status);
-  const {onOpen} = useModal();
+   const busOWnerDetail = data?.user;
+  if(isLoading) {
+    return(
+     <BusOwnerDetailSkeleton />
+    )
+  }
+  if(isError) {
+    return (
+      JSON.stringify(error)
+    )
+  }
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
@@ -78,7 +92,7 @@ const BusOwnerDetail = () => {
         </Button>
         <div className="flex-1">
           <h2 className="text-2xl font-bold tracking-tight">Bus Owner Details</h2>
-          <p className="text-muted-foreground">Owner ID: {id || ownerData.id}</p>
+          <p className="text-muted-foreground">Owner ID: { busOWnerDetail?.id ||id }</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={()=>onOpen("editBusOwner")} variant="outline" className="gap-2">
@@ -87,7 +101,7 @@ const BusOwnerDetail = () => {
           </Button>
           <SuspendDialog
             entityType="bus owner"
-            entityName={ownerData.company}
+            entityName={busOWnerDetail.company}
             currentStatus={ownerStatus}
             entityId={id ?? ""}
           />
@@ -99,49 +113,54 @@ const BusOwnerDetail = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Company Profile
-              <Badge variant={ownerData.status === "Active" ? "default" : "destructive"}>
-                {ownerData.status}
+              <Badge variant={busOWnerDetail.status === "Active" ? "default" : "destructive"}>
+                {busOWnerDetail.status}
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-center">
               <div className="w-24 h-24 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Building className="h-12 w-12 text-primary" />
+                <Avatar>
+                  <AvatarFallback>
+                    BUS
+                  </AvatarFallback>
+                  <AvatarImage src={busOWnerDetail?.profilePicture}/>
+                </Avatar>
               </div>
             </div>
             <div className="text-center">
-              <h3 className="text-xl font-semibold">{ownerData.company}</h3>
-              <p className="text-sm text-muted-foreground">{ownerData.type}</p>
-              <p className="text-sm text-muted-foreground mt-1">Owner: {ownerData.owner}</p>
+              <h3 className="text-xl font-semibold">{busOWnerDetail.company ?? "N/A"}</h3>
+              <p className="text-sm text-muted-foreground">{busOWnerDetail.type ?? "N/A"}</p>
+              <p className="text-sm text-muted-foreground mt-1">Owner: {busOWnerDetail.name}</p>
             </div>
             <div className="space-y-3 pt-4">
               <div className="flex items-center gap-3 text-sm">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{ownerData.email}</span>
+                <span>{busOWnerDetail.email}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>{ownerData.phone}</span>
+                <span>{busOWnerDetail.phone}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span>{ownerData.address}</span>
+                <span>{busOWnerDetail.address}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>Since {ownerData.joined}</span>
+                <span>Since {busOWnerDetail.createdAt}</span>
               </div>
             </div>
             <div className="pt-4 border-t space-y-2">
               <div className="text-sm">
-                <span className="text-muted-foreground">PAN:</span> {ownerData.panNumber}
+                <span className="text-muted-foreground">PAN:</span> {busOWnerDetail?.panNumber ?? "N/A"}
               </div>
               <div className="text-sm">
-                <span className="text-muted-foreground">Registration:</span> {ownerData.registrationNumber}
+                <span className="text-muted-foreground">Registration:</span> {busOWnerDetail?.registrationNumber ?? "N/A"}
               </div>
               <div className="text-sm">
-                <span className="text-muted-foreground">Bank:</span> {ownerData.bankDetails}
+                <span className="text-muted-foreground">Bank:</span> {busOWnerDetail?.bankDetails ?? "N/A"}
               </div>
             </div>
           </CardContent>

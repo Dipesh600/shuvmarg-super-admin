@@ -1,70 +1,32 @@
-import { useState } from "react";
-// import {  useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, FileText, CheckCircle2, XCircle, ExternalLink, Building2} from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  ExternalLink,
+  Building2,
+} from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-
-const ownerKYCData = {
-  id: "KYC001",
-  company: "Nepal Express Pvt. Ltd.",
-  owner: "Ram Bahadur Thapa",
-  email: "ram@nepalexpress.com",
-  phone: "+977 9841234567",
-  address: "Kathmandu, Nepal",
-  submittedAt: "2026-01-02T10:30:00Z",
-  verificationStatus: "pending",
-  companyRegistration: {
-    documentUrls: [
-      "https://res.cloudinary.com/dwagseu4o/image/upload/v1767440100/bus_owner_kyc/company_registration/lqmftmadjh8u1pmhgemn.pdf"
-    ],
-    verified: false,
-    rejectionReason: null
-  },
-  taxRegistration: {
-    panNumber: "123456789",
-    vatNumber: "VAT123456",
-    documentUrls: [
-      "https://res.cloudinary.com/dwagseu4o/image/upload/v1767440102/bus_owner_kyc/tax_registration/wlvurgol6ypw2kczh8vb.jpg"
-    ],
-    verified: false,
-    rejectionReason: null
-  },
-  transportLicense: {
-    licenseNumber: "TL-2025-1234",
-    validTill: "2027-12-31",
-    documentUrls: [
-      "https://res.cloudinary.com/dwagseu4o/image/upload/v1767440103/bus_owner_kyc/transport_license/gv7dwzo5onhx6gzwv8jn.pdf"
-    ],
-    verified: false,
-    rejectionReason: null
-  },
-  insuranceCertificates: [
-    {
-      insurerName: "Nepal Insurance Co.",
-      policyNumber: "NIC-2025-5678",
-      validTill: "2026-12-31",
-      documentUrls: [
-        "https://res.cloudinary.com/dwagseu4o/image/upload/v1767440104/bus_owner_kyc/insurance/esnouamsg6d47qgbcghz.pdf"
-      ],
-      verified: false,
-      rejectionReason: null,
-      _id: "6958fee8f0a452e1114673ed"
-    }
-  ]
-};
+import { useOwerKycDetails } from "@/hooks/useKycDetails";
 
 type DocumentSection = {
   title: string;
@@ -77,71 +39,120 @@ type DocumentSection = {
 
 export default function KYCBusOwnerDetail() {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  const { data, isLoading, isError, error } = useOwerKycDetails(id);
+  const kyc = data?.data ;
+
   
-  const [documentStatuses, setDocumentStatuses] = useState<Record<string, { verified: boolean; rejectionReason: string | null }>>({
-    companyRegistration: { verified: ownerKYCData.companyRegistration.verified, rejectionReason: ownerKYCData.companyRegistration.rejectionReason },
-    taxRegistration: { verified: ownerKYCData.taxRegistration.verified, rejectionReason: ownerKYCData.taxRegistration.rejectionReason },
-    transportLicense: { verified: ownerKYCData.transportLicense.verified, rejectionReason: ownerKYCData.transportLicense.rejectionReason },
-    insurance: { verified: ownerKYCData.insuranceCertificates[0].verified, rejectionReason: ownerKYCData.insuranceCertificates[0].rejectionReason },
-  });
-  
+
+  /* -------------------- Document Status State -------------------- */
+  const initialStatuses = useMemo(
+    () => ({
+      companyRegistration: {
+        verified: kyc?.companyRegistration.verified,
+        rejectionReason: kyc?.companyRegistration.rejectionReason,
+      },
+      taxRegistration: {
+        verified: kyc?.taxRegistration.verified,
+        rejectionReason: kyc?.taxRegistration.rejectionReason,
+      },
+      transportLicense: {
+        verified: kyc?.transportLicense.verified,
+        rejectionReason: kyc?.transportLicense.rejectionReason,
+      },
+      insurance: {
+        verified: kyc?.insuranceCertificates[0]?.verified ?? false,
+        rejectionReason:
+          kyc?.insuranceCertificates[0]?.rejectionReason ?? null,
+      },
+    }),
+    [kyc],
+  );
+
+  const [documentStatuses, setDocumentStatuses] =
+    useState(initialStatuses);
+
+  useEffect(() => {
+    setDocumentStatuses(initialStatuses);
+  }, [initialStatuses]);
+
+  /* -------------------- Dialog States -------------------- */
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [currentRejectKey, setCurrentRejectKey] = useState<string | null>(null);
+  const [currentRejectKey, setCurrentRejectKey] = useState<string | null>(
+    null,
+  );
   const [rejectionReason, setRejectionReason] = useState("");
   const [finalApprovalDialog, setFinalApprovalDialog] = useState(false);
   const [finalRejectionDialog, setFinalRejectionDialog] = useState(false);
   const [finalRejectionReason, setFinalRejectionReason] = useState("");
-
+/* -------------------- Loading / Error -------------------- */
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>{JSON.stringify(error)}</div>;
+  if (!kyc) return null;
+  /* -------------------- Document Sections -------------------- */
   const documentSections: DocumentSection[] = [
     {
       title: "Company Registration",
       key: "companyRegistration",
-      documents: ownerKYCData.companyRegistration.documentUrls,
+      documents: kyc.companyRegistration.documentUrls,
       verified: documentStatuses.companyRegistration.verified,
       rejectionReason: documentStatuses.companyRegistration.rejectionReason,
     },
     {
       title: "Tax Registration",
       key: "taxRegistration",
-      documents: ownerKYCData.taxRegistration.documentUrls,
+      documents: kyc.taxRegistration.documentUrls,
       verified: documentStatuses.taxRegistration.verified,
       rejectionReason: documentStatuses.taxRegistration.rejectionReason,
       details: [
-        { label: "PAN Number", value: ownerKYCData.taxRegistration.panNumber },
-        { label: "VAT Number", value: ownerKYCData.taxRegistration.vatNumber },
-      ]
+        { label: "PAN Number", value: kyc.taxRegistration.panNumber },
+        { label: "VAT Number", value: kyc.taxRegistration.vatNumber },
+      ],
     },
     {
       title: "Transport License",
       key: "transportLicense",
-      documents: ownerKYCData.transportLicense.documentUrls,
+      documents: kyc.transportLicense.documentUrls,
       verified: documentStatuses.transportLicense.verified,
       rejectionReason: documentStatuses.transportLicense.rejectionReason,
       details: [
-        { label: "License Number", value: ownerKYCData.transportLicense.licenseNumber },
-        { label: "Valid Till", value: ownerKYCData.transportLicense.validTill },
-      ]
+        { label: "License Number", value: kyc.transportLicense.licenseNumber },
+        { label: "Valid Till", value: kyc.transportLicense.validTill },
+      ],
     },
     {
       title: "Insurance Certificate",
       key: "insurance",
-      documents: ownerKYCData.insuranceCertificates[0].documentUrls,
+      documents: kyc.insuranceCertificates.flatMap(
+        (i: any) => i.documentUrls,
+      ),
       verified: documentStatuses.insurance.verified,
       rejectionReason: documentStatuses.insurance.rejectionReason,
       details: [
-        { label: "Insurer", value: ownerKYCData.insuranceCertificates[0].insurerName },
-        { label: "Policy Number", value: ownerKYCData.insuranceCertificates[0].policyNumber },
-        { label: "Valid Till", value: ownerKYCData.insuranceCertificates[0].validTill },
-      ]
+        {
+          label: "Insurer",
+          value: kyc.insuranceCertificates[0]?.insurerName,
+        },
+        {
+          label: "Policy Number",
+          value: kyc.insuranceCertificates[0]?.policyNumber,
+        },
+        {
+          label: "Valid Till",
+          value: kyc.insuranceCertificates[0]?.validTill,
+        },
+      ],
     },
   ];
 
+  /* -------------------- Handlers -------------------- */
   const handleVerify = (key: string) => {
-    setDocumentStatuses(prev => ({
+    setDocumentStatuses((prev) => ({
       ...prev,
-      [key]: { verified: true, rejectionReason: null }
+      [key]: { verified: true, rejectionReason: null },
     }));
-    toast.success("Document verified successfully");
+    toast.success("Document verified");
   };
 
   const openRejectDialog = (key: string) => {
@@ -151,47 +162,74 @@ export default function KYCBusOwnerDetail() {
   };
 
   const handleReject = () => {
-    if (currentRejectKey && rejectionReason.trim()) {
-      setDocumentStatuses(prev => ({
-        ...prev,
-        [currentRejectKey]: { verified: false, rejectionReason: rejectionReason.trim() }
-      }));
-      setRejectDialogOpen(false);
-      toast.error("Document rejected");
-    }
+    if (!currentRejectKey || !rejectionReason.trim()) return;
+
+    setDocumentStatuses((prev) => ({
+      ...prev,
+      [currentRejectKey]: {
+        verified: false,
+        rejectionReason: rejectionReason.trim(),
+      },
+    }));
+
+    toast.error("Document rejected");
+    setRejectDialogOpen(false);
   };
 
-  const allVerified = Object.values(documentStatuses).every(s => s.verified);
-  const hasRejections = Object.values(documentStatuses).some(s => s.rejectionReason);
+  const allVerified = Object.values(documentStatuses).every(
+    (s) => s.verified,
+  );
+  const hasRejections = Object.values(documentStatuses).some(
+    (s) => s.rejectionReason,
+  );
 
-  const handleFinalApproval = () => {
-    toast.success("KYC application approved successfully!");
-    setFinalApprovalDialog(false);
+  const handleFinalApproval = async () => {
+    toast.success("KYC approved successfully");
     navigate("/admin/kyc");
   };
 
-  const handleFinalRejection = () => {
-    toast.error("KYC application rejected");
-    setFinalRejectionDialog(false);
+  const handleFinalRejection = async () => {
+    toast.error("KYC rejected");
     navigate("/admin/kyc");
   };
 
+  /* -------------------- UI -------------------- */
   return (
     <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin/kyc")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/admin/kyc")}
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
+
           <div className="flex-1">
-            <h1 className="text-3xl font-bold tracking-tight">Bus Owner KYC Review</h1>
-            <p className="text-muted-foreground">Review and verify KYC documents for {ownerKYCData.company}</p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Bus Owner KYC Review
+            </h1>
+            <p className="text-muted-foreground">
+              Review KYC for {kyc.user.name}
+            </p>
           </div>
-          <Badge className="bg-yellow-100 text-yellow-800">Pending Review</Badge>
+
+          <Badge
+            className={
+              kyc.verificationStatus === "approved"
+                ? "bg-green-100 text-green-800"
+                : kyc.verificationStatus === "rejected"
+                ? "bg-red-100 text-red-800"
+                : "bg-yellow-100 text-yellow-800"
+            }
+          >
+            {kyc.verificationStatus.toUpperCase()}
+          </Badge>
         </div>
 
-        {/* Owner Info */}
+        {/* Applicant Info */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -199,102 +237,88 @@ export default function KYCBusOwnerDetail() {
               Applicant Information
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Company Name</p>
-                <p className="font-medium">{ownerKYCData.company}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Owner Name</p>
-                <p className="font-medium">{ownerKYCData.owner}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{ownerKYCData.email}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Phone</p>
-                <p className="font-medium">{ownerKYCData.phone}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Address</p>
-                <p className="font-medium">{ownerKYCData.address}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Submitted On</p>
-                <p className="font-medium">{new Date(ownerKYCData.submittedAt).toLocaleDateString()}</p>
-              </div>
-            </div>
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            <Info label="Name" value={kyc.user.name} />
+            <Info label="Email" value={kyc.user.email} />
+            <Info label="Phone" value={kyc.user.phone} />
+            <Info label="Bus Owner ID" value={kyc.busOwnerId} />
+            <Info
+              label="Submitted On"
+              value={new Date(kyc.createdAt).toLocaleDateString()}
+            />
           </CardContent>
         </Card>
 
-        {/* Document Sections */}
+        {/* Documents */}
         <div className="grid gap-4 md:grid-cols-2">
           {documentSections.map((section) => (
-            <Card key={section.key} className={section.verified ? "border-green-200 bg-green-50/50" : section.rejectionReason ? "border-destructive/50 bg-destructive/5" : ""}>
+            <Card
+              key={section.key}
+              className={
+                section.verified
+                  ? "border-green-200 bg-green-50/50"
+                  : section.rejectionReason
+                  ? "border-destructive/50 bg-destructive/5"
+                  : ""
+              }
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2">
                     <FileText className="h-4 w-4" />
                     {section.title}
                   </CardTitle>
+
                   {section.verified ? (
                     <Badge className="bg-green-100 text-green-800">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
                       Verified
                     </Badge>
                   ) : section.rejectionReason ? (
-                    <Badge variant="destructive">
-                      <XCircle className="h-3 w-3 mr-1" />
-                      Rejected
-                    </Badge>
+                    <Badge variant="destructive">Rejected</Badge>
                   ) : (
                     <Badge variant="secondary">Pending</Badge>
                   )}
                 </div>
+
                 {section.rejectionReason && (
                   <CardDescription className="text-destructive">
                     Reason: {section.rejectionReason}
                   </CardDescription>
                 )}
               </CardHeader>
+
               <CardContent className="space-y-4">
-                {section.details && (
-                  <div className="grid gap-2 text-sm">
-                    {section.details.map((detail, idx) => (
-                      <div key={idx} className="flex justify-between">
-                        <span className="text-muted-foreground">{detail.label}:</span>
-                        <span className="font-medium">{detail.value || "N/A"}</span>
-                      </div>
-                    ))}
+                {section.details?.map((d, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {d.label}
+                    </span>
+                    <span className="font-medium">
+                      {d.value ?? "N/A"}
+                    </span>
                   </div>
-                )}
-                
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Documents:</p>
-                  {section.documents.map((url, idx) => (
-                    <Button
-                      key={idx}
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start"
-                      onClick={() => window.open(url, "_blank")}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View Document {idx + 1}
-                    </Button>
-                  ))}
-                </div>
+                ))}
+
+                {section.documents.map((url, i) => (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => window.open(url, "_blank")}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    View Document {i + 1}
+                  </Button>
+                ))}
 
                 {!section.verified && !section.rejectionReason && (
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-2">
                     <Button
                       size="sm"
                       className="flex-1"
                       onClick={() => handleVerify(section.key)}
                     >
-                      <CheckCircle2 className="h-4 w-4 mr-1" />
                       Verify
                     </Button>
                     <Button
@@ -303,7 +327,6 @@ export default function KYCBusOwnerDetail() {
                       className="flex-1"
                       onClick={() => openRejectDialog(section.key)}
                     >
-                      <XCircle className="h-4 w-4 mr-1" />
                       Reject
                     </Button>
                   </div>
@@ -313,122 +336,132 @@ export default function KYCBusOwnerDetail() {
           ))}
         </div>
 
-        {/* Final Actions */}
+        {/* Final Decision */}
         <Card>
           <CardHeader>
             <CardTitle>Final Decision</CardTitle>
             <CardDescription>
               {allVerified
-                ? "All documents have been verified. You can approve this KYC application."
+                ? "All documents verified."
                 : hasRejections
-                ? "Some documents have been rejected. You can reject the entire application."
-                : "Please review and verify all documents before making a final decision."}
+                ? "Some documents rejected."
+                : "Please review all documents."}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex gap-4">
-              <Button
-                size="lg"
-                disabled={!allVerified}
-                onClick={() => setFinalApprovalDialog(true)}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Approve KYC Application
-              </Button>
-              <Button
-                size="lg"
-                variant="destructive"
-                onClick={() => setFinalRejectionDialog(true)}
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Reject KYC Application
-              </Button>
-            </div>
+          <CardContent className="flex gap-4">
+            <Button
+              size="lg"
+              disabled={allVerified}
+              onClick={() => setFinalApprovalDialog(true)}
+            >
+              Approve KYC
+            </Button>
+            <Button
+              size="lg"
+              className={allVerified ? "cursor-not-allowed":"cursor-pointer"}
+              disabled={allVerified}
+              variant="destructive"
+              onClick={() => setFinalRejectionDialog(true)}
+            >
+              Reject KYC
+            </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Reject Document Dialog */}
+      {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reject Document</DialogTitle>
-            <DialogDescription>
-              Please provide a reason for rejecting this document.
-            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="rejection-reason">Rejection Reason</Label>
-              <Textarea
-                id="rejection-reason"
-                placeholder="Enter the reason for rejection..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-              />
-            </div>
-          </div>
+          <Textarea
+            placeholder="Enter rejection reason..."
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+          />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setRejectDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleReject} disabled={!rejectionReason.trim()}>
-              Reject Document
+            <Button
+              variant="destructive"
+              onClick={handleReject}
+              disabled={!rejectionReason.trim()}
+            >
+              Reject
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Final Approval Dialog */}
-      <Dialog open={finalApprovalDialog} onOpenChange={setFinalApprovalDialog}>
+      {/* Approval Dialog */}
+      <Dialog
+        open={finalApprovalDialog}
+        onOpenChange={setFinalApprovalDialog}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approve KYC Application</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to approve this KYC application? The bus owner will be verified and can start operations.
-            </DialogDescription>
+            <DialogTitle>Approve KYC</DialogTitle>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFinalApprovalDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setFinalApprovalDialog(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleFinalApproval}>
-              Confirm Approval
-            </Button>
+            <Button onClick={handleFinalApproval}>Confirm</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Final Rejection Dialog */}
-      <Dialog open={finalRejectionDialog} onOpenChange={setFinalRejectionDialog}>
+      <Dialog
+        open={finalRejectionDialog}
+        onOpenChange={setFinalRejectionDialog}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject KYC Application</DialogTitle>
-            <DialogDescription>
-              Please provide a reason for rejecting this KYC application.
-            </DialogDescription>
+            <DialogTitle>Reject KYC</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="final-rejection-reason">Rejection Reason</Label>
-              <Textarea
-                id="final-rejection-reason"
-                placeholder="Enter the reason for rejecting the entire application..."
-                value={finalRejectionReason}
-                onChange={(e) => setFinalRejectionReason(e.target.value)}
-              />
-            </div>
-          </div>
+          <Textarea
+            placeholder="Enter rejection reason..."
+            value={finalRejectionReason}
+            onChange={(e) =>
+              setFinalRejectionReason(e.target.value)
+            }
+          />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFinalRejectionDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setFinalRejectionDialog(false)}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleFinalRejection} disabled={!finalRejectionReason.trim()}>
-              Reject Application
+            <Button
+              variant="destructive"
+              onClick={handleFinalRejection}
+              disabled={!finalRejectionReason.trim()}
+            >
+              Reject
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+/* -------------------- Helper -------------------- */
+function Info({ label, value }: { label: string; value?: string }) {
+  return (
+    <div>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="font-medium">{value ?? "N/A"}</p>
+    </div>
   );
 }

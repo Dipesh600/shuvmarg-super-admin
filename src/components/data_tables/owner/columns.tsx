@@ -117,9 +117,8 @@ type BusOwner = {
             <DropdownMenuItem onClick={() => navigate(`${window.location}/${id}`)}>
               View Profile
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {/* <DropdownMenuItem>View customer</DropdownMenuItem> */}
-            {/* <DropdownMenuItem>View payment details</DropdownMenuItem> */}
+            <DropdownMenuSeparator/>
+            <DropdownMenuItem onClick={()=>navigate(`/admin/kyc/bus-owner/${id}`)}>View Kyc Details</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
