@@ -16,7 +16,8 @@ import KYCVerificationSkeleton from "@/components/Skeletion_Loading/KycVerificat
 export default function KYCVerification() {
   const { data: allKyc, isLoading, isError, error } = useGetAllKyc();
 
-  const kycData = useMemo(() => allKyc?.data ?? [], [allKyc?.data]);
+  // const kycData = useMemo(() => allKyc?.data ?? [], [allKyc?.data]);
+  const kycData  = allKyc?.data ?? [];
 
   const ownersKyc = useMemo(() => {
     return kycData

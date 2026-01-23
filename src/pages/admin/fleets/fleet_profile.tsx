@@ -68,7 +68,7 @@ const BusDetail = () => {
             <MapPin className="h-4 w-4" />
             Track Live
           </Button>
-          <Button onClick={()=>onOpen("editBus")} variant="outline" className="gap-2">
+          <Button onClick={()=>onOpen("editBus",{})} variant="outline" className="gap-2">
             <Edit className="h-4 w-4" />
             Edit
           </Button>
@@ -78,10 +78,10 @@ const BusDetail = () => {
             currentStatus={busStatus}
             entityId={id??""}
           />
-          <Button onClick={()=>navigate(`/admin/fleets/${id}/maintenance`)} variant="secondary" className="gap-2">
+          {/* <Button onClick={()=>navigate(`/admin/fleets/${id}/maintenance`)} variant="secondary" className="gap-2">
             <Wrench className="h-4 w-4" />
             Maintenance
-          </Button>
+          </Button> */}
         </div>
       </div>
 

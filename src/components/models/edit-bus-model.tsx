@@ -54,8 +54,8 @@ export function EditBusDialog({ bus }: EditBusDialogProps) {
           <DialogTitle>Edit Bus</DialogTitle>
           <DialogDescription>Update bus details and configuration</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-4 custom-scrollbar max-h-[60vh] overflow-y-auto pr-2">
+          <div className="grid grid-cols-2 gap-4 custom-scrollbar">
             <div className="space-y-2">
               <Label htmlFor="busNumber">Bus Number</Label>
               <Input

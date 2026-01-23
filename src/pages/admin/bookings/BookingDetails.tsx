@@ -114,7 +114,7 @@ const BookingDetail = () => {
   return (
     <>
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/bookings")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/bookings")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">

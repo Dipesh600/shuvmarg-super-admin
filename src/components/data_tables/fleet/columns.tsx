@@ -14,13 +14,14 @@ import { MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type Owner = {
-  id: string;
+  id:string;
+  fleetId: string;
   operator: string;
   route: string;
   status: string;
   capacity: number;
-  gps: string;
-  lastService: string;
+  busType: string;
+  approvedAt: string;
 };
 
 export const columns: ColumnDef<Owner>[] = [
@@ -47,7 +48,7 @@ export const columns: ColumnDef<Owner>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "id",
+    accessorKey: "fleetId",
     header: "Bus Id",
   },
   {
@@ -63,7 +64,7 @@ export const columns: ColumnDef<Owner>[] = [
     header: "Status",
     cell: ({ row }) => {
       const { status } = row.original;
-      return <Badge variant={status as BadgeProps["variant"]}>{status}</Badge>;
+      return <Badge variant={status.toLowerCase() as BadgeProps["variant"]}>{status}</Badge>;
     },
   },
   {
@@ -71,21 +72,26 @@ export const columns: ColumnDef<Owner>[] = [
     header: "Capacity",
   },
   {
-    accessorKey: "gps",
-    header: "GPS",
+    accessorKey: "busType",
+    header: "Bus Type",
     cell: ({ row }) => {
-      const { gps } = row.original;
+      const { busType } = row.original;
       return (
-        <Badge variant={gps === "Online" ? "default" : "destructive"}>
-          {gps}
+        <Badge variant={"Success"}>
+          {busType}
         </Badge>
       );
     },
   },
-
   {
-    accessorKey: "lastService",
-    header: "Last Service",
+    accessorKey: "approvedAt",
+    header: "Approved At",
+    cell:({row})=>{
+      const {approvedAt}=row.original;
+      return(
+        <span>{new Date(approvedAt)?.toDateString()}</span>
+      )
+    }
   },
 
   {

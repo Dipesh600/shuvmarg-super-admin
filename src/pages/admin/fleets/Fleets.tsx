@@ -5,6 +5,9 @@ import { Bus, MapPin, Wrench, AlertTriangle } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/fleet/columns";
 import { DataTable } from "@/components/DataTable";
+import { fetchAllFleets } from "@/hooks/useFetchAllFleets";
+import KYCVerificationSkeleton from "@/components/Skeletion_Loading/KycVerificationSkeleton";
+import { useMemo } from "react";
 
 const buses = [
   {
@@ -56,6 +59,29 @@ const buses = [
 
 const Fleet = () => {
   const { onOpen } = useModal();
+  const {data,isLoading,error,isError} = fetchAllFleets();
+  const fleets = data?.data ?? []
+  const activeFleet = fleets?.filter((fleet:any)=>(fleet.status)?.toLowerCase()=== "active").length
+  const fleetTableData = useMemo(()=>{
+      return fleets?.map((fleet:any)=>{
+        return {
+          id:fleet._id,
+          operator:fleet.busName,
+          fleetId:fleet.fleetId,
+          status:fleet.status,
+          capacity:fleet.totalSeats,
+          approvedAt:fleet.approvedAt,
+          busType:fleet.busType
+
+        }
+      })
+  },[data])
+   if (isLoading) {
+    return <KYCVerificationSkeleton />;
+  }
+  if (isError) {
+    return <div>{JSON.stringify(error)}</div>;
+  }
   return (
     <>
       {/* Header */}
@@ -85,7 +111,7 @@ const Fleet = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">245</div>
+            <div className="text-2xl font-bold">{fleets.length}</div>
             <p className="text-xs dark:text-blue-500 text-blue-500">
               Registered fleet
             </p>
@@ -99,7 +125,7 @@ const Fleet = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">189</div>
+            <div className="text-2xl font-bold">{activeFleet}</div>
             <p className="text-xs text-green-500 darkt:text-green-500">
               77% operational
             </p>
@@ -127,7 +153,7 @@ const Fleet = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">33</div>
+            <div className="text-2xl font-bold">{fleets.length - activeFleet}</div>
             <p className="text-xs text-orange-500 dark:text-orange-500">
               Awaiting verification
             </p>
@@ -143,7 +169,7 @@ const Fleet = () => {
         <CardContent>
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-            <DataTable columns={columns} data={buses} />
+            <DataTable columns={columns} data={fleetTableData} />
           </div>
 
           {/* Mobile Cards */}
