@@ -1,7 +1,4 @@
-import axios from "axios";
 import { api } from "./axios";
-const apiUrl = "https://backend.shuvmarg.com";
-// const apiUrl = import.meta.env.VITE_API_URL;
 export type Admin = {
   id: string;
   adminId: string;
@@ -17,8 +14,8 @@ type LoginType = {
 };
 
 const loginAdmin = async ({ adminId, email, password, otp }: LoginType) => {
-  const { data } = await axios.post(
-    `${apiUrl}/api/admin/auth/login`,
+  const { data } = await api.post(
+    "/auth/login",
 
     { email, password, adminId, otp },
     {

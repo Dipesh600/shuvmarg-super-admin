@@ -9,12 +9,10 @@ const processQueue = (error: any, token: string | null = null) => {
   );
   failedQueue = [];
 };
-const apiUrl = "https://backend.shuvmarg.com";
-// const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = import.meta.env.VITE_API_URL;
 
 export const api = axios.create({
   baseURL: `${apiUrl}/api/admin`,
-  // withCredentials: true, // 🔑 refresh token cookie
 });
 
 api.interceptors.request.use((config) => {
