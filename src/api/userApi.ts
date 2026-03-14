@@ -22,4 +22,10 @@ const deleteUserById = async (userId: string) => {
   return data;
 };
 
-export { getAllUsers, getUserById, deleteUserById };
+// get user dashboard data
+const getUserDashboardData = async () => {
+  const { data } = await api.get("/userDashboard");
+  return data;
+};
+
+export { getAllUsers, getUserById, deleteUserById, getUserDashboardData };

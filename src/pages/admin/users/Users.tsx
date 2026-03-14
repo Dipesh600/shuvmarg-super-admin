@@ -12,7 +12,7 @@ import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/users/columns";
 import { DataTable } from "@/components/DataTable";
 import { useQuery } from "@tanstack/react-query";
-import { getAllUsers } from "@/api/userApi";
+import { getAllUsers, getUserDashboardData } from "@/api/userApi";
 import { useAuth } from "@/providers/AuthProvider";
 import { useMemo } from "react";
 import UsersSkeleton from "@/components/Skeletion_Loading/UserSkeletion";
@@ -85,6 +85,16 @@ const Users = () => {
     enabled: !!token,
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
+    queryKey: ["userDashboard"],
+    queryFn: getUserDashboardData,
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const userDashboard = dashboardData?.data?.summary;
+
   const userTableData = data?.data.map((user: any) => {
     return {
       id: user._id,
@@ -98,11 +108,6 @@ const Users = () => {
       joined: user.createdAt,
     };
   });
-  const ActiveUserCount = useMemo(() => {
-    return userTableData?.filter(
-      (user: any) => user.status?.toLowerCase() === "active"
-    ).length;
-  }, [userTableData]);
   const VerifiedUsers = useMemo(() => {
     return userTableData?.filter((user: any) => user.verified === true).length;
   }, [userTableData]);
@@ -113,7 +118,7 @@ const Users = () => {
       </div>
     );
   }
-  if (isLoading) {
+  if (isLoading || isDashboardLoading) {
     return <UsersSkeleton/>;
   }
 
@@ -143,8 +148,12 @@ const Users = () => {
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userTableData?.length}</div>
-            <p className="text-xs text-muted-foreground">+234 this month</p>
+            <div className="text-2xl font-bold">
+              {userDashboard?.totalUsers?.total || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              +{userDashboard?.totalUsers?.thisMonthIncrease || 0} this month
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -152,7 +161,9 @@ const Users = () => {
             <CardTitle className="text-sm font-medium">Active Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ActiveUserCount}</div>
+            <div className="text-2xl font-bold">
+              {userDashboard?.activeUsers?.last30Days || 0}
+            </div>
             <p className="text-xs text-muted-foreground">Last 30 days</p>
           </CardContent>
         </Card>
@@ -161,8 +172,13 @@ const Users = () => {
             <CardTitle className="text-sm font-medium">New Today</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45</div>
-            <p className="text-xs text-success">+12% vs yesterday</p>
+            <div className="text-2xl font-bold">
+              {userDashboard?.newUsers?.today || 0}
+            </div>
+            <p className="text-xs text-success">
+              {userDashboard?.newUsers?.growthVsYesterdayPercent >= 0 ? "+" : ""}
+              {userDashboard?.newUsers?.growthVsYesterdayPercent || 0}% vs yesterday
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -171,7 +187,12 @@ const Users = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{VerifiedUsers}</div>
-            <p className="text-xs text-muted-foreground">90.96%</p>
+            <p className="text-xs text-muted-foreground">
+              {userDashboard?.totalUsers?.total
+                ? ((VerifiedUsers / userDashboard.totalUsers.total) * 100).toFixed(2)
+                : 0}
+              %
+            </p>
           </CardContent>
         </Card>
       </div>
