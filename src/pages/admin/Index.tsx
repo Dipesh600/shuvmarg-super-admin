@@ -74,11 +74,16 @@ const Index = () => {
         />
         <StatCard
           title="Fleet Statistics"
-          value="245 Buses"
-          change="189 active (77%)"
+          value={`${summaryData.fleet.totalFleets} Fleets`}
+          change={`${summaryData.fleet.activeFleets} active (${(
+            (summaryData.fleet.activeFleets / summaryData.fleet.totalFleets) *
+            100
+          ).toFixed(0)}%)`}
           changeType="neutral"
           icon={Bus}
-          subtitle="23 under maintenance"
+          subtitle={`${
+            summaryData.fleet.totalFleets - summaryData.fleet.activeFleets
+          } inactive/maintenance`}
         />
         <StatCard
           title="Transaction Volume"
