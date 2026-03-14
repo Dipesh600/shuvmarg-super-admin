@@ -80,7 +80,7 @@ export function DashboardHeader() {
           <div className="flex items-center gap-2 pl-3 border-l border-muted">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary text-primary-foreground">
-                {admin?.adminId.charAt(0).toUpperCase()}
+                {admin?.adminId?.charAt(0).toUpperCase() || "A"}
               </AvatarFallback>
             </Avatar>
 
