@@ -102,7 +102,7 @@ if(isLoading) {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        {/* <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -130,7 +130,7 @@ if(isLoading) {
               <div className="text-2xl font-bold text-red-600">{bannedUsers}</div>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         {/* Users Table */}
         <Card>
