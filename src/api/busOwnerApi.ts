@@ -13,4 +13,11 @@ const getBusOwnerById = async (userId: string) => {
   });
   return data;
 };
-export {getAllBusOwners,getBusOwnerById}
+
+// get bus owner dashboard data
+const getBusOwnerDashboardData = async () => {
+  const { data } = await api.get("/busOwnerDashboard");
+  return data;
+};
+
+export { getAllBusOwners, getBusOwnerById, getBusOwnerDashboardData };

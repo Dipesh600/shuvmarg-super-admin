@@ -9,7 +9,7 @@ import { columns } from "@/components/data_tables/owner/columns";
 import { DataTable } from "@/components/DataTable";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
-import { getAllBusOwners } from "@/api/busOwnerApi";
+import { getAllBusOwners, getBusOwnerDashboardData } from "@/api/busOwnerApi";
 import AgentsSkeleton from "@/components/Skeletion_Loading/AgentsSkeletion";
 
 const busOwners = [
@@ -61,6 +61,16 @@ const BusOwners = () => {
     enabled: !!token,
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
+    queryKey: ["busOwnerDashboard"],
+    queryFn: getBusOwnerDashboardData,
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const busOwnerDashboard = dashboardData?.data;
+
   const BusOwnerTableData = data?.data.map((busOwner: any) => {
     return {
       id: busOwner._id,
@@ -84,7 +94,7 @@ const BusOwners = () => {
       </div>
     );
   }
-  if (isLoading) {
+  if (isLoading || isDashboardLoading) {
     return <AgentsSkeleton/>;
   }
   return (
@@ -115,7 +125,9 @@ const BusOwners = () => {
             <CardTitle className="text-sm font-medium">Total Owners</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{BusOwnerTableData?.length ?? 0}</div>
+            <div className="text-2xl font-bold">
+              {busOwnerDashboard?.totalBusOwners || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
               Registered companies
             </p>
@@ -123,35 +135,37 @@ const BusOwners = () => {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">
-              Small Fleet (1-5)
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Verified Owners</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">89</div>
-            <p className="text-xs text-muted-foreground">57% of owners</p>
+            <div className="text-2xl font-bold">
+              {busOwnerDashboard?.verifiedOwners?.split(" ")[0] || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {busOwnerDashboard?.verifiedOwners || "0% of total"}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">
-              Medium Fleet (6-15)
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Pending KYC</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45</div>
-            <p className="text-xs text-muted-foreground">29% of owners</p>
+            <div className="text-2xl font-bold">
+              {busOwnerDashboard?.pendingKyc || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">Awaiting verification</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">
-              Large Fleet (16+)
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Total Fleets</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">22</div>
-            <p className="text-xs text-success">14% of owners</p>
+            <div className="text-2xl font-bold">
+              {busOwnerDashboard?.totalFleets || 0}
+            </div>
+            <p className="text-xs text-success">Managed buses</p>
           </CardContent>
         </Card>
       </div>
@@ -162,7 +176,7 @@ const BusOwners = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <CardTitle>Bus Owner Directory</CardTitle>
             <Badge variant="outline" className="gap-2">
-              <TrendingUp className="h-3 w-3" /> Total Fleet: 245 Buses
+              <TrendingUp className="h-3 w-3" /> Total Fleet: {busOwnerDashboard?.totalFleets || 0} Buses
             </Badge>
           </div>
         </CardHeader>
