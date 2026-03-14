@@ -5,7 +5,7 @@ import { Bus, MapPin, Wrench, AlertTriangle } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/fleet/columns";
 import { DataTable } from "@/components/DataTable";
-import { fetchAllFleets } from "@/hooks/useFetchAllFleets";
+import { fetchAllFleets, fetchFleetDashboard } from "@/hooks/useFetchAllFleets";
 import KYCVerificationSkeleton from "@/components/Skeletion_Loading/KycVerificationSkeleton";
 import { useMemo } from "react";
 
@@ -59,24 +59,27 @@ const buses = [
 
 const Fleet = () => {
   const { onOpen } = useModal();
-  const {data,isLoading,error,isError} = fetchAllFleets();
-  const fleets = data?.data ?? []
-  const activeFleet = fleets?.filter((fleet:any)=>(fleet.status)?.toLowerCase()=== "active").length
-  const fleetTableData = useMemo(()=>{
-      return fleets?.map((fleet:any)=>{
-        return {
-          id:fleet._id,
-          operator:fleet.busName,
-          fleetId:fleet.fleetId,
-          status:fleet.status,
-          capacity:fleet.totalSeats,
-          approvedAt:fleet.approvedAt,
-          busType:fleet.busType
+  const { data, isLoading, error, isError } = fetchAllFleets();
+  const { data: dashboardData, isLoading: isDashboardLoading } = fetchFleetDashboard();
 
-        }
-      })
-  },[data])
-   if (isLoading) {
+  const fleets = data?.data ?? [];
+  const fleetDashboard = dashboardData?.data;
+
+  const fleetTableData = useMemo(() => {
+    return fleets?.map((fleet: any) => {
+      return {
+        id: fleet._id,
+        operator: fleet.busName,
+        fleetId: fleet.fleetId,
+        status: fleet.status,
+        capacity: fleet.totalSeats,
+        approvedAt: fleet.approvedAt,
+        busType: fleet.busType,
+      };
+    });
+  }, [data]);
+
+  if (isLoading || isDashboardLoading) {
     return <KYCVerificationSkeleton />;
   }
   if (isError) {
@@ -111,7 +114,9 @@ const Fleet = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{fleets.length}</div>
+            <div className="text-2xl font-bold">
+              {fleetDashboard?.totalBuses || 0}
+            </div>
             <p className="text-xs dark:text-blue-500 text-blue-500">
               Registered fleet
             </p>
@@ -120,43 +125,45 @@ const Fleet = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-green-500 darkt:ext-green-500/40" />{" "}
-              Active
+              <MapPin className="h-4 w-4 text-green-500" /> Active
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeFleet}</div>
-            <p className="text-xs text-green-500 darkt:text-green-500">
-              77% operational
+            <div className="text-2xl font-bold">
+              {fleetDashboard?.activeBuses || 0}
+            </div>
+            <p className="text-xs text-green-500">
+              {fleetDashboard?.totalBuses
+                ? ((fleetDashboard.activeBuses / fleetDashboard.totalBuses) * 100).toFixed(0)
+                : 0}
+              % operational
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Wrench className="h-4 w-4 text-yellow-500 darkt:text-yellow-500/40" />{" "}
-              Maintenance
+              <Wrench className="h-4 w-4 text-yellow-500" /> Maintenance
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">23</div>
-            <p className="text-xs text-yellow-500 darkt:text-yellow-500/40">
-              Under service
-            </p>
+            <div className="text-2xl font-bold">
+              {fleetDashboard?.maintenanceBuses || 0}
+            </div>
+            <p className="text-xs text-yellow-500">Under service</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-orange-500 dark:text-orange-500" />{" "}
-              Pending
+              <AlertTriangle className="h-4 w-4 text-orange-500" /> Pending
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{fleets.length - activeFleet}</div>
-            <p className="text-xs text-orange-500 dark:text-orange-500">
-              Awaiting verification
-            </p>
+            <div className="text-2xl font-bold">
+              {fleetDashboard?.pendingBuses || 0}
+            </div>
+            <p className="text-xs text-orange-500">Awaiting verification</p>
           </CardContent>
         </Card>
       </div>
