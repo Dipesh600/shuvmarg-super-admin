@@ -13,8 +13,7 @@ import { UserCog, CheckCircle, Clock, XCircle } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/agents/columns";
 import { DataTable } from "@/components/DataTable";
-import { useMemo } from "react";
-import { getAllAgents } from "@/api/agentApi";
+import { getAllAgents, getAgentDashboardData } from "@/api/agentApi";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/providers/AuthProvider";
 import AgentsSkeleton from "@/components/Skeletion_Loading/AgentsSkeletion";
@@ -77,6 +76,16 @@ const Agents = () => {
     enabled: !!token,
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
+    queryKey: ["agentDashboard"],
+    queryFn: getAgentDashboardData,
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const agentDashboard = dashboardData?.data;
+
   const agentTableData = data?.data.map((agent: any) => {
     return {
       id: agent._id,
@@ -96,9 +105,6 @@ const Agents = () => {
     };
   });
  
-  const VerifiedAgents = useMemo(() => {
-    return agentTableData?.filter((agent: any) => agent.status === true).length;
-  }, [agentTableData]);
   if (isError) {
     return (
       <div>
@@ -106,7 +112,7 @@ const Agents = () => {
       </div>
     );
   }
-  if (isLoading) {
+  if (isLoading || isDashboardLoading) {
     return <AgentsSkeleton/>;
   }
   return (
@@ -138,7 +144,9 @@ const Agents = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{agentTableData.length}</div>
+            <div className="text-2xl font-bold">
+              {agentDashboard?.totalAgents || 0}
+            </div>
             <p className="text-xs  dark:text-blue-500/40 text-blue-500 ">
               Registered agents
             </p>
@@ -152,9 +160,11 @@ const Agents = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{VerifiedAgents}</div>
+            <div className="text-2xl font-bold">
+              {agentDashboard?.verifiedAgents?.split(" ")[0] || 0}
+            </div>
             <p className="text-xs dark:text-green-500/40 text-green-500">
-              71% of total
+              {agentDashboard?.verifiedAgents || "0% of total"}
             </p>
           </CardContent>
         </Card>
@@ -166,7 +176,9 @@ const Agents = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">245</div>
+            <div className="text-2xl font-bold">
+              {agentDashboard?.pendingAgents || 0}
+            </div>
             <p className="text-xs text-orange-400 dark:text-orange-400/40">
               Awaiting verification
             </p>
@@ -180,7 +192,9 @@ const Agents = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">110</div>
+            <div className="text-2xl font-bold">
+              {agentDashboard?.rejectedAgents || 0}
+            </div>
             <p className="text-xs text-red-500 dark:text-red-500/40">
               Failed KYC
             </p>

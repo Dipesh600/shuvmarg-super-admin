@@ -13,4 +13,11 @@ const getAgentById = async (userId: string) => {
   });
   return data;
 };
-export {getAgentById,getAllAgents}
+
+// get agent dashboard data
+const getAgentDashboardData = async () => {
+  const { data } = await api.get("/agentDashboard");
+  return data;
+};
+
+export { getAgentById, getAllAgents, getAgentDashboardData };
