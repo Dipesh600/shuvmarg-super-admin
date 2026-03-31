@@ -40,6 +40,7 @@ import ReportEdit from "./pages/admin/reports/ReportEdit";
 import Bookings from "./pages/admin/bookings/Bookings";
 import BookingDetail from "./pages/admin/bookings/BookingDetails";
 import PushNotifications from "./pages/admin/push_notification/PushNotification";
+import OperatorDetails from "./pages/admin/busowners/OperatorDetails";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
                 <Route path="agents/:id" element={<AgentDetail />} />
                 <Route path="bus-owners" element={<BusOwners />} />
                 <Route path="bus-owners/:id" element={<BusOwnerDetail />} />
+                <Route path="bus-owners/operator/:id" element={<OperatorDetails />} />
                 <Route path="fleets" element={<Fleet />} />
                 <Route path="fleets/tracking" element={<FleetTracking />} />
                 <Route path="fleets/:id" element={<BusDetail />} />

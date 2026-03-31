@@ -1,14 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bus, MapPin, Wrench, AlertTriangle } from "lucide-react";
-import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/fleet/columns";
 import { DataTable } from "@/components/DataTable";
 import { fetchAllFleets, fetchFleetDashboard } from "@/hooks/useFetchAllFleets";
 import KYCVerificationSkeleton from "@/components/Skeletion_Loading/KycVerificationSkeleton";
 
 const Fleet = () => {
-  const { onOpen } = useModal();
   const { data, isLoading, error, isError } = fetchAllFleets();
   const { data: dashboardData, isLoading: isDashboardLoading } = fetchFleetDashboard();
 
@@ -42,12 +40,6 @@ const Fleet = () => {
             Monitor and manage bus fleet operations
           </p>
         </div>
-        <Button
-          onClick={() => onOpen("addBus", {})}
-          className="gap-2 w-full md:w-auto"
-        >
-          <Bus className="h-4 w-4" /> Add Bus
-        </Button>
       </div>
 
       {/* Stats Cards */}

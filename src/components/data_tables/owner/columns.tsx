@@ -10,18 +10,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ColumnDef } from "@tanstack/react-table";
-import {  MoreHorizontal } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type BusOwner = {
   id: string,
-      name: string,
-      phone:string
-      profileImg: string
-      email:string
-      verified:string  
-        status:string}
- export const columns: ColumnDef<BusOwner>[] = [
+  name: string,
+  phone: string
+  profileImg: string
+  email: string
+  verified: string
+  status: string
+}
+export const columns: ColumnDef<BusOwner>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -61,8 +62,8 @@ type BusOwner = {
     },
   },
   {
-    accessorKey:"name",
-    header:"Bus Owner"
+    accessorKey: "name",
+    header: "Bus Owner"
   },
   {
     accessorKey: "email",
@@ -77,8 +78,8 @@ type BusOwner = {
       );
     },
   },
-  
-  
+
+
   {
     accessorKey: "status",
     header: "Status",
@@ -92,12 +93,12 @@ type BusOwner = {
     header: "Verified",
     cell: ({ row }) => {
       const { verified } = row.original;
-      return <Badge variant={verified ? "Verified" :"Pending" }>{ verified ? "verified" :"pending"}</Badge>;
+      return <Badge variant={verified ? "Verified" : "Pending"}>{verified ? "verified" : "pending"}</Badge>;
     },
   },
-  
-  
-  
+
+
+
   {
     id: "actions",
     header: "Actions",
@@ -117,8 +118,9 @@ type BusOwner = {
             <DropdownMenuItem onClick={() => navigate(`${window.location}/${id}`)}>
               View Profile
             </DropdownMenuItem>
-            <DropdownMenuSeparator/>
-            <DropdownMenuItem onClick={()=>navigate(`/admin/kyc/bus-owner/${id}`)}>View Kyc Details</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate(`/admin/kyc/bus-owner/${id}`)}>View Kyc Details</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/admin/bus-owners/operator/${id}`)}>Operator</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
