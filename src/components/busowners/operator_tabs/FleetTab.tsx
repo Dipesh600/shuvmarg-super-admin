@@ -46,7 +46,7 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredFleets = fleets.filter((fleet: any) => 
+  const filteredFleets = fleets.filter((fleet: any) =>
     fleet.busName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     fleet.busNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
     fleet.fleetId.toLowerCase().includes(searchQuery.toLowerCase())
@@ -78,18 +78,18 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
           </h3>
           <p className="text-sm text-muted-foreground font-medium italic opacity-70">Manage registered vehicles for this operator</p>
         </div>
-        
+
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search bus name or number..." 
+            <Input
+              placeholder="Search bus name or number..."
               className="pl-9 bg-background border-2 font-bold"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button 
+          <Button
             onClick={() => setIsCreateOpen(true)}
             className="gap-2 h-10 px-5 font-bold uppercase transition-all hover:tracking-widest shadow-lg shadow-primary/20"
           >
@@ -100,15 +100,15 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
 
       <Card className="border-2 border-muted shadow-sm overflow-hidden">
         <CardHeader className="bg-muted/10 pb-4 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg font-black tracking-tighter leading-none mb-1">Fleet Roster</CardTitle>
-              <CardDescription className="text-[10px] font-bold uppercase tracking-widest">Total {fleets.length} vehicles registered</CardDescription>
-            </div>
-            <div className="flex gap-2">
-               <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
-                  {filteredFleets.filter((f: any) => f.status === 'ACTIVE').length} Active
-               </span>
-            </div>
+          <div>
+            <CardTitle className="text-lg font-black tracking-tighter leading-none mb-1">Fleet Roster</CardTitle>
+            <CardDescription className="text-[10px] font-bold uppercase tracking-widest">Total {fleets.length} vehicles registered</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
+              {filteredFleets.filter((f: any) => f.status === 'ACTIVE').length} Active
+            </span>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -154,52 +154,60 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
                           </span>
                         </div>
                       </TableCell>
-                      
+
                       <TableCell className="align-top py-4">
                         <div className="flex items-center">
-                           <Badge variant="secondary" className="font-black text-[9px] uppercase tracking-widest py-0.5 whitespace-nowrap">{fleet.busType}</Badge>
+                          <Badge variant="secondary" className="font-black text-[9px] uppercase tracking-widest py-0.5 whitespace-nowrap">{fleet.busType}</Badge>
                         </div>
                       </TableCell>
 
                       <TableCell className="align-top py-4 hidden md:table-cell">
                         <div className="flex flex-col gap-1.5 opacity-80 text-xs font-bold font-mono">
-                           <p>{fleet.totalSeats} Seats</p>
-                           <p className="text-muted-foreground text-[10px]">{fleet.seatLayout} Layout</p>
+                          <p>{fleet.totalSeats} Seats</p>
+                          <p className="text-muted-foreground text-[10px]">{fleet.seatLayout} Layout</p>
                         </div>
                       </TableCell>
 
                       <TableCell className="align-top py-4 hidden lg:table-cell text-center">
                         <span className="text-xs font-bold text-muted-foreground bg-muted/30 px-2 py-1 rounded-lg border">
-                           {fleet.registrationYear}
+                          {fleet.registrationYear}
                         </span>
                       </TableCell>
 
-                      <TableCell className="align-top py-4">
-                        <div className="flex flex-col gap-2 items-center">
-                          <Badge 
-                            variant={fleet.status === "ACTIVE" ? "default" : "outline"} 
-                            className="uppercase text-[9px] font-black tracking-widest py-0.5"
+                      <TableCell className="align-top py-4 text-center">
+                        <div className="flex flex-col gap-1 items-center">
+                          <Badge
+                            variant={fleet.status === "ACTIVE" ? "default" : "outline"}
+                            className={`uppercase text-[9px] font-black tracking-widest py-0.5 ${fleet.status === 'ACTIVE' ? 'bg-success hover:bg-success/90' : 'text-muted-foreground'}`}
                           >
                             {fleet.status || "Unknown"}
                           </Badge>
-                          {fleet.approvalStatus === "APPROVED" && (
-                            <div className="text-[9px] font-black uppercase text-success flex items-center gap-1 opacity-80" title="Approved Configuration">
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="align-top py-4 text-center">
+                        <div className="flex flex-col gap-1 items-center">
+                          {fleet.approvalStatus === "APPROVED" ? (
+                            <Badge variant="outline" className="text-[9px] font-black uppercase text-success border-success/30 bg-success/5 flex items-center gap-1">
                               <ShieldCheck className="h-3 w-3" /> Approved
-                            </div>
-                          )}
-                          {fleet.approvalStatus === "PENDING" && (
-                            <div className="text-[9px] font-black uppercase text-amber-500 opacity-80" title="Awaiting Verification">
+                            </Badge>
+                          ) : fleet.approvalStatus === "PENDING" ? (
+                            <Badge variant="outline" className="text-[9px] font-black uppercase text-amber-500 border-amber-500/30 bg-amber-500/5">
                               Pending
-                            </div>
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[9px] font-black uppercase text-muted-foreground">
+                              {fleet.approvalStatus || "N/A"}
+                            </Badge>
                           )}
                         </div>
                       </TableCell>
 
-                      <TableCell className="align-top py-4 text-right">
+                      <TableCell className="align-top py-4 text-right pr-6">
                         <div className="flex items-center justify-end gap-2 h-full">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
                             onClick={() => {
                               setActiveFleetId(fleet._id);
@@ -209,9 +217,9 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
                             onClick={() => {
                               setActiveFleetId(fleet._id);
@@ -221,9 +229,9 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-colors"
                             onClick={() => openDeleteConfirm(fleet._id, fleet.busName)}
                             title="Delete Configuration"
@@ -242,28 +250,28 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
       </Card>
 
       {/* Modals */}
-      <CreateOwnerFleetModal 
-        isOpen={isCreateOpen} 
-        onClose={() => setIsCreateOpen(false)} 
-        ownerId={ownerId} 
-      />
-      
-      <UpdateOwnerFleetModal 
-        id={activeFleetId} 
-        isOpen={modalType === "edit"} 
-        onClose={closeModals} 
+      <CreateOwnerFleetModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
         ownerId={ownerId}
       />
-      
-      <ViewOwnerFleetModal 
-        id={activeFleetId} 
-        isOpen={modalType === "view"} 
-        onClose={closeModals} 
+
+      <UpdateOwnerFleetModal
+        id={activeFleetId}
+        isOpen={modalType === "edit"}
+        onClose={closeModals}
+        ownerId={ownerId}
+      />
+
+      <ViewOwnerFleetModal
+        id={activeFleetId}
+        isOpen={modalType === "view"}
+        onClose={closeModals}
       />
 
       {/* Delete Confirmation Dialog */}
-      <Dialog 
-        open={deleteModal.isOpen} 
+      <Dialog
+        open={deleteModal.isOpen}
         onOpenChange={(open) => !open && setDeleteModal({ isOpen: false, id: null, name: "" })}
       >
         <DialogContent className="sm:max-w-[425px]">
@@ -272,7 +280,7 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
               <Trash2 className="h-5 w-5" /> Confirm Fleet Purge
             </DialogTitle>
             <DialogDescription className="font-medium text-sm pt-4">
-              Are you sure you want to permanently delete the assigned bus <span className="font-black text-foreground">{deleteModal.name}</span>? 
+              Are you sure you want to permanently delete the assigned bus <span className="font-black text-foreground">{deleteModal.name}</span>?
               This action cannot be undone and will orphan route mappings.
             </DialogDescription>
           </DialogHeader>
@@ -280,8 +288,8 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
             <DialogClose asChild>
               <Button variant="outline" className="font-bold flex-1">Cancel</Button>
             </DialogClose>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={confirmDelete}
               className="font-bold shadow-lg shadow-destructive/20 flex-1"
               disabled={deleteMutation.isPending}
