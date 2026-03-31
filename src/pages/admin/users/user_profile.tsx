@@ -44,8 +44,8 @@ const UserDetail = () => {
     staleTime: 5 * 60 * 1000,
   });
   useEffect(() => {
-    setUserStatus(data?.data.status);
-  }, [data?.data.status, id]);
+    setUserStatus(data?.data?.status);
+  }, [data?.data?.status, id]);
   if (isLoading) return <UserDetailSkeleton />;
 
   if (isError) {
@@ -58,33 +58,33 @@ const UserDetail = () => {
   const user = data?.data;
 
   const userData = {
-    id: user._id,
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    status: user.status,
-    verified: user.isVerified,
-    joined: user.createdAt?.split("T")[0],
-    address: user.address || "Kathmandu, Nepal",
-    role: user.role,
-    profileImg: user.profilePicture || "",
+    id: user?._id,
+    name: user?.name,
+    email: user?.email,
+    phone: user?.phone,
+    status: user?.status,
+    verified: user?.isVerified,
+    joined: user?.createdAt?.split("T")[0],
+    address: user?.address || "Kathmandu, Nepal",
+    role: user?.role,
+    profileImg: user?.profilePicture || "",
     lastLogin: "2024-01-28 10:30 AM",
   };
   const userBookings = bookings?.data?.map((booking: any) => ({
     id: booking._id,
     scheduleRoute: {
-      from: booking?.scheduleInfo.route.from,
-      to: booking?.scheduleInfo.route.to,
+      from: booking?.scheduleInfo?.route?.from,
+      to: booking?.scheduleInfo?.route?.to,
     },
     bookedAt: booking?.createdAt,
     amount: booking?.totalAmount,
     status: booking?.status,
   }));
   const userTranscations = bookings?.data?.map((booking: any) => ({
-    id: booking._id,
+    id: booking?._id,
     transactionId: booking?.transactionId,
     type: booking?.refundStatus,
-    paymentDate:booking.bookedAt,
+    paymentDate: booking?.bookedAt,
     amount: booking?.totalAmount,
     method: booking?.gateway,
   }));
