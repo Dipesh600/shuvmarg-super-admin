@@ -6,6 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/DataTable";
 import { getColumns } from "@/components/data_tables/boarding-point/columns";
 import CreateBoardingPointModal from "./CreateBoardingPointModal";
+import UpdateBoardingPointModal from "./UpdateBoardingPointModal";
+import ViewBoardingPointModal from "./ViewBoardingPointModal";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,10 @@ const BoardingPointsTab = ({ ownerId }: { ownerId: string }) => {
   const { data: response, isLoading } = useFetchBoardingPointsByOwner(ownerId);
   const deleteMutation = useDeleteBoardingPoint();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [updateId, setUpdateId] = useState<string | null>(null);
+  const [viewId, setViewId] = useState<string | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const handleOpenDelete = (id: string) => {
@@ -34,8 +40,13 @@ const BoardingPointsTab = ({ ownerId }: { ownerId: string }) => {
   };
 
   const handleViewDetail = (id: string) => {
-    console.log("View detail for:", id);
-    // TODO: Implement detail view (navigation or modal)
+    setViewId(id);
+    setIsViewModalOpen(true);
+  };
+
+  const handleUpdate = (id: string) => {
+    setUpdateId(id);
+    setIsUpdateModalOpen(true);
   };
 
   if (isLoading) {
@@ -51,6 +62,7 @@ const BoardingPointsTab = ({ ownerId }: { ownerId: string }) => {
   const boardingPointGroups = response?.data || [];
   const columns = getColumns({
     onView: handleViewDetail,
+    onUpdate: handleUpdate,
     onDelete: handleOpenDelete
   });
 
@@ -63,7 +75,7 @@ const BoardingPointsTab = ({ ownerId }: { ownerId: string }) => {
           </h3>
           <p className="text-sm text-muted-foreground font-medium italic opacity-70">Manage pickup locations and grouped shifts for this operator</p>
         </div>
-        <Button 
+        <Button
           onClick={() => setIsCreateModalOpen(true)}
           className="gap-2 h-12 px-8 font-black uppercase transition-all hover:tracking-widest shadow-xl shadow-primary/20 bg-primary text-primary-foreground group"
         >
@@ -83,10 +95,28 @@ const BoardingPointsTab = ({ ownerId }: { ownerId: string }) => {
         </p>
       </div>
 
-      <CreateBoardingPointModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
-        ownerId={ownerId} 
+      <CreateBoardingPointModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        ownerId={ownerId}
+      />
+
+      <UpdateBoardingPointModal
+        id={updateId}
+        isOpen={isUpdateModalOpen}
+        onClose={() => {
+          setIsUpdateModalOpen(false);
+          setUpdateId(null);
+        }}
+      />
+
+      <ViewBoardingPointModal
+        id={viewId}
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setViewId(null);
+        }}
       />
 
       {boardingPointGroups.length === 0 && (

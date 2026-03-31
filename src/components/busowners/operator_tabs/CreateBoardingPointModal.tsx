@@ -14,6 +14,7 @@ import { Plus, Trash2, MapPin, MapPinned, Clock, Phone } from "lucide-react";
 import { useCreateBoardingPoint } from "@/hooks/useBoardingPoints";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CreateBoardingPointModalProps {
   isOpen: boolean;
@@ -90,9 +91,9 @@ const CreateBoardingPointModal: React.FC<CreateBoardingPointModalProps> = ({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col pt-6">
-          <div className="flex-1 overflow-y-auto px-6 custom-scrollbar">
-            <div className="space-y-6 pb-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+          <ScrollArea className="flex-1 px-6">
+            <div className="space-y-6 py-6">
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -204,7 +205,7 @@ const CreateBoardingPointModal: React.FC<CreateBoardingPointModalProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+          </ScrollArea>
 
           <DialogFooter className="p-6 bg-muted/20 border-t gap-3 mt-auto">
             <DialogClose asChild>

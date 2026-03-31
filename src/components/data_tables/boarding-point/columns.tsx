@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Trash2, MapPin } from "lucide-react";
+import { MoreHorizontal, Eye, Trash2, MapPin, Edit3 } from "lucide-react";
 
 export type BoardingPointGroup = {
   _id: string;
@@ -22,10 +22,11 @@ export type BoardingPointGroup = {
 
 interface ColumnProps {
   onView: (id: string) => void;
+  onUpdate: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-export const getColumns = ({ onView, onDelete }: ColumnProps): ColumnDef<BoardingPointGroup>[] => [
+export const getColumns = ({ onView, onUpdate, onDelete }: ColumnProps): ColumnDef<BoardingPointGroup>[] => [
   {
     accessorKey: "city",
     header: "City",
@@ -90,6 +91,10 @@ export const getColumns = ({ onView, onDelete }: ColumnProps): ColumnDef<Boardin
             <DropdownMenuItem onClick={() => onView(_id)} className="cursor-pointer">
               <Eye className="mr-2 h-4 w-4" />
               View Detail
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onUpdate(_id)} className="cursor-pointer">
+              <Edit3 className="mr-2 h-4 w-4" />
+              Update Config
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
