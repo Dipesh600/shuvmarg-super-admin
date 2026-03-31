@@ -69,9 +69,7 @@ const OperatorDetails = () => {
             {/* Content Tabs */}
             <Tabs defaultValue="fleet" className="w-full">
                 <TabsList className="bg-muted/40 p-1 border h-auto flex flex-wrap justify-start gap-1 mb-8 rounded-xl max-w-fit">
-                    <TabsTrigger value="fleet" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 py-2 px-4 rounded-lg font-bold text-xs uppercase tracking-tight transition-all">
-                        <Bus className="h-3.5 w-3.5" /> Fleet
-                    </TabsTrigger>
+
                     <TabsTrigger value="boarding-point" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 py-2 px-4 rounded-lg font-bold text-xs uppercase tracking-tight transition-all">
                         <MapPin className="h-3.5 w-3.5" /> Boarding Point
                     </TabsTrigger>
@@ -84,9 +82,13 @@ const OperatorDetails = () => {
                     <TabsTrigger value="seat-template" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 py-2 px-4 rounded-lg font-bold text-xs uppercase tracking-tight transition-all">
                         <LayoutGrid className="h-3.5 w-3.5" /> Seat Template
                     </TabsTrigger>
+                    <TabsTrigger value="fleet" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 py-2 px-4 rounded-lg font-bold text-xs uppercase tracking-tight transition-all">
+                        <Bus className="h-3.5 w-3.5" /> Fleet
+                    </TabsTrigger>
                     <TabsTrigger value="bus-trip" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 py-2 px-4 rounded-lg font-bold text-xs uppercase tracking-tight transition-all">
                         <Bookmark className="h-3.5 w-3.5" /> Bus Trip
                     </TabsTrigger>
+
                 </TabsList>
 
                 <div className="bg-background/50 backdrop-blur-sm border rounded-3xl p-6 md:p-8 shadow-sm">
