@@ -43,6 +43,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   isKyc?: boolean;
   searchPlaceholder?: string;
+  pageSize?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -50,19 +51,20 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   searchPlaceholder,
+  pageSize = 10,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [statusFilter, setStatusFilter] = useState("all");
- const filteredData = useMemo(() => {
-  if (!isKyc || statusFilter === "all") return data;
+  const filteredData = useMemo(() => {
+    if (!isKyc || statusFilter === "all") return data;
 
-  return data.filter((item: any) => item?.status === statusFilter);
-}, [data, isKyc, statusFilter]);
+    return data.filter((item: any) => item?.status === statusFilter);
+  }, [data, isKyc, statusFilter]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState({});
   const table = useReactTable({
-    data:filteredData,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -72,7 +74,11 @@ export function DataTable<TData, TValue>({
     onGlobalFilterChange: setGlobalFilter,
     onRowSelectionChange: setRowSelection,
     getFilteredRowModel: getFilteredRowModel(),
-
+    initialState: {
+      pagination: {
+        pageSize: pageSize,
+      },
+    },
     state: {
       sorting,
       columnFilters,
