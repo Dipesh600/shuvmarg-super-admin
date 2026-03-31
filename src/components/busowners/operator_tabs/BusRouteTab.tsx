@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Route, Plus, Eye, Edit, Trash2, Loader2, MapPin, Clock, Search, Navigation } from "lucide-react";

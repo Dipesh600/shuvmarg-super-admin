@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Route, MapPin, Navigation, Clock, Ban } from "lucide-react";
+import { Route, MapPin, Navigation, Clock } from "lucide-react";
 import { useCreateBusRoute } from "@/hooks/useBusRoutes";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
