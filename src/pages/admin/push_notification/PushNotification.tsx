@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {  Search,  UserCheck, Ban, Users } from "lucide-react";
+import {  Search } from "lucide-react";
 import { SendUserNotificationDialog } from "@/components/models/send-user_notification-model";
 import { SendAllNotificationDialog } from "@/components/models/send-all_notification-model";
 import useUsersFetch from "@/hooks/useUseFetch";
@@ -73,9 +73,9 @@ export default function PushNotifications() {
       user.phone.includes(searchTerm)
   );
 
-  const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.status === "active").length;
-  const bannedUsers = users.filter((u) => u.status === "banned").length;
+  // const totalUsers = users.length;
+  // const activeUsers = users.filter((u) => u.status === "active").length;
+  // const bannedUsers = users.filter((u) => u.status === "banned").length;
 
 
   useEffect(()=>{
