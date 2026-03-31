@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Bus, MapPin, Plus, Eye, Edit, Trash2, Loader2, Search, TrendingUp, CreditCard, ShipIcon } from "lucide-react";
+import { Calendar, Clock, Bus, MapPin, Plus, Eye, Edit, Trash2, Loader2, Search, TrendingUp, ShipIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
