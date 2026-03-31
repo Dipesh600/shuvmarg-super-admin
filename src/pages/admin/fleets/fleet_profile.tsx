@@ -1,260 +1,325 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Edit, MapPin, Calendar, Bus, Wifi, Snowflake, Usb, Building } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
+import { 
+  ArrowLeft, 
+  Edit, 
+  MapPin, 
+  Bus, 
+  Wifi, 
+  Snowflake, 
+  Usb, 
+  User, 
+  Mail, 
+  Home, 
+  XCircle, 
+  Clock, 
+  ShieldCheck,
+  Zap,
+  Coffee,
+  Disc,
+  Info
+} from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { useModal } from "@/hooks/use-model-store";
 import { SuspendDialog } from "@/components/models/suspended-model";
-import { useState } from "react";
-
-const busData = {
-  id: "NP-BA-1234",
-  type: "Deluxe",
-  operator: "Nepal Express Pvt. Ltd.",
-  operatorId: "OWN-001",
-  route: "Kathmandu - Pokhara",
-  status: "Active",
-  gps: "Online",
-  capacity: 42,
-  occupancy: 85,
-  manufacturingYear: 2022,
-  chassisNumber: "CH-2022-123456",
-  engineNumber: "EN-2022-789012",
-  gpsDeviceId: "GPS-001234",
-  insuranceExpiry: "2025-06-15",
-  fitnessExpiry: "2024-12-31",
-  lastService: "2024-01-10",
-  nextService: "2024-04-10",
-  amenities: ["AC", "WiFi", "USB Charging", "Reclining Seats", "Blankets"],
-  recentTrips: [
-    { id: "TRP-001", date: "2024-01-28", route: "Kathmandu - Pokhara", passengers: 38, revenue: "NPR 45,600", status: "Completed" },
-    { id: "TRP-002", date: "2024-01-27", route: "Pokhara - Kathmandu", passengers: 42, revenue: "NPR 50,400", status: "Completed" },
-    { id: "TRP-003", date: "2024-01-26", route: "Kathmandu - Pokhara", passengers: 35, revenue: "NPR 42,000", status: "Completed" },
-  ],
-  maintenanceHistory: [
-    { id: "MNT-001", date: "2024-01-10", type: "Regular Service", cost: "NPR 15,000", description: "Oil change, brake check, tire rotation" },
-    { id: "MNT-002", date: "2023-10-15", type: "Repair", cost: "NPR 25,000", description: "AC compressor replacement" },
-    { id: "MNT-003", date: "2023-07-20", type: "Regular Service", cost: "NPR 12,000", description: "Full inspection and minor repairs" },
-  ],
-};
+import { fetchFleetById } from "@/hooks/useFetchAllFleets";
+import FleetProfileSkeleton from "@/components/Skeletion_Loading/FleetProfileSkeleton";
 
 const BusDetail = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const { onOpen } = useModal();
 
-  const amenityIcons: Record<string, React.ReactNode> = {
-    "AC": <Snowflake className="h-4 w-4" />,
-    "WiFi": <Wifi className="h-4 w-4" />,
-    "USB Charging": <Usb className="h-4 w-4" />,
-  };
-  const {onOpen} = useModal();
-    const [busStatus, _] = useState(busData.status);
+    const { data: fleetResponse, isLoading, isError, error } = fetchFleetById(id as string);
 
-  return (
-    <>
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/fleets")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <h2 className="text-2xl font-bold tracking-tight">Bus Details</h2>
-          <p className="text-muted-foreground">Bus Number: {id || busData.id}</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={()=>navigate(`/admin/fleets/tracking`)} className="gap-2">
-            <MapPin className="h-4 w-4" />
-            Track Live
-          </Button>
-          <Button onClick={()=>onOpen("editBus",{})} variant="outline" className="gap-2">
-            <Edit className="h-4 w-4" />
-            Edit
-          </Button>
-          <SuspendDialog
-            entityType="bus"
-            entityName={busData.id}
-            currentStatus={busStatus}
-            entityId={id??""}
-          />
-          {/* <Button onClick={()=>navigate(`/admin/fleets/${id}/maintenance`)} variant="secondary" className="gap-2">
-            <Wrench className="h-4 w-4" />
-            Maintenance
-          </Button> */}
-        </div>
-      </div>
+    const getAmenityIcon = (name: string) => {
+        const lowerName = name.toLowerCase();
+        if (lowerName.includes("wifi")) return <Wifi className="h-4 w-4" />;
+        if (lowerName.includes("charging") || lowerName.includes("usb")) return <Usb className="h-4 w-4" />;
+        if (lowerName.includes("ac") || lowerName.includes("air")) return <Snowflake className="h-4 w-4" />;
+        if (lowerName.includes("water")) return <Coffee className="h-4 w-4" />;
+        if (lowerName.includes("tv") || lowerName.includes("entertainment")) return <Disc className="h-4 w-4" />;
+        return <Zap className="h-4 w-4" />;
+    };
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Vehicle Info
-              <Badge variant={busData.status === "Active" ? "default" : "secondary"}>
-                {busData.status}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-center">
-              <div className="w-24 h-24 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Bus className="h-12 w-12 text-primary" />
-              </div>
-            </div>
-            <div className="text-center">
-              <h3 className="text-xl font-semibold">{busData.id}</h3>
-              <p className="text-sm text-muted-foreground">{busData.type} Bus</p>
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <Badge variant={busData.gps === "Online" ? "default" : "destructive"}>
-                  GPS {busData.gps}
-                </Badge>
-              </div>
-            </div>
-            <div className="space-y-3 pt-4">
-              <div className="flex items-center gap-3 text-sm">
-                <Building className="h-4 w-4 text-muted-foreground" />
-                <span>{busData.operator}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span>{busData.route}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>Year: {busData.manufacturingYear}</span>
-              </div>
-            </div>
-            <div className="pt-4 border-t">
-              <div className="flex justify-between text-sm mb-2">
-                <span>Occupancy Rate</span>
-                <span className="font-medium">{busData.occupancy}%</span>
-              </div>
-              <Progress value={busData.occupancy} className="h-2" />
-            </div>
-            <div className="pt-4 border-t space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Capacity:</span>
-                <span>{busData.capacity} seats</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Chassis:</span>
-                <span>{busData.chassisNumber}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Engine:</span>
-                <span>{busData.engineNumber}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">GPS ID:</span>
-                <span>{busData.gpsDeviceId}</span>
-              </div>
-            </div>
-            <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground mb-2">Amenities</p>
-              <div className="flex flex-wrap gap-2">
-                {busData.amenities.map((amenity) => (
-                  <Badge key={amenity} variant="outline" className="gap-1">
-                    {amenityIcons[amenity]}
-                    {amenity}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    if (isLoading) return <FleetProfileSkeleton />;
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Operations & Maintenance</CardTitle>
-            <CardDescription>Trip history and service records</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-4 mb-6">
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <div className="text-lg font-bold text-success">{busData.lastService}</div>
-                <div className="text-xs text-muted-foreground">Last Service</div>
-              </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <div className="text-lg font-bold">{busData.nextService}</div>
-                <div className="text-xs text-muted-foreground">Next Service</div>
-              </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <div className="text-lg font-bold">{busData.insuranceExpiry}</div>
-                <div className="text-xs text-muted-foreground">Insurance Expiry</div>
-              </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <div className="text-lg font-bold">{busData.fitnessExpiry}</div>
-                <div className="text-xs text-muted-foreground">Fitness Expiry</div>
-              </div>
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+                <XCircle className="h-16 w-16 text-destructive" />
+                <h2 className="text-2xl font-bold">Failed to fetch fleet details</h2>
+                <p className="text-muted-foreground">{(error as any)?.message || "Something went wrong"}</p>
+                <Button onClick={() => navigate("/admin/fleets")}>Back to Fleets</Button>
+            </div>
+        );
+    }
+
+    const fleet = fleetResponse?.data;
+
+    const getStatusVariant = (status: string) => {
+        switch (status.toUpperCase()) {
+            case "ACTIVE": return "default";
+            case "INACTIVE": return "destructive";
+            default: return "secondary";
+        }
+    };
+
+    const getApprovalVariant = (status: string) => {
+        switch (status.toUpperCase()) {
+            case "APPROVED": return "default";
+            case "PENDING": return "secondary";
+            case "REJECTED": return "destructive";
+            default: return "outline";
+        }
+    };
+
+    return (
+        <>
+            {/* Header */}
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-8">
+                <Button variant="ghost" size="icon" onClick={() => navigate("/admin/fleets")} className="shrink-0 border bg-background/50">
+                    <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <h2 className="text-3xl font-black tracking-tighter truncate">{fleet.busName}</h2>
+                        <Badge variant={getApprovalVariant(fleet.approvalStatus)} className="uppercase px-3 py-0.5 rounded-full text-[10px] tracking-widest font-black">
+                            {fleet.approvalStatus}
+                        </Badge>
+                    </div>
+                    <p className="text-muted-foreground mt-1 flex items-center gap-2 font-mono text-sm tracking-tighter">
+                        <Bus className="h-4 w-4" />
+                        {fleet.busNumber} • {fleet.fleetId}
+                    </p>
+                </div>
+                <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                    <Button onClick={() => onOpen("editBus", {})} variant="outline" className="gap-2 flex-1 md:flex-none h-11 px-6 shadow-sm border-primary/20">
+                        <Edit className="h-4 w-4 text-primary" />
+                        Edit Bus
+                    </Button>
+                    <SuspendDialog
+                        entityType="bus"
+                        entityName={fleet.busName}
+                        currentStatus={fleet.status}
+                        entityId={id ?? ""}
+                    />
+                </div>
             </div>
 
-            <Tabs defaultValue="trips">
-              <TabsList className="w-full justify-start">
-                <TabsTrigger value="trips">Recent Trips</TabsTrigger>
-                <TabsTrigger value="maintenance">Maintenance History</TabsTrigger>
-              </TabsList>
-              <TabsContent value="trips" className="mt-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Trip ID</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Route</TableHead>
-                      <TableHead>Passengers</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {busData.recentTrips.map((trip) => (
-                      <TableRow key={trip.id}>
-                        <TableCell className="font-medium">{trip.id}</TableCell>
-                        <TableCell>{trip.date}</TableCell>
-                        <TableCell>{trip.route}</TableCell>
-                        <TableCell>{trip.passengers}</TableCell>
-                        <TableCell>{trip.revenue}</TableCell>
-                        <TableCell>
-                          <Badge variant="default">{trip.status}</Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TabsContent>
-              <TabsContent value="maintenance" className="mt-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Cost</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {busData.maintenanceHistory.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell className="font-medium">{record.id}</TableCell>
-                        <TableCell>{record.date}</TableCell>
-                        <TableCell>
-                          <Badge variant={record.type === "Regular Service" ? "default" : "secondary"}>
-                            {record.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate">{record.description}</TableCell>
-                        <TableCell>{record.cost}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    </>
-  );
+            <div className="grid gap-8 lg:grid-cols-3">
+                {/* Left Column: Vehicle & Owner Info */}
+                <div className="lg:col-span-1 space-y-8">
+                    {/* Vehicle Overview Card */}
+                    <Card className="border-t-4 border-t-primary shadow-lg overflow-hidden group">
+                        <CardHeader className="bg-muted/30 pb-4">
+                            <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-primary/80">
+                                <Bus className="h-4 w-4" /> Vehicle Overview
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-8 space-y-8">
+                            <div className="flex flex-col items-center text-center space-y-4">
+                                <div className="p-6 rounded-3xl bg-primary/5 group-hover:bg-primary/10 transition-colors border border-primary/5 shadow-inner">
+                                    <Bus className="h-16 w-16 text-primary drop-shadow-sm" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black tracking-tighter">{fleet.busNumber}</h3>
+                                    <p className="text-muted-foreground font-medium uppercase text-xs tracking-widest mt-1 opacity-70 italic">{fleet.busType} CATEGORY</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Badge variant={getStatusVariant(fleet.status)} className="rounded-full px-4 py-1 uppercase text-[10px] font-black tracking-widest">
+                                        {fleet.status}
+                                    </Badge>
+                                    <Badge variant="outline" className="rounded-full border-muted-foreground/30 px-3 py-1 font-mono text-[10px] uppercase tracking-tighter">
+                                        YEAR {fleet.registrationYear}
+                                    </Badge>
+                                </div>
+                            </div>
+
+                            <Separator className="opacity-50" />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-muted/20 rounded-2xl border border-dashed border-muted-foreground/20 text-center">
+                                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1 opacity-60">Total Seats</p>
+                                    <p className="text-3xl font-black text-primary">{fleet.totalSeats}</p>
+                                </div>
+                                <div className="p-4 bg-muted/20 rounded-2xl border border-dashed border-muted-foreground/20 text-center">
+                                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1 opacity-60">Layout</p>
+                                    <p className="text-3xl font-black text-primary uppercase">{fleet.seatLayout}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Owner Information Card */}
+                    <Card className="shadow-lg border-l-4 border-l-primary/60">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-primary/80">
+                                <User className="h-4 w-4" /> Owner Details
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="flex flex-col gap-5">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/30 border border-muted/60">
+                                    <div className="p-3 rounded-full bg-background border shadow-sm">
+                                        <User className="h-6 w-6 text-primary/70" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-0.5 opacity-60">Owner Name</p>
+                                        <p className="font-black text-lg leading-none tracking-tighter">{fleet.ownerId.name}</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-4 px-2">
+                                    <div className="flex items-center gap-4 group">
+                                        <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center border group-hover:bg-primary/10 transition-colors">
+                                            <Mail className="h-4 w-4 text-primary/60" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-muted-foreground opacity-50 tracking-widest">Email Address</p>
+                                            <p className="font-bold text-sm truncate max-w-[200px]">{fleet.ownerId.email}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 group">
+                                        <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center border group-hover:bg-primary/10 transition-colors">
+                                            <Home className="h-4 w-4 text-primary/60" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase text-muted-foreground opacity-50 tracking-widest">Office Address</p>
+                                            <p className="font-bold text-sm">{fleet.ownerId.address}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <Button variant="link" className="p-0 h-auto justify-start text-primary font-black text-xs uppercase transition-all hover:tracking-widest" onClick={() => navigate(`/admin/users/${fleet.ownerId._id}`)}>
+                                    View Full History →
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Right Column: Visuals & Boarding Points */}
+                <div className="lg:col-span-2 space-y-8">
+                    {/* Visual Highlights & Amenities */}
+                    <div className="grid md:grid-cols-2 gap-8">
+                        {/* Image Showcase */}
+                        <Card className="shadow-lg border-primary/10">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <Zap className="h-4 w-4 text-warning" /> Fleet Images
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {fleet.fleetImages && fleet.fleetImages.length > 0 ? (
+                                        fleet.fleetImages.map((img: string, idx: number) => (
+                                            <div key={idx} className="relative group overflow-hidden rounded-2xl border aspect-[4/3] bg-muted/20 shadow-sm">
+                                                <img src={img} alt={`Fleet ${idx}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <Badge className="bg-white/20 backdrop-blur-md border-white/40">View</Badge>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="col-span-2 h-40 flex flex-col items-center justify-center border-2 border-dashed rounded-2xl bg-muted/10 opacity-50">
+                                            <Bus className="h-10 w-10 mb-2 opacity-20" />
+                                            <p className="text-xs font-bold uppercase tracking-widest">No images uploaded</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Amenities */}
+                        <Card className="shadow-lg border-primary/10 h-full">
+                            <CardHeader className="pb-4">
+                                <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <ShieldCheck className="h-4 w-4 text-success" /> Vehicle Amenities
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-2">
+                                <div className="flex flex-wrap gap-3">
+                                    {fleet.amenitiesId?.amenities?.map((amenity: any) => (
+                                        <div key={amenity._id} className="flex items-center gap-3 p-3 pr-5 bg-background border border-primary/5 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/20 transition-all group cursor-default">
+                                            <div className="p-2.5 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                                                {getAmenityIcon(amenity.name)}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-sm tracking-tight">{amenity.name}</span>
+                                                <span className="text-[9px] text-muted-foreground uppercase tracking-widest font-medium opacity-50">Included</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Boarding Points Section */}
+                    <Card className="shadow-lg border-l-4 border-l-primary/60 border-primary/10">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-primary" /> Boarding Points Configuration
+                            </CardTitle>
+                            <CardDescription className="text-xs uppercase tracking-widest font-medium opacity-50 italic">
+                                Primary boarding points in {fleet.boardingPointId?.city}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                            <div className="grid md:grid-cols-2 gap-6">
+                                {fleet.boardingPointId?.boardingPoints?.map((point: any) => (
+                                    <div key={point._id} className="relative group p-6 rounded-3xl bg-muted/10 border border-muted/50 hover:bg-muted/20 hover:border-primary/20 transition-all overflow-hidden flex items-start gap-4">
+                                        <div className="h-12 w-12 rounded-2xl bg-background border flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                                            <MapPin className="h-6 w-6 text-primary/70" />
+                                        </div>
+                                        <div className="space-y-4 flex-1 min-w-0">
+                                            <div>
+                                                <p className="font-black text-xl tracking-tighter truncate">{point.pointName}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                     <Badge variant="outline" className="text-[9px] px-2 py-0 border-primary/30 text-primary uppercase font-black tracking-widest h-5">{point.time}</Badge>
+                                                     <p className="text-xs font-bold text-muted-foreground truncate italic">via {point.landmark}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-wrap gap-x-6 gap-y-2 pt-2 border-t border-muted/80">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[8px] font-black uppercase text-muted-foreground opacity-60">Reporting Number</span>
+                                                    <span className="font-bold text-xs">{point.contactNumber}</span>
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[8px] font-black uppercase text-muted-foreground opacity-60">Coordinates</span>
+                                                    <span className="font-mono text-[10px] text-primary/80">{point.coordinates.lat?.toFixed(3)}N, {point.coordinates.lng?.toFixed(3)}E</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="absolute -top-4 -right-4 w-12 h-12 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/20 transition-all opacity-0 group-hover:opacity-100" />
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="mt-8 flex items-center gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                                <Info className="h-5 w-5 text-primary opacity-60 shrink-0" />
+                                <p className="text-xs font-bold text-muted-foreground tracking-tight italic">
+                                    {fleet.boardingPointId?.description}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Operational Summary */}
+                    <Card className="shadow-lg h-32 flex items-center justify-center opacity-40 grayscale pointer-events-none overflow-hidden relative group">
+                         <div className="text-center space-y-1 relative z-10 transition-all group-hover:scale-105">
+                             <Clock className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                             <p className="text-sm font-black uppercase tracking-[0.2em]">{fleet.recentTrips?.length > 0 ? "Recent Activity" : "No Recent Analytics"}</p>
+                             <p className="text-[10px] font-bold text-muted-foreground tracking-widest italic uppercase">Operations log integrated soon</p>
+                         </div>
+                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-muted/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    </Card>
+                </div>
+            </div>
+        </>
+    );
 };
 
 export default BusDetail;

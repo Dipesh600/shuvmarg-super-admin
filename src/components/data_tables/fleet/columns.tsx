@@ -10,21 +10,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Eye, MapPin, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-type Owner = {
-  id:string;
+export type FleetRow = {
+  _id: string;
   fleetId: string;
+  busNumber: string;
+  busName: string;
   operator: string;
   route: string;
-  status: string;
-  capacity: number;
+  seatCapacity: number;
   busType: string;
-  approvedAt: string;
+  status: string;
+  approvalStatus: string;
 };
 
-export const columns: ColumnDef<Owner>[] = [
+export const columns: ColumnDef<FleetRow>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -49,56 +51,78 @@ export const columns: ColumnDef<Owner>[] = [
   },
   {
     accessorKey: "fleetId",
-    header: "Bus Id",
+    header: "Fleet ID",
+    cell: ({ row }) => <span className="font-mono text-xs">{row.original.fleetId}</span>,
+  },
+  {
+    accessorKey: "busName",
+    header: "Bus Details",
+    cell: ({ row }) => (
+      <div className="flex flex-col">
+        <span className="font-bold">{row.original.busName}</span>
+        <span className="text-xs text-muted-foreground uppercase">{row.original.busNumber}</span>
+      </div>
+    ),
   },
   {
     accessorKey: "operator",
     header: "Operator",
+    cell: ({ row }) => (
+      <span className="text-sm">{row.original.operator}</span>
+    ),
   },
   {
     accessorKey: "route",
     header: "Route",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-1">
+        <MapPin className="h-3 w-3 text-muted-foreground" />
+        <span className="text-xs">{row.original.route}</span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "seatCapacity",
+    header: "Capacity",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-1">
+        <Users className="h-3 w-3 text-muted-foreground" />
+        <span className="text-sm">{row.original.seatCapacity}</span>
+      </div>
+    ),
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const { status } = row.original;
-      return <Badge variant={status.toLowerCase() as BadgeProps["variant"]}>{status}</Badge>;
+      const status = row.original.status.toUpperCase();
+      const variant = status === "ACTIVE" ? "default" : "destructive";
+      return <Badge variant={variant as BadgeProps["variant"]}>{status}</Badge>;
     },
   },
   {
-    accessorKey: "capacity",
-    header: "Capacity",
-  },
-  {
-    accessorKey: "busType",
-    header: "Bus Type",
+    accessorKey: "approvalStatus",
+    header: "Approval",
     cell: ({ row }) => {
-      const { busType } = row.original;
+      const status = row.original.approvalStatus;
+      let variant: "default" | "secondary" | "destructive" | "outline" = "outline";
+      
+      if (status === "APPROVED") variant = "default";
+      if (status === "PENDING") variant = "secondary";
+      if (status === "REJECTED") variant = "destructive";
+
       return (
-        <Badge variant={"Success"}>
-          {busType}
+        <Badge variant={variant} className="capitalize">
+          {status.toLowerCase()}
         </Badge>
       );
     },
   },
   {
-    accessorKey: "approvedAt",
-    header: "Approved At",
-    cell:({row})=>{
-      const {approvedAt}=row.original;
-      return(
-        <span>{new Date(approvedAt)?.toDateString()}</span>
-      )
-    }
-  },
-
-  {
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
-      const { id } = row.original;
+      const { _id } = row.original;
       const navigate = useNavigate();
       return (
         <DropdownMenu>
@@ -111,12 +135,13 @@ export const columns: ColumnDef<Owner>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigate(`${window.location}/${id}`)}
+              className="cursor-pointer"
+              onClick={() => navigate(`/admin/fleets/${_id}`)}
             >
+              <Eye className="mr-2 h-4 w-4" />
               View Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            
           </DropdownMenuContent>
         </DropdownMenu>
       );
