@@ -28,6 +28,7 @@ import {
   AlertCircleIcon,
   ClipboardCheck,
   Bell,
+  Wallet,
 } from "lucide-react";
 
 import { NavLink, useLocation } from "react-router-dom";
@@ -40,8 +41,9 @@ const menuItems = [
   { title: "Fleet Management", url: "/admin/fleets", icon: MapPin },
   { title: "KYC Verification", url: "/admin/kyc", icon: ClipboardCheck },
   { title: "Financial", url: "/admin/financial", icon: DollarSign },
-  { title: "Commissions", url: "/admin/commissions", icon: DollarSign },
-  { title: "Refunds", url: "/admin/refunds", icon: AlertCircleIcon },
+  { title: "Commissions",   url: "/admin/commissions",  icon: DollarSign },
+  { title: "Settlements",   url: "/admin/settlements",  icon: Wallet },
+  { title: "Refunds",       url: "/admin/refunds",      icon: AlertCircleIcon },
   { title: "Bookings", url: "/admin/bookings", icon: Ticket },
   { title: "Transactions", url: "/admin/transactions", icon: Ticket },
   { title: "Disputes", url: "/admin/disputes", icon: AlertCircle },
