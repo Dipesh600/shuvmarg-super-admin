@@ -42,6 +42,7 @@ import BookingDetail from "./pages/admin/bookings/BookingDetails";
 import PushNotifications from "./pages/admin/push_notification/PushNotification";
 import OperatorDetails from "./pages/admin/busowners/OperatorDetails";
 import Settlements from "./pages/admin/settlements/Settlements";
+import TripManagement from "./pages/admin/trips/TripManagement";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,7 @@ const App = () => (
                 <Route path="commissions" element={<Commissions />} />
                 <Route path="refunds" element={<Refunds />} />
                 <Route path="settlements" element={<Settlements />} />
+                <Route path="trips" element={<TripManagement />} />
                 <Route path="disputes" element={<Disputes />} />
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="reports" element={<Reports />} />

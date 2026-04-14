@@ -1,54 +1,62 @@
-"use client";
-
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Users, DollarSign, Bus } from "lucide-react";
+import { TrendingUp, Users, DollarSign, Bus, RefreshCw, AlertCircle } from "lucide-react";
 import {
-  Line,
-  LineChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  Legend,
+  Line, LineChart, Bar, BarChart,
+  CartesianGrid, ResponsiveContainer,
+  Tooltip, XAxis, YAxis, Legend,
 } from "recharts";
+import { getAnalyticsOverview } from "@/api/analyticsApi";
 
-// ==================== DATA ====================
-const userGrowthData = [
-  { month: "Jan", users: 8500, newUsers: 450 },
-  { month: "Feb", users: 9200, newUsers: 700 },
-  { month: "Mar", users: 9800, newUsers: 600 },
-  { month: "Apr", users: 10600, newUsers: 800 },
-  { month: "May", users: 11400, newUsers: 800 },
-  { month: "Jun", users: 12450, newUsers: 1050 },
-];
-
-const routePerformanceData = [
-  { route: "KTM-PKR", bookings: 1450, revenue: 2175000 },
-  { route: "KTM-CHT", bookings: 890, revenue: 1335000 },
-  { route: "KTM-BTR", bookings: 720, revenue: 1584000 },
-  { route: "PKR-BTW", bookings: 650, revenue: 1105000 },
-  { route: "KTM-JNK", bookings: 540, revenue: 891000 },
-];
+const TOOLTIP_STYLE = {
+  backgroundColor: "hsl(var(--card))",
+  border: "1px solid hsl(var(--border))",
+  borderRadius: "0.5rem",
+};
 
 const Analytics = () => {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["analyticsOverview"],
+    queryFn: getAnalyticsOverview,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const kpis             = data?.kpis;
+  const userGrowthChart  = data?.userGrowthChart  ?? [];
+  const bookingTrendChart= data?.bookingTrendChart ?? [];
+  const topRoutes        = data?.topRoutes         ?? [];
+
   return (
     <>
-      {/* ==================== PAGE HEADER ==================== */}
+      {/* PAGE HEADER */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Analytics & Business Intelligence
+            Analytics &amp; Business Intelligence
           </h2>
           <p className="text-muted-foreground mt-1">
             Advanced analytics and performance insights
           </p>
         </div>
+        {isLoading && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            Loading live data…
+          </div>
+        )}
       </div>
 
-      {/* ==================== ANALYTICS CARDS ==================== */}
+      {isError && (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-destructive/40 bg-destructive/10">
+          <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+          <p className="text-sm text-destructive">
+            Failed to load analytics data. Check backend connectivity.
+          </p>
+        </div>
+      )}
+
+      {/* KPI CARDS */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-3">
@@ -58,8 +66,19 @@ const Analytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12.3%</div>
-            <p className="text-xs text-primary">Month over month</p>
+            {isLoading ? <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" /> : (
+              <>
+                <div className="text-2xl font-bold">
+                  {kpis?.userGrowthRate != null
+                    ? `${kpis.userGrowthRate >= 0 ? "+" : ""}${kpis.userGrowthRate}%`
+                    : "—"
+                  }
+                </div>
+                <p className="text-xs text-primary">
+                  {kpis?.totalUsers.toLocaleString("en-IN") ?? 0} total users
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -67,12 +86,20 @@ const Analytics = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-teal-500" />
-              Revenue Growth
+              Booking Success Rate
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+18.5%</div>
-            <p className="text-xs text-teal-500">Exceeding forecast</p>
+            {isLoading ? <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" /> : (
+              <>
+                <div className="text-2xl font-bold">
+                  {kpis?.bookingSuccessRate ?? 0}%
+                </div>
+                <p className="text-xs text-teal-500">
+                  From {kpis?.totalBookings.toLocaleString("en-IN") ?? 0} bookings
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -84,8 +111,12 @@ const Analytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">77%</div>
-            <p className="text-xs text-purple-500">Average occupancy</p>
+            {isLoading ? <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" /> : (
+              <>
+                <div className="text-2xl font-bold">{kpis?.fleetUtilization ?? 0}%</div>
+                <p className="text-xs text-purple-500">Average seat occupancy</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -97,144 +128,159 @@ const Analytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rs. 1,450</div>
-            <p className="text-xs text-indigo-700">+5% vs last month</p>
+            {isLoading ? <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" /> : (
+              <>
+                <div className="text-2xl font-bold">
+                  Rs. {(kpis?.avgTransactionAmount ?? 0).toLocaleString("en-IN")}
+                </div>
+                <p className="text-xs text-indigo-700">Per confirmed booking</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* ==================== CHARTS AREA ==================== */}
+      {/* CHARTS */}
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* USER GROWTH CHART */}
+        {/* User Growth Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>User Acquisition & Growth</CardTitle>
+            <CardTitle>User Acquisition &amp; Growth</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={userGrowthData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="month" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "0.5rem",
-                  }}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="users"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  name="Total Users"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="newUsers"
-                  stroke="hsl(var(--secondary))"
-                  strokeWidth={2}
-                  name="New Users"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : userGrowthChart.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">
+                No user data yet.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={userGrowthChart}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11 }} />
+                  <YAxis className="text-xs" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    name="Total Users"
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="newUsers"
+                    stroke="hsl(var(--secondary))"
+                    strokeWidth={2}
+                    name="New Users"
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
-        {/* ROUTE PERFORMANCE BAR CHART */}
+        {/* Top Routes Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Routes Performance</CardTitle>
+            <CardTitle>Top Routes by Bookings</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={routePerformanceData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="route" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "0.5rem",
-                  }}
-                />
-                <Legend />
-                <Bar
-                  dataKey="bookings"
-                  fill="hsl(var(--primary))"
-                  radius={[4, 4, 0, 0]}
-                  name="Bookings"
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : topRoutes.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">
+                No route data yet.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={topRoutes} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis type="number" className="text-xs" />
+                  <YAxis dataKey="route" type="category" className="text-xs" width={90} tick={{ fontSize: 10 }} />
+                  <Tooltip
+                    contentStyle={TOOLTIP_STYLE}
+                    formatter={(value: number, name: string) =>
+                      name === "bookings"
+                        ? [value.toLocaleString("en-IN"), "Bookings"]
+                        : [`Rs. ${value.toLocaleString("en-IN")}`, "Revenue"]
+                    }
+                  />
+                  <Legend />
+                  <Bar
+                    dataKey="bookings"
+                    fill="hsl(var(--primary))"
+                    radius={[0, 4, 4, 0]}
+                    name="Bookings"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* ==================== BOTTOM METRIC CARDS ==================== */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* User Engagement */}
+      {/* Booking Trend Chart + Operational Efficiency */}
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">User Engagement</CardTitle>
+            <CardTitle>Monthly Booking Trends</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              ["Daily Active Users", "3,245"],
-              ["Weekly Active Users", "8,967"],
-              ["Monthly Active Users", "12,450"],
-              ["Avg. Session Duration", "4.2 mins"],
-            ].map(([label, value]) => (
-              <div className="flex justify-between" key={label}>
-                <span className="text-sm">{label}</span>
-                <span className="font-semibold">{value}</span>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[250px]">
+                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ))}
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={bookingTrendChart}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="month" className="text-xs" tick={{ fontSize: 11 }} />
+                  <YAxis className="text-xs" />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Bar
+                    dataKey="bookings"
+                    fill="hsl(var(--secondary))"
+                    radius={[4, 4, 0, 0]}
+                    name="Bookings"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
-        {/* Market Penetration */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Market Penetration</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              ["Province 3 (Bagmati)", "52%"],
-              ["Province 4 (Gandaki)", "23%"],
-              ["Province 1 (Koshi)", "15%"],
-              ["Other Provinces", "10%"],
-            ].map(([label, value]) => (
-              <div className="flex justify-between" key={label}>
-                <span className="text-sm">{label}</span>
-                <span className="font-semibold">{value}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Operational Efficiency */}
+        {/* Operational Efficiency — mix of live + structural */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Operational Efficiency</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {[
-              ["Booking Success Rate", "99.2%", "text-success"],
-              ["Payment Success Rate", "98.7%", "text-success"],
-              ["Customer Support Response", "2.3 hrs"],
-              ["Dispute Resolution", "2.3 days"],
-            ].map(([label, value, className]) => (
-              <div className="flex justify-between" key={label}>
-                <span className="text-sm">{label}</span>
-                <span className={`font-semibold ${className ?? ""}`}>
-                  {value}
-                </span>
-              </div>
-            ))}
+            {isLoading ? (
+              <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
+            ) : (
+              [
+                ["Total Platform Revenue",   `Rs. ${(kpis?.totalRevenue ?? 0).toLocaleString("en-IN")}`, "text-green-600"],
+                ["Total Registered Users",   (kpis?.totalUsers ?? 0).toLocaleString("en-IN"), ""],
+                ["New Users This Month",     (kpis?.usersThisMonth ?? 0).toLocaleString("en-IN"), "text-primary"],
+                ["Booking Success Rate",     `${kpis?.bookingSuccessRate ?? 0}%`, "text-green-600"],
+                ["Fleet Utilization",        `${kpis?.fleetUtilization ?? 0}%`, ""],
+                ["Avg Transaction Value",    `Rs. ${(kpis?.avgTransactionAmount ?? 0).toLocaleString("en-IN")}`, ""],
+              ].map(([label, value, className]) => (
+                <div className="flex justify-between" key={label}>
+                  <span className="text-sm">{label}</span>
+                  <span className={`font-semibold ${className}`}>{value}</span>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
