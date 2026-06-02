@@ -126,3 +126,16 @@ export const updateTripStatus = async (
   }
 };
 
+// ── Driver Assignment ─────────────────────────────────────────────────────────
+
+/** Assign a driver (userId) to a trip. Trip must not be completed or cancelled. */
+export const assignDriverToTrip = async (tripId: string, driverId: string) => {
+  const { data } = await api.patch(`/trips/assign-driver/${tripId}`, { driverId });
+  return data;
+};
+
+/** Get users eligible to be assigned as drivers for a given brand */
+export const getDriversByBrand = async (brandId: string) => {
+  const { data } = await api.get(`/brands/${brandId}/drivers`);
+  return data;
+};

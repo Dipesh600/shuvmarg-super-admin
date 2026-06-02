@@ -1,0 +1,83 @@
+--- KYCBusOwnerDetail.tsx
++++ KYCBusOwnerDetail.tsx
+@@ -27,6 +27,8 @@
+ } from "lucide-react";
+ import { toast } from "sonner";
+ import { useOwerKycDetails } from "@/hooks/useKycDetails";
++import { useMutation, useQueryClient } from "@tanstack/react-query";
++import { updateOwnerKycStatus } from "@/api/kycApi";
+ 
+ type DocumentSection = {
+   title: string;
+@@ -41,7 +43,8 @@
+   const navigate = useNavigate();
+   const { id } = useParams();
+ 
+   const { data, isLoading, isError, error } = useOwerKycDetails(id);
+   const kyc = data?.data ;
++  const queryClient = useQueryClient();
+ 
+   /* -------------------- Document Status State -------------------- */
+@@ -182,13 +185,55 @@
+     (s) => s.rejectionReason,
+   );
+ 
+-  const handleFinalApproval = async () => {
+-    toast.success("KYC approved successfully");
+-    navigate("/admin/kyc");
+-  };
+-
+-  const handleFinalRejection = async () => {
+-    toast.error("KYC rejected");
+-    navigate("/admin/kyc");
+-  };
++  const { mutate: submitReview, isPending } = useMutation({
++    mutationFn: updateOwnerKycStatus,
++    onSuccess: (res) => {
++      toast.success(res.message || "KYC status updated successfully");
++      queryClient.invalidateQueries({ queryKey: ["unified_kyc"] });
++      queryClient.invalidateQueries({ queryKey: ["busOwners"] });
++      queryClient.invalidateQueries({ queryKey: ["owner", id] });
++      navigate("/admin/kyc");
++    },
++    onError: (err: any) => {
++      toast.error(err?.response?.data?.message || "Failed to update KYC status");
++    }
++  });
++
++  const handleFinalApproval = () => {
++    submitReview({
++      id: kyc.busOwnerId || id,
++      verificationStatus: "approved",
++      companyRegistration: {
++        verified: documentStatuses.companyRegistration.verified,
++        rejectionReason: documentStatuses.companyRegistration.rejectionReason || null
++      },
++      taxRegistration: {
++        verified: documentStatuses.taxRegistration.verified,
++        rejectionReason: documentStatuses.taxRegistration.rejectionReason || null
++      },
++      transportLicense: {
++        verified: documentStatuses.transportLicense.verified,
++        rejectionReason: documentStatuses.transportLicense.rejectionReason || null
++      },
++      insuranceCertificates: [
++        {
++          verified: documentStatuses.insurance.verified,
++          rejectionReason: documentStatuses.insurance.rejectionReason || null
++        }
++      ]
++    });
++    setFinalApprovalDialog(false);
++  };
++
++  const handleFinalRejection = () => {
++    submitReview({
++      id: kyc.busOwnerId || id,
++      verificationStatus: "rejected",
++      rejectionReason: finalRejectionReason
++    });
++    setFinalRejectionDialog(false);
++  };
+ 
+   /* -------------------- UI -------------------- */

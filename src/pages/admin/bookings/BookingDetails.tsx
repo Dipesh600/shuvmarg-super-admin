@@ -172,13 +172,17 @@ const BookingDetail = () => {
                   <span>-Rs. {booking.discountAmount.toLocaleString()}</span>
                 </div>
               )}
-              {booking.yatraPointsUsed > 0 && (
+              {booking.smMoneyUsed > 0 && (
                 <div className="flex justify-between text-sm text-primary font-medium">
-                  <span>Yatra Points Used ({booking.yatraPointsUsed})</span>
-                  <span>-Rs. {booking.yatraPointsDiscount.toLocaleString()}</span>
+                  <span>SM Money Used</span>
+                  <span>-Rs. {booking.smMoneyUsed.toLocaleString()}</span>
                 </div>
               )}
               <Separator className="bg-primary/20" />
+              <div className="flex justify-between font-bold text-base text-foreground">
+                <span>Gateway Paid</span>
+                <span>Rs. {booking.gatewayAmount ? booking.gatewayAmount.toLocaleString() : booking.totalAmount.toLocaleString()}</span>
+              </div>
               <div className="flex justify-between font-black text-lg text-primary">
                 <span>Total Paid</span>
                 <span>Rs. {booking.totalAmount.toLocaleString()}</span>
@@ -288,8 +292,7 @@ const BookingDetail = () => {
               </CardHeader>
               <CardContent className="px-6 space-y-5">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center group cursor-pointer" onClick={() => navigate(`/admin/fleets/${booking.tripId.busId._id}`)}>
-                    <div>
+                  <div className="flex justify-between items-center group cursor-pointer" onClick={() => navigate(`/admin/fleets/${booking.tripId.busId._id}/workstation`)}>                    <div>
                                             <p className="text-xs font-bold text-muted-foreground uppercase opacity-70 mb-0.5">Bus Name</p>
                       <p className="font-black text-lg group-hover:text-primary transition-colors">{booking.tripId.busId.busName}</p>
                     </div>

@@ -8,10 +8,10 @@ import {
 } from "@/api/busOwnerFleetApi";
 import { toast } from "sonner";
 
-export const useFetchOwnerFleets = (ownerId: string) => {
+export const useFetchOwnerFleets = (ownerId: string, brandId?: string) => {
     return useQuery({
-        queryKey: ["ownerFleets", "owner", ownerId],
-        queryFn: () => getFleetsByOwner(ownerId),
+        queryKey: ["ownerFleets", "owner", ownerId, brandId],
+        queryFn: () => getFleetsByOwner(ownerId, brandId),
         enabled: !!ownerId,
     });
 };

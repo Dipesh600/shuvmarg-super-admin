@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,27 +8,42 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { useModal } from "@/hooks/use-model-store";
 
-interface EditBusDialogProps {
-  bus: {
-    id: string;
-    type: string;
-    route: string;
-    capacity: number;
-    manufacturingYear: number;
-    chassisNumber: string;
-    engineNumber: string;
-    gpsDeviceId: string;
-    amenities: string[];
-    status: string;
-  };
-}
-
 const allAmenities = ["AC", "WiFi", "USB Charging", "Reclining Seats", "Blankets", "TV", "Toilet"];
 
-export function EditBusDialog({ bus }: EditBusDialogProps) {
-  const [formData, setFormData] = useState(bus);
-    const {isOpen,type,onClose} = useModal();
-    const isModelOpen = isOpen && type ==="editBus"
+export function EditBusDialog() {
+  const { isOpen, type, onClose, data } = useModal();
+  const isModelOpen = isOpen && type === "editBus";
+  const bus = data?.bus;
+
+  const [formData, setFormData] = useState({
+    id: "",
+    type: "Standard",
+    route: "",
+    capacity: 0,
+    manufacturingYear: new Date().getFullYear(),
+    chassisNumber: "",
+    engineNumber: "",
+    gpsDeviceId: "",
+    amenities: [] as string[],
+    status: "Active",
+  });
+
+  useEffect(() => {
+    if (bus) {
+      setFormData({
+        id: bus.id || "",
+        type: bus.type || "Standard",
+        route: bus.route || "",
+        capacity: bus.capacity || 0,
+        manufacturingYear: bus.manufacturingYear || new Date().getFullYear(),
+        chassisNumber: bus.chassisNumber || "",
+        engineNumber: bus.engineNumber || "",
+        gpsDeviceId: bus.gpsDeviceId || "",
+        amenities: bus.amenities || [],
+        status: bus.status || "Active",
+      });
+    }
+  }, [bus, isModelOpen]);
   const handleAmenityChange = (amenity: string, checked: boolean) => {
     if (checked) {
       setFormData({ ...formData, amenities: [...formData.amenities, amenity] });

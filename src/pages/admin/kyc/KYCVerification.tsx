@@ -24,11 +24,11 @@ export default function KYCVerification() {
       .filter((k: any) => k.kyctype === "busowner")
       .map((k: any) => ({
         busownerId: k.busownerId,
-        ownerId:k.data._id,
+        ownerId: k.data._id,
         companyname: k.companyname,
         owner: k.owner,
         submitdate: k.submitdate,
-        documents: 0,
+        documents: k.documents ?? 0,
         status: k.status,
       }));
   }, [kycData]);
@@ -37,6 +37,7 @@ export default function KYCVerification() {
     return kycData
       .filter((k: any) => k.kyctype === "agent")
       .map((k: any) => ({
+        id: k.data._id,
         agentId: k.agentId,
         companyname: k.companyname,
         location: k.location ?? "Biratnagar",
@@ -51,13 +52,20 @@ export default function KYCVerification() {
     return kycData
       .filter((k: any) => k.kyctype === "fleet")
       .map((k: any) => ({
+        id: k.data._id,
         fleetId: k.fleetId,
-        companyname: k.companyname,
+        busName: k.data?.busName,
         busNumber: k.data?.busNumber,
+        brandName: k.companyname,   // companyname maps to the brand name for fleet KYC
         owner: k.owner,
         submitdate: k.submitdate,
-        documents: 0,
-        status: k.status,
+        documents: [
+          k.data?.fleetDocuments?.fitnessCert?.url,
+          k.data?.fleetDocuments?.insurance?.url,
+          k.data?.fleetDocuments?.bluebook?.url,
+          k.data?.fleetDocuments?.routePermit?.url,
+        ].filter(Boolean).length + (k.data?.fleetImages?.length || 0),
+        approvalStatus: k.data?.approvalStatus ?? k.status?.toUpperCase() ?? "PENDING",
       }));
   }, [kycData]);
 

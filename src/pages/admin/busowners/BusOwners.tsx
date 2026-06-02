@@ -59,14 +59,16 @@ const BusOwners = () => {
     queryKey: ["busOwners"],
     queryFn: getAllBusOwners,
     enabled: !!token,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
   });
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
     queryKey: ["busOwnerDashboard"],
     queryFn: getBusOwnerDashboardData,
     enabled: !!token,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
   });
 
   const busOwnerDashboard = dashboardData?.data;
@@ -74,6 +76,7 @@ const BusOwners = () => {
   const BusOwnerTableData = data?.data.map((busOwner: any) => {
     return {
       id: busOwner._id,
+      busOwnerKycId: busOwner.busOwnerId,
       name: busOwner.name,
       phone: busOwner.phone,
       profileImg: busOwner.profilePicture,
@@ -129,7 +132,7 @@ const BusOwners = () => {
               {busOwnerDashboard?.totalBusOwners || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              Registered companies
+              All onboarded accounts
             </p>
           </CardContent>
         </Card>

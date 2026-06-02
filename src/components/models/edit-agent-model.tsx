@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,24 +7,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { useModal } from "@/hooks/use-model-store";
 
-interface EditAgentDialogProps {
-  agent: {
-    name: string;
-    email: string;
-    phone: string;
-    agencyName: string;
-    location: string;
-    commission: string;
-    panNumber: string;
-    bankDetails: string;
-    status: string;
-  };
-}
+export function EditAgentDialog() {
+  const { isOpen, type, onClose, data } = useModal();
+  const isModelOpen = isOpen && type === "editAgent";
+  const agent = data?.agent;
 
-export function EditAgentDialog({ agent }: EditAgentDialogProps) {
-  const [formData, setFormData] = useState(agent);
-    const {isOpen,type,onClose} = useModal();
-    const isModelOpen = isOpen && type ==="editAgent";
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    agencyName: "",
+    location: "",
+    commission: "",
+    panNumber: "",
+    bankDetails: "",
+    status: "Pending",
+  });
+
+  useEffect(() => {
+    if (agent) {
+      setFormData({
+        name: agent.name || "",
+        email: agent.email || "",
+        phone: agent.phone || "",
+        agencyName: agent.agencyName || "",
+        location: agent.location || "",
+        commission: agent.commission || "",
+        panNumber: agent.panNumber || "",
+        bankDetails: agent.bankDetails || "",
+        status: agent.status || "Pending",
+      });
+    }
+  }, [agent, isModelOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     toast({

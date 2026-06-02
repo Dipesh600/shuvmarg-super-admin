@@ -151,9 +151,11 @@ const Users = () => {
             <div className="text-2xl font-bold">
               {userDashboard?.totalUsers?.total || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
-              +{userDashboard?.totalUsers?.thisMonthIncrease || 0} this month
-            </p>
+            {userDashboard?.totalUsers?.thisMonthIncrease > 0 && (
+              <p className="text-xs text-muted-foreground">
+                +{userDashboard.totalUsers.thisMonthIncrease} this month
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -175,10 +177,12 @@ const Users = () => {
             <div className="text-2xl font-bold">
               {userDashboard?.newUsers?.today || 0}
             </div>
-            <p className="text-xs text-success">
-              {userDashboard?.newUsers?.growthVsYesterdayPercent >= 0 ? "+" : ""}
-              {userDashboard?.newUsers?.growthVsYesterdayPercent || 0}% vs yesterday
-            </p>
+            {userDashboard?.newUsers?.today > 0 && (
+              <p className="text-xs text-success">
+                {userDashboard.newUsers.growthVsYesterdayPercent >= 0 ? "+" : ""}
+                {userDashboard.newUsers.growthVsYesterdayPercent}% vs yesterday
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -187,12 +191,11 @@ const Users = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{VerifiedUsers}</div>
-            <p className="text-xs text-muted-foreground">
-              {userDashboard?.totalUsers?.total
-                ? ((VerifiedUsers / userDashboard.totalUsers.total) * 100).toFixed(2)
-                : 0}
-              %
-            </p>
+            {userDashboard?.totalUsers?.total > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {((VerifiedUsers / userDashboard.totalUsers.total) * 100).toFixed(0)}% verified
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

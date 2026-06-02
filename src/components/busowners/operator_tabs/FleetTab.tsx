@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bus, Plus, Eye, Edit, Trash2, Loader2, Search, ShieldCheck } from "lucide-react";
+import { Bus, Plus, Eye, Edit, Trash2, Loader2, Search, ShieldCheck, Clock, XCircle, Lock, ExternalLink, RotateCcw } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,21 +24,40 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { useFetchOwnerFleets, useDeleteOwnerFleet } from "@/hooks/useOwnerFleets";
+import { resubmitFleetById } from "@/api/busOwnerFleetApi";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Modals
 import CreateOwnerFleetModal from "./CreateOwnerFleetModal";
 import UpdateOwnerFleetModal from "./UpdateOwnerFleetModal";
 import ViewOwnerFleetModal from "./ViewOwnerFleetModal";
+import FleetSetupWizard from "./FleetSetupWizard";
 
-const FleetTab = ({ ownerId }: { ownerId: string }) => {
-  const { data: response, isLoading, isError, refetch } = useFetchOwnerFleets(ownerId);
+const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) => {
+  const navigate = useNavigate();
+  const { data: response, isLoading, isError, refetch } = useFetchOwnerFleets(ownerId, brandId);
   const deleteMutation = useDeleteOwnerFleet();
+  const qc = useQueryClient();
+
+  // Resubmit rejected fleet for re-review
+  const resubmitMutation = useMutation({
+    mutationFn: (fleetId: string) => resubmitFleetById(fleetId),
+    onSuccess: () => {
+      toast.success("Fleet resubmitted for review. It is now PENDING approval.");
+      qc.invalidateQueries({ queryKey: ["owner-fleets"] });
+      refetch();
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to resubmit fleet");
+    }
+  });
 
   const fleets = response?.data || [];
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeFleetId, setActiveFleetId] = useState<string | null>(null);
   const [modalType, setModalType] = useState<"view" | "edit" | null>(null);
+  const [wizardFleetId, setWizardFleetId] = useState<string | null>(null);
 
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null; name: string }>({
     isOpen: false,
@@ -144,7 +165,12 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
                 </TableHeader>
                 <TableBody>
                   {filteredFleets.map((fleet: any) => (
-                    <TableRow key={fleet._id} className="hover:bg-muted/5 font-medium transition-colors">
+                  <TableRow key={fleet._id}
+                    className={`font-medium transition-colors ${
+                      fleet.approvalStatus === "APPROVED" ? "border-l-4 border-l-emerald-400 hover:bg-emerald-50/30" :
+                      fleet.approvalStatus === "REJECTED" ? "border-l-4 border-l-rose-400 hover:bg-rose-50/20" :
+                      "border-l-4 border-l-amber-400 hover:bg-amber-50/20"
+                    }`}>
                       <TableCell className="align-top py-4">
                         <div className="flex flex-col gap-1">
                           <span className="font-black tracking-tight text-sm text-foreground">{fleet.busName}</span>
@@ -175,66 +201,118 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
                       </TableCell>
 
                       <TableCell className="align-top py-4 text-center">
-                        <div className="flex flex-col gap-1 items-center">
+                        <div className="flex flex-col gap-1.5 items-center">
                           <Badge
                             variant={fleet.status === "ACTIVE" ? "default" : "outline"}
                             className={`uppercase text-[9px] font-black tracking-widest py-0.5 ${fleet.status === 'ACTIVE' ? 'bg-success hover:bg-success/90' : 'text-muted-foreground'}`}
                           >
                             {fleet.status || "Unknown"}
                           </Badge>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="align-top py-4 text-center">
-                        <div className="flex flex-col gap-1 items-center">
                           {fleet.approvalStatus === "APPROVED" ? (
-                            <Badge variant="outline" className="text-[9px] font-black uppercase text-success border-success/30 bg-success/5 flex items-center gap-1">
-                              <ShieldCheck className="h-3 w-3" /> Approved
-                            </Badge>
-                          ) : fleet.approvalStatus === "PENDING" ? (
-                            <Badge variant="outline" className="text-[9px] font-black uppercase text-amber-500 border-amber-500/30 bg-amber-500/5">
-                              Pending
-                            </Badge>
+                            <div className="flex items-center gap-1 text-[9px] font-black uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <ShieldCheck className="h-2.5 w-2.5" /> Approved
+                            </div>
+                          ) : fleet.approvalStatus === "REJECTED" ? (
+                            <div className="flex items-center gap-1 text-[9px] font-black uppercase text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                              <XCircle className="h-2.5 w-2.5" /> Rejected
+                            </div>
                           ) : (
-                            <Badge variant="outline" className="text-[9px] font-black uppercase text-muted-foreground">
-                              {fleet.approvalStatus || "N/A"}
-                            </Badge>
+                            <div className="flex items-center gap-1 text-[9px] font-black uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              <Clock className="h-2.5 w-2.5" /> KYC Pending
+                            </div>
                           )}
                         </div>
                       </TableCell>
 
                       <TableCell className="align-top py-4 text-right pr-6">
-                        <div className="flex items-center justify-end gap-2 h-full">
+                        <div className="flex items-center justify-end gap-1.5 h-full flex-wrap">
+                          {/* Inline KYC Review button for PENDING fleets */}
+                          {fleet.approvalStatus === "PENDING" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 gap-1.5 text-[10px] font-black uppercase tracking-widest border-amber-300 text-amber-700 hover:bg-amber-50"
+                              onClick={() => navigate(`/admin/kyc/fleet/${fleet._id}`)}
+                              title="Review KYC Documents"
+                            >
+                              <ExternalLink className="h-3 w-3" /> KYC Review
+                            </Button>
+                          )}
+
+                          {/* Resubmit rejected fleet for re-review */}
+                          {fleet.approvalStatus === "REJECTED" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 gap-1.5 text-[10px] font-black uppercase tracking-widest border-blue-300 text-blue-700 hover:bg-blue-50"
+                              onClick={() => {
+                                if (confirm(`Resubmit "${fleet.busName}" for review? This will move it back to PENDING status.`)) {
+                                  resubmitMutation.mutate(fleet._id);
+                                }
+                              }}
+                              disabled={resubmitMutation.isPending}
+                              title="Resubmit for KYC Review"
+                            >
+                              <RotateCcw className={`h-3 w-3 ${resubmitMutation.isPending ? 'animate-spin' : ''}`} /> Resubmit
+                            </Button>
+                          )}
+                          
+                          {fleet.approvalStatus === "APPROVED" && !fleet.setupComplete && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 gap-1.5 text-[10px] font-black uppercase tracking-widest border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                              onClick={() => setWizardFleetId(fleet._id)}
+                              title="Complete Setup Wizard"
+                            >
+                              <ShieldCheck className="h-3 w-3" /> Setup Wizard
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
                             onClick={() => {
-                              setActiveFleetId(fleet._id);
-                              setModalType("view");
+                              if (fleet.approvalStatus === "APPROVED" && fleet.setupComplete) {
+                                navigate(`/admin/fleets/${fleet._id}/workstation`);
+                              } else {
+                                setActiveFleetId(fleet._id);
+                                setModalType("view");
+                              }
                             }}
-                            title="View Configuration Details"
+                            title={fleet.approvalStatus === "APPROVED" && fleet.setupComplete ? "Open Workstation" : "View Fleet Details"}
                           >
-                            <Eye className="h-4 w-4" />
+                            {fleet.approvalStatus === "APPROVED" && fleet.setupComplete
+                              ? <ExternalLink className="h-4 w-4" />
+                              : <Eye className="h-4 w-4" />
+                            }
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-colors"
+                            className={`h-8 w-8 transition-colors ${
+                              fleet.approvalStatus === "PENDING"
+                                ? "opacity-40 cursor-not-allowed"
+                                : "hover:bg-primary/10 hover:text-primary"
+                            }`}
                             onClick={() => {
+                              if (fleet.approvalStatus === "PENDING") {
+                                toast.info("Cannot edit a fleet that is under KYC review.");
+                                return;
+                              }
                               setActiveFleetId(fleet._id);
                               setModalType("edit");
                             }}
-                            title="Edit Vehicle Attributes"
+                            title={fleet.approvalStatus === "PENDING" ? "Locked during KYC review" : "Edit Fleet"}
                           >
-                            <Edit className="h-4 w-4" />
+                            {fleet.approvalStatus === "PENDING" ? <Lock className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-colors"
                             onClick={() => openDeleteConfirm(fleet._id, fleet.busName)}
-                            title="Delete Configuration"
+                            title="Delete Fleet"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -254,6 +332,7 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         ownerId={ownerId}
+        brandId={brandId}
       />
 
       <UpdateOwnerFleetModal
@@ -268,6 +347,16 @@ const FleetTab = ({ ownerId }: { ownerId: string }) => {
         isOpen={modalType === "view"}
         onClose={closeModals}
       />
+
+      {wizardFleetId && brandId && (
+        <FleetSetupWizard
+          isOpen={!!wizardFleetId}
+          onClose={() => setWizardFleetId(null)}
+          fleetId={wizardFleetId}
+          brandId={brandId}
+          ownerId={ownerId}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog

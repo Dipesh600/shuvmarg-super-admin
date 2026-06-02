@@ -70,9 +70,10 @@ export const columns: ColumnDef<BusOwner>[] = [
     header: "Contact",
     cell: ({ row }) => {
       const { phone, email } = row.original;
+      const isInternal = email && email.includes("@shuvmarg.internal");
       return (
         <div className="text-sm">
-          <div>{email}</div>
+          <div>{isInternal ? <span className="text-muted-foreground italic">No email provided</span> : email}</div>
           <div className="text-muted-foreground">{phone}</div>
         </div>
       );
@@ -119,8 +120,8 @@ export const columns: ColumnDef<BusOwner>[] = [
               View Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate(`/admin/kyc/bus-owner/${id}`)}>View Kyc Details</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate(`/admin/bus-owners/operator/${id}`)}>Operator</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/admin/kyc/bus-owner/${row.original.busOwnerKycId}`)}>View Kyc Details</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/admin/bus-owners/${id}?tab=operators`)}>Manage Brands</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

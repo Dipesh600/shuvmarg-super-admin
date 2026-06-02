@@ -158,7 +158,7 @@ if(isLoading) {
                   <TableHead>Contact</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Yatra Points</TableHead>
+                  <TableHead>SM Money</TableHead>
                   <TableHead>Referrals</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead className="text-right">Actions</TableHead>

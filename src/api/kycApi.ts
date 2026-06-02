@@ -29,4 +29,9 @@ export const getOwnerDetail = async(busOwnerId:string)=>{
   } catch (error) {
     console.log(error);
   }
-}
+};
+
+export const updateOwnerKycStatus = async(payload: any) => {
+  const { data } = await api.patch("/busOwnerKycStatus", payload);
+  return data;
+};

@@ -16,6 +16,7 @@ import {
   Calendar,
   Edit,
   CheckCircle,
+  Wallet,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -24,6 +25,7 @@ import { SuspendDialog } from "@/components/models/suspended-model";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserById } from "@/api/userApi";
+import { getUserBalance } from "@/api/walletApi";
 import UserDetailSkeleton from "@/components/Skeletion_Loading/UserDetailSkeleton";
 import { useUserBookings } from "@/hooks/useUserBookings";
 import DeleteModel from "@/components/models/delete-model";
@@ -40,6 +42,12 @@ const UserDetail = () => {
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ["user", id],
     queryFn: () => getUserById(id as string),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: walletData, isLoading: walletLoading } = useQuery({
+    queryKey: ["userWallet", id],
+    queryFn: () => getUserBalance(id as string),
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
@@ -187,7 +195,7 @@ const UserDetail = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-3 mb-6">
+            <div className="grid gap-4 md:grid-cols-4 mb-6">
               <div className="p-4 bg-muted/50 rounded-lg text-center">
                 <div className="text-2xl font-bold">
                   {bookings?.totalBookings ?? 0}
@@ -205,6 +213,21 @@ const UserDetail = () => {
               <div className="p-4 bg-muted/50 rounded-lg text-center">
                 <div className="text-sm font-medium">{userData.lastLogin}</div>
                 <div className="text-sm text-muted-foreground">Last Login</div>
+              </div>
+              <div className="p-4 bg-muted/50 rounded-lg text-center flex flex-col items-center justify-center relative group overflow-hidden border border-transparent hover:border-primary/20 transition-colors">
+                <div className="absolute inset-0 bg-primary/5 translate-y-[120%] group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+                <div className="text-2xl font-bold relative z-10">
+                  {walletLoading ? "..." : `Rs. ${walletData?.balance?.toLocaleString("en-IN") ?? 0}`}
+                </div>
+                <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1 relative z-10">
+                  <Wallet className="h-3.5 w-3.5" /> SM Money
+                </div>
+                <div 
+                  className="text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute bottom-1.5 z-10 font-medium cursor-pointer flex items-center gap-0.5 hover:underline" 
+                  onClick={() => navigate(`/admin/wallet`)}
+                >
+                  Manage &rarr;
+                </div>
               </div>
             </div>
 

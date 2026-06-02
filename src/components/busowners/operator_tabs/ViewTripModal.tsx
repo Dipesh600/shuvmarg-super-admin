@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
    Dialog,
    DialogContent,
@@ -10,10 +10,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Calendar, Clock, Bus, MapPin, LayoutGrid, Info, Repeat, Eye, Loader2, Navigation, ShieldCheck } from "lucide-react";
+import { Calendar, Clock, Bus, MapPin, LayoutGrid, Info, Repeat, Eye, Loader2, Navigation, ShieldCheck, UserCheck, UserX } from "lucide-react";
 import { useFetchTripById } from "@/hooks/useTrips";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { assignDriverToTrip, getDriversByBrand } from "@/api/tripApi";
+import { toast } from "sonner";
+
 
 interface ViewTripModalProps {
    id: string | null;
@@ -26,8 +31,30 @@ const ViewTripModal: React.FC<ViewTripModalProps> = ({
    isOpen,
    onClose
 }) => {
+   const qc = useQueryClient();
+   const [selectedDriverId, setSelectedDriverId] = useState("");
    const { data: tripResponse, isLoading } = useFetchTripById(id || "");
    const trip = tripResponse?.data;
+
+   // Only fetch drivers when modal is open and trip has a brand
+   const { data: driversData } = useQuery({
+      queryKey: ["brand-drivers", trip?.brandId?._id || trip?.brandId],
+      queryFn:  () => getDriversByBrand(trip?.brandId?._id || trip?.brandId),
+      enabled:  isOpen && !!trip?.brandId,
+   });
+   const drivers = driversData?.data || [];
+
+   const assignMut = useMutation({
+      mutationFn: () => assignDriverToTrip(id!, selectedDriverId),
+      onSuccess: () => {
+         qc.invalidateQueries({ queryKey: ["trip", id] });
+         toast.success("Driver assigned successfully.");
+         setSelectedDriverId("");
+      },
+      onError: (e: any) => toast.error(e.response?.data?.message || "Failed to assign driver"),
+   });
+
+   const canAssignDriver = trip && !["completed", "cancelled"].includes(trip.status);
 
    return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -168,6 +195,62 @@ const ViewTripModal: React.FC<ViewTripModalProps> = ({
                               <p className="font-black text-lg text-primary uppercase">{trip.recurrence}</p>
                            </div>
                         </div>
+
+                        {/* ── Driver Assignment Card ─────────────────────────── */}
+                        <Card className={`p-5 border-2 shadow-none ${trip.driverId ? "border-emerald-200 bg-emerald-50/30" : "border-amber-200 bg-amber-50/30"}`}>
+                           <div className="flex items-center gap-2 mb-4">
+                              {trip.driverId ? (
+                                 <UserCheck className="h-4 w-4 text-emerald-600" />
+                              ) : (
+                                 <UserX className="h-4 w-4 text-amber-600" />
+                              )}
+                              <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Driver Assignment</h4>
+                           </div>
+
+                           {trip.driverId ? (
+                              <div className="flex items-center justify-between">
+                                 <div>
+                                    <p className="font-black text-lg tracking-tight">{(trip.driverId as any).fullName || "Driver Assigned"}</p>
+                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{(trip.driverId as any).licenseNumber || ""}</p>
+                                 </div>
+                                 <Badge className="bg-emerald-100 text-emerald-700 uppercase text-[9px] font-black tracking-widest border-emerald-200">Assigned</Badge>
+                              </div>
+                           ) : (
+                              <div className="space-y-3">
+                                 <p className="text-xs font-bold text-amber-700">
+                                    ⚠ No driver assigned. Trip cannot move to BOARDING without a driver.
+                                 </p>
+                                 {canAssignDriver && (
+                                    <div className="flex gap-2">
+                                       <Select value={selectedDriverId} onValueChange={setSelectedDriverId}>
+                                          <SelectTrigger className="h-9 rounded-xl flex-1">
+                                             <SelectValue placeholder="Select a driver..." />
+                                          </SelectTrigger>
+                                          <SelectContent className="rounded-xl">
+                                             {drivers.length === 0 ? (
+                                                <SelectItem value="none" disabled>No drivers available</SelectItem>
+                                             ) : (
+                                                drivers.map((d: any) => (
+                                                   <SelectItem key={d._id} value={d._id}>
+                                                      {d.fullName} ({d.licenseType})
+                                                   </SelectItem>
+                                                ))
+                                             )}
+                                          </SelectContent>
+                                       </Select>
+                                       <Button
+                                          size="sm"
+                                          className="h-9 px-4 rounded-xl font-black"
+                                          disabled={!selectedDriverId || assignMut.isPending}
+                                          onClick={() => assignMut.mutate()}
+                                       >
+                                          {assignMut.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Assign"}
+                                       </Button>
+                                    </div>
+                                 )}
+                              </div>
+                           )}
+                        </Card>
 
                         {/* Automation Details if any */}
                         {trip.recurrence !== "none" && (

@@ -136,10 +136,10 @@ export const columns: ColumnDef<FleetRow>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
               className="cursor-pointer"
-              onClick={() => navigate(`/admin/fleets/${_id}`)}
+              onClick={() => navigate(`/admin/fleets/${_id}/workstation`)}
             >
               <Eye className="mr-2 h-4 w-4" />
-              View Profile
+              Open Workstation
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </DropdownMenuContent>

@@ -37,11 +37,15 @@ const Index = () => {
   if (isError) {
     return <div>Error loading dashboard data: {(error as Error).message}</div>;
   }
-  const summaryData = data?.data.summary;
-  const revenueData = data?.data.revenueOverview.map((item: any) => ({
+  const summaryData = data?.data?.summary;
+  const revenueData = (data?.data?.revenueOverview ?? []).map((item: any) => ({
     month: item.label,
     revenue: item.revenue,
   }));
+
+  // Guard: don't render KPI cards until data is fully loaded
+  if (!summaryData) return <DashboardSkeleton />;
+
   return (
     <>
       {/* Welcome Section */}

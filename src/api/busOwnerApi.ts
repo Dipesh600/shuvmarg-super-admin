@@ -20,4 +20,22 @@ const getBusOwnerDashboardData = async () => {
   return data;
 };
 
-export { getAllBusOwners, getBusOwnerById, getBusOwnerDashboardData };
+// create new bus owner (FormData with files)
+const createBusOwner = async (formData: FormData) => {
+  const { data } = await api.post("/busOwner/create", formData);
+  return data;
+};
+
+// reupload specific KYC document
+const reuploadKycDocument = async (formData: FormData) => {
+  const { data } = await api.post("/busOwner/reuploadKycDocument", formData);
+  return data;
+};
+
+// update bus owner details
+const updateBusOwner = async (payload: any) => {
+  const { data } = await api.patch("/busOwner/update", payload);
+  return data;
+};
+
+export { getAllBusOwners, getBusOwnerById, getBusOwnerDashboardData, createBusOwner, reuploadKycDocument, updateBusOwner };

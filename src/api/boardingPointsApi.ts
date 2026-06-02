@@ -10,6 +10,20 @@ export const createBoardingPoint = async (payload: any) => {
     }
 };
 
+export const getPointsByCity = async (city: string, ownerId?: string, type?: string) => {
+    try {
+        const params = new URLSearchParams();
+        if (ownerId) params.append("ownerId", ownerId);
+        if (type) params.append("type", type);
+        
+        const { data } = await api.get(`/boardingPoints/city/${city}?${params.toString()}`);
+        return data;
+    } catch (error) {
+        console.error("Error fetching boarding points by city:", error);
+        throw error;
+    }
+};
+
 export const getBoardingPointsByOwner = async (ownerId: string) => {
     try {
         const { data } = await api.get(`/boardingPoints/owner/${ownerId}`);

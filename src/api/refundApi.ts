@@ -40,20 +40,29 @@ export const getAllRefundPolicy = async () => {
 
 // ─── Live refund request endpoints ───────────────────────────────────────────
 
-export const getRefundRequests = async () => {
+export const getRefundQueue = async (status?: string, search?: string) => {
   try {
-    const { data } = await api.get("/refund/getAllCancelledBookings");
+    const params = new URLSearchParams();
+    if (status) params.append("status", status);
+    if (search) params.append("search", search);
+    const queryString = params.toString() ? `?${params.toString()}` : "";
+    const { data } = await api.get(`/refund/queue${queryString}`);
     return data;
   } catch (error) {
     const err = error as AxiosError<{ message?: string }>;
-    throw new Error(err.response?.data?.message || "Failed to fetch refund requests");
+    throw new Error(err.response?.data?.message || "Failed to fetch refund queue");
   }
 };
 
+// Legacy alias
+export const getRefundRequests = getRefundQueue;
+
 export const updateRefundStatus = async (payload: {
-  bookingId: string;
-  refundStatus: "approved" | "rejected" | "processing";
-  adminNote?: string;
+  refundId: string;
+  status: "processing" | "completed" | "rejected";
+  remarks?: string;
+  refundGateway?: string;
+  refundGatewayId?: string;
 }) => {
   try {
     const { data } = await api.patch("/refund/update-status", payload);

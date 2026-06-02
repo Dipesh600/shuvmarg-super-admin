@@ -1,5 +1,4 @@
 import { Toaster } from "@/components/ui/sonner";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -43,6 +42,14 @@ import PushNotifications from "./pages/admin/push_notification/PushNotification"
 import OperatorDetails from "./pages/admin/busowners/OperatorDetails";
 import Settlements from "./pages/admin/settlements/Settlements";
 import TripManagement from "./pages/admin/trips/TripManagement";
+import PlatformRegistry from "./pages/admin/registry/PlatformRegistry";
+import PlatformAmenities from "./pages/admin/registry/PlatformAmenities";
+import FleetWorkstation from "./pages/admin/fleets/FleetWorkstation";
+import OffersHub from "./pages/admin/offers/OffersHub";
+import CreateOffer from "./pages/admin/offers/CreateOffer";
+import OfferDetail from "./pages/admin/offers/OfferDetail";
+import WalletManagement from "./pages/admin/wallet/WalletManagement";
+import GatewayFees from "./pages/admin/gateway-fees/GatewayFees";
 
 const queryClient = new QueryClient();
 
@@ -50,13 +57,12 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
       <ModelProvider />
       <BrowserRouter>
         <AuthProvider>
           <Routes>
             <Route path="/auth/login" element={<SuperAdminLogin />} />
-            <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+            <Route element={<ProtectedRoute allowedRoles={["SUPER_ADMIN", "ADMIN", "SUB_ADMIN"]} />}>
               <Route path="/" element={<Navigate to={"/admin"} />} />
               <Route
                 path="/admin"
@@ -72,10 +78,11 @@ const App = () => (
                 <Route path="agents" element={<Agents />} />
                 <Route path="agents/:id" element={<AgentDetail />} />
                 <Route path="bus-owners" element={<BusOwners />} />
-                <Route path="bus-owners/:id" element={<BusOwnerDetail />} />
                 <Route path="bus-owners/operator/:id" element={<OperatorDetails />} />
+                <Route path="bus-owners/:id" element={<BusOwnerDetail />} />
                 <Route path="fleets" element={<Fleet />} />
                 <Route path="fleets/tracking" element={<FleetTracking />} />
+                <Route path="fleets/:id/workstation" element={<FleetWorkstation />} />
                 <Route path="fleets/:id" element={<BusDetail />} />
                 <Route
                   path="fleets/:id/maintenance"
@@ -102,10 +109,17 @@ const App = () => (
                 <Route path="commissions" element={<Commissions />} />
                 <Route path="refunds" element={<Refunds />} />
                 <Route path="settlements" element={<Settlements />} />
+                <Route path="wallet" element={<WalletManagement />} />
                 <Route path="trips" element={<TripManagement />} />
                 <Route path="disputes" element={<Disputes />} />
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="reports" element={<Reports />} />
+                <Route path="registry" element={<PlatformRegistry />} />
+                <Route path="amenities" element={<PlatformAmenities />} />
+                <Route path="gateway-fees" element={<GatewayFees />} />
+                <Route path="offers" element={<OffersHub />} />
+                <Route path="offers/create" element={<CreateOffer />} />
+                <Route path="offers/:id" element={<OfferDetail />} />
                 <Route path="security" element={<Security />} />
                 <Route path="settings" element={<Settings />} />
               </Route>

@@ -125,19 +125,25 @@ const SuperAdminLogin = () => {
                 )}
               </div>
 
-              {/* OTP */}
+              {/* OTP — always required */}
               <div className="space-y-2">
-                <Label className="text-slate-300">2FA Code</Label>
+                <Label className="text-slate-300">
+                  Google Authenticator Code{" "}
+                  <span className="text-red-400 text-xs font-semibold">*required</span>
+                </Label>
                 <Input
                   {...register("otp")}
-                  placeholder="123456"
-                  className="bg-slate-900 border-slate-700 text-white"
+                  placeholder="6-digit code from Google Authenticator"
+                  className="bg-slate-900 border-slate-700 text-white tracking-widest text-center text-lg"
+                  maxLength={6}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
                 />
                 {errors.otp ? (
                   <p className="text-xs text-red-500">{errors.otp.message}</p>
                 ) : (
                   <p className="text-xs text-slate-500">
-                    Generated via Google Authenticator or SMS
+                    Open Google Authenticator and enter your 6-digit code
                   </p>
                 )}
               </div>

@@ -31,6 +31,7 @@ import {
 import CreateSeatTemplateModal from "./CreateSeatTemplateModal";
 import UpdateSeatTemplateModal from "./UpdateSeatTemplateModal";
 import ViewSeatTemplateModal from "./ViewSeatTemplateModal";
+import { MiniSeatMapPreview } from "./MiniSeatMapPreview";
 
 const SeatTemplateTab = ({ ownerId }: { ownerId: string }) => {
   const { data: response, isLoading, isError, refetch } = useFetchSeatTemplatesByUser(ownerId);
@@ -137,9 +138,9 @@ const SeatTemplateTab = ({ ownerId }: { ownerId: string }) => {
               <Table>
                 <TableHeader className="bg-muted/20">
                   <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-[100px]"></TableHead>
                     <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary">Template Name</TableHead>
                     <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary text-center">Total Seats</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary text-center">Breakdown (A/B/C)</TableHead>
                     <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary text-center">Status</TableHead>
                     <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary text-right pr-6">Operations</TableHead>
                   </TableRow>
@@ -147,6 +148,21 @@ const SeatTemplateTab = ({ ownerId }: { ownerId: string }) => {
                 <TableBody>
                   {filteredTemplates.map((t: any) => (
                     <TableRow key={t._id} className="hover:bg-primary/[0.02] transition-colors border-b last:border-0">
+                      <TableCell className="py-2 pl-4">
+                        <div className="w-16 h-12 flex items-center justify-center rounded-lg border bg-background overflow-hidden relative group cursor-pointer" onClick={() => { setActiveTemplateId(t._id); setModalType("view"); }}>
+                            {t.seatConfig ? (
+                                <div className="scale-50 origin-center pointer-events-none absolute inset-0 flex items-center justify-center">
+                                    <MiniSeatMapPreview config={t.seatConfig} size="xs" />
+                                </div>
+                            ) : (
+                                <span className="text-[8px] font-black uppercase text-muted-foreground">Legacy</span>
+                            )}
+                            <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <Eye className="w-4 h-4 text-primary" />
+                            </div>
+                        </div>
+                      </TableCell>
+
                       <TableCell className="align-middle py-4">
                         <div className="flex flex-col">
                            <span className="font-black tracking-tight text-sm text-foreground">{t.templateName}</span>
@@ -158,16 +174,6 @@ const SeatTemplateTab = ({ ownerId }: { ownerId: string }) => {
                          <div className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-primary/10 border-2 border-primary/20 px-2">
                            <span className="font-black text-xs text-primary">{t.totalSeats}</span>
                          </div>
-                      </TableCell>
-
-                      <TableCell className="align-middle py-4 text-center">
-                        <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-muted-foreground">
-                           <span className="bg-muted px-1.5 py-0.5 rounded" title="Seat A">{t.seata?.length || 0}A</span>
-                           <span className="opacity-30">•</span>
-                           <span className="bg-muted px-1.5 py-0.5 rounded" title="Seat B">{t.seatb?.length || 0}B</span>
-                           <span className="opacity-30">•</span>
-                           <span className="bg-muted px-1.5 py-0.5 rounded" title="Seat C">{t.seatc?.length || 0}C</span>
-                        </div>
                       </TableCell>
 
                       <TableCell className="align-middle py-4 text-center">

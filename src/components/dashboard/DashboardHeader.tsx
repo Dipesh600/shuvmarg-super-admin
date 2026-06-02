@@ -53,16 +53,7 @@ export function DashboardHeader() {
             System Healthy
           </Badge>
 
-          {/* Active Sessions (hidden on mobile) */}
-          <Badge
-            variant="secondary"
-            className="
-              text-white bg-green-600 hover:bg-green-700 cursor-pointer
-              hidden md:flex
-            "
-          >
-            127 Active Sessions
-          </Badge>
+
 
           {/* Notification */}
           <Button variant="ghost" className="cursor-pointer" size="icon">

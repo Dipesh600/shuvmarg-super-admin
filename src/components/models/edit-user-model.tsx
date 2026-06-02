@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,30 @@ import { toast } from "@/hooks/use-toast";
 import { useModal } from "@/hooks/use-model-store";
 
 export function EditUserDialog() {
-  const {isOpen,type,onClose,data} = useModal();
-  const [formData, setFormData] = useState(data?.data);
-    const isModelOpen = isOpen && type === "editUser" 
+  const { isOpen, type, onClose, data } = useModal();
+  const isModelOpen = isOpen && type === "editUser";
+  const user = data?.data;
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    status: "active",
+  });
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        address: user.address || "",
+        status: user.status || "active",
+      });
+    }
+  }, [user, isModelOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     toast({

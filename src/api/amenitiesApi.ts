@@ -10,6 +10,16 @@ export const createAmenity = async (payload: any) => {
     }
 };
 
+export const createGlobalAmenity = async (payload: any) => {
+    try {
+        const { data } = await api.post("/amenities/createGlobal", payload);
+        return data;
+    } catch (error) {
+        console.error("Error creating global amenity:", error);
+        throw error;
+    }
+};
+
 export const getAmenitiesByOwner = async (ownerId: string) => {
     try {
         const { data } = await api.get(`/amenities/owner/${ownerId}`);

@@ -10,6 +10,26 @@ export const createBusRoute = async (payload: any) => {
     }
 };
 
+export const createGlobalRoute = async (payload: any) => {
+    try {
+        const { data } = await api.post("/busRoutes/createGlobal", payload);
+        return data;
+    } catch (error) {
+        console.error("Error creating global route:", error);
+        throw error;
+    }
+};
+
+export const getGlobalRoutes = async () => {
+    try {
+        const { data } = await api.get("/busRoutes/global");
+        return data;
+    } catch (error) {
+        console.error("Error fetching global routes:", error);
+        throw error;
+    }
+};
+
 export const getBusRoutesByOwner = async (ownerId: string) => {
     try {
         const { data } = await api.get(`/busRoutes/owner/${ownerId}`);
