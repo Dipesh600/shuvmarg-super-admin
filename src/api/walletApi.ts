@@ -95,6 +95,29 @@ export interface UserBalance {
   exists: boolean;
 }
 
+// ─── Global Feed Types ──────────────────────────────────────────────────────
+
+export type GlobalFeedFilter = "all" | "cashback" | "referral" | "spent" | "admin" | "refunds";
+
+export interface GlobalFeedStats {
+  totalCreditsToday: number;
+  totalDebitsToday: number;
+  totalCreditAmountToday: number;
+  totalDebitAmountToday: number;
+}
+
+export interface GlobalFeedResponse {
+  entries: WalletTransaction[];
+  stats: GlobalFeedStats;
+  pagination: {
+    page: number;
+    limit: number;
+    totalCount: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
 // ─── API Functions ───────────────────────────────────────────────────────────
 
 export const getWalletOverview = async (): Promise<WalletOverview> => {
@@ -150,5 +173,21 @@ export const getUserBalance = async (userId: string): Promise<UserBalance> => {
   } catch (error) {
     const err = error as AxiosError<{ message?: string }>;
     throw new Error(err.response?.data?.message || "Failed to fetch user balance");
+  }
+};
+
+export const getGlobalFeed = async (
+  page = 1,
+  limit = 25,
+  type: GlobalFeedFilter = "all"
+): Promise<GlobalFeedResponse> => {
+  try {
+    const { data } = await api.get("/wallet/global-feed", {
+      params: { page, limit, type },
+    });
+    return data.data;
+  } catch (error) {
+    const err = error as AxiosError<{ message?: string }>;
+    throw new Error(err.response?.data?.message || "Failed to fetch global transaction feed");
   }
 };

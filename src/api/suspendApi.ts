@@ -2,13 +2,10 @@ import type { AxiosError } from "axios";
 import { api } from "./axios";
 
 export interface SuspendPayload {
-//   entityType: "user" | "agent" | "bus owner" | "bus";
   id: string;
-  status: "banned" | "active";
-//   reason?: string;
-//   duration?: string;
+  status: "banned" | "active" | "inactive";
+  reason?: string;
 }
-
 
 export async function suspendEntity(payload: SuspendPayload) {
   try {
@@ -19,9 +16,10 @@ export async function suspendEntity(payload: SuspendPayload) {
     throw new Error(err.response?.data?.message || "Failed to update status");
   }
 }
-export async function getUserBookings(id:string) {
+
+export async function getUserBookings(id: string) {
   try {
-    const { data } = await api.post("/getBookingsByUser",{userId:id});
+    const { data } = await api.post("/booking/getBookingsByUser", { userId: id });
     return data;
   } catch (error) {
     throw new Error("Failed to fetch bookings");
