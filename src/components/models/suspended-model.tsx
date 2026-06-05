@@ -51,36 +51,34 @@ const queryClient = useQueryClient();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Require reason when suspending/banning
+    if (!isSuspended && !reason.trim()) {
+      toast.error("Reason is required when suspending a user");
+      return;
+    }
+
     suspendMutation.mutate(
       {
-        id:entityId,
+        id: entityId,
         status: isSuspended ? "active" : "banned",
+        ...(reason.trim() && { reason: reason.trim() }),
       },
       {
         onSuccess: () => {
-          toast.success("User Update Successfully")
-          queryClient.invalidateQueries({queryKey:["user",entityId]})
-          // toast({
-          //   title: isSuspended ? "Reactivated" : "Suspended",
-          //   description: `${entityName} has been ${
-          //     isSuspended ? "reactivated" : "suspended"
-          //   } successfully.`,
-          //   variant: isSuspended ? "default" : "destructive",
-          // });
+          const action = isSuspended ? "reactivated" : "suspended";
+          toast.success(`${entityName} has been ${action} successfully`);
+          queryClient.invalidateQueries({ queryKey: ["user", entityId] });
+          queryClient.invalidateQueries({ queryKey: ["users"] });
           setOpen(false);
           setReason("");
         },
         onError: (err: any) => {
-          console.log(err)
-          // toast({
-          //   title: "Error",
-          //   description: err.message || "Something went wrong",
-          //   variant: "destructive",
-          // });
+          toast.error(err.message || "Something went wrong");
         },
       }
     );
   };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
