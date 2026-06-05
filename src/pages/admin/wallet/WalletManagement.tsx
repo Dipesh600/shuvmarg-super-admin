@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ScratchThemeManager from "@/components/scratch-themes/ScratchThemeManager";
 import {
   Table,
   TableBody,
@@ -45,6 +47,7 @@ import {
   type WalletTransaction,
 } from "@/api/walletApi";
 import WalletAdjustmentDialog from "@/components/models/wallet-adjustment-model";
+import GlobalTransactionFeed from "@/components/wallet/GlobalTransactionFeed";
 
 const WalletManagement = () => {
   const queryClient = useQueryClient();
@@ -176,6 +179,19 @@ const WalletManagement = () => {
         </Button>
       </div>
 
+      <Tabs defaultValue="wallet" className="mt-6">
+        <TabsList className="mb-4">
+          <TabsTrigger value="wallet" className="gap-2">
+            <Wallet className="h-4 w-4" />
+            Wallet & Ledger
+          </TabsTrigger>
+          <TabsTrigger value="themes" className="gap-2">
+            <DollarSign className="h-4 w-4" />
+            Scratch Themes
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="wallet" className="space-y-6">
       {/* ══════════════════════════════════════════════════════════════════
           SECTION 1: PLATFORM OBSERVATORY KPI CARDS
           ══════════════════════════════════════════════════════════════ */}
@@ -298,15 +314,15 @@ const WalletManagement = () => {
             </div>
           )}
 
-          {/* Empty state */}
+          {/* Global Feed (shown when no user is searched) */}
           {!submittedQuery && !lookupLoading && (
-            <div className="flex flex-col items-center justify-center p-16 text-center gap-2">
-              <Wallet className="h-12 w-12 text-muted-foreground" />
-              <p className="text-sm font-medium">Enter a search query above</p>
-              <p className="text-xs text-muted-foreground max-w-[320px]">
-                Search by user's phone number (e.g. 9841234567), name, or MongoDB ID
-              </p>
-            </div>
+            <GlobalTransactionFeed
+              onUserClick={(query) => {
+                setSearchQuery(query);
+                setSubmittedQuery(query);
+                setLedgerPage(1);
+              }}
+            />
           )}
 
           {/* User Found — Profile + Wallet + Actions */}
@@ -650,6 +666,12 @@ const WalletManagement = () => {
           }}
         />
       )}
+        </TabsContent>
+
+        <TabsContent value="themes" className="pt-2">
+          <ScratchThemeManager />
+        </TabsContent>
+      </Tabs>
     </>
   );
 };

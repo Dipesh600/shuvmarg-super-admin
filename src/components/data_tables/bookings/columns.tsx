@@ -12,6 +12,33 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+// Extracted into its own component so useNavigate is called at the
+// component top-level (React hooks rule) rather than inside a cell callback.
+const BookingActionsCell = ({ bookingId }: { bookingId: string }) => {
+  const navigate = useNavigate();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p0">
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => navigate(`/admin/bookings/${bookingId}`)}
+        >
+          <ExternalLink className="mr-2 h-4 w-4" />
+          View Details
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 export type BookingRow = {
   _id: string;
   ticketId: string;
@@ -62,7 +89,7 @@ export const columns: ColumnDef<BookingRow>[] = [
   },
   {
     accessorKey: "date",
-    header: "Travel Date",
+    header: "Booking Date",
     cell: ({ row }) => {
       const date = new Date(row.getValue("date"));
       return <span>{date.toLocaleDateString()}</span>;
@@ -89,31 +116,6 @@ export const columns: ColumnDef<BookingRow>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => {
-      const navigate = useNavigate();
-      const booking = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem 
-              className="cursor-pointer"
-              onClick={() => navigate(`/admin/bookings/${booking._id}`)}
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <BookingActionsCell bookingId={row.original._id} />,
   },
 ];

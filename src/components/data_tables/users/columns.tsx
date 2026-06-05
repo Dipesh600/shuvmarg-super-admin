@@ -15,13 +15,17 @@ import { useNavigate } from "react-router-dom";
 
 export type User = {
   id: string;
-  profileImg:string;
+  profileImg: string;
   name: string;
   phone: string;
   bookings: number;
+  totalSpent: number;
   joined: string;
-  status: "active" | "suspended" | "inActive";
+  status: "active" | "inactive" | "banned";
   email: string;
+  role?: string;
+  roles?: string[];
+  verified?: boolean;
 };
 
 export const columns: ColumnDef<User>[] = [
@@ -49,16 +53,22 @@ export const columns: ColumnDef<User>[] = [
   },
   {
     accessorKey: "profileImg",
-    header: "Profile Image",
+    header: "Profile",
     cell: ({ row }) => {
-      const { profileImg } = row.original;
+      const { profileImg, name } = row.original;
       return (
         <div className="flex justify-center items-center">
-          <img
-            src={profileImg}
-            alt="Profile"
-            className="w-8 h-8 rounded-full object-cover"
-          />
+          {profileImg ? (
+            <img
+              src={profileImg}
+              alt={name}
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
+              {name?.[0]?.toUpperCase() || "?"}
+            </div>
+          )}
         </div>
       );
     },
@@ -74,9 +84,31 @@ export const columns: ColumnDef<User>[] = [
       const { phone, email } = row.original;
       return (
         <div className="text-sm">
-          <div>{email}</div>
+          <div>{email || "—"}</div>
           <div className="text-muted-foreground">{phone}</div>
         </div>
+      );
+    },
+  },
+  {
+    accessorKey: "role",
+    header: "Registered As",
+    cell: ({ row }) => {
+      const { role } = row.original;
+      const label =
+        role === "busOwner"
+          ? "Bus Owner"
+          : role === "agent"
+          ? "Agent"
+          : role === "conductor"
+          ? "Conductor"
+          : role === "driver"
+          ? "Driver"
+          : "Passenger";
+      return (
+        <Badge variant={role !== "passenger" ? "secondary" : "outline"} className="capitalize">
+          {label}
+        </Badge>
       );
     },
   },
@@ -85,9 +117,15 @@ export const columns: ColumnDef<User>[] = [
     header: "Status",
     cell: ({ row }) => {
       const { status } = row.original;
+      const variant =
+        status === "active"
+          ? "default"
+          : status === "banned"
+          ? "destructive"
+          : "secondary"; // inactive = muted
       return (
-        <Badge variant={status === "active" ? "default" : "destructive"}>
-          {status}
+        <Badge variant={variant} className="capitalize">
+          {status === "inactive" ? "Suspended" : status}
         </Badge>
       );
     },
@@ -95,15 +133,19 @@ export const columns: ColumnDef<User>[] = [
   {
     accessorKey: "bookings",
     header: "Bookings",
+    cell: ({ row }) => {
+      const { bookings } = row.original;
+      return <span className="font-medium">{bookings}</span>;
+    },
   },
   {
     accessorKey: "joined",
     header: "Joined",
-    cell:({row})=>{
-      const {joined} = row.original;
+    cell: ({ row }) => {
+      const { joined } = row.original;
       const date = new Date(joined);
       return date.toLocaleDateString();
-    }
+    },
   },
   {
     id: "actions",
@@ -121,12 +163,10 @@ export const columns: ColumnDef<User>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigate(`${window.location}/${id}`)}>
+            <DropdownMenuItem onClick={() => navigate(`/admin/users/${id}`)}>
               View Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {/* <DropdownMenuItem>View customer</DropdownMenuItem> */}
-            {/* <DropdownMenuItem>View payment details</DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       );

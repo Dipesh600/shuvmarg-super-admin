@@ -19,6 +19,10 @@ export type UserBooking = {
     from: string;
     to: string;
   };
+  tripRoute?: {
+    from: string;
+    to: string;
+  } | null;
   amount: number;
 
   bookedAt: string;
@@ -56,14 +60,22 @@ export const UserBooking: ColumnDef<UserBooking>[] = [
     accessorKey: "route",
     header: "Route",
     cell: ({ row }) => {
-      const { scheduleRoute } = row.original;
+      const { scheduleRoute, tripRoute } = row.original;
       return (
         <div>
-          {scheduleRoute.from} - {scheduleRoute.to}
+          <div className="font-medium">
+            {scheduleRoute.from} → {scheduleRoute.to}
+          </div>
+          {tripRoute && (
+            <div className="text-xs text-muted-foreground mt-0.5">
+              Trip: {tripRoute.from} → {tripRoute.to}
+            </div>
+          )}
         </div>
       );
     },
   },
+
 
   {
     accessorKey: "status",
