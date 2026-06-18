@@ -31,15 +31,15 @@ import { getAllTransactions } from "@/api/transactionApi";
 import { getDisputes } from "@/api/disputeApi";
 
 /* ─── Helpers ─── */
-function statusVariant(s: string): "default" | "destructive" | "secondary" | "outline" {
+function statusStyles(s: string): string {
   switch (s) {
-    case "SUCCESS":          return "default";
+    case "SUCCESS":          return "text-white border-white/10 bg-white/5";
     case "FAILED":
-    case "DISPUTED":         return "destructive";
-    case "REFUNDED":         return "secondary";
+    case "DISPUTED":         return "text-white border-white/10 bg-white/5";
+    case "REFUNDED":         return "text-white border-white/10 bg-white/5";
     case "PENDING":
-    case "PAYMENT_RECEIVED": return "outline";
-    default:                 return "outline";
+    case "PAYMENT_RECEIVED": return "text-white border-white/10 bg-white/5";
+    default:                 return "text-white/70 border-white/20 bg-white/10";
   }
 }
 
@@ -134,21 +134,21 @@ const Transactions = () => {
     <>
       {/* ── Page header ── */}
       <div className="mb-6">
-        <h2 className="text-3xl font-bold tracking-tight">Financial Ledger</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <h2 className="text-2xl font-bold tracking-tight text-white">Financial Ledger</h2>
+        <p className="text-white/60 mt-1 font-medium text-sm">
           Gateway-level audit trail for every payment on the platform
         </p>
       </div>
 
       {/* ── Disputes alert banner (only shown when there are open disputes) ── */}
       {openDisputeCount > 0 && (
-        <div className="mb-6 flex items-start gap-3 rounded-lg border border-destructive/50 bg-destructive/5 p-4">
-          <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 p-4">
+          <AlertTriangle className="h-5 w-5 text-white shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="text-destructive font-bold text-sm">
+            <p className="text-white font-bold text-sm">
               {openDisputeCount} payment{openDisputeCount > 1 ? "s" : ""} need manual resolution
             </p>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="text-sm text-white/60 mt-0.5">
               Money was received by the gateway but booking creation failed. These users have been
               charged with no ticket — action required.
             </p>
@@ -156,7 +156,7 @@ const Transactions = () => {
           <Button
             size="sm"
             variant="destructive"
-            className="shrink-0 gap-2"
+            className="shrink-0 gap-2 bg-white/5 hover:bg-white/5 text-white border-none"
             onClick={() => navigate("/admin/disputes")}
           >
             Resolve Disputes <ExternalLink className="h-3.5 w-3.5" />
@@ -168,46 +168,50 @@ const Transactions = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
           {
-            icon:  <TrendingUp  className="h-5 w-5 text-primary" />,
+            icon:  <TrendingUp  className="h-5 w-5 text-[#D3D925]" />,
             label: "Total Volume",
             value: `Rs. ${(stats.totalVolume ?? 0).toLocaleString()}`,
             sub:   `${stats.totalCount ?? 0} total transactions`,
-            border: "border-l-primary",
+            border: "border-l-[#D3D925]",
+            valueColor: "text-[#D3D925]",
           },
           {
-            icon:  <CheckCircle className="h-5 w-5 text-success" />,
+            icon:  <CheckCircle className="h-5 w-5 text-white" />,
             label: "Success Rate",
             value: stats.successRate ?? "—",
             sub:   `${stats.successCount ?? 0} successful`,
-            border: "border-l-success",
+            border: "border-l-emerald-500",
+            valueColor: "text-white",
           },
           {
-            icon:  <XCircle     className="h-5 w-5 text-destructive" />,
+            icon:  <XCircle     className="h-5 w-5 text-white" />,
             label: "Failed",
             value: stats.failedCount ?? 0,
             sub:   `${stats.disputedCount ?? 0} DISPUTED → go to Disputes`,
-            border: "border-l-destructive",
+            border: "border-l-rose-500",
+            valueColor: "text-white",
             onClick: stats.disputedCount > 0 ? () => navigate("/admin/disputes") : undefined,
           },
           {
-            icon:  <RefreshCw   className="h-5 w-5 text-secondary-foreground" />,
+            icon:  <RefreshCw   className="h-5 w-5 text-white/60" />,
             label: "Refunded",
             value: stats.refundedCount ?? 0,
             sub:   `${stats.pendingCount ?? 0} pending / verifying`,
-            border: "border-l-muted-foreground",
+            border: "border-l-white/20",
+            valueColor: "text-white",
           },
         ].map((m) => (
           <Card
             key={m.label}
-            className={`border-l-4 ${m.border} ${m.onClick ? "cursor-pointer hover:bg-muted/30 transition-colors" : ""}`}
+            className={`border-y-white/5 border-r-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl border-l-4 ${m.border} ${m.onClick ? "cursor-pointer hover:bg-white/5 transition-colors" : ""}`}
             onClick={m.onClick}
           >
             <CardContent className="pt-4 pb-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground mb-1">{m.label}</p>
-                  <p className="font-bold text-lg leading-tight">{m.value}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{m.sub}</p>
+                  <p className="text-xs text-white/60 mb-1">{m.label}</p>
+                  <p className={`font-bold text-lg leading-tight ${m.valueColor}`}>{m.value}</p>
+                  <p className="text-[11px] text-white/40 mt-0.5 truncate">{m.sub}</p>
                 </div>
                 {m.icon}
               </div>
@@ -217,15 +221,15 @@ const Transactions = () => {
       </div>
 
       {/* ── What this page is / is not ── */}
-      <div className="flex items-start gap-2 mb-5 p-3 bg-muted/30 rounded-lg border border-border/40">
-        <CreditCard className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          <span className="font-semibold text-foreground">Financial ledger only.</span>{" "}
+      <div className="flex items-start gap-2 mb-5 p-3 bg-white/5 rounded-lg border border-white/10">
+        <CreditCard className="h-4 w-4 text-white/60 shrink-0 mt-0.5" />
+        <p className="text-xs text-white/60 leading-relaxed">
+          <span className="font-semibold text-white">Financial ledger only.</span>{" "}
           This view shows the raw gateway record for every payment — what the gateway received,
           confirmed, or failed. To manage DISPUTED payments (money taken, no ticket issued) or
           resolve manual refunds, use the{" "}
           <button
-            className="underline font-semibold text-primary"
+            className="underline font-semibold text-[#D3D925]"
             onClick={() => navigate("/admin/disputes")}
           >
             Disputes page
@@ -235,16 +239,16 @@ const Transactions = () => {
       </div>
 
       {/* ── Ledger table ── */}
-      <Card>
-        <CardHeader className="pb-4">
+      <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
+        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-primary" /> Transaction History
+            <CardTitle className="flex items-center gap-2 text-white">
+              <CreditCard className="h-4 w-4 text-[#D3D925]" /> Transaction History
               {pagination.total > 0 && (
-                <Badge variant="secondary" className="font-mono">{pagination.total.toLocaleString()}</Badge>
+                <Badge variant="outline" className="bg-white/5 border-white/10 text-white/80">{pagination.total.toLocaleString()}</Badge>
               )}
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white">
               <RefreshCw className="h-4 w-4 mr-2" /> Refresh
             </Button>
           </div>
@@ -252,31 +256,31 @@ const Transactions = () => {
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-2 mt-3">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
               <Input
                 placeholder="Search txn ID or ticket ID…"
-                className="pl-9"
+                className="pl-9 border-white/10 bg-white/5 text-white placeholder:text-white/40"
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
             <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[160px] border-white/10 bg-white/5 text-white">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#121212] border-white/10 text-white">
                 {STATUS_OPTIONS.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  <SelectItem key={s.value} value={s.value} className="focus:bg-white/10 focus:text-white">{s.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={txnType} onValueChange={(v) => { setTxnType(v); setPage(1); }}>
-              <SelectTrigger className="w-[130px]">
+              <SelectTrigger className="w-[130px] border-white/10 bg-white/5 text-white">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#121212] border-white/10 text-white">
                 {TYPE_OPTIONS.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  <SelectItem key={t.value} value={t.value} className="focus:bg-white/10 focus:text-white">{t.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -285,19 +289,19 @@ const Transactions = () => {
 
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
+            <div className="flex items-center justify-center py-16 text-white/40 text-sm">
               Loading ledger…
             </div>
           ) : isError ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <XCircle className="h-10 w-10 text-destructive" />
-              <p className="text-sm text-muted-foreground">Failed to load transactions</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+              <XCircle className="h-10 w-10 text-white" />
+              <p className="text-sm text-white/60">Failed to load transactions</p>
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="border-white/10 text-white hover:bg-white/10">Retry</Button>
             </div>
           ) : transactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
-              <CreditCard className="h-10 w-10 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">No transactions match the current filters</p>
+              <CreditCard className="h-10 w-10 text-white/20" />
+              <p className="text-sm text-white/60">No transactions match the current filters</p>
             </div>
           ) : (
             <>
@@ -305,7 +309,7 @@ const Transactions = () => {
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full min-w-[860px] text-sm">
                   <thead>
-                    <tr className="border-b text-left text-xs text-muted-foreground uppercase tracking-wide">
+                    <tr className="border-b border-white/5 text-left text-xs text-white/60 uppercase tracking-wide">
                       <th className="pb-3 pr-4 font-semibold">Gateway Ref</th>
                       <th className="pb-3 pr-4 font-semibold">Ticket</th>
                       <th className="pb-3 pr-4 font-semibold">Customer</th>
@@ -317,48 +321,48 @@ const Transactions = () => {
                       <th className="pb-3 text-right font-semibold">Detail</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border/40">
+                  <tbody className="divide-y divide-white/5">
                     {transactions.map((txn: any) => {
                       const isProblematic = txn.status === "DISPUTED" || txn.status === "PAYMENT_RECEIVED";
                       return (
                         <tr
                           key={txn._id}
-                          className={`transition-colors ${
+                          className={`transition-colors border-white/5 ${
                             isProblematic
-                              ? "bg-destructive/5 hover:bg-destructive/10"
-                              : "hover:bg-muted/30"
+                              ? "bg-white/5 hover:bg-white/5"
+                              : "hover:bg-white/5"
                           }`}
                         >
-                          <td className="py-3 pr-4 font-mono text-xs text-muted-foreground">
+                          <td className="py-3 pr-4 text-xs text-white/60">
                             {txn.transactionId?.slice(-14) ?? "—"}
                           </td>
-                          <td className="py-3 pr-4 font-mono text-xs">
+                          <td className="py-3 pr-4 text-xs text-white/80">
                             {txn.ticketId ?? (
-                              <span className="text-muted-foreground/50 italic">
+                              <span className="text-white/40 italic">
                                 {txn.status === "DISPUTED" ? "No ticket" : "—"}
                               </span>
                             )}
                           </td>
                           <td className="py-3 pr-4">
-                            <p className="font-medium leading-tight">{txn.userId?.name ?? "—"}</p>
-                            <p className="text-xs text-muted-foreground">{txn.userId?.phone ?? ""}</p>
+                            <p className="font-medium leading-tight text-white/90">{txn.userId?.name ?? "—"}</p>
+                            <p className="text-xs text-white/60">{txn.userId?.phone ?? ""}</p>
                           </td>
-                          <td className="py-3 pr-4 font-bold tabular-nums">
+                          <td className="py-3 pr-4 font-bold tabular-nums text-[#D3D925]">
                             Rs.&nbsp;{(txn.totalAmount ?? 0).toLocaleString()}
                           </td>
                           <td className="py-3 pr-4">
-                            <Badge variant="outline" className="text-[10px]">
+                            <Badge variant="outline" className="text-[10px] bg-white/5 border-white/10 text-white/80">
                               {PM[txn.gateway] ?? txn.gateway ?? "—"}
                             </Badge>
                           </td>
                           <td className="py-3 pr-4">
-                            <Badge variant="secondary" className="text-[10px]">
+                            <Badge variant="outline" className="text-[10px] bg-white/5 border-white/10 text-white/80">
                               {txn.transactionType ?? "—"}
                             </Badge>
                           </td>
                           <td className="py-3 pr-4">
                             <div className="flex items-center gap-1.5">
-                              <Badge variant={statusVariant(txn.status)} className="gap-1 text-[10px]">
+                              <Badge variant="outline" className={`gap-1 text-[10px] ${statusStyles(txn.status)}`}>
                                 {statusIcon(txn.status)}
                                 {statusLabel(txn.status)}
                               </Badge>
@@ -366,14 +370,14 @@ const Transactions = () => {
                               {txn.status === "DISPUTED" && (
                                 <button
                                   onClick={() => navigate("/admin/disputes")}
-                                  className="text-[10px] text-destructive underline font-semibold hover:opacity-80"
+                                  className="text-[10px] text-white underline font-semibold hover:opacity-80"
                                 >
                                   Resolve
                                 </button>
                               )}
                             </div>
                           </td>
-                          <td className="py-3 pr-4 text-xs text-muted-foreground whitespace-nowrap">
+                          <td className="py-3 pr-4 text-xs text-white/60 whitespace-nowrap">
                             {txn.createdAt
                               ? new Date(txn.createdAt).toLocaleString("en-NP", {
                                   day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
@@ -382,8 +386,8 @@ const Transactions = () => {
                           </td>
                           <td className="py-3 text-right">
                             <Link to={`/admin/transactions/${txn._id}`}>
-                              <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs">
-                                <ArrowRight className="h-3 w-3" />
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10">
+                                <ArrowRight className="h-4 w-4" />
                               </Button>
                             </Link>
                           </td>
@@ -402,39 +406,39 @@ const Transactions = () => {
                     <div
                       key={txn._id}
                       className={`rounded-lg border p-3 space-y-2 ${
-                        isProblematic ? "border-destructive/40 bg-destructive/5" : "border-border/60 bg-muted/20"
+                        isProblematic ? "border-white/10 bg-white/5" : "border-white/10 bg-white/5"
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs text-muted-foreground">
+                        <span className="text-xs text-white/60">
                           {txn.transactionId?.slice(-12) ?? "—"}
                         </span>
-                        <Badge variant={statusVariant(txn.status)} className="gap-1 text-[10px]">
+                        <Badge variant="outline" className={`gap-1 text-[10px] ${statusStyles(txn.status)}`}>
                           {statusIcon(txn.status)} {statusLabel(txn.status)}
                         </Badge>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">{txn.userId?.name ?? "—"}</span>
-                        <span className="font-bold tabular-nums">
+                        <span className="text-white/60">{txn.userId?.name ?? "—"}</span>
+                        <span className="font-bold tabular-nums text-[#D3D925]">
                           Rs.&nbsp;{(txn.totalAmount ?? 0).toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <Badge variant="outline" className="text-[10px]">
+                        <Badge variant="outline" className="text-[10px] bg-white/5 border-white/10 text-white/80">
                           {PM[txn.gateway] ?? txn.gateway ?? "—"}
                         </Badge>
                         {txn.status === "DISPUTED" ? (
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="h-7 text-xs gap-1"
+                            className="h-7 text-xs gap-1 bg-white/5 hover:bg-white/5 text-white"
                             onClick={() => navigate("/admin/disputes")}
                           >
                             Resolve <ExternalLink className="h-3 w-3" />
                           </Button>
                         ) : (
                           <Link to={`/admin/transactions/${txn._id}`}>
-                            <Button variant="ghost" size="sm" className="h-7 text-xs">
+                            <Button variant="ghost" size="sm" className="h-7 text-xs text-white/80 hover:text-white hover:bg-white/10">
                               Details
                             </Button>
                           </Link>
@@ -447,8 +451,8 @@ const Transactions = () => {
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
-                  <p className="text-xs text-muted-foreground">
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/5">
+                  <p className="text-xs text-white/60">
                     Page {pagination.page} of {pagination.totalPages}
                     &nbsp;·&nbsp;{pagination.total.toLocaleString()} records
                   </p>
@@ -457,6 +461,7 @@ const Transactions = () => {
                       variant="outline" size="sm"
                       disabled={page <= 1}
                       onClick={() => setPage((p) => p - 1)}
+                      className="border-white/10 bg-white/5 text-white hover:bg-white/10"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -464,6 +469,7 @@ const Transactions = () => {
                       variant="outline" size="sm"
                       disabled={page >= pagination.totalPages}
                       onClick={() => setPage((p) => p + 1)}
+                      className="border-white/10 bg-white/5 text-white hover:bg-white/10"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>

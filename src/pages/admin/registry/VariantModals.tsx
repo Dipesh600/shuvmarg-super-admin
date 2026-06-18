@@ -19,16 +19,16 @@ import { createVariant, setVariantStops, getStopsForVariant, getAllStops } from 
 const ModalHeader = ({ icon: Icon, title, subtitle, children }: {
   icon: React.ElementType; title: string; subtitle?: string; children?: React.ReactNode;
 }) => (
-  <div className="bg-slate-900 p-7 text-white">
+  <div className="bg-[#121212] p-7 border-b border-white/5 text-white">
     <DialogHeader>
-      <DialogTitle className="text-lg font-black text-white flex items-center gap-2.5">
+      <DialogTitle className="text-lg font-bold text-white flex items-center gap-2.5">
         <div className="p-1.5 bg-white/10 rounded-lg">
           <Icon className="w-4 h-4 text-white" />
         </div>
         {title}
       </DialogTitle>
     </DialogHeader>
-    {subtitle && <p className="text-slate-400 text-sm font-medium mt-1.5 ml-9">{subtitle}</p>}
+    {subtitle && <p className="text-white/50 text-sm font-medium mt-1.5 ml-9">{subtitle}</p>}
     {children && <div className="mt-3 ml-9">{children}</div>}
   </div>
 );
@@ -73,26 +73,26 @@ export const CreateVariantModal = ({ corridor, open, onClose }: CreateVariantMod
       <DialogContent className="sm:max-w-[480px] p-0 border-none shadow-2xl rounded-2xl overflow-hidden">
         <ModalHeader icon={Route} title="Add Route Variant" subtitle={`Define a path for corridor ${corridor?.code}`}>
           <div className="flex items-center gap-2">
-            <Badge className="bg-white/15 text-white border-none font-black text-xs px-2">
+            <Badge className="bg-white/15 text-white border-none font-bold text-xs px-2">
               {corridor?.originId?.name}
             </Badge>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-            <Badge className="bg-white/15 text-white border-none font-black text-xs px-2">
+            <ArrowRight className="w-3.5 h-3.5 text-white/50" />
+            <Badge className="bg-white/15 text-white border-none font-bold text-xs px-2">
               {corridor?.destinationId?.name}
             </Badge>
           </div>
         </ModalHeader>
 
-        <div className="p-7 space-y-5 bg-background">
+        <div className="p-7 space-y-5 bg-[#0a0a0a]">
           <div className="space-y-1.5">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Path Name</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Path Name</Label>
             <Input placeholder="e.g. Via BP Highway, Via Hetauda" className="h-11 rounded-xl font-bold"
               value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Road Type</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Road Type</Label>
               <Select value={form.type} onValueChange={v => setForm({ ...form, type: v })}>
                 <SelectTrigger className="h-11 rounded-xl font-bold"><SelectValue /></SelectTrigger>
                 <SelectContent className="rounded-xl">
@@ -103,33 +103,33 @@ export const CreateVariantModal = ({ corridor, open, onClose }: CreateVariantMod
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Distance (km)</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Distance (km)</Label>
               <Input type="number" placeholder="232" className="h-11 rounded-xl font-bold"
                 value={form.distanceKm} onChange={e => setForm({ ...form, distanceKm: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Duration (min)</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Duration (min)</Label>
               <Input type="number" placeholder="390" className="h-11 rounded-xl font-bold"
                 value={form.durationMinutes} onChange={e => setForm({ ...form, durationMinutes: e.target.value })} />
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-muted/40 rounded-xl border border-border/60">
+          <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
             <div className="flex items-center gap-3">
-              <ArrowRightLeft className="w-4 h-4 text-foreground/60" />
+              <ArrowRightLeft className="w-4 h-4 text-white/60" />
               <div>
-                <p className="text-sm font-black">Auto-Build Return Variant</p>
-                <p className="text-[10px] text-muted-foreground font-medium">Creates the reverse path automatically.</p>
+                <p className="text-sm font-bold">Auto-Build Return Variant</p>
+                <p className="text-[10px] text-white/50 font-medium">Creates the reverse path automatically.</p>
               </div>
             </div>
             <Switch checked={form.autoGenerateReturn} onCheckedChange={v => setForm({ ...form, autoGenerateReturn: v })} />
           </div>
         </div>
 
-        <DialogFooter className="p-7 pt-0 bg-background gap-3">
+        <DialogFooter className="p-7 pt-0 bg-[#0a0a0a] gap-3">
           <Button variant="outline" onClick={onClose} className="font-bold rounded-xl h-11">Cancel</Button>
           <Button disabled={mutation.isPending || !form.name} onClick={handleSubmit}
-            className="font-black rounded-xl h-11 px-8 bg-slate-900 hover:bg-slate-800 text-white">
+            className="font-bold rounded-xl h-11 px-8 bg-[#121212] hover:bg-white/10 text-white">
             {mutation.isPending && <Loader2 className="mr-2 w-4 h-4 animate-spin" />}
             {form.autoGenerateReturn ? "Create Both Directions" : "Create Variant"}
           </Button>
@@ -262,10 +262,10 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
         <ModalHeader icon={Route} title="Route Stop Sequence" subtitle="Define ordered stops for this variant path">
           {variant && (
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge className="bg-white/15 text-white border-none font-mono font-black text-xs">{variant.code}</Badge>
-              <span className="text-slate-400 text-xs">{variant.name.replace(/ \(Return\)/i, "").replace(/ \(Forward\)/i, "")}</span>
+              <Badge className="bg-white/15 text-white border-none font-bold text-xs">{variant.code}</Badge>
+              <span className="text-white/50 text-xs">{variant.name.replace(/ \(Return\)/i, "").replace(/ \(Forward\)/i, "")}</span>
               {variant.direction && (
-                <Badge className={`border-none text-[9px] font-black ${variant.direction === "RETURN" ? "bg-amber-500/20 text-amber-300" : "bg-emerald-500/20 text-emerald-300"}`}>
+                <Badge className={`border-none text-[9px] font-bold ${variant.direction === "RETURN" ? "bg-white/5/20 text-white" : "bg-[#D3D925]/100/20 text-[#D3D925]"}`}>
                   {variant.direction}
                 </Badge>
               )}
@@ -273,16 +273,16 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
           )}
         </ModalHeader>
 
-        <div className="flex flex-1 overflow-hidden bg-background">
+        <div className="flex flex-1 overflow-hidden bg-[#0a0a0a]">
 
           {/* Left Panel: Stop Registry */}
-          <div className="w-64 border-r flex flex-col shrink-0 bg-muted/10">
-            <div className="px-3 py-3 border-b bg-background/80 space-y-2 shrink-0">
+          <div className="w-64 border-r flex flex-col shrink-0 bg-white/[0.02]">
+            <div className="px-3 py-3 border-b bg-[#0a0a0a]/80 space-y-2 shrink-0">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Stop Registry</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Stop Registry</p>
                 <button 
                   onClick={() => { setIsSmartPaste(!isSmartPaste); setSmartPasteText(""); }}
-                  className={`text-[9px] font-black uppercase px-2 py-0.5 rounded transition-all ${isSmartPaste ? "bg-slate-200 text-slate-700 hover:bg-slate-300" : "bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100"}`}
+                  className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded transition-all ${isSmartPaste ? "bg-slate-200 text-white/30 hover:bg-slate-300" : "bg-[#D3D925]/10 text-[#D3D925] border border-[#D3D925]/20 hover:bg-[#D3D925]/10"}`}
                 >
                   {isSmartPaste ? "Back to Search" : "✨ Smart Paste"}
                 </button>
@@ -291,10 +291,10 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
               {!isSmartPaste && (
                 <div className="space-y-2 animate-in fade-in">
                   <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/50" />
                     <Input placeholder="Search stops..." className="pl-7 h-7 rounded-lg text-xs" value={stopSearch} onChange={e => setStopSearch(e.target.value)} />
                   </div>
-                  <p className="text-[9px] text-muted-foreground/60">{filteredAvailableStops.length} of {allStops.length} stops</p>
+                  <p className="text-[9px] text-white/50/60">{filteredAvailableStops.length} of {allStops.length} stops</p>
                 </div>
               )}
             </div>
@@ -302,11 +302,11 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
             <div className="flex-1 overflow-y-auto p-2">
               {isSmartPaste ? (
                 <div className="flex flex-col h-full space-y-3 animate-in fade-in p-1">
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  <p className="text-[10px] text-white/50 leading-relaxed">
                     Paste a comma-separated list of stop names or aliases to instantly generate the sequence.
                   </p>
                   <textarea 
-                    className="flex-1 w-full p-3 text-xs font-mono rounded-xl border bg-background resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                    className="flex-1 w-full p-3 text-xs rounded-xl border bg-[#0a0a0a] resize-none focus:outline-none focus:ring-2 focus:ring-[#D3D925]/30"
                     placeholder="e.g. Kathmandu, Mugling, Pokhara"
                     value={smartPasteText}
                     onChange={e => setSmartPasteText(e.target.value)}
@@ -315,7 +315,7 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
                   <Button 
                     onClick={handleSmartPaste} 
                     disabled={!smartPasteText.trim()} 
-                    className="w-full h-11 rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+                    className="w-full h-11 rounded-xl font-bold bg-[#D3D925] text-black hover:bg-[#D9CD25] text-white shrink-0"
                   >
                     Auto-Map Stops
                   </Button>
@@ -323,17 +323,17 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
               ) : (
                 <div className="space-y-1 animate-in fade-in">
                   {filteredAvailableStops.length === 0 ? (
-                    <div className="p-3 text-center text-[10px] text-muted-foreground italic">
+                    <div className="p-3 text-center text-[10px] text-white/50 italic">
                       {stopSearch ? `No stops matching "${stopSearch}"` : sequence.length > 0 ? "All stops added." : "No stops in registry."}
                     </div>
                   ) : filteredAvailableStops.map((stop: any) => (
                     <button key={stop.code} onClick={() => addStop(stop)}
-                      className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-primary/8 border border-transparent hover:border-primary/15 transition-all group flex items-center justify-between">
+                      className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-[#D3D925]/8 border border-transparent hover:border-primary/15 transition-all group flex items-center justify-between">
                       <div>
                         <p className="text-xs font-bold leading-tight">{stop.name}</p>
-                        <p className="text-[9px] text-muted-foreground font-mono uppercase mt-0.5">{stop.code} · {stop.type}</p>
+                        <p className="text-[9px] text-white/50 uppercase mt-0.5">{stop.code} · {stop.type}</p>
                       </div>
-                      <Plus className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                      <Plus className="w-3.5 h-3.5 text-white/50/40 group-hover:text-[#D3D925] transition-colors shrink-0" />
                     </button>
                   ))}
                 </div>
@@ -343,19 +343,19 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
 
           {/* Right Panel: Route Timeline */}
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-5 py-3 border-b bg-background/80 flex items-center justify-between">
+            <div className="px-5 py-3 border-b bg-[#0a0a0a]/80 flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Route Timeline</p>
-                <p className="text-[10px] text-muted-foreground/70 mt-0.5">{sequence.length} stops · Use arrows to reorder</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Route Timeline</p>
+                <p className="text-[10px] text-white/50/70 mt-0.5">{sequence.length} stops · Use arrows to reorder</p>
               </div>
               {sequence.length >= 2 && (
                 <div className="flex items-center gap-1.5 overflow-x-auto max-w-xs">
                   {sequence.map((s, i) => (
                     <React.Fragment key={s.stopCode}>
-                      <span className={`text-[9px] font-black shrink-0 ${i === 0 || i === sequence.length - 1 ? "text-foreground" : "text-muted-foreground"}`}>
+                      <span className={`text-[9px] font-bold shrink-0 ${i === 0 || i === sequence.length - 1 ? "text-white" : "text-white/50"}`}>
                         {s.stopCode}
                       </span>
-                      {i < sequence.length - 1 && <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40 shrink-0" />}
+                      {i < sequence.length - 1 && <ArrowRight className="w-2.5 h-2.5 text-white/50/40 shrink-0" />}
                     </React.Fragment>
                   ))}
                 </div>
@@ -365,11 +365,11 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
             <div className="flex-1 overflow-y-auto px-5 py-4">
               {isLoading && (
                 <div className="flex items-center justify-center h-24">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary/40" />
+                  <Loader2 className="w-5 h-5 animate-spin text-[#D3D925]/40" />
                 </div>
               )}
               {!isLoading && sequence.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-40 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
+                <div className="flex flex-col items-center justify-center h-40 text-center text-white/50 border-2 border-dashed border-white/10 rounded-xl">
                   <Route className="w-8 h-8 mb-3 opacity-20" />
                   <p className="text-sm font-bold">No stops added yet</p>
                   <p className="text-xs mt-1 opacity-60">Click stops from the left panel to build the route</p>
@@ -398,7 +398,7 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
                                   {timeBetween && !snapshot.isDragging && (
                                     <div className="flex items-center gap-2 ml-5 my-1">
                                       <div className="w-px h-5 bg-border ml-2" />
-                                      <span className="text-[9px] text-muted-foreground font-medium flex items-center gap-1">
+                                      <span className="text-[9px] text-white/50 font-medium flex items-center gap-1">
                                         <Clock className="w-2.5 h-2.5" />{timeBetween}
                                       </span>
                                     </div>
@@ -406,24 +406,24 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
 
                                   {/* Stop card */}
                                   <div className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all group ${
-                                    snapshot.isDragging ? "bg-background border-primary shadow-xl scale-[1.02]" :
-                                    isOrigin ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-800/40" :
-                                    isDest ? "bg-rose-50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-800/40" :
-                                    "bg-muted/20 border-border/50 hover:bg-muted/40"
+                                    snapshot.isDragging ? "bg-[#0a0a0a] border-primary shadow-xl scale-[1.02]" :
+                                    isOrigin ? "bg-[#D3D925]/10 border-[#D3D925]/20 dark:bg-[#D3D925]/10 dark:border-[#D3D925]/20" :
+                                    isDest ? "bg-white/5 border-white/10 dark:bg-white/5 dark:border-white/10" :
+                                    "bg-white/[0.02] border-white/5 hover:bg-white/5"
                                   }`}>
                                     {/* Drag Handle */}
                                     <div
                                       {...provided.dragHandleProps}
-                                      className="flex items-center justify-center w-6 h-full cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-foreground transition-colors mt-0.5"
+                                      className="flex items-center justify-center w-6 h-full cursor-grab active:cursor-grabbing text-white/50/40 hover:text-white transition-colors mt-0.5"
                                     >
                                       <GripVertical className="w-4 h-4" />
                                     </div>
 
                                     {/* Sequence number */}
-                                    <div className={`flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-black shrink-0 mt-0.5 ${
-                                      isOrigin ? "bg-emerald-600 text-white" :
-                                      isDest ? "bg-rose-600 text-white" :
-                                      "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                                    <div className={`flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold shrink-0 mt-0.5 ${
+                                      isOrigin ? "bg-[#D3D925] text-black text-white" :
+                                      isDest ? "bg-white/5 hover:bg-white/5 text-white" :
+                                      "bg-slate-200 text-white/30 dark:bg-slate-700 dark:text-slate-200"
                                     }`}>
                                       {index + 1}
                                     </div>
@@ -431,24 +431,24 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
                                     {/* Stop info */}
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center gap-2 mb-2">
-                                        <p className="text-sm font-black truncate">{stop.stopName}</p>
-                                        <span className="text-[9px] font-mono text-muted-foreground uppercase">{stop.stopCode}</span>
-                                        {isOrigin && <Badge className="text-[8px] bg-emerald-100 text-emerald-700 border-none font-black px-1.5 py-0">ORIGIN</Badge>}
-                                        {isDest && <Badge className="text-[8px] bg-rose-100 text-rose-700 border-none font-black px-1.5 py-0">DESTINATION</Badge>}
+                                        <p className="text-sm font-bold truncate">{stop.stopName}</p>
+                                        <span className="text-[9px] text-white/50 uppercase">{stop.stopCode}</span>
+                                        {isOrigin && <Badge className="text-[8px] bg-[#D3D925]/10 text-white/90 border-none font-bold px-1.5 py-0">ORIGIN</Badge>}
+                                        {isDest && <Badge className="text-[8px] bg-white/5 text-white border-none font-bold px-1.5 py-0">DESTINATION</Badge>}
                                       </div>
                                       <div className="flex items-center gap-4">
                                         <div className="flex items-center gap-1.5">
-                                          <Clock className="w-3 h-3 text-muted-foreground" />
+                                          <Clock className="w-3 h-3 text-white/50" />
                                           <Input type="number" value={stop.estimatedMinutesFromOrigin}
                                             onChange={e => updateStop(index, "estimatedMinutesFromOrigin", parseInt(e.target.value) || 0)}
-                                            className="h-6 w-20 text-[11px] font-bold rounded-lg px-2 border-border/50 bg-background"
+                                            className="h-6 w-20 text-[11px] font-bold rounded-lg px-2 border-white/5 bg-[#0a0a0a]"
                                             placeholder="0"
                                           />
-                                          <span className="text-[10px] text-muted-foreground">min from start</span>
+                                          <span className="text-[10px] text-white/50">min from start</span>
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                           <Switch checked={stop.isMajor} onCheckedChange={v => updateStop(index, "isMajor", v)} className="scale-75 origin-left" />
-                                          <Label className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 cursor-pointer">
+                                          <Label className="text-[10px] font-bold text-white/50 flex items-center gap-1 cursor-pointer">
                                             <Star className="w-2.5 h-2.5" /> Major stop
                                           </Label>
                                         </div>
@@ -458,7 +458,7 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
                                     {/* Controls */}
                                     <div className="flex flex-col gap-1 shrink-0">
                                       <button onClick={() => removeStop(stop.stopCode)}
-                                        className="w-8 h-8 rounded-md border border-border/60 bg-background flex items-center justify-center hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive transition-all">
+                                        className="w-8 h-8 rounded-md border border-white/10 bg-[#0a0a0a] flex items-center justify-center hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive transition-all">
                                         <X className="w-4 h-4" />
                                       </button>
                                     </div>
@@ -476,17 +476,17 @@ export const MapStopsModal = ({ variant, open, onClose }: MapStopsModalProps) =>
               )}
             </div>
 
-            <div className="px-5 py-4 border-t bg-muted/10 flex justify-between items-center shrink-0">
+            <div className="px-5 py-4 border-t bg-white/[0.02] flex justify-between items-center shrink-0">
               <div>
                 {sequence.length < 2
-                  ? <p className="text-[11px] text-amber-600 font-bold">⚠ Add at least Origin + Destination</p>
-                  : <p className="text-[11px] text-emerald-600 font-bold">✓ {sequence.length} stops ready to save</p>
+                  ? <p className="text-[11px] text-white font-bold">⚠ Add at least Origin + Destination</p>
+                  : <p className="text-[11px] text-[#D3D925] font-bold">✓ {sequence.length} stops ready to save</p>
                 }
               </div>
               <div className="flex gap-2.5">
                 <Button variant="outline" onClick={onClose} className="font-bold rounded-xl h-10">Cancel</Button>
                 <Button disabled={saveMutation.isPending || sequence.length < 2} onClick={() => saveMutation.mutate()}
-                  className="font-black rounded-xl h-10 px-6 gap-2 bg-slate-900 hover:bg-slate-800 text-white">
+                  className="font-bold rounded-xl h-10 px-6 gap-2 bg-[#121212] hover:bg-white/10 text-white">
                   {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                   Save Route
                 </Button>

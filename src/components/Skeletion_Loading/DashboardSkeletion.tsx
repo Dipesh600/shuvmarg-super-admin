@@ -75,7 +75,7 @@ const DashboardSkeleton = () => {
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
-                className="flex gap-3 p-4 rounded-lg bg-muted"
+                className="flex gap-3 p-4 rounded-lg bg-[#121212]/30 backdrop-blur-md border-white/5/5"
               >
                 <Skeleton className="h-6 w-6 rounded-full" />
                 <div className="space-y-2 flex-1">

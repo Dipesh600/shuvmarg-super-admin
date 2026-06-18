@@ -35,6 +35,7 @@ import {
     getScheduleHealth,
     searchTrips,
     getRoutePerformance,
+    burstGenerateTrips,
     type AdminTrip,
     type TripStatus,
     type ExceptionType,
@@ -85,10 +86,10 @@ const getDirection = (trip: AdminTrip) => {
 // ── Exception Badge ──────────────────────────────────────────────────────────
 
 const EXCEPTION_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-    CANCELLED:   { bg: "bg-red-500/10",    text: "text-red-600",    label: "Cancelled" },
-    RESCHEDULED: { bg: "bg-amber-500/10",  text: "text-amber-600",  label: "Rescheduled" },
-    EXTRA_RUN:   { bg: "bg-purple-500/10", text: "text-purple-600", label: "Extra Run" },
-    NONE:        { bg: "bg-muted",         text: "text-muted-foreground", label: "Normal" },
+    CANCELLED:   { bg: "bg-white/5",    text: "text-white",    label: "Cancelled" },
+    RESCHEDULED: { bg: "bg-white/5",  text: "text-white",  label: "Rescheduled" },
+    EXTRA_RUN:   { bg: "bg-white/5", text: "text-white", label: "Extra Run" },
+    NONE:        { bg: "bg-white/5",         text: "text-white/60", label: "Normal" },
 };
 
 const ExceptionBadge = ({ type }: { type?: ExceptionType }) => {
@@ -103,15 +104,15 @@ const ExceptionBadge = ({ type }: { type?: ExceptionType }) => {
 // ── Status Badge ─────────────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-    scheduled:    { bg: "bg-blue-500/10",    text: "text-blue-600" },
-    boarding:     { bg: "bg-amber-500/10",   text: "text-amber-600" },
-    "in-transit": { bg: "bg-violet-500/10",  text: "text-violet-600" },
-    completed:    { bg: "bg-emerald-500/10", text: "text-emerald-600" },
-    cancelled:    { bg: "bg-red-500/10",     text: "text-red-600" },
+    scheduled:    { bg: "bg-white/5",    text: "text-white" },
+    boarding:     { bg: "bg-white/5",   text: "text-white" },
+    "in-transit": { bg: "bg-white/5",  text: "text-white" },
+    completed:    { bg: "bg-white/5", text: "text-white" },
+    cancelled:    { bg: "bg-white/5",     text: "text-white" },
 };
 
 const StatusBadge = ({ status }: { status: TripStatus }) => {
-    const s = STATUS_STYLES[status] || { bg: "bg-muted", text: "text-muted-foreground" };
+    const s = STATUS_STYLES[status] || { bg: "bg-white/5", text: "text-white/60" };
     return (
         <Badge className={`text-[9px] uppercase font-black tracking-wider px-2 py-0.5 border-0 ${s.bg} ${s.text}`}>
             {status.replace("-", " ")}
@@ -122,9 +123,9 @@ const StatusBadge = ({ status }: { status: TripStatus }) => {
 // ── Health Status Badge ──────────────────────────────────────────────────────
 
 const HEALTH_STYLES: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
-    CRITICAL: { bg: "bg-red-500/10",     text: "text-red-600",     icon: <XCircle className="w-3.5 h-3.5" /> },
-    WARNING:  { bg: "bg-amber-500/10",   text: "text-amber-600",   icon: <AlertTriangle className="w-3.5 h-3.5" /> },
-    HEALTHY:  { bg: "bg-emerald-500/10", text: "text-emerald-600", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+    CRITICAL: { bg: "bg-white/5",     text: "text-white",     icon: <XCircle className="w-3.5 h-3.5" /> },
+    WARNING:  { bg: "bg-white/5",   text: "text-white",   icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+    HEALTHY:  { bg: "bg-white/5", text: "text-white", icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
 };
 
 const HealthBadge = ({ status }: { status: string }) => {
@@ -145,15 +146,15 @@ const KpiCard = ({ label, value, icon, accent = "text-foreground", sub }: {
     accent?: string;
     sub?: string;
 }) => (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl overflow-hidden hover:shadow-md transition-shadow">
         <CardContent className="p-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/50">{label}</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-white/40">{label}</p>
                     <p className={`text-2xl font-black tracking-tighter mt-1 ${accent}`}>{value}</p>
-                    {sub && <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>}
+                    {sub && <p className="text-[11px] text-white/60 mt-0.5">{sub}</p>}
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground/40">
+                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/30">
                     {icon}
                 </div>
             </div>
@@ -188,7 +189,7 @@ function ExceptionTriageTab() {
                     label="Today's Exceptions"
                     value={kpis?.todayExceptions ?? "—"}
                     icon={<AlertTriangle className="w-5 h-5" />}
-                    accent={kpis?.todayExceptions ? "text-red-600" : "text-muted-foreground"}
+                    accent={kpis?.todayExceptions ? "text-white" : "text-white/60"}
                 />
                 <KpiCard
                     label="Total Exceptions"
@@ -200,46 +201,46 @@ function ExceptionTriageTab() {
                     label="Revenue At Risk"
                     value={kpis ? fmtCurrency(kpis.revenueAtRisk) : "—"}
                     icon={<IndianRupee className="w-5 h-5" />}
-                    accent={kpis?.revenueAtRisk ? "text-amber-600" : "text-muted-foreground"}
+                    accent={kpis?.revenueAtRisk ? "text-white" : "text-white/60"}
                 />
                 <KpiCard
                     label="Stuck Trips"
                     value={kpis?.stuckTrips ?? "—"}
                     icon={<Clock className="w-5 h-5" />}
-                    accent={kpis?.stuckTrips ? "text-red-600" : "text-emerald-600"}
+                    accent={kpis?.stuckTrips ? "text-white" : "text-white"}
                     sub="boarding >3h or transit >24h"
                 />
                 <KpiCard
                     label="Pending Refunds"
                     value={kpis?.pendingRefunds ?? "—"}
                     icon={<IndianRupee className="w-5 h-5" />}
-                    accent={kpis?.pendingRefunds ? "text-amber-600" : "text-muted-foreground"}
+                    accent={kpis?.pendingRefunds ? "text-white" : "text-white/60"}
                     sub="platform-wide"
                 />
             </div>
 
             {/* Stuck Trips Alert */}
             {stuckTrips.length > 0 && (
-                <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                     <div className="flex items-center gap-2 mb-3">
-                        <Clock className="w-4 h-4 text-red-500" />
-                        <span className="text-sm font-black text-red-700 uppercase tracking-wider">
+                        <Clock className="w-4 h-4 text-white" />
+                        <span className="text-sm font-black text-white uppercase tracking-wider">
                             {stuckTrips.length} Stuck Trip{stuckTrips.length > 1 ? "s" : ""}
                         </span>
                     </div>
                     <div className="space-y-2">
                         {stuckTrips.map((trip) => (
-                            <div key={trip._id} className="flex items-center justify-between bg-background/60 rounded-lg px-3 py-2">
+                            <div key={trip._id} className="flex items-center justify-between bg-[#121212]/30 rounded-lg px-3 py-2">
                                 <div className="flex items-center gap-3">
                                     <StatusBadge status={trip.status} />
                                     <span className="text-sm font-bold">{trip.directionLabel || "—"}</span>
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-xs text-white/60">
                                         {trip.brandId?.brandName} · {fmtDate(trip.tripDate)} · {trip.departureTime}
                                     </span>
                                 </div>
                                 <Button
                                     size="sm"
-                                    variant="outline"
+                                    variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
                                     onClick={() => trip.busId?._id && navigate(`/admin/fleets/${trip.busId._id}/workstation`)}
                                     className="h-7 rounded-lg text-xs font-bold gap-1"
                                 >
@@ -252,13 +253,13 @@ function ExceptionTriageTab() {
             )}
 
             {/* Exception Table */}
-            <Card className="overflow-hidden">
-                <CardHeader className="pb-3">
+            <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl overflow-hidden">
+                <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-white">
                             <AlertTriangle className="h-4 w-4" /> Exception Trips
                         </CardTitle>
-                        <Button variant="outline" size="sm" onClick={() => refetch()} className="h-8 rounded-lg">
+                        <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()} className="h-8 rounded-lg">
                             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                         </Button>
                     </div>
@@ -266,33 +267,33 @@ function ExceptionTriageTab() {
                 <CardContent className="p-0">
                     {isLoading ? (
                         <div className="flex items-center justify-center p-16">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            <Loader2 className="h-6 w-6 animate-spin text-white/60" />
                         </div>
                     ) : isError ? (
                         <div className="flex flex-col items-center justify-center gap-2 p-12">
                             <AlertCircle className="h-8 w-8 text-destructive" />
-                            <p className="text-sm text-muted-foreground">Failed to load exception data.</p>
-                            <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+                            <p className="text-sm text-white/60">Failed to load exception data.</p>
+                            <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()}>Retry</Button>
                         </div>
                     ) : exceptions.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-2 p-16">
-                            <CheckCircle2 className="h-10 w-10 text-emerald-500/40" />
-                            <p className="font-bold text-muted-foreground">No exceptions in the selected window</p>
-                            <p className="text-sm text-muted-foreground/60">All trips are running normally.</p>
+                            <CheckCircle2 className="h-10 w-10 text-white/60" />
+                            <p className="font-bold text-white/60">No exceptions in the selected window</p>
+                            <p className="text-sm text-white/50">All trips are running normally.</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-muted/30">
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Date</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Brand</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Direction</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Exception</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Bookings</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Revenue Impact</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Reason</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest w-[100px]"></TableHead>
+                                <TableHeader className="bg-white/5 border-b border-white/5 bg-white/5 border-b border-white/5">
+                                    <TableRow className="border-b border-white/5 hover:bg-white/5 transition-colors bg-white/5">
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Date</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Brand</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Direction</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Exception</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Bookings</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Revenue Impact</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Reason</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest w-[100px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -300,10 +301,10 @@ function ExceptionTriageTab() {
                                         const bs = trip.bookingStats;
                                         const rs = trip.refundStats;
                                         return (
-                                            <TableRow key={trip._id} className="hover:bg-muted/10">
+                                            <TableRow key={trip._id} className="hover:bg-white/5">
                                                 <TableCell>
                                                     <div className="font-bold text-sm">{fmtDate(trip.tripDate)}</div>
-                                                    <div className="text-[11px] text-muted-foreground">{trip.departureTime}</div>
+                                                    <div className="text-[11px] text-white/60">{trip.departureTime}</div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <span className="text-sm font-bold">{trip.brandId?.brandName || "—"}</span>
@@ -311,31 +312,31 @@ function ExceptionTriageTab() {
                                                 <TableCell className="text-sm">{getDirection(trip)}</TableCell>
                                                 <TableCell><ExceptionBadge type={trip.exceptionType} /></TableCell>
                                                 <TableCell>
-                                                    <div className="text-sm font-mono">
+                                                    <div className="text-sm">
                                                         <span className="font-bold">{bs?.booked || 0}</span>
-                                                        <span className="text-muted-foreground"> booked</span>
+                                                        <span className="text-white/60"> booked</span>
                                                     </div>
                                                     {(bs?.cancelled ?? 0) > 0 && (
-                                                        <div className="text-[11px] text-red-500">{bs?.cancelled} cancelled</div>
+                                                        <div className="text-[11px] text-white">{bs?.cancelled} cancelled</div>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="font-bold text-sm">{fmtCurrency(bs?.revenue || 0)}</div>
                                                     {(rs?.pendingCount ?? 0) > 0 && (
-                                                        <div className="text-[11px] text-amber-600">
+                                                        <div className="text-[11px] text-white">
                                                             {rs?.pendingCount} refund{(rs?.pendingCount ?? 0) > 1 ? "s" : ""} pending
                                                         </div>
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="max-w-[200px]">
-                                                    <p className="text-xs text-muted-foreground truncate">
+                                                    <p className="text-xs text-white/60 truncate">
                                                         {trip.cancellationReason || trip.rescheduleReason || "—"}
                                                     </p>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Button
                                                         size="sm"
-                                                        variant="outline"
+                                                        variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
                                                         onClick={() => trip.busId?._id && navigate(`/admin/fleets/${trip.busId._id}/workstation`)}
                                                         className="h-7 rounded-lg text-xs font-bold gap-1"
                                                     >
@@ -354,18 +355,18 @@ function ExceptionTriageTab() {
                     {pagination && pagination.totalPages > 1 && (
                         <div className="flex items-center justify-between p-4 border-t">
                             <Button
-                                variant="outline" size="sm"
+                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm"
                                 disabled={page === 1 || isLoading}
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 className="font-bold rounded-lg"
                             >
                                 ← Previous
                             </Button>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-white/60">
                                 Page {pagination.page} of {pagination.totalPages} · {pagination.total} exceptions
                             </span>
                             <Button
-                                variant="outline" size="sm"
+                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm"
                                 disabled={page === pagination.totalPages || isLoading}
                                 onClick={() => setPage(p => p + 1)}
                                 className="font-bold rounded-lg"
@@ -394,11 +395,30 @@ const getSchedDirection = (entry: ScheduleHealthEntry) => {
 };
 
 function ScheduleHealthTab() {
+    const navigate = useNavigate();
     const { data, isLoading, isError, refetch } = useQuery({
         queryKey: ["schedule-health"],
         queryFn: () => getScheduleHealth(),
         staleTime: 60_000,
     });
+
+    const [generatingId, setGeneratingId] = useState<string | null>(null);
+    const [expandedRow, setExpandedRow] = useState<string | null>(null);
+
+    const handleBurstGenerate = async (scheduleId: string) => {
+        setGeneratingId(scheduleId);
+        try {
+            const result = await burstGenerateTrips(scheduleId);
+            // Show inline feedback via refetch
+            await refetch();
+            // Simple alert — can swap for toast later
+            alert(`Generation complete: ${result.generated} trips created, ${result.skipped} skipped.`);
+        } catch {
+            alert("Failed to regenerate trips. Check server logs.");
+        } finally {
+            setGeneratingId(null);
+        }
+    };
 
     const kpis = data?.kpis;
     const schedules = data?.schedules || [];
@@ -407,83 +427,158 @@ function ScheduleHealthTab() {
     return (
         <div className="space-y-6">
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                 <KpiCard
                     label="Active Schedules"
                     value={kpis?.totalActive ?? "—"}
                     icon={<Activity className="w-5 h-5" />}
-                    accent="text-emerald-600"
+                    accent="text-white"
                 />
                 <KpiCard
                     label="Suspended"
                     value={kpis?.totalSuspended ?? "—"}
                     icon={<PauseCircle className="w-5 h-5" />}
-                    accent={kpis?.totalSuspended ? "text-amber-600" : "text-muted-foreground"}
+                    accent={kpis?.totalSuspended ? "text-white" : "text-white/60"}
                 />
                 <KpiCard
                     label="Critical"
                     value={kpis?.critical ?? "—"}
                     icon={<XCircle className="w-5 h-5" />}
-                    accent={kpis?.critical ? "text-red-600" : "text-muted-foreground"}
+                    accent={kpis?.critical ? "text-white" : "text-white/60"}
                     sub="generation gap >7 days"
                 />
                 <KpiCard
                     label="Warnings"
                     value={kpis?.warnings ?? "—"}
                     icon={<AlertTriangle className="w-5 h-5" />}
-                    accent={kpis?.warnings ? "text-amber-600" : "text-muted-foreground"}
+                    accent={kpis?.warnings ? "text-white" : "text-white/60"}
                     sub="generation gap 3-7 days"
                 />
                 <KpiCard
                     label="Healthy"
                     value={kpis?.healthy ?? "—"}
                     icon={<CheckCircle2 className="w-5 h-5" />}
-                    accent="text-emerald-600"
+                    accent="text-white"
+                />
+                <KpiCard
+                    label="Missing Trips"
+                    value={kpis?.totalMissing ?? "—"}
+                    icon={<AlertCircle className="w-5 h-5" />}
+                    accent={kpis?.totalMissing ? "text-white" : "text-white"}
+                    sub="across all active schedules"
                 />
             </div>
 
-            {/* Suspended Schedules Warning */}
+            {/* ══════════════════════════════════════════════════════════════════
+                SUSPENDED SCHEDULES — now with full impact data
+               ══════════════════════════════════════════════════════════════════ */}
             {suspended.length > 0 && (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                        <PauseCircle className="w-4 h-4 text-amber-500" />
-                        <span className="text-sm font-black text-amber-700 uppercase tracking-wider">
-                            {suspended.length} Suspended Schedule{suspended.length > 1 ? "s" : ""}
-                        </span>
-                    </div>
-                    <div className="space-y-2">
-                        {suspended.map((entry) => (
-                            <div key={entry.schedule._id} className="flex items-center justify-between bg-background/60 rounded-lg px-3 py-2">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold">{entry.schedule.brandId?.brandName || "—"}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {getSchedDirection(entry)} · {entry.schedule.departureTime} → {entry.schedule.arrivalTime}
-                                    </span>
-                                    {entry.schedule.suspensionReason && (
-                                        <span className="text-xs text-amber-600 truncate max-w-[200px]">
-                                            — {entry.schedule.suspensionReason}
-                                        </span>
-                                    )}
-                                </div>
-                                {entry.schedule.suspendUntil && (
-                                    <span className="text-xs font-bold text-amber-600">
-                                        Auto-resume: {fmtDateFull(entry.schedule.suspendUntil)}
-                                    </span>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl overflow-hidden border-white/10">
+                    <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                        <div className="flex items-center gap-2">
+                            <PauseCircle className="w-4 h-4 text-white" />
+                            <CardTitle className="flex items-center gap-2 text-white">
+                                {suspended.length} Suspended Schedule{suspended.length > 1 ? "s" : ""}
+                            </CardTitle>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="divide-y divide-border/40">
+                            {suspended.map((entry) => {
+                                const si = entry.suspensionInfo;
+                                const h = entry.health;
+                                const s = entry.schedule;
+                                return (
+                                    <div key={s._id} className="px-4 py-3 hover:bg-white/5 transition-colors">
+                                        {/* Row 1: Brand, Route, Timing */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3 flex-wrap">
+                                                <span className="text-sm font-bold">{s.brandId?.brandName || "—"}</span>
+                                                <span className="text-xs text-white/60">
+                                                    {getSchedDirection(entry)} · {s.departureTime} → {s.arrivalTime}
+                                                </span>
+                                                {s.busId && (
+                                                    <span className="text-[10px] text-white/60 bg-white/5 px-1.5 py-0.5 rounded">
+                                                        {s.busId.busName || s.busId.busNumber || "—"}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
+                                                onClick={() => s.busId?._id && navigate(`/admin/fleets/${s.busId._id}/workstation`)}
+                                                className="h-7 rounded-lg text-xs font-bold gap-1 shrink-0"
+                                            >
+                                                <ExternalLink className="w-3 h-3" /> Workstation
+                                            </Button>
+                                        </div>
+
+                                        {/* Row 2: Suspension reason */}
+                                        {si?.reason && (
+                                            <div className="mt-1.5 flex items-start gap-1.5">
+                                                <AlertTriangle className="w-3 h-3 text-white mt-0.5 shrink-0" />
+                                                <p className="text-xs text-white">{si.reason}</p>
+                                            </div>
+                                        )}
+
+                                        {/* Row 3: Impact metrics */}
+                                        <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+                                            {si && (
+                                                <>
+                                                    <div>
+                                                        <span className="text-white/60">Suspended for </span>
+                                                        <span className="font-bold text-white">{si.daysSuspended} day{si.daysSuspended !== 1 ? "s" : ""}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-white/60">Missed trips: </span>
+                                                        <span className="font-bold text-white">{si.missedTrips}</span>
+                                                    </div>
+                                                    {si.autoResumeDate && (
+                                                        <div>
+                                                            <span className="text-white/60">Auto-resume: </span>
+                                                            <span className="font-bold text-white">{fmtDateFull(si.autoResumeDate)}</span>
+                                                        </div>
+                                                    )}
+                                                    {!si.autoResumeDate && (
+                                                        <div>
+                                                            <span className="font-bold text-white">Manual resume required</span>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                            <div>
+                                                <span className="text-white/60">Last generated: </span>
+                                                <span className="font-bold">{h.lastGeneratedDate ? fmtDateFull(h.lastGeneratedDate) : "Never"}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-white/60">Upcoming trips: </span>
+                                                <span className="font-bold">{h.upcomingTrips}</span>
+                                            </div>
+                                            {h.cancelledTrips > 0 && (
+                                                <div>
+                                                    <span className="text-white/60">Cancelled: </span>
+                                                    <span className="font-bold text-white">{h.cancelledTrips}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </CardContent>
+                </Card>
             )}
 
-            {/* Health Table */}
-            <Card className="overflow-hidden">
-                <CardHeader className="pb-3">
+            {/* ══════════════════════════════════════════════════════════════════
+                GENERATION HEALTH TABLE — with missing dates + regenerate action
+               ══════════════════════════════════════════════════════════════════ */}
+            <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl overflow-hidden">
+                <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-white">
                             <Activity className="h-4 w-4" /> Generation Health
                         </CardTitle>
-                        <Button variant="outline" size="sm" onClick={() => refetch()} className="h-8 rounded-lg">
+                        <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()} className="h-8 rounded-lg">
                             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                         </Button>
                     </div>
@@ -491,78 +586,187 @@ function ScheduleHealthTab() {
                 <CardContent className="p-0">
                     {isLoading ? (
                         <div className="flex items-center justify-center p-16">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            <Loader2 className="h-6 w-6 animate-spin text-white/60" />
                         </div>
                     ) : isError ? (
                         <div className="flex flex-col items-center justify-center gap-2 p-12">
                             <AlertCircle className="h-8 w-8 text-destructive" />
-                            <p className="text-sm text-muted-foreground">Failed to load schedule health.</p>
-                            <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+                            <p className="text-sm text-white/60">Failed to load schedule health.</p>
+                            <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()}>Retry</Button>
                         </div>
                     ) : schedules.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-2 p-16">
-                            <Activity className="h-10 w-10 text-muted-foreground/30" />
-                            <p className="font-bold text-muted-foreground">No active schedules found</p>
+                            <Activity className="h-10 w-10 text-white/20" />
+                            <p className="font-bold text-white/60">No active schedules found</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-muted/30">
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Health</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Brand</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Route</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Timing</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Trip Horizon</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Gap</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Trips</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Bus</TableHead>
+                                <TableHeader className="bg-white/5 border-b border-white/5 bg-white/5 border-b border-white/5">
+                                    <TableRow className="border-b border-white/5 hover:bg-white/5 transition-colors bg-white/5">
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Health</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Brand</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Route</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Timing</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Trip Horizon</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Gap</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Missing</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Last Generated</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Trips</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Bus</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest w-[120px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {schedules.map((entry) => {
                                         const h = entry.health;
                                         const s = entry.schedule;
+                                        const isExpanded = expandedRow === s._id;
+                                        const isGenerating = generatingId === s._id;
                                         return (
-                                            <TableRow key={s._id} className={`hover:bg-muted/10 ${h.status === "CRITICAL" ? "bg-red-500/3" : ""}`}>
-                                                <TableCell><HealthBadge status={h.status} /></TableCell>
-                                                <TableCell className="font-bold text-sm">{s.brandId?.brandName || "—"}</TableCell>
-                                                <TableCell className="text-sm">{getSchedDirection(entry)}</TableCell>
-                                                <TableCell>
-                                                    <span className="text-sm font-bold">{s.departureTime}</span>
-                                                    <span className="text-muted-foreground/40"> → </span>
-                                                    <span className="text-sm text-muted-foreground">{s.arrivalTime}</span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="text-sm">
-                                                        <span className="font-bold">{fmtDate(h.actualHorizon)}</span>
-                                                        <span className="text-muted-foreground/40"> / </span>
-                                                        <span className="text-muted-foreground">{fmtDate(h.expectedHorizon)}</span>
-                                                    </div>
-                                                    <div className="text-[10px] text-muted-foreground/50">actual / expected</div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className={`text-sm font-black ${
-                                                        h.gapDays > 7 ? "text-red-600" :
-                                                        h.gapDays > 3 ? "text-amber-600" :
-                                                        "text-emerald-600"
-                                                    }`}>
-                                                        {h.gapDays > 0 ? `${h.gapDays}d short` : "On track"}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="text-sm">
-                                                        <span className="font-bold">{h.upcomingTrips}</span>
-                                                        <span className="text-muted-foreground"> upcoming</span>
-                                                    </div>
-                                                    {h.cancelledTrips > 0 && (
-                                                        <div className="text-[11px] text-red-500">{h.cancelledTrips} cancelled</div>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-xs text-muted-foreground">
-                                                    {s.busId?.busName || s.busId?.busNumber || "—"}
-                                                </TableCell>
-                                            </TableRow>
+                                            <>
+                                                <TableRow
+                                                    key={s._id}
+                                                    className={`hover:bg-white/5 ${h.status === "CRITICAL" ? "bg-white/5" : ""}`}
+                                                >
+                                                    <TableCell><HealthBadge status={h.status} /></TableCell>
+                                                    <TableCell className="font-bold text-sm">{s.brandId?.brandName || "—"}</TableCell>
+                                                    <TableCell className="text-sm">{getSchedDirection(entry)}</TableCell>
+                                                    <TableCell>
+                                                        <span className="text-sm font-bold">{s.departureTime}</span>
+                                                        <span className="text-white/30"> → </span>
+                                                        <span className="text-sm text-white/60">{s.arrivalTime}</span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="text-sm">
+                                                            <span className="font-bold">{fmtDate(h.actualHorizon)}</span>
+                                                            <span className="text-white/30"> / </span>
+                                                            <span className="text-white/60">{fmtDate(h.expectedHorizon)}</span>
+                                                        </div>
+                                                        <div className="text-[10px] text-white/40">actual / expected</div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className={`text-sm font-black ${
+                                                            h.gapDays > 7 ? "text-white" :
+                                                            h.gapDays > 3 ? "text-white" :
+                                                            "text-white"
+                                                        }`}>
+                                                            {h.gapDays > 0 ? `${h.gapDays}d short` : "On track"}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {h.missingCount > 0 ? (
+                                                            <button
+                                                                onClick={() => setExpandedRow(isExpanded ? null : s._id)}
+                                                                className="flex items-center gap-1 group"
+                                                            >
+                                                                <span className="text-sm font-black text-white">
+                                                                    {h.missingCount} trip{h.missingCount > 1 ? "s" : ""}
+                                                                </span>
+                                                                <ChevronDown className={`w-3 h-3 text-white transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-xs text-white font-bold">All good</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="text-sm font-bold">
+                                                            {h.lastGeneratedDate ? fmtDate(h.lastGeneratedDate) : "—"}
+                                                        </div>
+                                                        {h.lastGeneratedAt && (
+                                                            <div className="text-[10px] text-white/40">
+                                                                ran {fmtDateFull(h.lastGeneratedAt)}
+                                                            </div>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="text-sm">
+                                                            <span className="font-bold">{h.upcomingTrips}</span>
+                                                            <span className="text-white/60"> upcoming</span>
+                                                        </div>
+                                                        {h.cancelledTrips > 0 && (
+                                                            <div className="text-[11px] text-white">{h.cancelledTrips} cancelled</div>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-xs text-white/60">
+                                                        {s.busId?.busName || s.busId?.busNumber || "—"}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {h.missingCount > 0 && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
+                                                                disabled={isGenerating}
+                                                                onClick={() => handleBurstGenerate(s._id)}
+                                                                className={`h-7 rounded-lg text-xs font-bold gap-1 ${
+                                                                    h.status === "CRITICAL"
+                                                                        ? "border-white/10 text-white hover:bg-white/5"
+                                                                        : "border-white/10 text-white hover:bg-white/5"
+                                                                }`}
+                                                            >
+                                                                {isGenerating ? (
+                                                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                                                ) : (
+                                                                    <RefreshCw className="w-3 h-3" />
+                                                                )}
+                                                                {isGenerating ? "Generating…" : "Regenerate"}
+                                                            </Button>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+
+                                                {/* Expanded: Show missing dates */}
+                                                {isExpanded && h.missingDates.length > 0 && (
+                                                    <TableRow key={`${s._id}-expanded`} className="bg-white/5">
+                                                        <TableCell colSpan={11} className="py-3 px-6">
+                                                            <div className="space-y-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <AlertCircle className="w-3.5 h-3.5 text-white" />
+                                                                    <span className="text-xs font-black text-white uppercase tracking-wider">
+                                                                        Missing Trip Dates ({h.missingCount})
+                                                                    </span>
+                                                                    <span className="text-[10px] text-white/60">
+                                                                        — Trips expected but not generated for these dates
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-1.5">
+                                                                    {h.missingDates.slice(0, 60).map((dateStr) => {
+                                                                        const d = new Date(dateStr);
+                                                                        const isNear = (d.getTime() - Date.now()) < 7 * 86400000;
+                                                                        return (
+                                                                            <span
+                                                                                key={dateStr}
+                                                                                className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                                                                    isNear
+                                                                                        ? "bg-white/5 text-white border border-white/10"
+                                                                                        : "bg-white/5 text-white border border-white/10"
+                                                                                }`}
+                                                                            >
+                                                                                {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                                                            </span>
+                                                                        );
+                                                                    })}
+                                                                    {h.missingDates.length > 60 && (
+                                                                        <span className="text-[10px] text-white/60 font-bold px-2 py-0.5">
+                                                                            +{h.missingDates.length - 60} more
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <span className="text-[10px] text-white/60">
+                                                                        <span className="inline-block w-2 h-2 rounded-sm bg-white/5 border border-white/10 mr-1 align-middle" />
+                                                                        Within 7 days (urgent)
+                                                                    </span>
+                                                                    <span className="text-[10px] text-white/60">
+                                                                        <span className="inline-block w-2 h-2 rounded-sm bg-white/5 border border-white/10 mr-1 align-middle" />
+                                                                        Future
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </>
                                         );
                                     })}
                                 </TableBody>
@@ -625,14 +829,14 @@ function BusGroup({ busId, trips, navigate }: {
                    ?? trips.find(t => t.tripDate >= today);
 
     return (
-        <div className="border-b border-border/40 last:border-0">
+        <div className="border-b border-white/5 last:border-0">
             {/* Bus header row — always visible */}
             <button
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left"
                 onClick={() => setOpen(o => !o)}
             >
                 {/* Expand icon */}
-                <span className="text-muted-foreground shrink-0">
+                <span className="text-white/60 shrink-0">
                     {open
                         ? <ChevronDown className="h-4 w-4" />
                         : <ChevronRight className="h-4 w-4" />}
@@ -648,21 +852,21 @@ function BusGroup({ busId, trips, navigate }: {
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-sm">{busName}</span>
                         {busNum && busNum !== busName && (
-                            <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] text-white/60 bg-white/5 px-1.5 py-0.5 rounded">
                                 {busNum}
                             </span>
                         )}
-                        <Badge variant="outline" className="text-[10px] font-semibold">{brand}</Badge>
+                        <Badge variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white text-[10px] font-semibold">{brand}</Badge>
                         {todayTrip && (
                             <StatusBadge status={todayTrip.status} />
                         )}
                         {exceptions > 0 && (
-                            <Badge className="text-[10px] font-black bg-red-500/10 text-red-600 border-0">
+                            <Badge className="text-[10px] font-black bg-white/5 text-white border-0">
                                 {exceptions} exception{exceptions > 1 ? "s" : ""}
                             </Badge>
                         )}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                    <div className="text-xs text-white/60 mt-0.5 truncate">
                         {route} · {departs}
                     </div>
                 </div>
@@ -670,24 +874,24 @@ function BusGroup({ busId, trips, navigate }: {
                 {/* Summary stats */}
                 <div className="hidden sm:flex items-center gap-6 shrink-0 text-right">
                     <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Trips</p>
+                        <p className="text-[10px] text-white/60 uppercase tracking-wide">Trips</p>
                         <p className="font-bold text-sm">{totalTrips}</p>
                     </div>
                     <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Avg Occ</p>
+                        <p className="text-[10px] text-white/60 uppercase tracking-wide">Avg Occ</p>
                         <p className={`font-bold text-sm ${
-                            avgOcc >= 80 ? "text-emerald-600" :
-                            avgOcc >= 50 ? "text-amber-600" :
-                            "text-muted-foreground"
+                            avgOcc >= 80 ? "text-white" :
+                            avgOcc >= 50 ? "text-white" :
+                            "text-white/60"
                         }`}>{avgOcc}%</p>
                     </div>
                     <div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Revenue</p>
+                        <p className="text-[10px] text-white/60 uppercase tracking-wide">Revenue</p>
                         <p className="font-bold text-sm">{fmtCurrency(totalRevenue)}</p>
                     </div>
                     <Button
                         size="sm"
-                        variant="outline"
+                        variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
                         className="h-7 text-xs gap-1 rounded-lg"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -701,17 +905,17 @@ function BusGroup({ busId, trips, navigate }: {
 
             {/* Expanded trip list */}
             {open && (
-                <div className="bg-muted/10 border-t border-border/30 overflow-x-auto">
+                <div className="bg-white/5 border-t border-white/10/30 overflow-x-auto">
                     <table className="w-full min-w-[640px] text-sm">
                         <thead>
-                            <tr className="border-b border-border/30">
-                                <th className="pl-12 pr-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Date</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Departure</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Seats</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Revenue</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-muted-foreground">Exception</th>
-                                <th className="px-3 py-2 text-right text-[10px] font-black uppercase tracking-widest text-muted-foreground"></th>
+                            <tr className="border-b border-white/10/30">
+                                <th className="pl-12 pr-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Date</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Status</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Departure</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Seats</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Revenue</th>
+                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Exception</th>
+                                <th className="px-3 py-2 text-right text-[10px] font-black uppercase tracking-widest text-white/60"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -728,7 +932,7 @@ function BusGroup({ busId, trips, navigate }: {
                                     return (
                                         <tr
                                             key={trip._id}
-                                            className={`border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors ${
+                                            className={`border-b border-white/10/20 last:border-0 hover:bg-white/5/20 transition-colors ${
                                                 isToday ? "bg-primary/5" : ""
                                             }`}
                                         >
@@ -748,21 +952,21 @@ function BusGroup({ busId, trips, navigate }: {
                                             <td className="px-3 py-2 text-xs font-bold">{trip.departureTime}</td>
                                             <td className="px-3 py-2">
                                                 <span className={`text-xs font-bold ${
-                                                    occPct >= 80 ? "text-emerald-600" :
-                                                    occPct >= 50 ? "text-amber-600" :
-                                                    "text-muted-foreground"
+                                                    occPct >= 80 ? "text-white" :
+                                                    occPct >= 50 ? "text-white" :
+                                                    "text-white/60"
                                                 }`}>
                                                     {sold}/{totalSeatsT || "?"}
                                                 </span>
                                                 {totalSeatsT > 0 && (
-                                                    <span className="text-[10px] text-muted-foreground ml-1">({occPct}%)</span>
+                                                    <span className="text-[10px] text-white/60 ml-1">({occPct}%)</span>
                                                 )}
                                             </td>
                                             <td className="px-3 py-2 text-xs font-bold">{fmtCurrency(bs?.revenue || 0)}</td>
                                             <td className="px-3 py-2">
                                                 {hasException
                                                     ? <ExceptionBadge type={trip.exceptionType} />
-                                                    : <span className="text-xs text-muted-foreground/30">—</span>
+                                                    : <span className="text-xs text-white/20">—</span>
                                                 }
                                             </td>
                                             <td className="px-3 py-2 text-right">
@@ -843,14 +1047,14 @@ function AllTripsTab() {
                         ))}
                     </SelectContent>
                 </Select>
-                <Button variant="outline" size="sm" onClick={() => refetch()} className="h-9 rounded-lg">
+                <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()} className="h-9 rounded-lg">
                     <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                 </Button>
             </div>
 
             {/* Result summary */}
             {pagination && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-white/60">
                     {pagination.total} trips across{" "}
                     <strong>{busGroups.size}</strong> bus{busGroups.size !== 1 ? "es" : ""}
                     {statusFilter !== "all" && ` · filtered by "${statusFilter.replace("-", " ")}"`}
@@ -863,13 +1067,13 @@ function AllTripsTab() {
             )}
 
             {/* Bus accordion list */}
-            <Card className="overflow-hidden">
-                <CardHeader className="pb-3 px-4">
+            <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl overflow-hidden">
+                <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-white">
                             <Bus className="h-4 w-4" /> Fleet Trip View
                         </CardTitle>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-white/60">
                             Click a bus to expand its trips
                         </p>
                     </div>
@@ -877,19 +1081,19 @@ function AllTripsTab() {
                 <CardContent className="p-0">
                     {isLoading ? (
                         <div className="flex items-center justify-center p-16">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            <Loader2 className="h-6 w-6 animate-spin text-white/60" />
                         </div>
                     ) : isError ? (
                         <div className="flex flex-col items-center justify-center gap-2 p-12">
                             <AlertCircle className="h-8 w-8 text-destructive" />
-                            <p className="text-sm text-muted-foreground">Failed to load trips.</p>
-                            <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+                            <p className="text-sm text-white/60">Failed to load trips.</p>
+                            <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()}>Retry</Button>
                         </div>
                     ) : busGroups.size === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-2 p-16">
-                            <Bus className="h-10 w-10 text-muted-foreground/30" />
-                            <p className="font-bold text-muted-foreground">No trips found</p>
-                            <p className="text-sm text-muted-foreground/60">Try adjusting your filters.</p>
+                            <Bus className="h-10 w-10 text-white/20" />
+                            <p className="font-bold text-white/60">No trips found</p>
+                            <p className="text-sm text-white/50">Try adjusting your filters.</p>
                         </div>
                     ) : (
                         <div>
@@ -908,18 +1112,18 @@ function AllTripsTab() {
                     {pagination && pagination.totalPages > 1 && (
                         <div className="flex items-center justify-between p-4 border-t">
                             <Button
-                                variant="outline" size="sm"
+                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm"
                                 disabled={page === 1 || isLoading}
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 className="font-bold rounded-lg"
                             >
                                 ← Previous
                             </Button>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-white/60">
                                 Page {pagination.page} of {pagination.totalPages} · {pagination.total} trips
                             </span>
                             <Button
-                                variant="outline" size="sm"
+                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm"
                                 disabled={page === pagination.totalPages || isLoading}
                                 onClick={() => setPage(p => p + 1)}
                                 className="font-bold rounded-lg"
@@ -940,11 +1144,11 @@ function AllTripsTab() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const PERF_CONFIG: Record<PerformanceTier, { bg: string; text: string; bar: string; label: string; icon: React.ReactNode }> = {
-    CRITICAL: { bg: "bg-red-500/8",     text: "text-red-600",     bar: "bg-red-500",     label: "Critical",  icon: <TrendingDown className="w-3.5 h-3.5" /> },
-    LOW:      { bg: "bg-amber-500/8",   text: "text-amber-600",   bar: "bg-amber-500",   label: "Low",       icon: <TrendingDown className="w-3.5 h-3.5" /> },
-    MODERATE: { bg: "bg-blue-500/8",    text: "text-blue-600",    bar: "bg-blue-400",    label: "Moderate",  icon: <Minus className="w-3.5 h-3.5" /> },
-    HEALTHY:  { bg: "bg-emerald-500/8", text: "text-emerald-600", bar: "bg-emerald-500", label: "Healthy",   icon: <TrendingUp className="w-3.5 h-3.5" /> },
-    NO_DATA:  { bg: "bg-muted/30",      text: "text-muted-foreground", bar: "bg-muted",  label: "No Data",   icon: <Minus className="w-3.5 h-3.5" /> },
+    CRITICAL: { bg: "bg-white/5",     text: "text-white",     bar: "bg-white/5",     label: "Critical",  icon: <TrendingDown className="w-3.5 h-3.5" /> },
+    LOW:      { bg: "bg-white/5",   text: "text-white",   bar: "bg-white/5",   label: "Low",       icon: <TrendingDown className="w-3.5 h-3.5" /> },
+    MODERATE: { bg: "bg-white/5",    text: "text-white",    bar: "bg-white/5",    label: "Moderate",  icon: <Minus className="w-3.5 h-3.5" /> },
+    HEALTHY:  { bg: "bg-white/5", text: "text-white", bar: "bg-white/5", label: "Healthy",   icon: <TrendingUp className="w-3.5 h-3.5" /> },
+    NO_DATA:  { bg: "bg-white/5",      text: "text-white/60", bar: "bg-white/5",  label: "No Data",   icon: <Minus className="w-3.5 h-3.5" /> },
 };
 
 const LoadBar = ({ value, tier }: { value: number | null; tier: PerformanceTier }) => {
@@ -952,7 +1156,7 @@ const LoadBar = ({ value, tier }: { value: number | null; tier: PerformanceTier 
     const cfg = PERF_CONFIG[tier];
     return (
         <div className="flex items-center gap-2">
-            <div className="flex-1 h-1.5 bg-muted/40 rounded-full overflow-hidden">
+            <div className="flex-1 h-1.5 bg-white/5/40 rounded-full overflow-hidden">
                 <div
                     className={`h-full rounded-full transition-all duration-500 ${cfg.bar}`}
                     style={{ width: `${pct}%` }}
@@ -1010,11 +1214,11 @@ function RoutePerformanceTab() {
                     icon={<TrendingUp className="w-5 h-5" />}
                     accent={
                         kpis?.avgLoadFactor !== undefined
-                            ? kpis.avgLoadFactor >= 70 ? "text-emerald-600"
-                            : kpis.avgLoadFactor >= 55 ? "text-blue-600"
-                            : kpis.avgLoadFactor >= 30 ? "text-amber-600"
-                            : "text-red-600"
-                            : "text-muted-foreground"
+                            ? kpis.avgLoadFactor >= 70 ? "text-white"
+                            : kpis.avgLoadFactor >= 55 ? "text-white"
+                            : kpis.avgLoadFactor >= 30 ? "text-white"
+                            : "text-white"
+                            : "text-white/60"
                     }
                     sub="platform average"
                 />
@@ -1022,32 +1226,32 @@ function RoutePerformanceTab() {
                     label="Avg Completion Rate"
                     value={kpis ? `${kpis.avgCompletionRate}%` : "—"}
                     icon={<CheckCircle2 className="w-5 h-5" />}
-                    accent={kpis?.avgCompletionRate !== undefined && kpis.avgCompletionRate >= 90 ? "text-emerald-600" : "text-amber-600"}
+                    accent={kpis?.avgCompletionRate !== undefined && kpis.avgCompletionRate >= 90 ? "text-white" : "text-white"}
                     sub="trips that ran vs scheduled"
                 />
                 <KpiCard
                     label="Critical Routes"
                     value={kpis?.critical ?? "—"}
                     icon={<XCircle className="w-5 h-5" />}
-                    accent={kpis?.critical ? "text-red-600" : "text-emerald-600"}
+                    accent={kpis?.critical ? "text-white" : "text-white"}
                     sub="load factor <30% or cancel >20%"
                 />
                 <KpiCard
                     label="Healthy Routes"
                     value={kpis?.healthy ?? "—"}
                     icon={<CheckCircle2 className="w-5 h-5" />}
-                    accent="text-emerald-600"
+                    accent="text-white"
                     sub={`of ${kpis?.totalRoutes ?? 0} total`}
                 />
             </div>
 
             {/* Table */}
-            <Card className="overflow-hidden">
-                <CardHeader className="pb-3">
+            <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl overflow-hidden">
+                <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-white">
                             <TrendingDown className="h-4 w-4" /> Route Performance
-                            <span className="text-xs font-normal text-muted-foreground/50 normal-case tracking-normal">
+                            <span className="text-xs font-normal text-white/40 normal-case tracking-normal">
                                 — worst performers first
                             </span>
                         </CardTitle>
@@ -1067,7 +1271,7 @@ function RoutePerformanceTab() {
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <Button variant="outline" size="sm" onClick={() => refetch()} className="h-8 rounded-lg">
+                            <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()} className="h-8 rounded-lg">
                                 <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                             </Button>
                         </div>
@@ -1076,33 +1280,33 @@ function RoutePerformanceTab() {
                 <CardContent className="p-0">
                     {isLoading ? (
                         <div className="flex items-center justify-center p-16">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            <Loader2 className="h-6 w-6 animate-spin text-white/60" />
                         </div>
                     ) : isError ? (
                         <div className="flex flex-col items-center justify-center gap-2 p-12">
                             <AlertCircle className="h-8 w-8 text-destructive" />
-                            <p className="text-sm text-muted-foreground">Failed to load route performance.</p>
-                            <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+                            <p className="text-sm text-white/60">Failed to load route performance.</p>
+                            <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()}>Retry</Button>
                         </div>
                     ) : routes.length === 0 ? (
                         <div className="flex flex-col items-center justify-center gap-2 p-16">
-                            <BarChart3 className="h-10 w-10 text-muted-foreground/30" />
-                            <p className="font-bold text-muted-foreground">No active schedules found</p>
+                            <BarChart3 className="h-10 w-10 text-white/20" />
+                            <p className="font-bold text-white/60">No active schedules found</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-muted/30">
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Performance</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Brand</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Route</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Timing</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest w-[160px]">Load Factor</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Completion</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Cancellation</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Revenue</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase tracking-widest">Trips</TableHead>
+                                <TableHeader className="bg-white/5 border-b border-white/5 bg-white/5 border-b border-white/5">
+                                    <TableRow className="border-b border-white/5 hover:bg-white/5 transition-colors bg-white/5">
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Performance</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Brand</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Route</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Timing</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest w-[160px]">Load Factor</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Completion</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Cancellation</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Revenue</TableHead>
+                                        <TableHead className="text-white/80 font-semibold text-[10px] font-black uppercase tracking-widest">Trips</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1112,7 +1316,7 @@ function RoutePerformanceTab() {
                                         return (
                                             <TableRow
                                                 key={entry.schedule._id}
-                                                className={`hover:bg-muted/10 ${m.performance === "CRITICAL" ? cfg.bg : ""}`}
+                                                className={`hover:bg-white/5 ${m.performance === "CRITICAL" ? cfg.bg : ""}`}
                                             >
                                                 <TableCell>
                                                     <PerfBadge tier={m.performance} />
@@ -1125,49 +1329,49 @@ function RoutePerformanceTab() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <span className="text-sm font-bold">{entry.schedule.departureTime}</span>
-                                                    <span className="text-muted-foreground/40"> → </span>
-                                                    <span className="text-sm text-muted-foreground">{entry.schedule.arrivalTime}</span>
+                                                    <span className="text-white/30"> → </span>
+                                                    <span className="text-sm text-white/60">{entry.schedule.arrivalTime}</span>
                                                 </TableCell>
                                                 <TableCell>
                                                     <LoadBar value={m.loadFactor} tier={m.performance} />
                                                     {m.busSeats > 0 && m.totalSeatsSold > 0 && (
-                                                        <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+                                                        <p className="text-[10px] text-white/40 mt-0.5">
                                                             {m.totalSeatsSold} seats / {m.completedTrips} trips
                                                         </p>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <span className={`text-sm font-black ${
-                                                        m.completionRate === null ? "text-muted-foreground" :
-                                                        m.completionRate >= 90 ? "text-emerald-600" :
-                                                        m.completionRate >= 70 ? "text-amber-600" : "text-red-600"
+                                                        m.completionRate === null ? "text-white/60" :
+                                                        m.completionRate >= 90 ? "text-white" :
+                                                        m.completionRate >= 70 ? "text-white" : "text-white"
                                                     }`}>
                                                         {m.completionRate !== null ? `${m.completionRate}%` : "—"}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>
                                                     <span className={`text-sm font-black ${
-                                                        !m.cancellationRate ? "text-emerald-600" :
-                                                        m.cancellationRate > 20 ? "text-red-600" :
-                                                        m.cancellationRate > 10 ? "text-amber-600" : "text-emerald-600"
+                                                        !m.cancellationRate ? "text-white" :
+                                                        m.cancellationRate > 20 ? "text-white" :
+                                                        m.cancellationRate > 10 ? "text-white" : "text-white"
                                                     }`}>
                                                         {m.cancellationRate !== null ? `${m.cancellationRate}%` : "—"}
                                                     </span>
                                                     {m.cancelledTrips > 0 && (
-                                                        <p className="text-[10px] text-muted-foreground/50">{m.cancelledTrips} trips</p>
+                                                        <p className="text-[10px] text-white/40">{m.cancelledTrips} trips</p>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="font-bold text-sm">{fmtCurrency(m.totalRevenue)}</div>
                                                     {m.avgRevenuePerTrip > 0 && (
-                                                        <div className="text-[10px] text-muted-foreground/50">
+                                                        <div className="text-[10px] text-white/40">
                                                             {fmtCurrency(m.avgRevenuePerTrip)} / trip
                                                         </div>
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="text-sm font-bold">{m.totalTrips}</div>
-                                                    <div className="text-[10px] text-muted-foreground/50">
+                                                    <div className="text-[10px] text-white/40">
                                                         {m.completedTrips}✓ · {m.cancelledTrips}✗
                                                     </div>
                                                 </TableCell>
@@ -1182,13 +1386,13 @@ function RoutePerformanceTab() {
             </Card>
 
             {/* Legend */}
-            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground px-1">
+            <div className="flex flex-wrap gap-4 text-xs text-white/60 px-1">
                 <span className="font-bold uppercase tracking-wider">Load Factor Thresholds:</span>
-                <span><span className="text-red-600 font-bold">&lt;30%</span> Critical</span>
-                <span><span className="text-amber-600 font-bold">30–54%</span> Low</span>
-                <span><span className="text-blue-600 font-bold">55–69%</span> Moderate</span>
-                <span><span className="text-emerald-600 font-bold">≥70%</span> Healthy</span>
-                <span className="text-muted-foreground/40">·</span>
+                <span><span className="text-white font-bold">&lt;30%</span> Critical</span>
+                <span><span className="text-white font-bold">30–54%</span> Low</span>
+                <span><span className="text-white font-bold">55–69%</span> Moderate</span>
+                <span><span className="text-white font-bold">≥70%</span> Healthy</span>
+                <span className="text-white/30">·</span>
                 <span>Based on last {windowDays} days of completed trips</span>
             </div>
         </div>
@@ -1207,13 +1411,13 @@ export default function TripManagement() {
             {/* Page Header */}
             <div>
                 <h2 className="text-2xl sm:text-3xl font-black tracking-tight">Trip Control Center</h2>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-white/60 mt-1">
                     Platform-wide trip oversight — exception triage, generation health, and global search.
                 </p>
             </div>
 
             {/* Tab Bar */}
-            <div className="flex gap-1 p-1 bg-muted/30 rounded-xl border w-fit">
+            <div className="flex gap-1 p-1 bg-white/5 rounded-xl border w-fit">
                 {TABS.map(tab => (
                     <button
                         key={tab.key}
@@ -1221,8 +1425,8 @@ export default function TripManagement() {
                         className={`
                             flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
                             ${activeTab === tab.key
-                                ? "bg-background shadow-sm text-foreground"
-                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                ? "bg-[#121212]/30 shadow-sm text-foreground"
+                                : "text-white/60 hover:text-foreground hover:bg-white/5"
                             }
                         `}
                     >

@@ -135,14 +135,14 @@ export default function OffersHub() {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Offers & Coupons</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl font-bold tracking-tight text-white">Offers & Coupons</h1>
+            <p className="text-white/60 mt-1 font-medium text-sm">
               Create, manage, and analyze all promotional offers
             </p>
           </div>
           <Button
             onClick={() => navigate("/admin/offers/create")}
-            className="gap-2 shrink-0"
+            className="gap-2 shrink-0 bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90 font-bold"
           >
             <PlusCircle className="h-4 w-4" />
             Create Offer
@@ -151,67 +151,67 @@ export default function OffersHub() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Offers</CardTitle>
-              <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <Tag className="h-4 w-4 text-emerald-600" />
+          <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 pt-4 px-5 border-b border-white/5 bg-white/5">
+              <CardTitle className="text-sm font-semibold text-white/80">Active Offers</CardTitle>
+              <div className="p-2 bg-white/5 rounded-lg border border-white/5">
+                <Tag className="h-4 w-4 text-[#D3D925] shrink-0" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{tabCounts.active}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+            <CardContent className="px-5 pb-5 pt-4">
+              <div className="text-2xl font-bold text-white">{tabCounts.active}</div>
+              <p className="text-xs text-white/80 mt-1">
                 {tabCounts.upcoming} upcoming
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Burn</CardTitle>
-              <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                <Flame className="h-4 w-4 text-violet-600" />
+          <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 pt-4 px-5 border-b border-white/5 bg-white/5">
+              <CardTitle className="text-sm font-semibold text-white/80">Total Burn</CardTitle>
+              <div className="p-2 bg-white/5 rounded-lg border border-white/5">
+                <Flame className="h-4 w-4 text-[#D3D925] shrink-0" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-5 pb-5 pt-4">
+              <div className="text-2xl font-bold text-white">
                 Rs. {totalDiscountBurned.toLocaleString()}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-white/80 mt-1">
                 Total discount given
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Redemptions</CardTitle>
-              <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <TrendingUp className="h-4 w-4 text-blue-600" />
+          <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 pt-4 px-5 border-b border-white/5 bg-white/5">
+              <CardTitle className="text-sm font-semibold text-white/80">Total Redemptions</CardTitle>
+              <div className="p-2 bg-white/5 rounded-lg border border-white/5">
+                <TrendingUp className="h-4 w-4 text-[#D3D925] shrink-0" />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-5 pb-5 pt-4">
+              <div className="text-2xl font-bold text-white">
                 {coupons.reduce((s, c) => s + c.usedCount, 0).toLocaleString()}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-white/80 mt-1">
                 Across all coupons
               </p>
             </CardContent>
           </Card>
 
-          <Card className={expiringSoon.length > 0 ? "border-amber-500/50 bg-amber-500/5" : ""}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
-              <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${expiringSoon.length > 0 ? "bg-amber-500/15" : "bg-muted"}`}>
-                <AlertTriangle className={`h-4 w-4 ${expiringSoon.length > 0 ? "text-amber-600" : "text-muted-foreground"}`} />
+          <Card className={`bg-[#121212]/30 backdrop-blur-md shadow-xl ${expiringSoon.length > 0 ? "border-white/10" : "border-white/5"}`}>
+            <CardHeader className="flex flex-row items-center justify-between pb-3 pt-4 px-5 border-b border-white/5 bg-white/5">
+              <CardTitle className="text-sm font-semibold text-white/80">Expiring Soon</CardTitle>
+              <div className={`p-2 rounded-lg border border-white/5 bg-white/5`}>
+                <AlertTriangle className={`h-4 w-4 text-[#D3D925] shrink-0`} />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${expiringSoon.length > 0 ? "text-amber-600" : ""}`}>
+            <CardContent className="px-5 pb-5 pt-4">
+              <div className="text-2xl font-bold text-white">
                 {expiringSoon.length}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-white/80 mt-1">
                 Expiring within 7 days
               </p>
             </CardContent>
@@ -221,13 +221,13 @@ export default function OffersHub() {
         {/* Tabs + Search + Grid */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
-            <TabsList className="h-auto flex-wrap">
+            <TabsList className="h-auto flex-wrap bg-[#121212]/50 border border-white/5 p-1">
               {Object.entries(tabCounts).map(([key, count]) => (
-                <TabsTrigger key={key} value={key} className="capitalize gap-1.5">
+                <TabsTrigger key={key} value={key} className="capitalize gap-1.5 data-[state=active]:bg-[#D3D925] data-[state=active]:text-[#121212] text-white/60">
                   {key}
                   <Badge
                     variant="secondary"
-                    className="text-[10px] h-4 px-1.5 font-mono"
+                    className="text-[10px] h-4 px-1.5 bg-white/10 text-current hover:bg-white/20"
                   >
                     {count}
                   </Badge>
@@ -236,12 +236,12 @@ export default function OffersHub() {
             </TabsList>
 
             <div className="relative ml-auto">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-white/40" />
               <Input
                 placeholder="Search coupon code or title..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 w-72"
+                className="pl-8 w-72 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
               />
             </div>
           </div>
@@ -250,16 +250,16 @@ export default function OffersHub() {
             <TabsContent key={tab} value={tab} className="mt-0">
               {isLoading ? (
                 <div className="flex items-center justify-center h-48">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-white/40" />
                 </div>
               ) : filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 gap-3 text-center">
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                    <Tag className="h-6 w-6 text-muted-foreground" />
+                <div className="flex flex-col items-center justify-center h-48 gap-3 text-center border border-white/5 bg-[#121212]/30 rounded-xl backdrop-blur-md">
+                  <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center">
+                    <Tag className="h-6 w-6 text-white/40" />
                   </div>
                   <div>
-                    <p className="font-medium">No coupons found</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-white">No coupons found</p>
+                    <p className="text-sm text-white/60 mt-1">
                       {search ? "Try a different search term" : "Create your first offer to get started"}
                     </p>
                   </div>
@@ -267,7 +267,7 @@ export default function OffersHub() {
                     <Button
                       size="sm"
                       onClick={() => navigate("/admin/offers/create")}
-                      className="gap-2"
+                      className="gap-2 mt-2 bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90 font-bold"
                     >
                       <PlusCircle className="h-4 w-4" />
                       Create Offer
@@ -297,22 +297,23 @@ export default function OffersHub() {
 
       {/* Delete confirmation dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-[#121212]/95 border-white/5 backdrop-blur-xl shadow-2xl text-white">
           <DialogHeader>
-            <DialogTitle>Delete Coupon</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">Delete Coupon</DialogTitle>
+            <DialogDescription className="text-white/60">
               This coupon will be permanently deleted. This action cannot be undone.
               {" "}Note: Coupons that have been redeemed cannot be deleted — deactivate them instead.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+          <DialogFooter className="border-t border-white/5 pt-3 mt-4">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white">
               Cancel
             </Button>
             <Button
               variant="destructive"
               disabled={isDeleting}
               onClick={() => deleteTarget && doDelete(deleteTarget)}
+              className="bg-white/5 hover:bg-white/5 text-white font-bold"
             >
               {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Delete Coupon

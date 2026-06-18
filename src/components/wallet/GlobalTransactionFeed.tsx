@@ -157,10 +157,10 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-center gap-3 bg-muted/20 rounded-lg border border-border/50">
-        <Activity className="h-8 w-8 text-destructive" />
-        <p className="text-sm font-medium">Failed to load platform activity</p>
-        <p className="text-xs text-muted-foreground">
+      <div className="flex flex-col items-center justify-center p-12 text-center gap-3 bg-[#121212]/30 rounded-lg border border-white/5">
+        <Activity className="h-8 w-8 text-red-500" />
+        <p className="text-sm font-medium text-white">Failed to load platform activity</p>
+        <p className="text-xs text-white/60">
           Check your connection and try refreshing
         </p>
       </div>
@@ -176,11 +176,11 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
       {/* ── Header: Title + Live Stats ─────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <Activity className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold tracking-tight">
+          <Activity className="h-5 w-5 text-[#D3D925]" />
+          <h3 className="text-lg font-semibold tracking-tight text-white">
             Platform Activity Feed
           </h3>
-          <Badge variant="outline" className="text-[10px] font-mono ml-1">
+          <Badge className="bg-white/10 text-white/80 border-white/20 text-[10px] ml-1">
             {pagination.totalCount.toLocaleString()} total
           </Badge>
         </div>
@@ -214,16 +214,15 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
 
       {/* ── Filter Pills ──────────────────────────────────────────────── */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-        <Filter className="h-3.5 w-3.5 text-muted-foreground mr-1 shrink-0" />
+        <Filter className="h-3.5 w-3.5 text-white/40 mr-1 shrink-0" />
         {FILTERS.map((f) => (
           <Button
             key={f.key}
-            variant={activeFilter === f.key ? "default" : "outline"}
             size="sm"
-            className={`gap-1.5 rounded-full text-xs h-8 px-3 transition-all ${
+            className={`gap-1.5 rounded-full text-xs h-8 px-3 transition-all border ${
               activeFilter === f.key
-                ? ""
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-[#D3D925] text-[#121212] border-[#D3D925] hover:bg-[#D3D925]/90"
+                : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white"
             }`}
             onClick={() => handleFilterChange(f.key)}
           >
@@ -235,10 +234,10 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
 
       {/* ── Transaction Table ──────────────────────────────────────────── */}
       {entries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-16 text-center gap-2 bg-muted/20 rounded-lg border border-border/50">
-          <Activity className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm font-medium">No transactions found</p>
-          <p className="text-xs text-muted-foreground">
+        <div className="flex flex-col items-center justify-center p-16 text-center gap-2 bg-[#121212]/30 rounded-lg border border-white/5">
+          <Activity className="h-8 w-8 text-white/40" />
+          <p className="text-sm font-medium text-white">No transactions found</p>
+          <p className="text-xs text-white/60">
             {activeFilter !== "all"
               ? "Try changing the filter or check back later"
               : "No SM Money activity has been recorded yet"}
@@ -246,17 +245,17 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-lg border border-border/50">
+          <div className="overflow-x-auto rounded-lg border border-white/5">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[90px]">Time</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead className="w-[80px]">Type</TableHead>
-                  <TableHead>Purpose</TableHead>
-                  <TableHead className="text-right w-[110px]">Amount</TableHead>
-                  <TableHead className="w-[130px]">Reference</TableHead>
-                  <TableHead>Note</TableHead>
+                <TableRow className="border-b border-white/5 hover:bg-transparent">
+                  <TableHead className="w-[90px] text-white/60 font-semibold">Time</TableHead>
+                  <TableHead className="text-white/60 font-semibold">User</TableHead>
+                  <TableHead className="w-[80px] text-white/60 font-semibold">Type</TableHead>
+                  <TableHead className="text-white/60 font-semibold">Purpose</TableHead>
+                  <TableHead className="text-right w-[110px] text-white/60 font-semibold">Amount</TableHead>
+                  <TableHead className="w-[130px] text-white/60 font-semibold">Reference</TableHead>
+                  <TableHead className="text-white/60 font-semibold">Note</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -271,15 +270,15 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
                     typeof txn.userId === "object" ? txn.userId.phone : "";
 
                   return (
-                    <TableRow key={txn._id} className="group">
+                    <TableRow key={txn._id} className="group border-b border-white/5 hover:bg-white/5">
                       <TableCell>
-                        <div className="text-xs whitespace-nowrap text-muted-foreground">
+                        <div className="text-xs whitespace-nowrap text-white/60">
                           {formatDate(txn.createdAt)}
                         </div>
                       </TableCell>
                       <TableCell>
                         <button
-                          className="text-left hover:underline decoration-primary/50 underline-offset-2 transition-all group-hover:text-primary"
+                          className="text-left hover:underline decoration-white/50 underline-offset-2 transition-all group-hover:text-[#D3D925] text-white/90"
                           onClick={() => {
                             if (userPhone) onUserClick(userPhone);
                           }}
@@ -289,7 +288,7 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
                             {userName}
                           </div>
                           {userPhone && (
-                            <div className="text-[11px] text-muted-foreground">
+                            <div className="text-[11px] text-white/40">
                               {userPhone}
                             </div>
                           )}
@@ -315,7 +314,7 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs font-medium">
+                        <span className="text-xs font-medium text-white/90">
                           {purposeLabel(txn.purpose || txn.type)}
                         </span>
                       </TableCell>
@@ -330,7 +329,7 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className="text-[10px] font-mono text-muted-foreground">
+                        <div className="text-[10px] text-white/40">
                           {txn.referenceType
                             ? `${txn.referenceType}: ${
                                 txn.referenceId
@@ -342,7 +341,7 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
                       </TableCell>
                       <TableCell>
                         <div
-                          className="text-xs text-muted-foreground max-w-[200px] truncate"
+                          className="text-xs text-white/60 max-w-[200px] truncate"
                           title={txn.note || txn.remarks || ""}
                         >
                           {txn.note || txn.remarks || "—"}
@@ -358,26 +357,26 @@ const GlobalTransactionFeed = ({ onUserClick }: GlobalTransactionFeedProps) => {
           {/* ── Pagination ──────────────────────────────────────────────── */}
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-white/60">
                 Page {pagination.page} of {pagination.totalPages}
-                <span className="mx-1.5">·</span>
+                <span className="mx-1.5 text-white/20">·</span>
                 {pagination.totalCount.toLocaleString()} records
               </span>
               <div className="flex gap-2">
                 <Button
-                  variant="outline"
                   size="sm"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="bg-[#121212]/30 border border-white/10 text-white hover:bg-white/10 disabled:opacity-50"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Prev
                 </Button>
                 <Button
-                  variant="outline"
                   size="sm"
                   disabled={!pagination.hasMore}
                   onClick={() => setPage((p) => p + 1)}
+                  className="bg-[#121212]/30 border border-white/10 text-white hover:bg-white/10 disabled:opacity-50"
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />

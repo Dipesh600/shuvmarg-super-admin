@@ -7,6 +7,8 @@ import BookingsSkeleton from "@/components/Skeletion_Loading/BookingsSkeleton";
 import { DataTable } from "@/components/DataTable";
 import { columns } from "@/components/data_tables/bookings/columns";
 
+import { StatCard } from "@/components/dashboard/StatCard";
+
 const Bookings = () => {
   const { data: statsData, isLoading: isStatsLoading } = useQuery({
     queryKey: ["bookingStats"],
@@ -35,70 +37,50 @@ const Bookings = () => {
     <>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Booking Management</h2>
-          <p className="text-muted-foreground mt-1">Monitor and manage all platform bookings</p>
+          <h2 className="text-2xl font-bold tracking-tight text-white">Booking Management</h2>
+          <p className="text-sm text-white/60 mt-1 font-medium">Monitor and manage all platform bookings</p>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4 mb-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Total Bookings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalBookings.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Lifetime total</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Total Passengers
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPassengers.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Across all trips</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Confirmation Rate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.confirmationRate}</div>
-            <p className="text-xs text-success">Successful checkouts</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Ban className="h-4 w-4" />
-              Cancelled Bookings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.cancelledBookings.toLocaleString()}</div>
-            <p className="text-xs text-destructive">User cancellations</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Total Bookings"
+          value={stats.totalBookings.toLocaleString()}
+          icon={Calendar}
+          subtitle="Lifetime total"
+          changeType="neutral"
+        />
+        <StatCard
+          title="Total Passengers"
+          value={stats.totalPassengers.toLocaleString()}
+          icon={Users}
+          subtitle="Across all trips"
+          changeType="neutral"
+        />
+        <StatCard
+          title="Confirmation Rate"
+          value={stats.confirmationRate}
+          icon={TrendingUp}
+          subtitle="Successful checkouts"
+          changeType="positive"
+        />
+        <StatCard
+          title="Cancelled Bookings"
+          value={stats.cancelledBookings.toLocaleString()}
+          icon={Ban}
+          subtitle="User cancellations"
+          changeType="negative"
+        />
       </div>
 
-      <Card>
+      <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
-              <CardTitle>Booking History</CardTitle>
-              <CardDescription>Search and manage all bus bookings</CardDescription>
+              <CardTitle className="flex items-center gap-2 text-white">Booking History</CardTitle>
+              <CardDescription className="text-white/50">Search and manage all bus bookings</CardDescription>
             </div>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2 bg-white/5 border-white/10 hover:bg-white/10 text-white">
               <Download className="h-4 w-4" />
               Export
             </Button>

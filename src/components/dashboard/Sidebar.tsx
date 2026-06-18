@@ -43,6 +43,9 @@ import {
 } from "lucide-react";
 
 import { NavLink, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getAgentDashboardData } from "@/api/agentApi";
+import { useAuth } from "@/providers/AuthProvider";
 
 // ── Sidebar groups (order matters visually) ───────────────────────────────────
 
@@ -56,11 +59,11 @@ const GROUPS = [
   {
     label: "Operations",
     items: [
-      { title: "User Management",   url: "/admin/users",     icon: Users },
-      { title: "Agent Management",  url: "/admin/agents",    icon: Handshake },
-      { title: "Bus Owners",        url: "/admin/bus-owners",icon: Building2 },
-      { title: "KYC Verification",  url: "/admin/kyc",       icon: ClipboardCheck },
-      { title: "Push Notifications",url: "/admin/notifications", icon: Bell },
+      { title: "User Management",    url: "/admin/users",       icon: Users },
+      { title: "Agent Management",   url: "/admin/agents",      icon: Handshake },
+      { title: "Bus Owners",         url: "/admin/bus-owners",  icon: Building2 },
+      { title: "KYC Verification",   url: "/admin/kyc",         icon: ClipboardCheck },
+      { title: "Push Notifications", url: "/admin/notifications",icon: Bell },
     ],
   },
   {
@@ -103,24 +106,35 @@ const GROUPS = [
 export default function AppSidebar() {
   const { pathname } = useLocation();
   const { open } = useSidebar();
+  const { token } = useAuth();
+
+  // Live pending agent count for badge
+  const { data: dashData } = useQuery({
+    queryKey: ["agentDashboard"],
+    queryFn: getAgentDashboardData,
+    enabled: !!token,
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000, // refresh every minute
+  });
+  const pendingCount: number = dashData?.data?.pendingAgents ?? 0;
 
   return (
     <Sidebar
       collapsible="icon"
       className={cn(
-        "border-r border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300",
+        "border-r border-white/5 bg-[#121212]/80 backdrop-blur-xl supports-[backdrop-filter]:bg-[#121212]/60 transition-all duration-300",
         open ? "w-64" : "w-[70px]"
       )}
     >
       {/* ── Logo header ── */}
-      <SidebarHeader className={cn("h-16 border-b border-border/50 flex items-center gap-3", open ? "px-4 justify-start" : "justify-center")}>
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
-          <Bus className="w-5 h-5 text-primary-foreground" />
+      <SidebarHeader className={cn("h-16 border-b border-white/5 flex items-center gap-3", open ? "px-4 justify-start" : "justify-center")}>
+        <div className="w-8 h-8 rounded-xl bg-[#00564E] flex items-center justify-center shrink-0 shadow-[0_4px_14px_rgba(0,86,78,0.35)]">
+          <Bus className="w-5 h-5 text-[#D3D925]" />
         </div>
         {open && (
           <div className="flex flex-col overflow-hidden animate-in fade-in slide-in-from-left-2 duration-300">
-            <span className="font-bold text-lg tracking-tight truncate">Shubha Margha</span>
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider truncate">
+            <span className="font-bold text-lg tracking-tight text-[#F5F7F6] truncate">Shubha Margha</span>
+            <span className="text-[10px] text-[#B7C7C3] font-medium uppercase tracking-wider truncate">
               Admin Platform
             </span>
           </div>
@@ -133,14 +147,14 @@ export default function AppSidebar() {
           <SidebarGroup key={gi} className={gi > 0 ? "mt-1" : ""}>
             {/* Section label — only shown when sidebar is expanded */}
             {group.label && open && (
-              <SidebarGroupLabel className="px-3 mb-1 text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/50">
+              <SidebarGroupLabel className="px-3 mb-1 text-[10px] font-black uppercase tracking-[0.15em] text-[#B7C7C3]/60">
                 {group.label}
               </SidebarGroupLabel>
             )}
 
             {/* Divider between groups (not before the first) */}
             {gi > 0 && (
-              <div className="mx-3 mb-2 border-t border-border/30" />
+              <div className="mx-3 mb-2 border-t border-white/5" />
             )}
 
             <SidebarGroupContent>
@@ -158,29 +172,45 @@ export default function AppSidebar() {
                         asChild
                         tooltip={item.title}
                         className={cn(
-                          "h-9 transition-all duration-200 rounded-lg group hover:bg-primary/5",
+                          "h-10 transition-all duration-200 rounded-xl group hover:bg-white/5",
                           open ? "px-3" : "px-0 justify-center",
                           isActive
-                            ? "bg-primary/10 text-primary font-semibold"
-                            : "text-muted-foreground hover:text-foreground"
+                            ? "bg-white/10 text-[#D3D925] font-semibold shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]"
+                            : "text-[#B7C7C3] hover:text-[#F5F7F6]"
                         )}
                       >
-                        <NavLink to={item.url} className={cn("flex items-center gap-3", !open && "justify-center")}>
+                        <NavLink to={item.url} className={cn("flex items-center gap-3 w-full", !open && "justify-center")}>
                           <item.icon
                             className={cn(
-                              "w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110",
+                              "w-[18px] h-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110",
                               isActive
-                                ? "text-primary"
-                                : "text-muted-foreground group-hover:text-foreground"
+                                ? "text-[#D3D925]"
+                                : "text-white/45 group-hover:text-white"
                             )}
                           />
                           {open && (
-                            <span className="text-sm truncate animate-in fade-in slide-in-from-left-2 duration-300">
+                            <span className="text-[13px] truncate animate-in fade-in slide-in-from-left-2 duration-300 flex-1">
                               {item.title}
                             </span>
                           )}
-                          {isActive && open && (
-                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary animate-in zoom-in duration-300 shrink-0" />
+                          {/* Pending badge — on Agent Management when there are pending apps */}
+                          {item.url === "/admin/agents" && pendingCount > 0 && (
+                            open ? (
+                              <span className="ml-auto flex items-center gap-1 shrink-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#D3D925] animate-pulse" />
+                                <span className="text-[10px] font-bold bg-[#D3D925]/20 text-[#D3D925] px-1.5 py-0.5 rounded-full">
+                                  {pendingCount}
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#D3D925] border border-background" />
+                            )
+                          )}
+                          {isActive && open && item.url !== "/admin/agents" && (
+                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#D3D925] animate-in zoom-in duration-300 shrink-0 shadow-[0_0_8px_rgba(211,217,37,0.8)]" />
+                          )}
+                          {isActive && open && item.url === "/admin/agents" && pendingCount === 0 && (
+                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#D3D925] animate-in zoom-in duration-300 shrink-0 shadow-[0_0_8px_rgba(211,217,37,0.8)]" />
                           )}
                         </NavLink>
                       </SidebarMenuButton>
@@ -194,38 +224,38 @@ export default function AppSidebar() {
       </SidebarContent>
 
       {/* ── Footer ── */}
-      <SidebarFooter className="p-3 border-t border-border/50 bg-muted/20">
+      <SidebarFooter className="p-3 border-t border-white/5 bg-white/5 backdrop-blur-md">
         {open ? (
           <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-background border border-border/50">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold text-xs shadow-md shrink-0">
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#121212]/80 border border-white/5">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00564E] to-[#003D38] flex items-center justify-center text-[#F5F7F6] font-bold text-xs shadow-[0_4px_14px_rgba(0,86,78,0.35)] shrink-0">
                 SA
               </div>
               <div className="flex flex-col overflow-hidden min-w-0">
-                <span className="text-sm font-semibold truncate">Super Admin</span>
-                <span className="text-[10px] text-muted-foreground truncate font-medium">SUMA-ADM-001</span>
+                <span className="text-sm font-semibold text-[#F5F7F6] truncate">Super Admin</span>
+                <span className="text-[10px] text-[#B7C7C3] truncate font-medium">SUMA-ADM-001</span>
               </div>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/5 h-9 rounded-lg"
+              className="w-full justify-start gap-3 text-white/60 hover:text-rose-400 hover:bg-rose-500/10 h-10 rounded-xl"
             >
-              <LogOut className="w-4 h-4" />
-              <span className="text-xs font-medium">Logout</span>
+              <LogOut className="w-[18px] h-[18px]" />
+              <span className="text-xs font-semibold">Logout</span>
             </Button>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#00564E] to-[#003D38] flex items-center justify-center text-[#F5F7F6] font-bold text-xs shadow-[0_4px_14px_rgba(0,86,78,0.35)] shrink-0">
               SA
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              className="h-10 w-10 text-white/60 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-[18px] h-[18px]" />
             </Button>
           </div>
         )}

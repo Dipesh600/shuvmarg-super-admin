@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -37,17 +36,9 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { getBookingById } from "@/api/bookingsApi";
 import BookingDetailSkeleton from "@/components/Skeletion_Loading/BookingDetailSkeleton";
+import { StatCard } from "@/components/dashboard/StatCard";
 
 /* ─── Helpers ───────────────────────────── */
-function statusVariant(s: string): "default" | "secondary" | "destructive" | "outline" {
-  switch (s?.toLowerCase()) {
-    case "booked":    return "default";
-    case "cancelled": return "destructive";
-    case "no_show":   return "secondary";
-    default:          return "outline";
-  }
-}
-
 function statusIcon(s: string) {
   switch (s?.toLowerCase()) {
     case "booked":    return <CheckCircle className="h-3.5 w-3.5" />;
@@ -75,12 +66,19 @@ const DetailRow = ({
   value: React.ReactNode;
   icon?: React.ReactNode;
 }) => (
-  <div className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
-    <span className="text-sm text-muted-foreground flex items-center gap-2">
+  <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
+    <span className="text-sm text-white/60 flex items-center gap-2 font-medium">
       {icon}
       {label}
     </span>
-    <span className="text-sm font-semibold text-right max-w-[55%]">{value}</span>
+    <span className="text-sm font-semibold text-right max-w-[55%] text-white">{value}</span>
+  </div>
+);
+
+// Admin UI Card styling (matches Analytics.tsx)
+const AdminCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`shadow-xl border border-white/5 bg-[#121212]/30 backdrop-blur-md rounded-2xl overflow-hidden ${className}`}>
+    {children}
   </div>
 );
 
@@ -100,10 +98,15 @@ const BookingDetail = () => {
   if (isError) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <XCircle className="h-14 w-14 text-destructive" />
-        <h2 className="text-2xl font-bold">Failed to load booking</h2>
-        <p className="text-muted-foreground text-sm">{(error as Error).message}</p>
-        <Button onClick={() => navigate("/admin/bookings")}>Back to Bookings</Button>
+        <XCircle className="h-14 w-14 text-white" />
+        <h2 className="text-2xl font-bold tracking-tight text-white">Failed to load booking</h2>
+        <p className="text-white/60 text-sm font-medium">{(error as Error).message}</p>
+        <Button 
+          className="bg-white/10 hover:bg-white/20 text-white rounded-xl px-6"
+          onClick={() => navigate("/admin/bookings")}
+        >
+          Back to Bookings
+        </Button>
       </div>
     );
   }
@@ -113,10 +116,15 @@ const BookingDetail = () => {
   if (!booking) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <Ticket className="h-14 w-14 text-muted-foreground" />
-        <h2 className="text-2xl font-bold">Booking not found</h2>
-        <p className="text-muted-foreground text-sm">This ticket ID does not exist or was deleted.</p>
-        <Button onClick={() => navigate("/admin/bookings")}>Back to Bookings</Button>
+        <Ticket className="h-14 w-14 text-white/40" />
+        <h2 className="text-2xl font-bold tracking-tight text-white">Booking not found</h2>
+        <p className="text-white/60 text-sm font-medium">This ticket ID does not exist or was deleted.</p>
+        <Button 
+          className="bg-white/10 hover:bg-white/20 text-white rounded-xl px-6"
+          onClick={() => navigate("/admin/bookings")}
+        >
+          Back to Bookings
+        </Button>
       </div>
     );
   }
@@ -126,7 +134,7 @@ const BookingDetail = () => {
   const route    = (trip as any).routeId ?? {};
   const bus      = (trip as any).busId   ?? {};
   const customer = booking.userId  ?? {};
-  const coupon   = booking.couponUsed ?? null;   // populated Coupon doc
+  const coupon   = booking.couponUsed ?? null;
 
   const hasDiscount = (booking.discountAmount ?? 0) > 0;
   const hasSmMoney  = (booking.smMoneyUsed   ?? 0) > 0;
@@ -140,41 +148,63 @@ const BookingDetail = () => {
     : "—";
 
   return (
-    <>
+    <div className="font-sans text-white max-w-7xl mx-auto space-y-6 pb-12">
       {/* ══════════════════════════════════════
           PAGE HEADER
       ══════════════════════════════════════ */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/bookings")}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-white border border-white/5"
+          onClick={() => navigate("/admin/bookings")}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h2 className="text-3xl font-bold tracking-tight">Booking Details</h2>
-            <Badge variant={statusVariant(booking.status)} className="gap-1.5 capitalize text-xs">
+            <h2 className="text-2xl font-bold tracking-tight text-white">Booking Details</h2>
+            <Badge 
+              variant="outline" 
+              className="gap-1.5 capitalize text-xs px-2.5 py-0.5 font-bold"
+              style={{
+                backgroundColor: booking.status?.toLowerCase() === "booked" ? "rgba(211, 217, 37, 0.1)" : booking.status?.toLowerCase() === "cancelled" ? "rgba(244, 63, 94, 0.1)" : "rgba(255, 255, 255, 0.05)",
+                color: booking.status?.toLowerCase() === "booked" ? "#D3D925" : booking.status?.toLowerCase() === "cancelled" ? "#f43f5e" : "#fff",
+                borderColor: booking.status?.toLowerCase() === "booked" ? "rgba(211, 217, 37, 0.2)" : booking.status?.toLowerCase() === "cancelled" ? "rgba(244, 63, 94, 0.2)" : "rgba(255, 255, 255, 0.1)",
+              }}
+            >
               {statusIcon(booking.status)}
               {booking.status?.replace("_", " ")}
             </Badge>
           </div>
-          <p className="text-muted-foreground mt-1 text-sm flex items-center gap-2">
-            <Ticket className="h-3.5 w-3.5 shrink-0" />
-            <span className="font-mono font-semibold text-foreground">{booking.ticketId}</span>
-            <span className="text-muted-foreground/50">·</span>
+          <p className="text-white/50 mt-1 text-sm flex items-center gap-2 font-medium">
+            <Ticket className="h-4 w-4 shrink-0 text-white/50" />
+            <span className="font-bold tracking-wider text-white/80">#{booking.ticketId}</span>
+            <span className="text-white/20">|</span>
             <span>Booked {new Date(booking.bookedAt).toLocaleString("en-NP", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-          <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => window.print()}>
+          <Button 
+            className="bg-[#121212] hover:bg-white/5 text-white rounded-xl font-medium border border-white/10 gap-2 h-10"
+            onClick={() => window.print()}
+          >
             <Printer className="h-4 w-4" /> Print
           </Button>
-          <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => toast.success("Ticket resent")}>
+          <Button 
+            className="bg-white hover:bg-white/90 text-black rounded-xl font-bold gap-2 h-10"
+            onClick={() => toast.success("Ticket resent")}
+          >
             <RefreshCw className="h-4 w-4" /> Resend Ticket
           </Button>
           {isActive && (
-            <Button variant="destructive" size="sm" className="gap-2 flex-1 sm:flex-none" onClick={() => toast.success("Cancellation initiated")}>
-              <XCircle className="h-4 w-4" /> Cancel Booking
+            <Button 
+              className="bg-white/5 hover:bg-white/5 text-white rounded-xl font-semibold gap-2 h-10 border-0"
+              onClick={() => toast.success("Cancellation initiated")}
+            >
+              <XCircle className="h-4 w-4" /> Cancel
             </Button>
           )}
         </div>
@@ -183,430 +213,382 @@ const BookingDetail = () => {
       {/* ══════════════════════════════════════
           STAT STRIP — 4 quick-scan metrics
       ══════════════════════════════════════ */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {[
-          {
-            icon: <BadgeDollarSign className="h-5 w-5 text-primary" />,
-            label: "Total Paid",
-            value: `Rs. ${(booking.totalAmount ?? 0).toLocaleString()}`,
-            sub: hasDiscount ? `Saved Rs. ${(booking.discountAmount ?? 0).toLocaleString()}` : undefined,
-          },
-          {
-            icon: <Users className="h-5 w-5 text-primary" />,
-            label: "Passengers",
-            value: (booking.seats ?? []).length,
-            sub: (booking.seats ?? []).join(", "),
-          },
-          {
-            icon: <Calendar className="h-5 w-5 text-primary" />,
-            label: "Travel Date",
-            value: tripDate,
-            sub: `${booking.bookedDepartureTime ?? (trip as any).departureTime ?? "—"} → ${booking.bookedArrivalTime ?? (trip as any).arrivalTime ?? "—"}`,
-          },
-          {
-            icon: <Bus className="h-5 w-5 text-primary" />,
-            label: "Vehicle",
-            value: (bus as any).busName ?? "—",
-            sub: (bus as any).busNumber ?? undefined,
-          },
-        ].map((m) => (
-          <Card key={m.label} className="border-l-4 border-l-primary">
-            <CardContent className="pt-4 pb-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground mb-1">{m.label}</p>
-                  <p className="font-bold text-base leading-tight truncate">{m.value}</p>
-                  {m.sub && <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{m.sub}</p>}
-                </div>
-                {m.icon}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid gap-4 md:grid-cols-4">
+        <StatCard
+          title="Total Paid"
+          value={`Rs. ${(booking.totalAmount ?? 0).toLocaleString()}`}
+          icon={BadgeDollarSign}
+          subtitle={hasDiscount ? `Saved Rs. ${(booking.discountAmount ?? 0).toLocaleString()}` : undefined}
+          changeType="neutral"
+        />
+        <StatCard
+          title="Passengers"
+          value={(booking.seats ?? []).length.toString()}
+          icon={Users}
+          subtitle={(booking.seats ?? []).join(", ")}
+          changeType="neutral"
+        />
+        <StatCard
+          title="Travel Date"
+          value={tripDate}
+          icon={Calendar}
+          subtitle={`${booking.bookedDepartureTime ?? (trip as any).departureTime ?? "—"} → ${booking.bookedArrivalTime ?? (trip as any).arrivalTime ?? "—"}`}
+          changeType="neutral"
+        />
+        <StatCard
+          title="Vehicle"
+          value={(bus as any).busName ?? "—"}
+          icon={Bus}
+          subtitle={(bus as any).busNumber ?? undefined}
+          changeType="neutral"
+        />
       </div>
 
       {/* ══════════════════════════════════════
           ROW A — Customer  |  Route
       ══════════════════════════════════════ */}
-      <div className="grid gap-6 md:grid-cols-2 mb-6">
+      <div className="grid gap-6 md:grid-cols-2">
 
         {/* Customer ───────────────────────── */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <User className="h-4 w-4 text-primary" /> Customer
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 gap-1.5 text-xs text-primary"
-                onClick={() => (customer as any)._id && navigate(`/admin/users/${(customer as any)._id}`)}
-              >
-                View Profile <ExternalLink className="h-3 w-3" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4 items-center mb-4">
-              <Avatar className="h-14 w-14 border-2 border-muted shrink-0">
+        <AdminCard className="flex flex-col">
+          <div className="p-5 border-b border-white/5 flex items-center justify-between">
+            <h3 className="text-base font-bold flex items-center gap-2 text-white">
+              <User className="h-4 w-4 text-white/50" /> Customer Info
+            </h3>
+            <Button
+              variant="ghost"
+              className="h-8 gap-1.5 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-full px-3"
+              onClick={() => (customer as any)._id && navigate(`/admin/users/${(customer as any)._id}`)}
+            >
+              View Profile <ExternalLink className="h-3 w-3" />
+            </Button>
+          </div>
+          <div className="p-5 flex-1">
+            <div className="flex gap-4 items-center mb-6">
+              <Avatar className="h-16 w-16 border border-white/10 shrink-0">
                 <AvatarImage src={(customer as any).profilePicture} />
-                <AvatarFallback className="text-lg font-bold bg-primary/10 text-primary">
+                <AvatarFallback className="text-xl font-bold bg-white/5 text-white">
                   {(customer as any).name?.charAt(0)?.toUpperCase() ?? "?"}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-bold text-lg leading-tight">{(customer as any).name ?? "—"}</p>
-                <p className="text-sm text-muted-foreground">{(customer as any).phone ?? "—"}</p>
-                <p className="text-xs text-muted-foreground">{(customer as any).email ?? "—"}</p>
+                <p className="font-bold text-lg tracking-tight text-white">{(customer as any).name ?? "—"}</p>
+                <p className="text-sm font-medium text-white/60 mt-0.5">{(customer as any).phone ?? "—"}</p>
+                <p className="text-sm font-medium text-white/60">{(customer as any).email ?? "—"}</p>
               </div>
             </div>
 
-            <Separator className="mb-3" />
-
-            <DetailRow
-              icon={<CreditCard className="h-3.5 w-3.5" />}
-              label="Payment Method"
-              value={<Badge variant="outline">{PM[booking.paymentMethod] ?? booking.paymentMethod ?? "—"}</Badge>}
-            />
-            <DetailRow
-              icon={<Smartphone className="h-3.5 w-3.5" />}
-              label="Booked Via"
-              value={<Badge variant="outline">{booking.bookedVia ?? "—"}</Badge>}
-            />
-            <DetailRow
-              icon={<ShieldCheck className="h-3.5 w-3.5" />}
-              label="Boarding Status"
-              value={
-                <Badge variant={booking.boardingConfirmed ? "default" : "secondary"}>
-                  {booking.boardingConfirmed ? "Confirmed" : "Not Confirmed"}
-                </Badge>
-              }
-            />
-            {booking.transactionId && (
+            <div className="space-y-1">
               <DetailRow
-                icon={<Hash className="h-3.5 w-3.5" />}
-                label="Transaction ID"
-                value={<span className="font-mono text-xs">{booking.transactionId}</span>}
+                icon={<CreditCard className="h-4 w-4" />}
+                label="Payment Method"
+                value={<Badge className="bg-white/5 text-white hover:bg-white/10 border-white/10">{PM[booking.paymentMethod] ?? booking.paymentMethod ?? "—"}</Badge>}
               />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Route ──────────────────────────── */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" /> Route & Trip
-              </CardTitle>
-              {(trip as any)._id && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1.5 text-xs text-primary"
-                  onClick={() => navigate(`/admin/fleets/${(bus as any)._id}/workstation`)}
-                >
-                  View Trip <ExternalLink className="h-3 w-3" />
-                </Button>
+              <DetailRow
+                icon={<Smartphone className="h-4 w-4" />}
+                label="Booked Via"
+                value={<Badge className="bg-white/5 text-white hover:bg-white/10 border-white/10">{booking.bookedVia ?? "—"}</Badge>}
+              />
+              <DetailRow
+                icon={<ShieldCheck className="h-4 w-4" />}
+                label="Boarding Status"
+                value={
+                  <Badge className={`${booking.boardingConfirmed ? "bg-[#D3D925]/10 text-[#D3D925] border-[#D3D925]/20" : "bg-white/5 text-white/60 border-white/10"} border`}>
+                    {booking.boardingConfirmed ? "Confirmed" : "Not Confirmed"}
+                  </Badge>
+                }
+              />
+              {booking.transactionId && (
+                <DetailRow
+                  icon={<Hash className="h-4 w-4" />}
+                  label="Transaction ID"
+                  value={<span className="text-xs bg-white/5 px-2 py-1 rounded-md text-white/80 border border-white/5">{booking.transactionId}</span>}
+                />
               )}
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+        </AdminCard>
+
+        {/* Route ──────────────────────────── */}
+        <AdminCard className="flex flex-col">
+          <div className="p-5 border-b border-white/5 flex items-center justify-between">
+            <h3 className="text-base font-bold flex items-center gap-2 text-white">
+              <MapPin className="h-4 w-4 text-white/50" /> Route & Trip
+            </h3>
+            {(trip as any)._id && (
+              <Button
+                variant="ghost"
+                className="h-8 gap-1.5 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-full px-3"
+                onClick={() => navigate(`/admin/fleets/${(bus as any)._id}/workstation`)}
+              >
+                View Trip <ExternalLink className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          <div className="p-5 flex-1 flex flex-col">
             {/* From → To hero */}
-            <div className="flex items-stretch gap-2 p-4 bg-muted/40 rounded-xl mb-4">
+            <div className="flex items-stretch gap-2 p-4 bg-white/[0.03] rounded-xl mb-6 border border-white/5">
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">From</p>
-                <p className="font-black text-xl leading-tight">
+                <p className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-1">From</p>
+                <p className="font-bold text-xl tracking-tight text-white">
                   {booking.bookedFrom ?? (route as any).from ?? (trip as any).fromStopName ?? "—"}
                 </p>
               </div>
 
-              <div className="flex flex-col items-center justify-center gap-1 px-2 shrink-0">
-                <p className="text-[10px] font-semibold text-muted-foreground">
-                  {(route as any).duration ?? ""}
+              <div className="flex flex-col items-center justify-center gap-1.5 px-3 shrink-0">
+                <p className="text-[10px] font-semibold text-white/60">
+                  {(route as any).duration ?? "N/A"}
                 </p>
-                <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  <div className="w-8 h-[2px] bg-primary/40" />
-                  <ArrowRight className="h-3.5 w-3.5 text-primary" />
+                <div className="flex items-center gap-1 w-full justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+                  <div className="flex-1 h-[1px] bg-white/20 min-w-[32px]" />
+                  <ArrowRight className="h-3.5 w-3.5 text-white/40" />
                 </div>
-                <p className="text-[10px] text-muted-foreground">{(route as any).distance ?? ""}</p>
+                <p className="text-[10px] font-medium text-white/40">{(route as any).distance ?? ""}</p>
               </div>
 
               <div className="flex-1 min-w-0 text-right">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">To</p>
-                <p className="font-black text-xl leading-tight">
+                <p className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-1">To</p>
+                <p className="font-bold text-xl tracking-tight text-white">
                   {booking.bookedTo ?? (route as any).to ?? (trip as any).toStopName ?? "—"}
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="bg-muted/30 rounded-lg p-2.5 text-center">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Date</p>
-                <p className="font-bold text-sm">{tripDate}</p>
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="bg-white/[0.02] rounded-xl p-3 text-center border border-white/5">
+                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1">Date</p>
+                <p className="font-bold text-sm text-white">{tripDate}</p>
               </div>
-              <div className="bg-muted/30 rounded-lg p-2.5 text-center">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Departs</p>
-                <p className="font-bold text-sm">{booking.bookedDepartureTime ?? (trip as any).departureTime ?? "—"}</p>
+              <div className="bg-white/[0.02] rounded-xl p-3 text-center border border-white/5">
+                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1">Departs</p>
+                <p className="font-bold text-sm text-white">{booking.bookedDepartureTime ?? (trip as any).departureTime ?? "—"}</p>
               </div>
-              <div className="bg-muted/30 rounded-lg p-2.5 text-center">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">Arrives</p>
-                <p className="font-bold text-sm">{booking.bookedArrivalTime ?? (trip as any).arrivalTime ?? "—"}</p>
+              <div className="bg-white/[0.02] rounded-xl p-3 text-center border border-white/5">
+                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1">Arrives</p>
+                <p className="font-bold text-sm text-white">{booking.bookedArrivalTime ?? (trip as any).arrivalTime ?? "—"}</p>
               </div>
             </div>
 
-            <Separator className="mb-3" />
-
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5" /> Seats Booked
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-white/60 text-sm font-semibold flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-white/40" /> Seats Booked
               </span>
-              <div className="flex gap-1 flex-wrap justify-end">
+              <div className="flex gap-1.5 flex-wrap justify-end">
                 {(booking.seats ?? []).map((s: string) => (
-                  <Badge key={s} variant="secondary" className="font-mono font-bold text-[10px]">{s}</Badge>
+                  <Badge key={s} className="bg-white/10 hover:bg-white/10 text-white font-bold px-2 py-0.5 border border-white/10">{s}</Badge>
                 ))}
               </div>
             </div>
-
-            {(trip as any).directionLabel && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                <Navigation className="h-3.5 w-3.5" />
-                {(trip as any).directionLabel}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+        </AdminCard>
       </div>
 
       {/* ══════════════════════════════════════
           ROW B — Vehicle | Payment | Breakdown
       ══════════════════════════════════════ */}
-      <div className="grid gap-6 md:grid-cols-3 mb-6">
+      <div className="grid gap-6 md:grid-cols-3">
 
         {/* Vehicle ────────────────────────── */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Bus className="h-4 w-4 text-primary" /> Vehicle
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Bus name — tap to go to workstation */}
+        <AdminCard>
+          <div className="p-5 border-b border-white/5">
+            <h3 className="text-base font-bold flex items-center gap-2 text-white">
+              <Bus className="h-4 w-4 text-white/50" /> Vehicle
+            </h3>
+          </div>
+          <div className="p-5">
             <div
-              className="group flex items-center justify-between p-3 bg-muted/40 rounded-xl cursor-pointer hover:bg-muted/60 transition-colors mb-4"
+              className="group flex items-center justify-between p-4 bg-white/[0.03] rounded-xl cursor-pointer hover:bg-white/[0.05] transition-colors mb-5 border border-white/5"
               onClick={() => (bus as any)._id && navigate(`/admin/fleets/${(bus as any)._id}/workstation`)}
             >
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Bus Name</p>
-                <p className="font-black text-base group-hover:text-primary transition-colors">
+                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1">Bus Name</p>
+                <p className="font-bold text-base text-white group-hover:text-white/80 transition-colors">
                   {(bus as any).busName ?? "—"}
                 </p>
               </div>
               {(bus as any)._id && (
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                  <ArrowRight className="h-4 w-4 text-white/60" />
+                </div>
               )}
             </div>
 
-            <DetailRow
-              icon={<Tag className="h-3.5 w-3.5" />}
-              label="Plate No."
-              value={
-                <span className="font-mono bg-muted px-2 py-0.5 rounded text-xs font-bold">
-                  {(bus as any).busNumber ?? "—"}
-                </span>
-              }
-            />
-            <DetailRow
-              icon={<Bus className="h-3.5 w-3.5" />}
-              label="Service"
-              value={
-                <Badge variant="outline" className="text-[10px] border-primary/40 text-primary font-bold">
-                  {(bus as any).busType ?? "—"}
-                </Badge>
-              }
-            />
-            <DetailRow
-              icon={(trip as any).shift === "night" ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
-              label="Shift"
-              value={
-                <Badge variant={(trip as any).shift === "night" ? "secondary" : "outline"} className="capitalize font-bold">
-                  {(trip as any).shift ?? "—"}
-                </Badge>
-              }
-            />
-          </CardContent>
-        </Card>
+            <div className="space-y-1">
+              <DetailRow
+                icon={<Tag className="h-4 w-4" />}
+                label="Plate No."
+                value={
+                  <span className="bg-white/10 border border-white/5 px-2 py-1 rounded-md text-xs font-bold text-white">
+                    {(bus as any).busNumber ?? "—"}
+                  </span>
+                }
+              />
+              <DetailRow
+                icon={<Bus className="h-4 w-4" />}
+                label="Service"
+                value={
+                  <Badge variant="outline" className="text-[10px] border-white/10 text-white/80 font-bold bg-white/[0.02]">
+                    {(bus as any).busType ?? "—"}
+                  </Badge>
+                }
+              />
+              <DetailRow
+                icon={(trip as any).shift === "night" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                label="Shift"
+                value={
+                  <Badge className="bg-white/5 text-white/80 hover:bg-white/10 border border-white/5 capitalize font-bold">
+                    {(trip as any).shift ?? "—"}
+                  </Badge>
+                }
+              />
+            </div>
+          </div>
+        </AdminCard>
 
         {/* Payment Info ───────────────────── */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-primary" /> Payment
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center mb-4">
-              <p className="text-3xl font-black text-primary">
-                Rs.&nbsp;{(booking.totalAmount ?? 0).toLocaleString()}
+        <AdminCard>
+          <div className="p-5 border-b border-white/5">
+            <h3 className="text-base font-bold flex items-center gap-2 text-white">
+              <CreditCard className="h-4 w-4 text-white/50" /> Payment
+            </h3>
+          </div>
+          <div className="p-5">
+            <div className="text-center mb-5 bg-white/[0.03] p-4 rounded-xl border border-white/5">
+              <p className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-1">Amount Paid</p>
+              <p className="text-3xl font-bold tracking-tight text-white">
+                Rs. {(booking.totalAmount ?? 0).toLocaleString()}
               </p>
               {hasDiscount && (
-                <p className="text-xs text-destructive line-through mt-0.5">
-                  Rs.&nbsp;{(booking.originalAmount ?? 0).toLocaleString()}
-                </p>
-              )}
-              {hasDiscount && (
-                <p className="text-xs text-success font-semibold mt-1">
-                  You saved Rs.&nbsp;{(booking.discountAmount ?? 0).toLocaleString()}
-                </p>
+                <div className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold">
+                  <span className="text-white/40 line-through">Rs. {(booking.originalAmount ?? 0).toLocaleString()}</span>
+                  <span className="text-[#D3D925]">Saved Rs. {(booking.discountAmount ?? 0).toLocaleString()}</span>
+                </div>
               )}
             </div>
 
-            <Separator className="mb-3" />
-
-            <DetailRow
-              icon={<CreditCard className="h-3.5 w-3.5" />}
-              label="Method"
-              value={<Badge variant="outline">{PM[booking.paymentMethod] ?? booking.paymentMethod ?? "—"}</Badge>}
-            />
-            <DetailRow
-              icon={<Smartphone className="h-3.5 w-3.5" />}
-              label="Channel"
-              value={<Badge variant="outline">{booking.bookedVia ?? "—"}</Badge>}
-            />
-            {booking.transactionId && (
+            <div className="space-y-1">
               <DetailRow
-                icon={<Hash className="h-3.5 w-3.5" />}
-                label="Txn ID"
-                value={<span className="font-mono text-[11px] truncate">{booking.transactionId}</span>}
+                icon={<CreditCard className="h-4 w-4" />}
+                label="Method"
+                value={<Badge className="bg-white/5 text-white/80 hover:bg-white/10 border border-white/10">{PM[booking.paymentMethod] ?? booking.paymentMethod ?? "—"}</Badge>}
               />
-            )}
-            <DetailRow
-              icon={<ShieldCheck className="h-3.5 w-3.5" />}
-              label="Boarding"
-              value={
-                <Badge variant={booking.boardingConfirmed ? "default" : "secondary"} className="text-[10px]">
-                  {booking.boardingConfirmed ? "Confirmed" : "Pending"}
-                </Badge>
-              }
-            />
-          </CardContent>
-        </Card>
+              <DetailRow
+                icon={<Smartphone className="h-4 w-4" />}
+                label="Channel"
+                value={<Badge className="bg-white/5 text-white/80 hover:bg-white/10 border border-white/10">{booking.bookedVia ?? "—"}</Badge>}
+              />
+              {booking.transactionId && (
+                <DetailRow
+                  icon={<Hash className="h-4 w-4" />}
+                  label="Txn ID"
+                  value={<span className="text-[11px] bg-white/5 px-2 py-1 rounded-md text-white/80 border border-white/5">{booking.transactionId}</span>}
+                />
+              )}
+            </div>
+          </div>
+        </AdminCard>
 
         {/* Price Breakdown ────────────────── */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-primary" /> Fare Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-0">
+        <AdminCard>
+          <div className="p-5 border-b border-white/5">
+            <h3 className="text-base font-bold flex items-center gap-2 text-white">
+              <Receipt className="h-4 w-4 text-white/50" /> Fare Breakdown
+            </h3>
+          </div>
+          <div className="p-5">
+            <div className="space-y-1">
               <DetailRow
-                icon={<BadgeDollarSign className="h-3.5 w-3.5" />}
+                icon={<BadgeDollarSign className="h-4 w-4" />}
                 label="Base Fare"
                 value={`Rs. ${(booking.originalAmount ?? 0).toLocaleString()}`}
               />
               {hasDiscount && (
                 <DetailRow
-                  icon={<Percent className="h-3.5 w-3.5" />}
+                  icon={<Percent className="h-4 w-4" />}
                   label={`Coupon${booking.couponCode ? ` (${booking.couponCode})` : ""}`}
                   value={
-                    <span className="text-destructive">
-                      −Rs.&nbsp;{(booking.discountAmount ?? 0).toLocaleString()}
+                    <span className="text-white font-bold">
+                      −Rs. {(booking.discountAmount ?? 0).toLocaleString()}
                     </span>
                   }
                 />
               )}
               {hasSmMoney && (
                 <DetailRow
-                  icon={<Wallet className="h-3.5 w-3.5" />}
+                  icon={<Wallet className="h-4 w-4" />}
                   label="SM Money"
                   value={
-                    <span className="text-primary">
-                      −Rs.&nbsp;{(booking.smMoneyUsed ?? 0).toLocaleString()}
+                    <span className="text-[#D3D925] font-bold">
+                      −Rs. {(booking.smMoneyUsed ?? 0).toLocaleString()}
                     </span>
                   }
                 />
               )}
               <DetailRow
-                icon={<CreditCard className="h-3.5 w-3.5" />}
+                icon={<CreditCard className="h-4 w-4" />}
                 label="Gateway Paid"
                 value={`Rs. ${((booking.gatewayAmount ?? booking.totalAmount) ?? 0).toLocaleString()}`}
               />
             </div>
 
-            <Separator className="my-3" />
-
-            <div className="flex items-center justify-between">
-              <span className="font-black text-base text-primary">Total Paid</span>
-              <span className="font-black text-xl text-primary">
-                Rs.&nbsp;{(booking.totalAmount ?? 0).toLocaleString()}
+            <div className="mt-5 p-4 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
+              <span className="font-bold text-sm text-white/80 uppercase tracking-wider">Total Paid</span>
+              <span className="font-bold text-xl tracking-tight text-white">
+                Rs. {(booking.totalAmount ?? 0).toLocaleString()}
               </span>
             </div>
 
-            {/* Coupon detail card — only if coupon doc was populated */}
+            {/* Coupon detail card */}
             {coupon && hasDiscount && (
-              <>
-                <Separator className="my-3" />
-                <div
-                  className="p-3 rounded-lg bg-muted/40 border border-border/50 cursor-pointer hover:bg-muted/60 transition-colors"
-                  onClick={() => navigate(`/admin/offers/${(coupon as any)._id}`)}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Coupon Used</p>
-                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                  </div>
-                  <p className="font-bold text-sm">{(coupon as any).couponCode}</p>
-                  {(coupon as any).title && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{(coupon as any).title}</p>
-                  )}
-                  <p className="text-xs text-success font-semibold mt-1">
-                    {(coupon as any).discountType === "percentage"
-                      ? `${(coupon as any).discountValue}% off`
-                      : `Rs. ${(coupon as any).discountValue} off`}
-                    {(coupon as any).maxDiscountAmount
-                      ? ` (max Rs. ${(coupon as any).maxDiscountAmount})`
-                      : ""}
-                  </p>
+              <div
+                className="mt-4 p-4 rounded-xl bg-white/[0.03] border border-white/5 cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => navigate(`/admin/offers/${(coupon as any)._id}`)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Coupon Used</p>
+                  <ArrowRight className="h-3 w-3 text-white/40" />
                 </div>
-              </>
+                <p className="font-bold text-base text-white">{(coupon as any).couponCode}</p>
+                {(coupon as any).title && (
+                  <p className="text-xs font-medium text-white/50 mt-1">{(coupon as any).title}</p>
+                )}
+                <p className="text-xs text-[#D3D925] font-bold mt-2 inline-flex bg-[#D3D925]/10 px-2 py-1 rounded-md border border-[#D3D925]/20">
+                  {(coupon as any).discountType === "percentage"
+                    ? `${(coupon as any).discountValue}% off`
+                    : `Rs. ${(coupon as any).discountValue} off`}
+                  {(coupon as any).maxDiscountAmount
+                    ? ` (max Rs. ${(coupon as any).maxDiscountAmount})`
+                    : ""}
+                </p>
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </AdminCard>
       </div>
 
       {/* ══════════════════════════════════════
           ROW C — Boarding & Dropping (conditional)
       ══════════════════════════════════════ */}
       {(boardingPt?.name || droppingPt?.name) && (
-        <div className="grid gap-6 md:grid-cols-2 mb-6">
+        <div className="grid gap-6 md:grid-cols-2">
           {boardingPt?.name && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Navigation className="h-4 w-4 text-success" /> Boarding Point
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="font-bold">{boardingPt.name}</p>
-                {boardingPt.time && <p className="text-sm text-muted-foreground mt-0.5">{boardingPt.time}</p>}
-              </CardContent>
-            </Card>
+            <AdminCard className="p-5">
+              <h3 className="text-xs font-semibold flex items-center gap-2 text-white/50 uppercase tracking-wider mb-3">
+                <Navigation className="h-4 w-4" /> Boarding Point
+              </h3>
+              <p className="font-bold text-lg text-white">{boardingPt.name}</p>
+              {boardingPt.time && <p className="text-sm font-medium text-white/60 mt-1">{boardingPt.time}</p>}
+            </AdminCard>
           )}
           {droppingPt?.name && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-destructive" /> Dropping Point
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="font-bold">{droppingPt.name}</p>
-                {droppingPt.time && <p className="text-sm text-muted-foreground mt-0.5">{droppingPt.time}</p>}
-              </CardContent>
-            </Card>
+            <AdminCard className="p-5">
+              <h3 className="text-xs font-semibold flex items-center gap-2 text-white/50 uppercase tracking-wider mb-3">
+                <MapPin className="h-4 w-4" /> Dropping Point
+              </h3>
+              <p className="font-bold text-lg text-white">{droppingPt.name}</p>
+              {droppingPt.time && <p className="text-sm font-medium text-white/60 mt-1">{droppingPt.time}</p>}
+            </AdminCard>
           )}
         </div>
       )}
@@ -615,39 +597,39 @@ const BookingDetail = () => {
           ROW D — Passenger Manifest (conditional)
       ══════════════════════════════════════ */}
       {passengers.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              Passenger Manifest
-              <Badge variant="secondary">{passengers.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
+        <AdminCard>
+          <div className="p-5 border-b border-white/5 flex items-center gap-3">
+            <Users className="h-4 w-4 text-white/50" />
+            <h3 className="text-base font-bold text-white">Passenger Manifest</h3>
+            <Badge className="bg-white/10 text-white/80 border-0 font-bold px-2">{passengers.length}</Badge>
+          </div>
+          <div className="p-5">
+            <div className="space-y-3">
               {passengers.map((p: any, i: number) => (
                 <div
                   key={i}
-                  className="grid grid-cols-4 gap-4 items-center p-3 bg-muted/30 rounded-lg border border-border/40"
+                  className="grid grid-cols-4 gap-4 items-center p-4 bg-white/[0.03] rounded-xl border border-white/5 hover:bg-white/[0.05] transition-colors"
                 >
-                  <div className="flex items-center gap-2.5 col-span-1">
-                    <Badge variant="outline" className="font-mono font-bold text-[10px] shrink-0">{p.seatNo}</Badge>
+                  <div className="flex items-center gap-4 col-span-1">
+                    <div className="h-10 w-10 shrink-0 bg-white/5 border border-white/10 rounded-full flex items-center justify-center font-bold text-sm text-white/80">
+                      {p.seatNo}
+                    </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] text-muted-foreground uppercase">Name</p>
-                      <p className="font-semibold text-sm truncate">{p.name}</p>
+                      <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">Name</p>
+                      <p className="font-bold text-sm text-white truncate">{p.name}</p>
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] text-muted-foreground uppercase">Age</p>
-                    <p className="font-semibold text-sm">{p.age > 0 ? p.age : "—"}</p>
+                    <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">Age</p>
+                    <p className="font-semibold text-sm text-white/80">{p.age > 0 ? p.age : "—"}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-muted-foreground uppercase">Gender</p>
-                    <p className="font-semibold text-sm capitalize">{p.gender ?? "—"}</p>
+                    <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">Gender</p>
+                    <p className="font-semibold text-sm text-white/80 capitalize">{p.gender ?? "—"}</p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] text-muted-foreground uppercase">ID Proof</p>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">ID Proof</p>
+                    <p className="text-sm font-medium text-white/60 truncate">
                       {p.idType
                         ? `${p.idType.replace(/_/g, " ")}${p.idNumber ? ` · ${p.idNumber}` : ""}`
                         : "—"}
@@ -656,35 +638,35 @@ const BookingDetail = () => {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </AdminCard>
       )}
 
       {/* ══════════════════════════════════════
           ROW E — Cancellation (conditional)
       ══════════════════════════════════════ */}
       {booking.status === "cancelled" && (booking.cancellationReason || booking.cancelledBy) && (
-        <Card className="border-destructive/40">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2 text-destructive">
-              <XCircle className="h-4 w-4" /> Cancellation Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+          <div className="p-5 border-b border-white/10 flex items-center gap-2">
+            <XCircle className="h-4 w-4 text-white" />
+            <h3 className="text-base font-bold text-white">Cancellation Details</h3>
+          </div>
+          <div className="p-5 space-y-4">
             <DetailRow
               label="Cancelled By"
-              value={<Badge variant="destructive" className="capitalize">{booking.cancelledBy ?? "—"}</Badge>}
+              icon={<User className="h-4 w-4" />}
+              value={<Badge className="bg-white/5 text-white border border-white/10 capitalize font-bold">{booking.cancelledBy ?? "—"}</Badge>}
             />
             {booking.cancellationReason && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Reason</p>
-                <p className="text-sm text-foreground leading-relaxed">{booking.cancellationReason}</p>
+              <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-white/60 mb-1">Reason</p>
+                <p className="text-sm font-medium text-white/60 leading-relaxed">{booking.cancellationReason}</p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 };
 

@@ -301,13 +301,13 @@ export const CouponLivePreview = ({ data }: CouponLivePreviewProps) => {
   return (
     <div className="flex flex-col h-full">
       {/* Tab switcher */}
-      <div className="flex items-center gap-1 p-1 bg-muted rounded-xl mb-6 self-start">
+      <div className="flex items-center gap-1 p-1 bg-[#121212]/50 border border-white/5 rounded-xl mb-6 self-start">
         <button
           onClick={() => setTab("mobile")}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             tab === "mobile"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-[#D3D925] text-[#121212] font-bold shadow-sm"
+              : "text-white/60 hover:text-white hover:bg-white/5"
           }`}
         >
           <Smartphone className="w-4 h-4" />
@@ -317,8 +317,8 @@ export const CouponLivePreview = ({ data }: CouponLivePreviewProps) => {
           onClick={() => setTab("web")}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             tab === "web"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-[#D3D925] text-[#121212] font-bold shadow-sm"
+              : "text-white/60 hover:text-white hover:bg-white/5"
           }`}
         >
           <Globe className="w-4 h-4" />

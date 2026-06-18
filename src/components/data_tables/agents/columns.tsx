@@ -1,16 +1,7 @@
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type Agent = {
@@ -21,32 +12,26 @@ type Agent = {
   commission: string;
   performance: string;
   applications: number;
-  profileImg:string;
+  profileImg: string;
+};
+
+const AgentActionsCell = ({ id }: { id: string }) => {
+  const navigate = useNavigate();
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
+      onClick={() => navigate(`/admin/agents/${id}`)}
+      title="View Profile"
+    >
+      <ArrowRight className="h-4 w-4" />
+      <span className="sr-only">View Profile</span>
+    </Button>
+  );
 };
 
 export const columns: ColumnDef<Agent>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
   {
     accessorKey: "profileImg",
     header: "Profile Image",
@@ -66,56 +51,39 @@ export const columns: ColumnDef<Agent>[] = [
   {
     accessorKey: "name",
     header: "Name",
+    cell: ({ row }) => <span className="font-medium text-white/90">{row.getValue("name")}</span>,
   },
   {
     accessorKey: "location",
     header: "Location",
+    cell: ({ row }) => <span className="text-white/80">{row.getValue("location")}</span>,
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
       const { status } = row.original;
-      return <Badge variant={status ? "Verified" :"Rejected" as BadgeProps["variant"]}>{status ? "Verified" : "Rejected"}</Badge>;
+      return <Badge variant="outline" className={status ? "text-emerald-500 border-emerald-500/20 bg-emerald-500/10 font-bold" : "text-rose-500 border-rose-500/20 bg-rose-500/10 font-bold"}>{status ? "Verified" : "Rejected"}</Badge>;
     },
   },
   {
     accessorKey: "commission",
     header: "Commission",
+    cell: ({ row }) => <span className="text-[#D3D925] font-medium">{row.getValue("commission")}</span>,
   },
   {
     accessorKey: "performance",
     header: "Performance",
+    cell: ({ row }) => <span className="text-white/80">{row.getValue("performance")}</span>,
   },
   {
     accessorKey: "applications",
     header: "Applications",
+    cell: ({ row }) => <span className="text-white/80">{row.getValue("applications")}</span>,
   },
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => {
-      const { id } = row.original;
-      const navigate = useNavigate();
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigate(`${window.location}/${id}`)}>
-              View Profile
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {/* <DropdownMenuItem>View customer</DropdownMenuItem> */}
-            {/* <DropdownMenuItem>View payment details</DropdownMenuItem> */}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <AgentActionsCell id={row.original.id} />,
   },
 ];

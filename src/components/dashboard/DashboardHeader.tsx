@@ -31,8 +31,8 @@ export function DashboardHeader() {
     <header
       className="
         sticky top-0 z-50 
-        border-b 
-        bg-card/90 backdrop-blur-sm
+        border-b border-white/5
+        bg-[#121212]/80 backdrop-blur-xl
         transition-colors
       "
     >
@@ -47,17 +47,17 @@ export function DashboardHeader() {
           {/* Status Badge (hidden on mobile) */}
           <Badge
             variant="outline"
-            className="gap-1 border-muted-foreground/30 text-foreground hidden md:flex"
+            className="gap-1 border-white/5 bg-white/5 text-[#B7C7C3] hidden md:flex rounded-xl"
           >
-            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#D3D925] animate-pulse shadow-[0_0_8px_rgba(211,217,37,0.8)]" />
             System Healthy
           </Badge>
 
 
 
           {/* Notification */}
-          <Button variant="ghost" className="cursor-pointer" size="icon">
-            <Bell className="h-4 w-4 text-foreground" />
+          <Button variant="ghost" className="cursor-pointer hover:bg-white/5 rounded-xl h-9 w-9" size="icon">
+            <Bell className="h-4 w-4 text-[#B7C7C3]" />
           </Button>
 
           {/* Settings */}
@@ -68,23 +68,23 @@ export function DashboardHeader() {
           <ModeToggle />
 
           {/* User Info */}
-          <div className="flex items-center gap-2 pl-3 border-l border-muted">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary text-primary-foreground">
+          <div className="flex items-center gap-2 pl-3 border-l border-white/5">
+            <Avatar className="h-9 w-9 border border-white/5 shadow-[0_4px_14px_rgba(0,86,78,0.35)]">
+              <AvatarFallback className="bg-gradient-to-br from-[#00564E] to-[#003D38] text-[#F5F7F6] font-bold">
                 {admin?.adminId?.charAt(0).toUpperCase() || "A"}
               </AvatarFallback>
             </Avatar>
 
             {/* Hide User Text on small screens */}
             <div className="hidden lg:block">
-              <p className="text-sm font-medium text-foreground">Super Admin</p>
-              <p className="text-xs text-muted-foreground">{admin?.adminId}</p>
+              <p className="text-sm font-semibold text-[#F5F7F6]">Super Admin</p>
+              <p className="text-[10px] text-[#B7C7C3] font-medium">{admin?.adminId}</p>
             </div>
           </div>
 
           {/* Logout */}
-          <Button className="cursor-pointer"  onClick={()=>logout()} variant="ghost" size="icon">
-            <LogOut className="h-4 w-4 text-foreground" />
+          <Button className="cursor-pointer hover:bg-rose-500/10 hover:text-rose-400 rounded-xl h-9 w-9 text-[#B7C7C3]"  onClick={()=>logout()} variant="ghost" size="icon">
+            <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </div>

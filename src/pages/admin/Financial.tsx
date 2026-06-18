@@ -87,7 +87,7 @@ function Delta({ v, inverted = false }: { v: number | null | undefined; inverted
   if (v == null) return <span className="text-[10px] text-muted-foreground/40 italic">no prior data</span>;
   const positive = inverted ? v <= 0 : v >= 0;
   return (
-    <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${positive ? "text-emerald-600" : "text-red-500"}`}>
+    <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${positive ? "text-white" : "text-white"}`}>
       {v >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
       {v > 0 ? "+" : ""}{v}% MoM
     </span>
@@ -118,10 +118,10 @@ function FlowNode({
   onClick?:       () => void;
 }) {
   const base = warning
-    ? "border-amber-400/40 bg-amber-500/5 hover:bg-amber-500/8"
+    ? "border-white/10 bg-white/5 hover:bg-white/5"
     : accent
-    ? "border-primary/25 bg-primary/5 hover:bg-primary/8"
-    : "border-border/50 bg-card hover:bg-muted/20";
+    ? "border-[#D3D925]/25 bg-[#D3D925]/5 hover:bg-[#D3D925]/10"
+    : "border-white/5 bg-[#121212]/30 hover:bg-white/5 backdrop-blur-sm";
 
   return (
     <button
@@ -129,18 +129,18 @@ function FlowNode({
       disabled={!onClick}
       className={`flex-1 min-w-[180px] text-left p-4 rounded-xl border transition-all duration-200 ${base} ${onClick ? "cursor-pointer" : "cursor-default"}`}
     >
-      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-muted-foreground/50 mb-2">{label}</p>
-      <p className={`text-2xl font-black tracking-tight tabular-nums leading-none mb-1.5 ${warning ? "text-amber-600" : accent ? "text-primary" : "text-foreground"}`}>
+      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/50 mb-2">{label}</p>
+      <p className={`text-2xl font-black tracking-tight tabular-nums leading-none mb-1.5 ${warning ? "text-white" : accent ? "text-[#D3D925]" : "text-white"}`}>
         {mainValue}
       </p>
       {delta !== undefined && <div className="mb-3"><Delta v={delta} inverted={deltaInverted} /></div>}
       {children && (
-        <div className="mt-2 pt-2 border-t border-border/20 space-y-0.5">
+        <div className="mt-2 pt-2 border-t border-white/10 space-y-0.5">
           {children}
         </div>
       )}
       {onClick && (
-        <div className="mt-3 flex items-center gap-1 text-[10px] text-muted-foreground/60">
+        <div className="mt-3 flex items-center gap-1 text-[10px] text-white/60 hover:text-white">
           View <ArrowRight className="h-2.5 w-2.5" />
         </div>
       )}
@@ -152,11 +152,11 @@ function FlowNode({
 const ChartTip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-xl border border-border bg-card/95 backdrop-blur shadow-xl p-3 text-xs min-w-[170px]">
-      <p className="font-black mb-2 pb-2 border-b border-border/40">{label}</p>
+    <div className="rounded-xl border border-white/10 bg-[#121212]/95 backdrop-blur shadow-xl p-3 text-xs min-w-[170px] text-white">
+      <p className="font-black mb-2 pb-2 border-b border-white/10">{label}</p>
       {payload.map((p: any) => (
         <div key={p.name} className="flex justify-between gap-4 py-0.5">
-          <span className="flex items-center gap-1.5 text-muted-foreground">
+          <span className="flex items-center gap-1.5 text-white/60">
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color }} />{p.name}
           </span>
           <span className="font-bold">{Rs(p.value)}</span>
@@ -232,12 +232,12 @@ export default function Financial() {
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black tracking-tight">Financial Command Center</h2>
-          <p className="text-muted-foreground text-sm mt-0.5">
+          <h2 className="text-2xl font-black tracking-tight text-white">Financial Command Center</h2>
+          <p className="text-white/60 text-sm mt-0.5">
             Platform money flow · GBV → Commission captured → Operator payouts → Net position
           </p>
         </div>
-        <Button variant="outline" size="icon" className="h-9 w-9 shrink-0"
+        <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 bg-[#121212]/30 border-white/5 text-white hover:bg-white/10"
           onClick={() => refetch()} disabled={isFetching}>
           <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
         </Button>
@@ -245,33 +245,33 @@ export default function Financial() {
 
       {/* ══ 1. SYSTEM HEALTH ════════════════════════════════════════════════ */}
       <div className={`rounded-xl border px-5 py-3 flex items-center gap-4 ${
-        health.level === "HEALTHY"  ? "border-emerald-500/30 bg-emerald-500/5"
-        : health.level === "WATCH" ? "border-amber-500/30 bg-amber-500/5"
-        :                            "border-red-500/40 bg-red-500/5"
+        health.level === "HEALTHY"  ? "border-white/10 bg-white/5"
+        : health.level === "WATCH" ? "border-white/10 bg-white/5"
+        :                            "border-white/10 bg-white/5"
       }`}>
         <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-          health.level === "HEALTHY"  ? "bg-emerald-500 shadow-[0_0_8px_3px_rgba(34,197,94,0.4)]"
-          : health.level === "WATCH" ? "bg-amber-500 shadow-[0_0_8px_3px_rgba(245,158,11,0.4)]"
-          :                            "bg-red-500 shadow-[0_0_8px_3px_rgba(239,68,68,0.4)]"
+          health.level === "HEALTHY"  ? "bg-white/5 shadow-[0_0_8px_3px_rgba(34,197,94,0.4)]"
+          : health.level === "WATCH" ? "bg-white/5 shadow-[0_0_8px_3px_rgba(245,158,11,0.4)]"
+          :                            "bg-white/5 shadow-[0_0_8px_3px_rgba(239,68,68,0.4)]"
         }`} />
         <div className="flex-1">
           <span className={`font-black text-sm ${
-            health.level === "HEALTHY" ? "text-emerald-700" : health.level === "WATCH" ? "text-amber-700" : "text-red-700"
+            health.level === "HEALTHY" ? "text-white" : health.level === "WATCH" ? "text-white" : "text-white"
           }`}>
             {health.level === "HEALTHY" ? "All Clear —" : health.level === "WATCH" ? "Attention —" : "Critical —"}
           </span>
           <span className="text-xs text-muted-foreground ml-2">{health.signals.join(" · ")}</span>
         </div>
         <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shrink-0 ${
-          health.level === "HEALTHY" ? "bg-emerald-100 text-emerald-800"
-          : health.level === "WATCH" ? "bg-amber-100 text-amber-800"
-          :                            "bg-red-100 text-red-800"
+          health.level === "HEALTHY" ? "bg-white/5 text-white"
+          : health.level === "WATCH" ? "bg-white/5 text-white"
+          :                            "bg-white/5 text-white"
         }`}>{health.level}</span>
       </div>
 
       {/* ══ 2. MONEY FLOW SPINE ═════════════════════════════════════════════ */}
       <div>
-        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 mb-3">
+        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">
           Money Flow · This Month
         </p>
         <div className="flex flex-col lg:flex-row items-stretch gap-2">
@@ -281,20 +281,20 @@ export default function Financial() {
             delta={d?.gbv?.momDelta} accent>
             <Stat label="Bookings this month"  value={N(d?.gbv?.thisMonthCount  ?? 0)} />
             <Stat label="Seats sold"           value={N(d?.gbv?.thisMonthSeats  ?? 0)} />
-            <Stat label="Discounts applied"    value={Rs(d?.gbv?.thisMonthDiscount ?? 0)} accent="text-amber-600" />
+            <Stat label="Discounts applied"    value={Rs(d?.gbv?.thisMonthDiscount ?? 0)} accent="text-white" />
             <Stat label="Avg ticket (all time)" value={Rs(d?.gbv?.avgTicket ?? 0)} />
           </FlowNode>
 
           {/* Connector: Take Rate */}
           <div className="flex lg:flex-col items-center justify-center px-2 gap-1 shrink-0">
-            <ChevronRight className="h-4 w-4 text-muted-foreground/30 lg:rotate-0 rotate-90" />
-            <div className="px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary whitespace-nowrap">
+            <ChevronRight className="h-4 w-4 text-white/30 lg:rotate-0 rotate-90" />
+            <div className="px-2.5 py-1 rounded-full bg-[#D3D925]/10 border border-[#D3D925]/20 text-[10px] font-black text-[#D3D925] whitespace-nowrap">
               {d?.takeRate?.thisMonth ?? 0}% take rate
               {d?.takeRate?.isEstimated && (
                 <span className="ml-1 opacity-50 font-normal">(est.)</span>
               )}
             </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/30 lg:rotate-0 rotate-90 hidden lg:block" />
+            <ChevronRight className="h-4 w-4 text-white/30 lg:rotate-0 rotate-90 hidden lg:block" />
           </div>
 
           {/* Node 2: Net Revenue */}
@@ -307,7 +307,7 @@ export default function Financial() {
           </FlowNode>
 
           <div className="flex lg:flex-col items-center justify-center px-1 shrink-0">
-            <ChevronRight className="h-4 w-4 text-muted-foreground/30 lg:rotate-0 rotate-90" />
+            <ChevronRight className="h-4 w-4 text-white/30 lg:rotate-0 rotate-90" />
           </div>
 
           {/* Node 3: Pending Settlements */}
@@ -315,12 +315,12 @@ export default function Financial() {
             warning={(d?.pendingSettlements?.count ?? 0) > 0}
             onClick={() => nav("/admin/settlements")}>
             <Stat label="Total settlements"  value={N(d?.pendingSettlements?.count ?? 0)} />
-            <Stat label="Pending"            value={N(d?.pendingSettlements?.pending ?? 0)}    accent="text-amber-600" />
-            <Stat label="Processing"         value={N(d?.pendingSettlements?.processing ?? 0)} accent="text-blue-500" />
+            <Stat label="Pending"            value={N(d?.pendingSettlements?.pending ?? 0)}    accent="text-white" />
+            <Stat label="Processing"         value={N(d?.pendingSettlements?.processing ?? 0)} accent="text-white" />
           </FlowNode>
 
           <div className="flex lg:flex-col items-center justify-center px-1 shrink-0">
-            <ChevronRight className="h-4 w-4 text-muted-foreground/30 lg:rotate-0 rotate-90" />
+            <ChevronRight className="h-4 w-4 text-white/30 lg:rotate-0 rotate-90" />
           </div>
 
           {/* Node 4: Refund Liability */}
@@ -329,31 +329,31 @@ export default function Financial() {
             onClick={() => nav("/admin/refunds")}>
             <Stat label="Pending refunds"      value={N(d?.refundLiability?.count ?? 0)} />
             <Stat label="Paid out (all-time)"  value={Rs(d?.refundHealth?.totalPaid ?? 0)} />
-            <Stat label="Cancellation income"  value={Rs(d?.refundHealth?.cancellationIncome ?? 0)} accent="text-emerald-600" />
+            <Stat label="Cancellation income"  value={Rs(d?.refundHealth?.cancellationIncome ?? 0)} accent="text-white" />
             <Stat label="Refund rate of GBV"   value={`${d?.refundHealth?.refundRate ?? 0}%`}
-              accent={(d?.refundHealth?.refundRate ?? 0) > 5 ? "text-red-500" : "text-muted-foreground"} />
+              accent={(d?.refundHealth?.refundRate ?? 0) > 5 ? "text-white" : "text-muted-foreground"} />
           </FlowNode>
 
         </div>
 
         {/* Health bar below spine */}
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 rounded-lg bg-muted/20 border border-border/20">
-          <span className="text-[10px] text-muted-foreground">
-            <span className={`font-black ${(d?.transactionSuccessRate ?? 0) >= 92 ? "text-emerald-600" : "text-amber-600"}`}>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 rounded-lg bg-white/5 border border-white/5 backdrop-blur-md">
+          <span className="text-[10px] text-white/60">
+            <span className={`font-black ${(d?.transactionSuccessRate ?? 0) >= 92 ? "text-white" : "text-white"}`}>
               {d?.transactionSuccessRate ?? 0}%
             </span>{" "}txn success
           </span>
-          <span className="text-muted-foreground/30 hidden sm:block">·</span>
-          <span className="text-[10px] text-muted-foreground">
-            <span className="font-black">{N(d?.gbv?.totalBookings ?? 0)}</span> total bookings
+          <span className="text-white/30 hidden sm:block">·</span>
+          <span className="text-[10px] text-white/60">
+            <span className="font-black text-white">{N(d?.gbv?.totalBookings ?? 0)}</span> total bookings
           </span>
-          <span className="text-muted-foreground/30 hidden sm:block">·</span>
-          <span className="text-[10px] text-muted-foreground">
-            <span className="font-black">{Rs(d?.gbv?.totalDiscount ?? 0)}</span> in discounts issued
+          <span className="text-white/30 hidden sm:block">·</span>
+          <span className="text-[10px] text-white/60">
+            <span className="font-black text-white">{Rs(d?.gbv?.totalDiscount ?? 0)}</span> in discounts issued
           </span>
-          <span className="text-muted-foreground/30 hidden sm:block">·</span>
-          <span className="text-[10px] text-muted-foreground">
-            <span className="font-black">{N(d?.gbv?.totalSeats ?? 0)}</span> seats sold total
+          <span className="text-white/30 hidden sm:block">·</span>
+          <span className="text-[10px] text-white/60">
+            <span className="font-black text-white">{N(d?.gbv?.totalSeats ?? 0)}</span> seats sold total
           </span>
         </div>
       </div>
@@ -361,45 +361,45 @@ export default function Financial() {
       {/* ══ 3. ACTION SURFACE ═══════════════════════════════════════════════ */}
       {actions.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40">
             Requires Action
           </p>
           {actions.map((a, i) => (
             <button key={i} onClick={() => nav(a.href)}
-              className={`w-full flex items-start gap-3 px-4 py-3 rounded-xl border text-left transition-all hover:shadow-md ${
+              className={`w-full flex items-start gap-3 px-4 py-3 rounded-xl border text-left transition-all hover:shadow-md backdrop-blur-sm ${
                 a.sev === "critical"
-                  ? "border-red-400/40 bg-red-500/5 hover:bg-red-500/8"
-                  : "border-amber-400/40 bg-amber-500/5 hover:bg-amber-500/8"
+                  ? "border-white/10 bg-white/5 hover:bg-white/5 text-white"
+                  : "border-white/10 bg-white/5 hover:bg-white/5 text-white"
               }`}>
-              <AlertTriangle className={`h-4 w-4 mt-0.5 shrink-0 ${a.sev === "critical" ? "text-red-500" : "text-amber-500"}`} />
+              <AlertTriangle className={`h-4 w-4 mt-0.5 shrink-0 ${a.sev === "critical" ? "text-white" : "text-white"}`} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold">{a.text}</p>
-                <p className="text-xs text-muted-foreground">{a.sub}</p>
+                <p className="text-sm font-bold text-white">{a.text}</p>
+                <p className="text-xs opacity-70">{a.sub}</p>
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground/40 mt-0.5 shrink-0" />
+              <ArrowRight className="h-4 w-4 opacity-50 mt-0.5 shrink-0" />
             </button>
           ))}
         </div>
       )}
 
       {/* ══ 4. REVENUE TREND CHART ══════════════════════════════════════════ */}
-      <Card>
-        <CardHeader className="pb-0 border-b border-border/30">
+      <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
             <div>
-              <CardTitle className="text-sm font-black">Revenue Trend</CardTitle>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                <span className="text-primary opacity-60">■</span> GBV ·{" "}
-                <span className="text-emerald-500">—</span> Commission ·{" "}
-                <span className="text-red-400 opacity-70">■</span> Refunds ·{" "}
-                <span className="text-amber-400 opacity-70">■</span> Discounts
+              <CardTitle className="flex items-center gap-2 text-white">Revenue Trend</CardTitle>
+              <p className="text-[11px] text-white/60 mt-0.5">
+                <span className="text-[#D3D925] opacity-60">■</span> GBV ·{" "}
+                <span className="text-white">—</span> Commission ·{" "}
+                <span className="text-white opacity-70">■</span> Refunds ·{" "}
+                <span className="text-white opacity-70">■</span> Discounts
               </p>
             </div>
-            <div className="flex gap-1 p-1 bg-muted/50 rounded-lg">
+            <div className="flex gap-1 p-1 bg-white/5 rounded-lg border border-white/5">
               {([3, 6, 12] as ChartPeriod[]).map(p => (
                 <button key={p} onClick={() => setPeriod(p)}
                   className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${
-                    period === p ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+                    period === p ? "bg-[#D3D925] shadow text-[#121212]" : "text-white/60 hover:text-white"
                   }`}>
                   {p}M
                 </button>
@@ -409,17 +409,17 @@ export default function Financial() {
         </CardHeader>
         <CardContent className="pt-4 px-2">
           {chart.length === 0 ? (
-            <div className="flex items-center justify-center h-[240px] text-sm text-muted-foreground">No data</div>
+            <div className="flex items-center justify-center h-[240px] text-sm text-white/60">No data</div>
           ) : (
             <ResponsiveContainer width="100%" height={240}>
               <ComposedChart data={chart} margin={{ top: 0, right: 12, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/25" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickFormatter={Rs} axisLine={false} tickLine={false} width={48} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }} tickFormatter={Rs} axisLine={false} tickLine={false} width={48} />
                 <Tooltip content={<ChartTip />} />
-                <Bar dataKey="gbv"      name="GBV"        fill="hsl(var(--primary))" opacity={0.15} radius={[3,3,0,0]} />
-                <Bar dataKey="discount" name="Discounts"  fill="#f59e0b" opacity={0.45} radius={[3,3,0,0]} />
-                <Bar dataKey="refunds"  name="Refunds"    fill="#ef4444" opacity={0.55} radius={[3,3,0,0]} />
+                <Bar dataKey="gbv"      name="GBV"        fill="#D3D925" opacity={0.3} radius={[3,3,0,0]} />
+                <Bar dataKey="discount" name="Discounts"  fill="#f59e0b" opacity={0.6} radius={[3,3,0,0]} />
+                <Bar dataKey="refunds"  name="Refunds"    fill="#ef4444" opacity={0.6} radius={[3,3,0,0]} />
                 <Line type="monotone" dataKey="commission" name="Commission"
                   stroke="#22c55e" strokeWidth={2.5}
                   dot={{ r: 3, fill: "#22c55e", strokeWidth: 0 }}
@@ -434,17 +434,17 @@ export default function Financial() {
       <div className="grid md:grid-cols-2 gap-4">
 
         {/* Booking Status Distribution */}
-        <Card>
-          <CardHeader className="pb-3 border-b border-border/30">
-            <CardTitle className="text-sm font-black flex items-center gap-2">
-              <Ticket className="h-4 w-4 text-muted-foreground/50" />
+        <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Ticket className="h-4 w-4 text-white/50" />
               Booking Status Breakdown
             </CardTitle>
-            <p className="text-[11px] text-muted-foreground">{N(totalBkCount)} total bookings across all time</p>
+            <p className="text-[11px] text-white/60">{N(totalBkCount)} total bookings across all time</p>
           </CardHeader>
           <CardContent className="pt-4 space-y-3">
             {bkStatuses.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No data</p>
+              <p className="text-sm text-white/60 text-center py-4">No data</p>
             ) : bkStatuses.map(([status, { count, value }]) => {
               const pct = totalBkCount > 0 ? (count / totalBkCount * 100) : 0;
               const color = STATUS_COLORS[status] ?? "#94A3B8";
@@ -453,15 +453,15 @@ export default function Financial() {
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
-                      <span className="text-sm font-bold capitalize">{status}</span>
-                      <span className="text-[10px] text-muted-foreground">{pct.toFixed(1)}%</span>
+                      <span className="text-sm font-bold capitalize text-white">{status}</span>
+                      <span className="text-[10px] text-white/60">{pct.toFixed(1)}%</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-sm font-black tabular-nums">{N(count)}</span>
-                      {value > 0 && <span className="text-[10px] text-muted-foreground ml-1.5">{Rs(value)}</span>}
+                      <span className="text-sm font-black tabular-nums text-white">{N(count)}</span>
+                      {value > 0 && <span className="text-[10px] text-white/60 ml-1.5">{Rs(value)}</span>}
                     </div>
                   </div>
-                  <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
                   </div>
                 </div>
@@ -471,28 +471,28 @@ export default function Financial() {
         </Card>
 
         {/* Coupon Impact */}
-        <Card>
-          <CardHeader className="pb-3 border-b border-border/30">
-            <CardTitle className="text-sm font-black flex items-center gap-2">
-              <Tag className="h-4 w-4 text-muted-foreground/50" />
+        <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Tag className="h-4 w-4 text-white/50" />
               Coupon &amp; Discount Impact
             </CardTitle>
-            <p className="text-[11px] text-muted-foreground">How promotions affect revenue</p>
+            <p className="text-[11px] text-white/60">How promotions affect revenue</p>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Coupon bookings",    value: N(d?.couponImpact?.bookingsWithCoupon ?? 0), sub: `${d?.couponImpact?.couponUsageRate ?? 0}% of all bookings` },
-                { label: "Total discount given", value: Rs(d?.couponImpact?.discountGiven ?? 0),    sub: "Cash off for users", accent: "text-amber-600" },
+                { label: "Total discount given", value: Rs(d?.couponImpact?.discountGiven ?? 0),    sub: "Cash off for users", accent: "text-white" },
                 { label: "Revenue from coupon bookings", value: Rs(d?.couponImpact?.revenueFromCoupon ?? 0), sub: "Despite discount" },
                 { label: "Discount as % of GBV", value: `${d?.gbv?.allTime > 0 ? ((d?.gbv?.totalDiscount ?? 0) / d.gbv.allTime * 100).toFixed(1) : 0}%`,
                   sub: Rs(d?.gbv?.totalDiscount ?? 0) + " total",
-                  accent: (d?.gbv?.allTime > 0 && (d?.gbv?.totalDiscount ?? 0) / d.gbv.allTime > 0.1) ? "text-amber-600" : "" },
+                  accent: (d?.gbv?.allTime > 0 && (d?.gbv?.totalDiscount ?? 0) / d.gbv.allTime > 0.1) ? "text-white" : "" },
               ].map((item, i) => (
-                <div key={i} className="p-3 rounded-lg bg-muted/20 border border-border/20">
-                  <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground/50 mb-1">{item.label}</p>
-                  <p className={`text-lg font-black tabular-nums ${item.accent ?? ""}`}>{item.value}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{item.sub}</p>
+                <div key={i} className="p-3 rounded-lg bg-white/5 border border-white/5">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-white/50 mb-1">{item.label}</p>
+                  <p className={`text-lg font-black tabular-nums text-white ${item.accent ?? ""}`}>{item.value}</p>
+                  <p className="text-[10px] text-white/60 mt-0.5">{item.sub}</p>
                 </div>
               ))}
             </div>
@@ -501,52 +501,52 @@ export default function Financial() {
       </div>
 
       {/* ══ 6. OPERATOR LEADERBOARD ═════════════════════════════════════════ */}
-      <Card>
-        <CardHeader className="pb-3 border-b border-border/30">
+      <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-sm font-black flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground/50" />
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Users className="h-4 w-4 text-white/50" />
                 Operator Revenue Leaderboard
               </CardTitle>
-              <p className="text-[11px] text-muted-foreground">Top brands by all-time GBV contribution</p>
+              <p className="text-[11px] text-white/60">Top brands by all-time GBV contribution</p>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {ops.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No operator data yet</p>
+            <p className="text-sm text-white/60 text-center py-8">No operator data yet</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-xs">
                 <thead>
-                  <tr className="border-b border-border/30 bg-muted/10">
+                  <tr className="border-b border-white/5 bg-white/5">
                     {["#", "Operator Brand", "All-time GBV", "Share", "Bookings", "Avg Ticket", "Discounts", "This Month"].map(h => (
-                      <th key={h} className="text-left px-4 py-2.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">{h}</th>
+                      <th key={h} className="text-left px-4 py-2.5 text-[9px] font-black uppercase tracking-widest text-white/50">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {ops.map((op, i) => (
-                    <tr key={op.brandId} className="border-b border-border/20 hover:bg-muted/10 transition-colors">
-                      <td className="px-4 py-3 font-black text-muted-foreground/40 tabular-nums">{i + 1}</td>
+                    <tr key={op.brandId} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <td className="px-4 py-3 font-black text-white/40 tabular-nums">{i + 1}</td>
                       <td className="px-4 py-3">
-                        <p className="font-bold">{op.brandName}</p>
-                        <p className="text-muted-foreground/60">{N(op.seats)} seats</p>
+                        <p className="font-bold text-white">{op.brandName}</p>
+                        <p className="text-white/60">{N(op.seats)} seats</p>
                       </td>
-                      <td className="px-4 py-3 font-black tabular-nums">{Rs(op.gbv)}</td>
+                      <td className="px-4 py-3 font-black tabular-nums text-white">{Rs(op.gbv)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 bg-muted/40 rounded-full overflow-hidden">
-                            <div className="h-full bg-primary rounded-full" style={{ width: `${op.share}%` }} />
+                          <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-[#D3D925] rounded-full" style={{ width: `${op.share}%` }} />
                           </div>
-                          <span className="font-bold tabular-nums">{op.share}%</span>
+                          <span className="font-bold tabular-nums text-white">{op.share}%</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 tabular-nums font-bold">{N(op.count)}</td>
-                      <td className="px-4 py-3 tabular-nums">{Rs(op.avgTicket)}</td>
-                      <td className="px-4 py-3 tabular-nums text-amber-600 font-bold">{Rs(op.discount)}</td>
-                      <td className="px-4 py-3 tabular-nums text-emerald-600 font-bold">{Rs(op.thisMonth)}</td>
+                      <td className="px-4 py-3 tabular-nums font-bold text-white">{N(op.count)}</td>
+                      <td className="px-4 py-3 tabular-nums text-white">{Rs(op.avgTicket)}</td>
+                      <td className="px-4 py-3 tabular-nums text-white font-bold">{Rs(op.discount)}</td>
+                      <td className="px-4 py-3 tabular-nums text-white font-bold">{Rs(op.thisMonth)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -560,17 +560,17 @@ export default function Financial() {
       <div className="grid md:grid-cols-2 gap-4">
 
         {/* Gateway Mix */}
-        <Card>
-          <CardHeader className="pb-3 border-b border-border/30">
-            <CardTitle className="text-sm font-black flex items-center gap-2">
-              <BarChart2 className="h-4 w-4 text-muted-foreground/50" />
+        <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <BarChart2 className="h-4 w-4 text-white/50" />
               Payment Gateway Mix
             </CardTitle>
-            <p className="text-[11px] text-muted-foreground">Volume share · avg ticket · this month</p>
+            <p className="text-[11px] text-white/60">Volume share · avg ticket · this month</p>
           </CardHeader>
           <CardContent className="pt-4 space-y-4">
             {gateways.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No data</p>
+              <p className="text-sm text-white/60 text-center py-4">No data</p>
             ) : gateways.map(g => {
               const color = GW_COLORS[g.gateway] ?? "#94A3B8";
               const label = GW_LABELS[g.gateway] ?? g.gateway;
@@ -579,21 +579,21 @@ export default function Financial() {
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full" style={{ background: color }} />
-                      <span className="text-sm font-bold">{label}</span>
+                      <span className="text-sm font-bold text-white">{label}</span>
                       {g.volumeShare > 70 && (
-                        <Badge className="text-[9px] bg-amber-500/10 text-amber-700 border-amber-400/30 border px-1.5">dominant</Badge>
+                        <Badge className="text-[9px] bg-white/5 text-white border-white/10 border px-1.5">dominant</Badge>
                       )}
                     </div>
                     <div className="text-right">
-                      <span className="text-sm font-black tabular-nums">{Rs(g.total)}</span>
-                      <span className="text-[10px] text-muted-foreground ml-1.5">{g.volumeShare}%</span>
+                      <span className="text-sm font-black tabular-nums text-white">{Rs(g.total)}</span>
+                      <span className="text-[10px] text-white/60 ml-1.5">{g.volumeShare}%</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${g.volumeShare}%`, background: color }} />
                     </div>
-                    <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap">
+                    <span className="text-[10px] text-white/60 whitespace-nowrap">
                       {N(g.count)} txns · avg {Rs(g.avgTicket)} · {Rs(g.thisMonth)} this mo.
                     </span>
                   </div>
@@ -604,22 +604,22 @@ export default function Financial() {
         </Card>
 
         {/* Settlement Queue */}
-        <Card>
-          <CardHeader className="pb-3 border-b border-border/30">
+        <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-black flex items-center gap-2">
-                  <Wallet className="h-4 w-4 text-muted-foreground/50" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Wallet className="h-4 w-4 text-white/50" />
                   Settlement Queue
                   {(d?.pendingSettlements?.count ?? 0) > 0 && (
-                    <Badge variant="secondary" className="font-mono text-[10px]">
+                    <Badge variant="secondary" className="text-[10px] bg-white/10 text-white">
                       {d?.pendingSettlements?.count}
                     </Badge>
                   )}
                 </CardTitle>
-                <p className="text-[11px] text-muted-foreground">Oldest first · gross → commission → net</p>
+                <p className="text-[11px] text-white/60">Oldest first · gross → commission → net</p>
               </div>
-              <Button variant="ghost" size="sm" className="text-xs gap-1 h-7"
+              <Button variant="ghost" size="sm" className="text-xs gap-1 h-7 text-white/60 hover:text-white hover:bg-white/10"
                 onClick={() => nav("/admin/settlements")}>
                 All <ArrowRight className="h-3 w-3" />
               </Button>
@@ -628,34 +628,34 @@ export default function Financial() {
           <CardContent className="p-0">
             {queue.length === 0 ? (
               <div className="flex flex-col items-center py-8 gap-2">
-                <CheckCircle2 className="h-7 w-7 text-emerald-500/40" />
-                <p className="text-sm text-muted-foreground font-bold">All settled</p>
+                <CheckCircle2 className="h-7 w-7 text-white/60" />
+                <p className="text-sm text-white/60 font-bold">All settled</p>
               </div>
             ) : (
               queue.map(s => (
-                <div key={s._id} className={`px-4 py-3 border-b border-border/25 last:border-0 ${s.daysAgo > 14 ? "bg-amber-500/5" : ""}`}>
+                <div key={s._id} className={`px-4 py-3 border-b border-white/5 last:border-0 ${s.daysAgo > 14 ? "bg-white/5" : "hover:bg-white/5"}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-bold">{s.brandName}</p>
-                      <p className="text-[10px] text-muted-foreground">{s.ownerName} · {N(s.ticketsSold)} tickets</p>
+                      <p className="text-sm font-bold text-white">{s.brandName}</p>
+                      <p className="text-[10px] text-white/60">{s.ownerName} · {N(s.ticketsSold)} tickets</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-black tabular-nums">{Rs(s.netPayable)}</p>
-                      <p className={`text-[10px] font-bold ${s.daysAgo > 14 ? "text-amber-600" : "text-muted-foreground"}`}>
+                      <p className="text-sm font-black tabular-nums text-white">{Rs(s.netPayable)}</p>
+                      <p className={`text-[10px] font-bold ${s.daysAgo > 14 ? "text-white" : "text-white/60"}`}>
                         {s.daysAgo === 0 ? "Today" : `${s.daysAgo}d ago`}
                       </p>
                     </div>
                   </div>
                   {/* Gross → commission → net breakdown per row */}
-                  <div className="mt-1.5 flex items-center gap-2 text-[9px] text-muted-foreground/60">
+                  <div className="mt-1.5 flex items-center gap-2 text-[9px] text-white/50">
                     <span className="tabular-nums">{Rs(s.grossAmount)} gross</span>
                     <span>→</span>
-                    <span className="text-primary tabular-nums">{Rs(s.commission)} ({s.commissionRate}%)</span>
+                    <span className="text-[#D3D925] tabular-nums">{Rs(s.commission)} ({s.commissionRate}%)</span>
                     <span>→</span>
-                    <span className="font-black text-foreground tabular-nums">{Rs(s.netPayable)} net</span>
+                    <span className="font-black text-white tabular-nums">{Rs(s.netPayable)} net</span>
                     <span className="ml-auto">
                       <Badge variant="outline" className={`text-[9px] font-black uppercase px-1.5 py-0 ${
-                        s.status === "processing" ? "border-blue-400/40 text-blue-600" : "border-amber-400/40 text-amber-700"
+                        s.status === "processing" ? "border-white/10 text-white bg-white/5" : "border-white/10 text-white bg-white/5"
                       }`}>
                         {s.status}
                       </Badge>

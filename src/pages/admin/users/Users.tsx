@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Filter, Download } from "lucide-react";
 import { columns } from "@/components/data_tables/users/columns";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { Users as UsersIcon, CheckCircle, TrendingUp, Activity } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
 import { useQuery } from "@tanstack/react-query";
 import { getAllUsers, getUserDashboardData } from "@/api/userApi";
@@ -77,8 +79,8 @@ const Users = () => {
       {/* Header — Admin is observer/enforcer, no Add User */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
-          <p className="text-muted-foreground mt-1">
+          <h2 className="text-2xl font-bold tracking-tight text-white">User Management</h2>
+          <p className="text-white/60 mt-1 font-medium text-sm">
             Monitor and manage all registered users
           </p>
         </div>
@@ -86,77 +88,48 @@ const Users = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {userDashboard?.totalUsers?.total || 0}
-            </div>
-            {userDashboard?.totalUsers?.thisMonthIncrease > 0 && (
-              <p className="text-xs text-muted-foreground">
-                +{userDashboard.totalUsers.thisMonthIncrease} this month
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {userDashboard?.activeUsers?.last30Days || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Last 30 days</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">New Today</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {userDashboard?.newUsers?.today || 0}
-            </div>
-            {userDashboard?.newUsers?.today > 0 && (
-              <p className="text-xs text-success">
-                {userDashboard.newUsers.growthVsYesterdayPercent >= 0 ? "+" : ""}
-                {userDashboard.newUsers.growthVsYesterdayPercent}% vs yesterday
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Verified</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{verifiedUsers}</div>
-            {(userDashboard?.totalUsers?.total ?? 0) > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {((verifiedUsers / userDashboard.totalUsers.total) * 100).toFixed(0)}% verified
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Total Users"
+          value={(userDashboard?.totalUsers?.total || 0).toString()}
+          change={userDashboard?.totalUsers?.thisMonthIncrease > 0 ? `+${userDashboard.totalUsers.thisMonthIncrease} this month` : undefined}
+          changeType="positive"
+          icon={UsersIcon}
+        />
+        <StatCard
+          title="Active Users"
+          value={(userDashboard?.activeUsers?.last30Days || 0).toString()}
+          subtitle="Last 30 days"
+          icon={Activity}
+        />
+        <StatCard
+          title="New Today"
+          value={(userDashboard?.newUsers?.today || 0).toString()}
+          change={userDashboard?.newUsers?.today > 0 ? `${userDashboard.newUsers.growthVsYesterdayPercent >= 0 ? "+" : ""}${userDashboard.newUsers.growthVsYesterdayPercent}% vs yesterday` : undefined}
+          changeType={userDashboard?.newUsers?.growthVsYesterdayPercent >= 0 ? "positive" : "negative"}
+          icon={TrendingUp}
+        />
+        <StatCard
+          title="Verified"
+          value={verifiedUsers.toString()}
+          subtitle={(userDashboard?.totalUsers?.total ?? 0) > 0 ? `${((verifiedUsers / userDashboard.totalUsers.total) * 100).toFixed(0)}% verified` : undefined}
+          icon={CheckCircle}
+        />
       </div>
 
       {/* User Directory */}
-      <Card>
+      <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
-              <CardTitle>User Directory</CardTitle>
-              <CardDescription>Search and manage user accounts</CardDescription>
+              <CardTitle className="flex items-center gap-2 text-white">User Directory</CardTitle>
+              <CardDescription className="text-white/60">Search and manage user accounts</CardDescription>
             </div>
             <div className="flex gap-2 flex-wrap">
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white transition-all">
                 <Filter className="h-4 w-4" />
                 Filter
               </Button>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2 bg-white/5 border-white/10 hover:bg-white/10 hover:text-white transition-all">
                 <Download className="h-4 w-4" />
                 Export
               </Button>
@@ -184,7 +157,7 @@ const Users = () => {
                       alt={user.name}
                       className="w-8 h-8 rounded-full object-cover"
                     />
-                    <span className="font-medium">{user.name}</span>
+                    <span className="font-medium text-white/90">{user.name}</span>
                   </div>
                   <Badge
                     variant={user.status === "active" ? "default" : "destructive"}
@@ -192,7 +165,7 @@ const Users = () => {
                     {user.status}
                   </Badge>
                 </div>
-                <div className="text-sm text-muted-foreground space-y-1">
+                <div className="text-sm text-white/60 space-y-1">
                   <div>Phone: {user.phone}</div>
                   <div>Email: {user.email || "Not provided"}</div>
                   <div>Bookings: {user.bookings}</div>

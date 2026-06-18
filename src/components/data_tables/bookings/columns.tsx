@@ -1,41 +1,22 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { type ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, ExternalLink } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Extracted into its own component so useNavigate is called at the
-// component top-level (React hooks rule) rather than inside a cell callback.
 const BookingActionsCell = ({ bookingId }: { bookingId: string }) => {
   const navigate = useNavigate();
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p0">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuItem
-          className="cursor-pointer"
-          onClick={() => navigate(`/admin/bookings/${bookingId}`)}
-        >
-          <ExternalLink className="mr-2 h-4 w-4" />
-          View Details
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
+      onClick={() => navigate(`/admin/bookings/${bookingId}`)}
+      title="View Details"
+    >
+      <ArrowRight className="h-4 w-4" />
+      <span className="sr-only">View Details</span>
+    </Button>
   );
 };
 
@@ -55,36 +36,58 @@ export const columns: ColumnDef<BookingRow>[] = [
   {
     accessorKey: "ticketId",
     header: "Ticket ID",
-    cell: ({ row }) => <span className="font-mono font-medium">{row.getValue("ticketId")}</span>,
+    cell: ({ row }) => (
+      <span className="font-mono text-[11px] font-semibold text-white/60 bg-white/5 px-2 py-1 rounded-md border border-white/5">
+        #{row.getValue<string>("ticketId").slice(-8)}
+      </span>
+    ),
   },
   {
     accessorKey: "whoBooked",
     header: "User",
+    cell: ({ row }) => <span className="font-medium text-white/90">{row.getValue("whoBooked")}</span>,
   },
   {
     accessorKey: "route",
     header: "Route",
-    cell: ({ row }) => (
-      <Badge variant="outline" className="font-normal">
-        {row.getValue("route")}
-      </Badge>
-    ),
+    cell: ({ row }) => {
+      const routeStr = row.getValue<string>("route");
+      const [from, to] = routeStr.split(" - ");
+      return (
+        <div className="flex items-center gap-1.5 font-medium text-white/80 text-sm">
+          {from ? from : routeStr} {to && <span className="text-white/30 mx-1">→</span>} {to && to}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "seats",
     header: "Seats",
+    cell: ({ row }) => {
+      const seats = row.getValue<string>("seats");
+      if (!seats) return <span className="text-white/30">—</span>;
+      return (
+        <div className="flex flex-wrap gap-1">
+          {seats.split(", ").map(seat => (
+            <Badge key={seat} variant="outline" className="font-mono text-[10px] bg-white/5 border-white/10 text-white/70 px-1 py-0">{seat}</Badge>
+          ))}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "passengers",
     header: "Passengers",
-    cell: ({ row }) => <span className="text-center block">{row.getValue("passengers")}</span>,
+    cell: ({ row }) => (
+      <span className="font-medium text-white/80">{row.getValue("passengers")}</span>
+    ),
   },
   {
     accessorKey: "amount",
     header: "Amount",
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("amount"));
-      return <span className="font-semibold">Rs. {amount.toLocaleString()}</span>;
+      return <span className="font-bold text-white tracking-tight">Rs. {amount.toLocaleString("en-IN")}</span>;
     },
   },
   {
@@ -92,7 +95,11 @@ export const columns: ColumnDef<BookingRow>[] = [
     header: "Booking Date",
     cell: ({ row }) => {
       const date = new Date(row.getValue("date"));
-      return <span>{date.toLocaleDateString()}</span>;
+      return (
+        <span className="text-sm font-medium text-white/60">
+           {date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        </span>
+      );
     },
   },
   {
@@ -100,14 +107,20 @@ export const columns: ColumnDef<BookingRow>[] = [
     header: "Status",
     cell: ({ row }) => {
       const status = (row.getValue("status") as string).toLowerCase();
-      let variant: "default" | "secondary" | "destructive" | "outline" = "outline";
       
-      if (status === "booked" || status === "confirmed") variant = "default";
-      if (status === "completed") variant = "secondary";
-      if (status === "cancelled") variant = "destructive";
+      const isBooked = status === "booked" || status === "confirmed";
+      const isCancelled = status === "cancelled";
 
       return (
-        <Badge variant={variant} className="capitalize">
+        <Badge 
+          className="capitalize px-2 py-0.5 font-bold"
+          variant="outline"
+          style={{
+            backgroundColor: isBooked ? "rgba(211, 217, 37, 0.1)" : isCancelled ? "rgba(244, 63, 94, 0.1)" : "rgba(255, 255, 255, 0.05)",
+            color: isBooked ? "#D3D925" : isCancelled ? "#f43f5e" : "#fff",
+            borderColor: isBooked ? "rgba(211, 217, 37, 0.2)" : isCancelled ? "rgba(244, 63, 94, 0.2)" : "rgba(255, 255, 255, 0.1)",
+          }}
+        >
           {status}
         </Badge>
       );

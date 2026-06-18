@@ -77,41 +77,41 @@ function RefundRequestsTab({ onOpen }: RefundRequestsTabProps) {
   const completedCount = summary.completed?.count || 0;
 
   const statusColors: Record<string, string> = {
-    pending: "bg-blue-500/15 text-blue-600 border-blue-500/30",
-    processing: "bg-amber-500/15 text-amber-600 border-amber-500/30",
-    completed: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30",
-    rejected: "bg-red-500/15 text-red-500 border-red-500/30",
+    pending: "bg-white/5 text-white border-white/10",
+    processing: "bg-white/5 text-white border-white/10",
+    completed: "bg-white/5 text-white border-white/10",
+    rejected: "bg-white/5 text-white border-white/10",
   };
 
   return (
-    <Card>
+    <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <CardTitle>Refund Queue</CardTitle>
-            <CardDescription>
+            <CardTitle className="flex items-center gap-2 text-white">Refund Queue</CardTitle>
+            <CardDescription className="text-white/60">
               {pendingCount} pending · {processingCount} processing · {completedCount} completed
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-3 sm:justify-end items-center">
             <div className="relative">
-              <Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2 h-4 w-4 text-white/40" />
               <Input
                 type="text"
                 placeholder="Search ticket, name, phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 w-[200px] lg:w-[250px] text-sm"
+                className="pl-9 h-9 w-[200px] lg:w-[250px] text-sm bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
               />
             </div>
-            <div className="flex gap-2 border-l pl-3">
+            <div className="flex gap-2 border-l border-white/10 pl-3">
             {["", "pending", "processing", "completed", "rejected"].map((s) => (
               <Button
                 key={s}
                 variant={statusFilter === s ? "default" : "outline"}
                 size="sm"
                 onClick={() => setStatusFilter(s)}
-                className="capitalize text-xs"
+                className={`capitalize text-xs ${statusFilter === s ? "bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"}`}
               >
                 {s || "All"}
               </Button>
@@ -123,52 +123,52 @@ function RefundRequestsTab({ onOpen }: RefundRequestsTabProps) {
       <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 className="h-6 w-6 animate-spin text-white/40" />
           </div>
         ) : refunds.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+          <div className="flex items-center justify-center h-32 text-white/60 text-sm">
             No refund requests found
           </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Ticket</TableHead>
-                <TableHead>Passenger</TableHead>
-                <TableHead>Route</TableHead>
-                <TableHead className="text-right">Original</TableHead>
-                <TableHead className="text-right">Refund</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead>Requested</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+              <TableRow className="border-white/5 hover:bg-transparent">
+                <TableHead className="text-white/60">Ticket</TableHead>
+                <TableHead className="text-white/60">Passenger</TableHead>
+                <TableHead className="text-white/60">Route</TableHead>
+                <TableHead className="text-right text-white/60">Original</TableHead>
+                <TableHead className="text-right text-white/60">Refund</TableHead>
+                <TableHead className="text-white/60">Reason</TableHead>
+                <TableHead className="text-white/60">Requested</TableHead>
+                <TableHead className="text-white/60">Status</TableHead>
+                <TableHead className="text-white/60">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {refunds.map((refund: any) => (
-                <TableRow key={refund._id}>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
+                <TableRow key={refund._id} className="border-white/5 hover:bg-white/5">
+                  <TableCell className="text-xs text-white/40">
                     {refund.booking?.ticketId || "—"}
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-sm">{refund.user?.name || "—"}</p>
+                      <p className="font-medium text-sm text-white/90">{refund.user?.name || "—"}</p>
                       {refund.user?.phone && (
-                        <p className="text-xs text-muted-foreground">{refund.user.phone}</p>
+                        <p className="text-xs text-white/60">{refund.user.phone}</p>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm">{refund.route}</TableCell>
-                  <TableCell className="text-right text-sm">
+                  <TableCell className="text-sm text-white">{refund.route}</TableCell>
+                  <TableCell className="text-right text-sm text-white">
                     Rs. {refund.originalAmount?.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-right text-sm font-semibold text-emerald-600">
+                  <TableCell className="text-right text-sm font-semibold text-[#D3D925]">
                     Rs. {refund.refundAmount?.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-sm max-w-[160px] truncate" title={refund.reason}>
+                  <TableCell className="text-sm max-w-[160px] truncate text-white" title={refund.reason}>
                     {refund.reason || "—"}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm text-white/60">
                     {refund.requestedAt
                       ? format(new Date(refund.requestedAt), "d MMM, HH:mm")
                       : "—"}
@@ -182,7 +182,7 @@ function RefundRequestsTab({ onOpen }: RefundRequestsTabProps) {
                     <Button
                       variant={refund.status === "pending" || refund.status === "processing" ? "default" : "outline"}
                       size="sm"
-                      className="text-xs"
+                      className={`text-xs ${refund.status === "pending" || refund.status === "processing" ? "bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90" : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white"}`}
                       onClick={() => onOpen("editRefundProccess", refund)}
                     >
                       {refund.status === "completed" || refund.status === "rejected" ? "View Details" : "Review"}
@@ -248,72 +248,80 @@ const Refunds = () => {
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
             Refund Management
           </h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-white/60 mt-1 font-medium text-sm">
             Process refund requests and manage policies
           </p>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+        <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-3 pt-4 px-5 border-b border-white/5 bg-white/5">
+            <CardTitle className="text-sm font-semibold text-white/80">
               Pending Refunds
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-white/5 rounded-lg border border-white/5">
+              <Clock className="h-4 w-4 text-[#D3D925] shrink-0" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingCount}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-5 pb-5 pt-4">
+            <div className="text-2xl font-bold text-white">{pendingCount}</div>
+            <p className="text-xs text-white/80 mt-1">
               Rs. {pendingAmount.toLocaleString()} total value
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Processing</CardTitle>
-            <RotateCcw className="h-4 w-4 text-muted-foreground" />
+        <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-3 pt-4 px-5 border-b border-white/5 bg-white/5">
+            <CardTitle className="text-sm font-semibold text-white/80">Processing</CardTitle>
+            <div className="p-2 bg-white/5 rounded-lg border border-white/5">
+              <RotateCcw className="h-4 w-4 text-[#D3D925] shrink-0" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{processingCount}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-5 pb-5 pt-4">
+            <div className="text-2xl font-bold text-white">{processingCount}</div>
+            <p className="text-xs text-white/80 mt-1">
               Rs. {processingAmount.toLocaleString()} in transit
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+        <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-3 pt-4 px-5 border-b border-white/5 bg-white/5">
+            <CardTitle className="text-sm font-semibold text-white/80">
               Completed
             </CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-white/5 rounded-lg border border-white/5">
+              <CheckCircle className="h-4 w-4 text-[#D3D925] shrink-0" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completedCount}</div>
-            <p className="text-xs text-muted-foreground">Rs. {completedAmount.toLocaleString()} refunded</p>
+          <CardContent className="px-5 pb-5 pt-4">
+            <div className="text-2xl font-bold text-white">{completedCount}</div>
+            <p className="text-xs text-white/80 mt-1">Rs. {completedAmount.toLocaleString()} refunded</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+        <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-3 pt-4 px-5 border-b border-white/5 bg-white/5">
+            <CardTitle className="text-sm font-semibold text-white/80">
               Rejection Rate
             </CardTitle>
-            <XCircle className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-white/5 rounded-lg border border-white/5">
+              <XCircle className="h-4 w-4 text-[#D3D925] shrink-0" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{rejectionRate}%</div>
-            <p className="text-xs text-muted-foreground">Of {totalRequests} total requests</p>
+          <CardContent className="px-5 pb-5 pt-4">
+            <div className="text-2xl font-bold text-white">{rejectionRate}%</div>
+            <p className="text-xs text-white/80 mt-1">Of {totalRequests} total requests</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="requests" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="requests">Refund Requests</TabsTrigger>
-          <TabsTrigger value="policies">Refund Policies</TabsTrigger>
+        <TabsList className="bg-[#121212]/30 border border-white/5">
+          <TabsTrigger value="requests" className="data-[state=active]:bg-[#D3D925] data-[state=active]:text-[#121212] text-white/60">Refund Requests</TabsTrigger>
+          <TabsTrigger value="policies" className="data-[state=active]:bg-[#D3D925] data-[state=active]:text-[#121212] text-white/60">Refund Policies</TabsTrigger>
         </TabsList>
 
         <TabsContent value="requests">
@@ -321,32 +329,32 @@ const Refunds = () => {
         </TabsContent>
 
         <TabsContent value="policies">
-          <Card>
-            <CardHeader className="flex flex-row justify-between items-center">
+          <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
               <div>
-                <CardTitle>Cancellation Policy Timeline</CardTitle>
-                <CardDescription>
+                <CardTitle className="flex items-center gap-2 text-white">Cancellation Policy Timeline</CardTitle>
+                <CardDescription className="text-white/60">
                   How much passengers get back based on when they cancel
                 </CardDescription>
               </div>
               <Button
                 onClick={() => onOpen("addRefundPolicy", {})}
-                className="cursor-pointer"
+                className="cursor-pointer bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90"
               >
-                <PlusCircle />
-                <span className="capitalize">Add Policy</span>
+                <PlusCircle className="mr-2" />
+                <span className="capitalize font-bold">Add Policy</span>
               </Button>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pt-6">
               {/* Visual Timeline Preview */}
               {policiesTableData && policiesTableData.length > 0 ? (
                 <>
                   {/* Horizontal bar visualization */}
-                  <div className="rounded-xl border bg-muted/30 p-6 space-y-4">
-                    <p className="text-sm font-medium text-muted-foreground">
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-6 space-y-4">
+                    <p className="text-sm font-medium text-white/80">
                       Passenger Refund Timeline — Hours Before Departure
                     </p>
-                    <div className="flex w-full h-12 rounded-lg overflow-hidden border">
+                    <div className="flex w-full h-12 rounded-lg overflow-hidden border border-white/10">
                       {[...policiesTableData]
                         .sort((a: any, b: any) => a.minHours - b.minHours)
                         .map((policy: any) => {
@@ -375,7 +383,7 @@ const Refunds = () => {
                           );
                         })}
                     </div>
-                    <div className="flex justify-between text-xs text-muted-foreground">
+                    <div className="flex justify-between text-xs text-white/40">
                       <span>← Departure</span>
                       <span>48+ hours ahead →</span>
                     </div>
@@ -388,7 +396,7 @@ const Refunds = () => {
                       .map((policy: any) => (
                         <div
                           key={policy.id}
-                          className="relative rounded-xl border bg-card p-5 space-y-3 hover:shadow-md transition-shadow cursor-pointer"
+                          className="relative rounded-xl border border-white/10 bg-white/5 p-5 space-y-3 hover:bg-white/10 transition-colors cursor-pointer"
                           onClick={() => onOpen("editRefundPolicy", policy)}
                         >
                           {/* Color accent bar */}
@@ -398,10 +406,10 @@ const Refunds = () => {
                           />
 
                           <div className="flex items-center justify-between pt-1">
-                            <h4 className="font-semibold text-sm">{policy.policyName}</h4>
+                            <h4 className="font-semibold text-sm text-white">{policy.policyName}</h4>
                             <Badge
                               variant="outline"
-                              className="text-xs"
+                              className="text-xs bg-[#121212]/30"
                               style={{
                                 borderColor: policy.color || "#64748b",
                                 color: policy.color || "#64748b",
@@ -419,11 +427,11 @@ const Refunds = () => {
                             >
                               {policy.refundPercentage}%
                             </span>
-                            <span className="text-xs text-muted-foreground">refund</span>
+                            <span className="text-xs text-white/40">refund</span>
                           </div>
 
                           {/* Time window */}
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-white/60">
                             <Clock className="h-3.5 w-3.5" />
                             <span>
                               {policy.minHours === 0 && policy.maxHours
@@ -437,20 +445,20 @@ const Refunds = () => {
                           {/* Fee breakdown */}
                           <div className="flex gap-3 text-xs">
                             <div className="flex items-center gap-1">
-                              <CheckCircle className="h-3 w-3 text-emerald-500" />
-                              <span className="text-muted-foreground">
+                              <CheckCircle className="h-3 w-3 text-white" />
+                              <span className="text-white/60">
                                 {policy.refundPercentage}% back
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <XCircle className="h-3 w-3 text-destructive" />
-                              <span className="text-muted-foreground">
+                              <XCircle className="h-3 w-3 text-white" />
+                              <span className="text-white/60">
                                 {policy.deductionPercentage}% fee
                               </span>
                             </div>
                           </div>
 
-                          <p className="text-xs text-muted-foreground/70 leading-relaxed">
+                          <p className="text-xs text-white/40 leading-relaxed">
                             {policy.description}
                           </p>
                         </div>
@@ -458,8 +466,8 @@ const Refunds = () => {
                   </div>
 
                   {/* Example calculation */}
-                  <div className="rounded-xl border bg-muted/20 p-5">
-                    <p className="text-sm font-medium mb-3">Example: NPR 1,000 Ticket</p>
+                  <div className="rounded-xl border border-white/10 bg-[#121212]/30 p-5">
+                    <p className="text-sm font-medium mb-3 text-white">Example: NPR 1,000 Ticket</p>
                     <div className="grid gap-2 md:grid-cols-4">
                       {[...policiesTableData]
                         .sort((a: any, b: any) => (b.maxHours ?? 999) - (a.maxHours ?? 999))
@@ -469,8 +477,8 @@ const Refunds = () => {
                               className="w-2 h-2 rounded-full shrink-0"
                               style={{ backgroundColor: policy.color }}
                             />
-                            <span className="text-muted-foreground">{policy.policyName}:</span>
-                            <span className="font-semibold">
+                            <span className="text-white/60">{policy.policyName}:</span>
+                            <span className="font-semibold text-white">
                               NPR {Math.round(1000 * policy.refundPercentage / 100).toLocaleString()}
                             </span>
                           </div>
@@ -479,12 +487,12 @@ const Refunds = () => {
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-48 text-muted-foreground text-sm gap-2">
+                <div className="flex flex-col items-center justify-center h-48 text-white/40 text-sm gap-2">
                   <p>No refund policies configured yet</p>
                   <Button
                     variant="outline"
                     onClick={() => onOpen("addRefundPolicy", {})}
-                    className="mt-2"
+                    className="mt-2 bg-[#121212]/30 border-white/5 text-white hover:bg-white/10"
                   >
                     <PlusCircle className="h-4 w-4 mr-2" />
                     Create First Policy

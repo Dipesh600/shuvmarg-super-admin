@@ -165,7 +165,7 @@ export default function CreateOffer() {
   if (isEditMode && isLoadingCoupon) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-white/40" />
       </div>
     );
   }
@@ -174,20 +174,20 @@ export default function CreateOffer() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/offers")} className="shrink-0">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/offers")} className="shrink-0 text-white/60 hover:text-white hover:bg-white/10">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
             {isEditMode ? "Edit Offer" : "Create New Offer"}
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-white/60 text-sm">
             {isEditMode
               ? "Update the details of your offer — preview updates in real-time on the right"
               : "Fill in the details — preview updates in real-time on the right"}
           </p>
         </div>
-        <Button onClick={handleSubmit} disabled={isPending} className="gap-2 shrink-0">
+        <Button onClick={handleSubmit} disabled={isPending} className="gap-2 shrink-0 bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90 font-bold">
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {isPending ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Offer" : "Publish Offer")}
         </Button>
@@ -198,22 +198,22 @@ export default function CreateOffer() {
         {/* ── LEFT: Form ─────────────────────────────────────────────── */}
         <div className="space-y-4">
           {/* Basic Info */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Basic Information</CardTitle>
-              <CardDescription>Set the coupon code, title, and description</CardDescription>
+          <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+              <CardTitle className="flex items-center gap-2 text-white">Basic Information</CardTitle>
+              <CardDescription className="text-white/60">Set the coupon code, title, and description</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Coupon Code */}
               <div className="space-y-2">
-                <Label htmlFor="couponCode">Coupon Code *</Label>
+                <Label htmlFor="couponCode" className="text-white">Coupon Code *</Label>
                 <div className="flex gap-2">
                   <Input
                     id="couponCode"
                     placeholder="e.g. VOYAGE20"
                     value={form.couponCode}
                     onChange={(e) => update("couponCode", e.target.value.toUpperCase())}
-                    className="font-mono tracking-widest font-semibold"
+                    className="tracking-widest font-semibold bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                     maxLength={20}
                     disabled={isEditMode} // Cannot edit coupon code
                   />
@@ -221,7 +221,7 @@ export default function CreateOffer() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="gap-2 shrink-0"
+                      className="gap-2 shrink-0 bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white"
                       onClick={() => update("couponCode", generateCode())}
                     >
                       <Wand2 className="h-4 w-4" />
@@ -233,19 +233,20 @@ export default function CreateOffer() {
 
               {/* Title */}
               <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title" className="text-white">Title *</Label>
                 <Input
                   id="title"
                   placeholder="e.g. Get 20% OFF on your first trip"
                   value={form.title}
                   onChange={(e) => update("title", e.target.value)}
                   maxLength={100}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                 />
               </div>
 
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-white">Description</Label>
                 <Textarea
                   id="description"
                   placeholder="e.g. Exclusive launch offer for new Shuvmarg riders."
@@ -253,40 +254,40 @@ export default function CreateOffer() {
                   onChange={(e) => update("description", e.target.value)}
                   rows={2}
                   maxLength={500}
-                  className="resize-none"
+                  className="resize-none bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* Discount Config */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Discount Configuration</CardTitle>
-              <CardDescription>Choose between a percentage or fixed amount discount</CardDescription>
+          <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+              <CardTitle className="flex items-center gap-2 text-white">Discount Configuration</CardTitle>
+              <CardDescription className="text-white/60">Choose between a percentage or fixed amount discount</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 {/* Type toggle */}
                 <div className="space-y-2">
-                  <Label>Discount Type *</Label>
+                  <Label className="text-white">Discount Type *</Label>
                   <Select
                     value={form.discountType}
                     onValueChange={(v) => update("discountType", v as "percentage" | "fixed")}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white/5 border-white/10 text-white focus:ring-[#D3D925]">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="percentage">Percentage (%)</SelectItem>
-                      <SelectItem value="fixed">Fixed Amount (Rs.)</SelectItem>
+                    <SelectContent className="bg-[#121212] border-white/10 text-white">
+                      <SelectItem value="percentage" className="focus:bg-white/10 focus:text-white">Percentage (%)</SelectItem>
+                      <SelectItem value="fixed" className="focus:bg-white/10 focus:text-white">Fixed Amount (Rs.)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Value */}
                 <div className="space-y-2">
-                  <Label htmlFor="discountValue">
+                  <Label htmlFor="discountValue" className="text-white">
                     {form.discountType === "percentage" ? "Percentage (0–100)" : "Amount (Rs.)"} *
                   </Label>
                   <div className="relative">
@@ -298,8 +299,9 @@ export default function CreateOffer() {
                       value={form.discountValue || ""}
                       onChange={(e) => update("discountValue", Number(e.target.value))}
                       placeholder={form.discountType === "percentage" ? "20" : "500"}
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 text-sm font-medium">
                       {form.discountType === "percentage" ? "%" : "Rs."}
                     </span>
                   </div>
@@ -309,7 +311,7 @@ export default function CreateOffer() {
               <div className="grid grid-cols-2 gap-4">
                 {/* Min Order */}
                 <div className="space-y-2">
-                  <Label htmlFor="minOrderAmount">Min. Order Amount (Rs.)</Label>
+                  <Label htmlFor="minOrderAmount" className="text-white">Min. Order Amount (Rs.)</Label>
                   <Input
                     id="minOrderAmount"
                     type="number"
@@ -317,13 +319,14 @@ export default function CreateOffer() {
                     value={form.minOrderAmount || ""}
                     onChange={(e) => update("minOrderAmount", Number(e.target.value))}
                     placeholder="0 = no minimum"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                   />
                 </div>
 
                 {/* Max Discount */}
                 {form.discountType === "percentage" && (
                   <div className="space-y-2">
-                    <Label htmlFor="maxDiscountAmount">Max Discount Cap (Rs.)</Label>
+                    <Label htmlFor="maxDiscountAmount" className="text-white">Max Discount Cap (Rs.)</Label>
                     <Input
                       id="maxDiscountAmount"
                       type="number"
@@ -333,6 +336,7 @@ export default function CreateOffer() {
                         update("maxDiscountAmount", e.target.value ? Number(e.target.value) : undefined)
                       }
                       placeholder="Leave blank = unlimited"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                     />
                   </div>
                 )}
@@ -341,40 +345,42 @@ export default function CreateOffer() {
           </Card>
 
           {/* Validity & Limits */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Validity & Usage Limits</CardTitle>
-              <CardDescription>Set when the offer runs and how many times it can be used</CardDescription>
+          <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+              <CardTitle className="flex items-center gap-2 text-white">Validity & Usage Limits</CardTitle>
+              <CardDescription className="text-white/60">Set when the offer runs and how many times it can be used</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Date range */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="validFrom">Valid From *</Label>
+                  <Label htmlFor="validFrom" className="text-white">Valid From *</Label>
                   <Input
                     id="validFrom"
                     type="date"
                     value={form.validFrom}
                     onChange={(e) => update("validFrom", e.target.value)}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925] [color-scheme:dark]"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="validTo">Valid To *</Label>
+                  <Label htmlFor="validTo" className="text-white">Valid To *</Label>
                   <Input
                     id="validTo"
                     type="date"
                     value={form.validTo}
                     onChange={(e) => update("validTo", e.target.value)}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925] [color-scheme:dark]"
                   />
                 </div>
               </div>
 
-              <Separator />
+              <Separator className="bg-white/10" />
 
               {/* Usage limits */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="totalUsageLimit">Total Usage Limit</Label>
+                  <Label htmlFor="totalUsageLimit" className="text-white">Total Usage Limit</Label>
                   <Input
                     id="totalUsageLimit"
                     type="number"
@@ -384,16 +390,18 @@ export default function CreateOffer() {
                       update("totalUsageLimit", e.target.value ? Number(e.target.value) : undefined)
                     }
                     placeholder="Leave blank = unlimited"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="perUserLimit">Per User Limit</Label>
+                  <Label htmlFor="perUserLimit" className="text-white">Per User Limit</Label>
                   <Input
                     id="perUserLimit"
                     type="number"
                     min={1}
                     value={form.perUserLimit}
                     onChange={(e) => update("perUserLimit", Number(e.target.value))}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                   />
                 </div>
               </div>
@@ -401,10 +409,10 @@ export default function CreateOffer() {
           </Card>
 
           {/* Targeting */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">User Targeting</CardTitle>
-              <CardDescription>Who can use this offer?</CardDescription>
+          <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+              <CardTitle className="flex items-center gap-2 text-white">User Targeting</CardTitle>
+              <CardDescription className="text-white/60">Who can use this offer?</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
@@ -415,8 +423,8 @@ export default function CreateOffer() {
                     onClick={() => toggleUserType(ut.value)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
                       selectedUserTypes.includes(ut.value)
-                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                        : "bg-muted/40 text-muted-foreground border-border hover:border-border/80 hover:text-foreground"
+                        ? "bg-[#D3D925] text-[#121212] border-[#D3D925] shadow-sm font-bold"
+                        : "bg-white/5 text-white/60 border-white/10 hover:border-white/20 hover:text-white"
                     }`}
                   >
                     {ut.label}
@@ -424,17 +432,17 @@ export default function CreateOffer() {
                 ))}
               </div>
               {selectedUserTypes.length === 0 && (
-                <p className="text-xs text-destructive mt-2">Select at least one user type</p>
+                <p className="text-xs text-white mt-2">Select at least one user type</p>
               )}
             </CardContent>
           </Card>
 
           {/* Submit CTA (bottom) */}
           <div className="flex justify-end gap-3 pb-4">
-            <Button variant="outline" onClick={() => navigate("/admin/offers")}>
+            <Button variant="outline" onClick={() => navigate("/admin/offers")} className="bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white">
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={isPending} className="gap-2 min-w-32">
+            <Button onClick={handleSubmit} disabled={isPending} className="gap-2 min-w-32 bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90 font-bold">
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {isPending ? (isEditMode ? "Updating..." : "Publishing...") : (isEditMode ? "Update Offer" : "Publish Offer")}
             </Button>
@@ -443,10 +451,10 @@ export default function CreateOffer() {
 
         {/* ── RIGHT: Live Preview ─────────────────────────────────────── */}
         <div className="sticky top-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Live Preview</CardTitle>
-              <CardDescription>See how this offer will look to users</CardDescription>
+          <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+              <CardTitle className="flex items-center gap-2 text-white">Live Preview</CardTitle>
+              <CardDescription className="text-white/60">See how this offer will look to users</CardDescription>
             </CardHeader>
             <CardContent className="min-h-[400px]">
               <CouponLivePreview

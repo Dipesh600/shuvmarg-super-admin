@@ -41,6 +41,7 @@ const Index = () => {
   const revenueData = (data?.data?.revenueOverview ?? []).map((item: any) => ({
     month: item.label,
     revenue: item.revenue,
+    netRevenue: Math.round(item.revenue * 0.85), // Estimated net revenue
   }));
 
   // Guard: don't render KPI cards until data is fully loaded
@@ -50,10 +51,10 @@ const Index = () => {
     <>
       {/* Welcome Section */}
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">
+        <h2 className="text-2xl font-bold tracking-tight text-white">
           Dashboard Overview
         </h2>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-white/60 mt-1 font-medium text-sm">
           Welcome back! Here's what's happening with the Sumarg Platform today.
         </p>
       </div>
@@ -83,7 +84,7 @@ const Index = () => {
             (summaryData.fleet.activeFleets / summaryData.fleet.totalFleets) *
             100
           ).toFixed(0)}%)`}
-          changeType="neutral"
+          changeType="positive"
           icon={Bus}
           subtitle={`${
             summaryData.fleet.totalFleets - summaryData.fleet.activeFleets
@@ -110,41 +111,41 @@ const Index = () => {
       </div>
 
       {/* Geographic Overview */}
-      <Card>
+      <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl">
         <CardHeader>
-          <CardTitle>Geographic Overview</CardTitle>
-          <CardDescription>Regional performance across Nepal</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-white">Geographic Overview</CardTitle>
+          <CardDescription className="text-white/50">Regional performance across Nepal</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted">
-              <MapPin className="h-5 w-5 text-primary mt-1" />
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-white/5 border border-white/5">
+              <MapPin className="h-5 w-5 text-[#D3D925] mt-1" />
               <div>
-                <p className="font-semibold">Province 3 (Bagmati)</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-bold text-white text-sm">Province 3 (Bagmati)</p>
+                <p className="text-xs text-white/50 font-medium">
                   145 active buses
                 </p>
-                <Badge variant="secondary" className="mt-2">
+                <Badge className="mt-2 bg-white/10 text-white/80 hover:bg-white/20 border-white/5">
                   Highest revenue
                 </Badge>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted">
-              <MapPin className="h-5 w-5 text-primary mt-1" />
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-white/5 border border-white/5">
+              <MapPin className="h-5 w-5 text-[#D3D925] mt-1" />
               <div>
-                <p className="font-semibold">Province 4 (Gandaki)</p>
-                <p className="text-sm text-muted-foreground">67 active buses</p>
-                <Badge variant="secondary" className="mt-2">
+                <p className="font-bold text-white text-sm">Province 4 (Gandaki)</p>
+                <p className="text-xs text-white/50 font-medium">67 active buses</p>
+                <Badge className="mt-2 bg-white/10 text-white/80 hover:bg-white/20 border-white/5">
                   Growing market
                 </Badge>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted">
-              <MapPin className="h-5 w-5 text-primary mt-1" />
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-white/5 border border-white/5">
+              <MapPin className="h-5 w-5 text-[#D3D925] mt-1" />
               <div>
-                <p className="font-semibold">Province 1 (Koshi)</p>
-                <p className="text-sm text-muted-foreground">33 active buses</p>
-                <Badge variant="secondary" className="mt-2">
+                <p className="font-bold text-white text-sm">Province 1 (Koshi)</p>
+                <p className="text-xs text-white/50 font-medium">33 active buses</p>
+                <Badge className="mt-2 bg-white/10 text-white/80 hover:bg-white/20 border-white/5">
                   New expansion
                 </Badge>
               </div>
@@ -155,51 +156,51 @@ const Index = () => {
 
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-success" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <CheckCircle className="h-5 w-5 text-[#D3D925]" />
               Verification Queue
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm">Pending Agent Verifications</span>
-                <Badge>245</Badge>
+                <span className="text-sm font-semibold text-white/60">Pending Agent Verifications</span>
+                <Badge className="bg-white/10 text-white hover:bg-white/20">245</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">Pending Bus Owner Verifications</span>
-                <Badge>45</Badge>
+                <span className="text-sm font-semibold text-white/60">Pending Bus Owner Verifications</span>
+                <Badge className="bg-white/10 text-white hover:bg-white/20">45</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">Pending Fleet Verifications</span>
-                <Badge>33</Badge>
+                <span className="text-sm font-semibold text-white/60">Pending Fleet Verifications</span>
+                <Badge className="bg-white/10 text-white hover:bg-white/20">33</Badge>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <AlertTriangle className="h-5 w-5 text-white" />
               Active Alerts
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm">Open Disputes</span>
-                <Badge variant="destructive">45</Badge>
+                <span className="text-sm font-semibold text-white/60">Open Disputes</span>
+                <Badge className="bg-white/5 text-white border border-white/10 hover:bg-white/5">45</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">Pending Refunds</span>
-                <Badge variant="outline">23</Badge>
+                <span className="text-sm font-semibold text-white/60">Pending Refunds</span>
+                <Badge className="bg-white/5 text-white/80 border border-white/10">23</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">System Alerts</span>
-                <Badge variant="outline">2</Badge>
+                <span className="text-sm font-semibold text-white/60">System Alerts</span>
+                <Badge className="bg-white/5 text-white/80 border border-white/10">2</Badge>
               </div>
             </div>
           </CardContent>
@@ -225,7 +226,7 @@ export default Index;
 // }) {
 //   return (
 //     <div className="flex justify-between items-center">
-//       <span className="text-sm">{label}</span>
+//       <span className="text-sm font-semibold text-white/60">{label}</span>
 //       <Badge variant={badgeVariant}>{value}</Badge>
 //     </div>
 //   );

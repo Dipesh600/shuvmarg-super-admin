@@ -94,17 +94,11 @@ const UserDetail = () => {
   };
 
   // Map bookings from the getBookingsByUser endpoint
-  // Priority for route display:
-  //   1. booking.bookedFrom / booking.bookedTo (user's actual searched route)
-  //   2. booking.boardingPoint.name / booking.droppingPoint.name (specific pickup/drop)
-  //   3. trip.fromStopName / trip.toStopName (new schedule-based trips)
-  //   4. trip.routeId.from / trip.routeId.to (legacy trips)
   const userBookings = bookings?.data?.map((booking: any) => {
     const trip = booking?.tripId;
     const tripFrom = trip?.fromStopName || trip?.routeId?.from || "N/A";
     const tripTo = trip?.toStopName || trip?.routeId?.to || "N/A";
 
-    // User's actual booked route takes top priority
     const from =
       booking?.bookedFrom ||
       booking?.boardingPoint?.name ||
@@ -117,7 +111,6 @@ const UserDetail = () => {
     return {
       id: booking._id,
       scheduleRoute: { from, to },
-      // Include full trip route when it differs from user's actual route
       tripRoute:
         (from !== tripFrom || to !== tripTo)
           ? { from: tripFrom, to: tripTo }
@@ -127,7 +120,6 @@ const UserDetail = () => {
       status: booking?.status,
     };
   });
-
 
   // Map transactions from the bookings data (using correct field names)
   const userTransactions = bookings?.data?.map((booking: any) => ({
@@ -168,7 +160,6 @@ const UserDetail = () => {
         </div>
         <div className="flex gap-2">
           <DeleteModel entityId={userData.id} entityType="user" />
-          {/* No Edit button — admin is observer/enforcer, not editor */}
           <SuspendDialog
             entityType="user"
             entityName={`${userData.name}`}
@@ -180,12 +171,19 @@ const UserDetail = () => {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* ── Profile Card ── */}
-        <Card className="lg:col-span-1 h-fit">
+        <Card className="lg:col-span-1 h-fit border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-white">
               Profile
               <Badge
-                variant={userData.status === "active" ? "default" : "destructive"}
+                variant="outline"
+                className={
+                  userData.status === "active" 
+                    ? "capitalize bg-[#D3D925]/10 text-[#D3D925] border-[#D3D925]/20 font-medium" 
+                    : userData.status === "banned"
+                    ? "capitalize bg-white/5 text-white border-white/10 font-medium"
+                    : "capitalize bg-white/5 text-white/50 border-white/10 font-medium"
+                }
               >
                 {userData.status}
               </Badge>
@@ -194,25 +192,29 @@ const UserDetail = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-center">
               <div className="w-24 h-24 overflow-hidden rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
-                <img
-                  src={userData.profileImg}
-                  alt="profile_img"
-                  className="w-full rounded-full object-cover "
-                />
+                {userData.profileImg ? (
+                  <img
+                    src={userData.profileImg}
+                    alt="profile_img"
+                    className="w-full rounded-full object-cover "
+                  />
+                ) : (
+                  userData.name?.[0]?.toUpperCase() || "?"
+                )}
               </div>
             </div>
             <div className="text-center">
               <h3 className="text-xl font-semibold">{userData.name}</h3>
               {userData.verified && (
                 <div className="flex items-center justify-center gap-1 text-success text-sm mt-1">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <CheckCircle className="h-4 w-4 text-white" />
                   Verified
                 </div>
               )}
               {/* Roles badges */}
               <div className="flex items-center justify-center gap-1 mt-2 flex-wrap">
                 {userData.roles.map((role: string) => (
-                  <Badge key={role} variant="secondary" className="text-xs capitalize">
+                  <Badge key={role} variant="outline" className="text-xs capitalize bg-white/5 text-white border-white/10">
                     {getRoleLabel(role)}
                   </Badge>
                 ))}
@@ -296,7 +298,7 @@ const UserDetail = () => {
                 <h4 className="text-sm font-medium text-muted-foreground">Referral</h4>
                 <div className="flex justify-between text-sm">
                   <span>Code</span>
-                  <Badge variant="outline" className="font-mono text-xs">
+                  <Badge variant="outline" className="text-xs">
                     {referral.code || "N/A"}
                   </Badge>
                 </div>
@@ -310,7 +312,7 @@ const UserDetail = () => {
         </Card>
 
         {/* ── Activity Card ── */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl">
           <CardHeader>
             <CardTitle>Activity Summary</CardTitle>
             <CardDescription>
@@ -319,7 +321,7 @@ const UserDetail = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3 mb-6">
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
+              <div className="p-4 border border-white/5 bg-[#121212]/50 rounded-lg text-center">
                 <div className="text-2xl font-bold">
                   {metrics?.bookings?.total ?? bookings?.totalBookings ?? 0}
                 </div>
@@ -327,29 +329,27 @@ const UserDetail = () => {
                   Total Bookings
                 </div>
               </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
+              <div className="p-4 border border-white/5 bg-[#121212]/50 rounded-lg text-center">
                 <div className="text-2xl font-bold">
                   NPR.{(metrics?.bookings?.totalSpent ?? bookings?.totalBookingAmount ?? 0).toLocaleString("en-IN")}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Spent</div>
               </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center flex flex-col items-center justify-center relative group overflow-hidden border border-transparent hover:border-primary/20 transition-colors">
-                <div className="absolute inset-0 bg-primary/5 translate-y-[120%] group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-                <div className="text-2xl font-bold relative z-10">
+              <div className="p-4 rounded-lg text-center flex flex-col items-center justify-center relative group overflow-hidden border border-[#D3D925]/20 bg-[#D3D925]/5 hover:bg-[#D3D925]/10 hover:shadow-[0_0_20px_rgba(211,217,37,0.15)] transition-all duration-300">
+                <div className="text-2xl font-bold relative z-10 text-[#D3D925]">
                   {walletLoading ? "..." : `Rs. ${walletData?.balance?.toLocaleString("en-IN") ?? 0}`}
                 </div>
                 <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1 relative z-10">
-                  <Wallet className="h-3.5 w-3.5" /> SM Money
+                  <Wallet className="h-3.5 w-3.5 text-[#D3D925]/70" /> SM Money
                 </div>
                 <div
-                  className="text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute bottom-1.5 z-10 font-medium cursor-pointer flex items-center gap-0.5 hover:underline"
+                  className="text-[10px] text-[#D3D925] opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute bottom-1.5 z-10 font-medium cursor-pointer flex items-center gap-0.5 hover:underline"
                   onClick={() => navigate(`/admin/wallet`)}
                 >
                   Manage &rarr;
                 </div>
               </div>
             </div>
-
 
             <Tabs defaultValue="bookings">
               <TabsList className="w-fit justify-start">
