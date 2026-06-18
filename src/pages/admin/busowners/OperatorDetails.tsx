@@ -17,6 +17,7 @@ import FleetTab from "@/components/busowners/operator_tabs/FleetTab";
 import BrandServicesTab from "@/components/busowners/operator_tabs/BrandServicesTab";
 import BrandSchedulesTab from "@/components/busowners/operator_tabs/BrandSchedulesTab";
 import DriversTab from "@/components/busowners/operator_tabs/DriversTab";
+import { StatCard } from "@/components/dashboard/StatCard";
 
 // ─── FinancialTab ─────────────────────────────────────────────────────────────
 
@@ -27,19 +28,7 @@ const fmt = (n: number) =>
         ? `NPR ${(n / 1_000).toFixed(1)}K`
         : `NPR ${Math.round(n).toLocaleString()}`;
 
-const KpiCard = ({
-    label, value, sub, accent = false,
-}: { label: string; value: string; sub?: string; accent?: boolean }) => (
-    <Card className={`shadow-sm border ${accent ? "border-amber-200 bg-amber-50" : "border-muted/40"}`}>
-        <CardContent className="p-5">
-            <p className={`text-[10px] uppercase font-black tracking-widest mb-1.5 ${accent ? "text-amber-600/70" : "text-muted-foreground"}`}>
-                {label}
-            </p>
-            <p className={`text-2xl font-black leading-none ${accent ? "text-amber-600" : ""}`}>{value}</p>
-            {sub && <p className="text-[11px] text-muted-foreground font-semibold mt-1.5">{sub}</p>}
-        </CardContent>
-    </Card>
-);
+// Removed KpiCard since we are using StatCard now
 
 // Inline bar chart — no external dependency
 const BarChart = ({ data }: { data: { label: string; revenue: number; bookings: number }[] }) => {
@@ -55,7 +44,7 @@ const BarChart = ({ data }: { data: { label: string; revenue: number; bookings: 
                         <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center z-10 pointer-events-none">
                             <div className="bg-slate-900 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg whitespace-nowrap shadow-xl">
                                 <div>{d.label}</div>
-                                <div className="text-emerald-400">{fmt(d.revenue)}</div>
+                                <div className="text-white">{fmt(d.revenue)}</div>
                                 <div className="text-slate-400">{d.bookings} bookings</div>
                             </div>
                             <div className="w-2 h-2 bg-slate-900 rotate-45 -mt-1" />
@@ -108,36 +97,43 @@ const FinancialTab = ({ brand }: { brand: any }) => {
         <div className="space-y-6 animate-in fade-in duration-300">
             {/* KPI Cards */}
             <div className="grid gap-4 md:grid-cols-4">
-                <KpiCard
-                    label="Total Revenue"
+                <StatCard
+                    title="Total Revenue"
                     value={f ? fmt(f.kpis.totalGross) : "NPR 0"}
-                    sub={f ? `${f.kpis.totalBookings.toLocaleString()} bookings · ${f.kpis.totalTickets.toLocaleString()} tickets` : "No bookings yet"}
+                    icon={Activity}
+                    subtitle={f ? `${f.kpis.totalBookings.toLocaleString()} bookings · ${f.kpis.totalTickets.toLocaleString()} tickets` : "No bookings yet"}
+                    changeType="neutral"
                 />
-                <KpiCard
-                    label="This Month"
+                <StatCard
+                    title="This Month"
                     value={f ? fmt(f.thisMonth.revenue) : "NPR 0"}
-                    sub={f ? `${f.thisMonth.bookings} bookings this month` : undefined}
+                    icon={Activity}
+                    subtitle={f ? `${f.thisMonth.bookings} bookings this month` : undefined}
+                    changeType="positive"
                 />
-                <KpiCard
-                    label="Pending Settlement"
+                <StatCard
+                    title="Pending Settlement"
                     value={f ? fmt(f.settlements.pending) : "NPR 0"}
-                    sub={f && f.settlements.pendingCount > 0 ? `${f.settlements.pendingCount} settlement${f.settlements.pendingCount !== 1 ? "s" : ""} awaiting payment` : "All settled"}
-                    accent={f ? f.settlements.pending > 0 : false}
+                    icon={CreditCard}
+                    subtitle={f && f.settlements.pendingCount > 0 ? `${f.settlements.pendingCount} settlement${f.settlements.pendingCount !== 1 ? "s" : ""} awaiting payment` : "All settled"}
+                    changeType={f && f.settlements.pending > 0 ? "negative" : "neutral"}
                 />
-                <KpiCard
-                    label="Platform Cut"
+                <StatCard
+                    title="Platform Cut"
                     value={`${brand.commissionRate ?? 8}%`}
-                    sub={f && f.kpis.totalGross > 0
+                    icon={Briefcase}
+                    subtitle={f && f.kpis.totalGross > 0
                         ? `≈ ${fmt(Math.round(f.kpis.totalGross * (brand.commissionRate ?? 8) / 100))} collected`
                         : brand.bankDetails?.bankName || "Bank not configured"}
+                    changeType="neutral"
                 />
             </div>
 
             {/* Monthly Revenue Chart */}
-            <Card className="shadow-sm border-muted/40">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-base font-black tracking-tight">Monthly Revenue</CardTitle>
-                    <CardDescription className="text-[11px]">
+            <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
+                <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                    <CardTitle className="flex items-center gap-2 text-white">Monthly Revenue</CardTitle>
+                    <CardDescription className="text-[11px] text-white/60">
                         Last 12 months — hover bars for details
                     </CardDescription>
                 </CardHeader>
@@ -155,18 +151,18 @@ const FinancialTab = ({ brand }: { brand: any }) => {
 
             <div className="grid gap-6 md:grid-cols-2">
                 {/* Trip Counts */}
-                <Card className="shadow-sm border-muted/40">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-black tracking-tight">Trip Overview</CardTitle>
+                <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
+                    <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                        <CardTitle className="flex items-center gap-2 text-white">Trip Overview</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {f ? (
                             <div className="grid grid-cols-2 gap-3">
                                 {[
-                                    { label: "Completed",  value: f.trips.completed,  color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
-                                    { label: "Scheduled",  value: f.trips.scheduled,  color: "text-blue-600 bg-blue-50 border-blue-200" },
-                                    { label: "In Transit", value: f.trips.inTransit,  color: "text-amber-600 bg-amber-50 border-amber-200" },
-                                    { label: "Cancelled",  value: f.trips.cancelled,  color: "text-red-500 bg-red-50 border-red-200" },
+                                    { label: "Completed",  value: f.trips.completed,  color: "text-white bg-white/5 border-white/10" },
+                                    { label: "Scheduled",  value: f.trips.scheduled,  color: "text-white bg-white/5 border-white/10" },
+                                    { label: "In Transit", value: f.trips.inTransit,  color: "text-white bg-white/5 border-white/10" },
+                                    { label: "Cancelled",  value: f.trips.cancelled,  color: "text-white bg-white/5 border-white/10" },
                                 ].map(({ label, value, color }) => (
                                     <div key={label} className={`rounded-xl border p-4 ${color}`}>
                                         <p className="text-2xl font-black leading-none">{value}</p>
@@ -181,10 +177,10 @@ const FinancialTab = ({ brand }: { brand: any }) => {
                 </Card>
 
                 {/* Fleet Revenue Breakdown */}
-                <Card className="shadow-sm border-muted/40">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-base font-black tracking-tight">Fleet Revenue</CardTitle>
-                        <CardDescription className="text-[11px]">Top performing buses in this brand</CardDescription>
+                <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
+                    <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                        <CardTitle className="flex items-center gap-2 text-white">Fleet Revenue</CardTitle>
+                        <CardDescription className="text-[11px] text-white/60">Top performing buses in this brand</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
                         {f && f.fleetBreakdown.length > 0 ? (
@@ -193,7 +189,7 @@ const FinancialTab = ({ brand }: { brand: any }) => {
                                     <div key={fb.busId || idx} className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors">
                                         <div>
                                             <p className="text-sm font-black">{fb.bus?.busName || "Unknown Bus"}</p>
-                                            <p className="text-[10px] text-muted-foreground font-bold font-mono uppercase">{fb.bus?.busNumber || "—"} · {fb.tickets} tickets</p>
+                                            <p className="text-[10px] text-muted-foreground font-bold uppercase">{fb.bus?.busNumber || "—"} · {fb.tickets} tickets</p>
                                         </div>
                                         <p className="text-sm font-black text-primary">{fmt(fb.revenue)}</p>
                                     </div>
@@ -214,8 +210,8 @@ const FinancialTab = ({ brand }: { brand: any }) => {
 
 const ActivityTab = () => {
     return (
-        <Card className="shadow-sm border-muted/40 animate-in fade-in duration-300">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground border-2 border-dashed border-muted rounded-xl mt-6">
+        <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white animate-in fade-in duration-300">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground border-2 border-dashed border-muted/40 rounded-xl mt-6">
                 <Activity className="w-10 h-10 mb-4 opacity-20" />
                 <p className="text-sm font-bold">No activity</p>
                 <p className="text-xs mt-1 opacity-60">Brand-specific administrative logs will appear here.</p>
@@ -298,12 +294,12 @@ const OperatorDetails = () => {
                         <div>
                             <div className="flex items-center gap-3">
                                 <h2 className="text-3xl font-black tracking-tighter truncate">{brand.brandName}</h2>
-                                <Badge variant="outline" className={`text-[10px] font-black border-none px-2.5 py-0.5 uppercase tracking-widest ${brand.status === "ACTIVE" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                                <Badge variant="outline" className={`text-[10px] font-black border-none px-2.5 py-0.5 uppercase tracking-widest ${brand.status === "ACTIVE" ? "bg-white/5 text-white" : "bg-white/5 text-white"}`}>
                                     {brand.status}
                                 </Badge>
                             </div>
                             <div className="flex items-center gap-4 text-muted-foreground mt-1.5 text-xs font-semibold">
-                                <p className="font-mono uppercase bg-muted/50 px-2 py-0.5 rounded-md text-primary">{brand.brandCode}</p>
+                                <p className="uppercase bg-muted/50 px-2 py-0.5 rounded-md text-primary">{brand.brandCode}</p>
                                 <p className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5" /> Owned by {brand.ownerId?.name || "Bus Owner"}</p>
                                 {brand.baseCity && <p className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {brand.baseCity}</p>}
                                 <p className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Est. {new Date(brand.createdAt).getFullYear()}</p>
@@ -343,26 +339,26 @@ const OperatorDetails = () => {
 
                 <div className="mt-2">
                     <TabsContent value="fleet">
-                        <div className="bg-background border rounded-2xl p-1 shadow-sm">
+                        <div className="bg-[#121212]/30 border-white/5 border rounded-2xl p-1 shadow-sm backdrop-blur-md">
                             {/* We will update FleetTab to accept brandId later */}
                             <FleetTab ownerId={brand.ownerId?._id} brandId={brand._id} />
                         </div>
                     </TabsContent>
                     
                     <TabsContent value="services">
-                        <div className="bg-background border rounded-2xl p-4 shadow-sm">
+                        <div className="bg-[#121212]/30 border-white/5 border rounded-2xl p-4 shadow-sm backdrop-blur-md">
                             <BrandServicesTab brandId={brand._id} />
                         </div>
                     </TabsContent>
 
                     <TabsContent value="schedules">
-                        <div className="bg-background border rounded-2xl p-4 shadow-sm">
+                        <div className="bg-[#121212]/30 border-white/5 border rounded-2xl p-4 shadow-sm backdrop-blur-md">
                             <BrandSchedulesTab brandId={brand._id} ownerId={brand.ownerId?._id} />
                         </div>
                     </TabsContent>
 
                     <TabsContent value="drivers">
-                        <div className="bg-background border rounded-2xl p-4 shadow-sm">
+                        <div className="bg-[#121212]/30 border-white/5 border rounded-2xl p-4 shadow-sm backdrop-blur-md">
                             <DriversTab brandId={brand._id} brandName={brand.brandName} />
                         </div>
                     </TabsContent>

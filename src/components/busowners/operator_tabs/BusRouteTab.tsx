@@ -98,10 +98,10 @@ const BusRouteTab = ({ ownerId }: { ownerId: string }) => {
         </div>
       </div>
 
-      <Card className="border-2 border-muted shadow-sm overflow-hidden">
-        <CardHeader className="bg-muted/10 pb-4">
-          <CardTitle className="text-lg font-black tracking-tighter leading-none">Route Configurations</CardTitle>
-          <CardDescription className="text-[10px] font-bold uppercase tracking-widest">Total {routes.length} active configurations found</CardDescription>
+      <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white overflow-hidden">
+        <CardHeader className="bg-white/5 pb-4 border-b border-white/5">
+          <CardTitle className="text-lg font-black tracking-tighter leading-none text-white">Route Configurations</CardTitle>
+          <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-white/60">Total {routes.length} active configurations found</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -125,23 +125,23 @@ const BusRouteTab = ({ ownerId }: { ownerId: string }) => {
           ) : (
             <div className="rounded-md overflow-x-auto min-h-[300px]">
               <Table>
-                <TableHeader className="bg-muted/20">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary">Route Details</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary hidden md:table-cell">Locations</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary hidden lg:table-cell">Distance / Duration</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary text-right">Base Price</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary text-center">Status</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary text-right">Actions</TableHead>
+                <TableHeader className="bg-white/5 border-b border-white/10">
+                  <TableRow className="hover:bg-transparent border-white/10">
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60">Route Details</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60 hidden md:table-cell">Locations</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60 hidden lg:table-cell">Distance / Duration</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60 text-right">Base Price</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60 text-center">Status</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredRoutes.map((route: any) => (
-                    <TableRow key={route._id} className="hover:bg-muted/5 font-medium transition-colors">
+                    <TableRow key={route._id} className="hover:bg-white/5 font-medium transition-colors border-white/5">
                       <TableCell className="align-top py-4">
                         <div className="flex flex-col">
-                          <span className="font-black tracking-tight text-sm text-foreground">{route.routeName}</span>
-                          <span className="text-[9px] font-bold text-muted-foreground/50 uppercase tracking-widest tooltip mt-1" title={route._id}>
+                          <span className="font-black tracking-tight text-sm text-white/90">{route.routeName}</span>
+                          <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest tooltip mt-1" title={route._id}>
                             ID: {route._id.slice(-8)}
                           </span>
                         </div>
@@ -149,32 +149,32 @@ const BusRouteTab = ({ ownerId }: { ownerId: string }) => {
 
                       <TableCell className="align-top py-4 hidden md:table-cell">
                         <div className="flex flex-col gap-1.5 text-xs">
-                          <div className="flex items-center gap-1.5 opacity-80">
-                            <MapPin className="h-3 w-3 text-muted-foreground" /> {route.from}
+                          <div className="flex items-center gap-1.5 opacity-80 text-white/70">
+                            <MapPin className="h-3 w-3 text-white/40" /> {route.from}
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <MapPin className="h-3 w-3 text-primary" /> <span className="font-bold">{route.to}</span>
+                          <div className="flex items-center gap-1.5 text-white/90">
+                            <MapPin className="h-3 w-3 text-[#D3D925]" /> <span className="font-bold">{route.to}</span>
                           </div>
                         </div>
                       </TableCell>
 
                       <TableCell className="align-top py-4 hidden lg:table-cell">
                         <div className="flex flex-col gap-1.5">
-                          <span className="text-xs font-bold bg-muted/50 w-fit px-2 py-0.5 rounded-md flex items-center gap-1.5">
+                          <span className="text-xs font-bold bg-white/5 w-fit px-2 py-0.5 rounded-md flex items-center gap-1.5 text-white/80">
                             <Navigation className="h-3 w-3" /> {route.distance}
                           </span>
-                          <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5 ml-1">
+                          <span className="text-xs font-bold text-white/60 flex items-center gap-1.5 ml-1">
                             <Clock className="h-3 w-3" /> {route.duration}
                           </span>
                         </div>
                       </TableCell>
 
                       <TableCell className="align-top py-4 text-right">
-                        <div className="inline-flex items-center justify-end px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary font-black text-sm">
+                        <div className="inline-flex items-center justify-end px-2.5 py-1 rounded-lg bg-[#D3D925]/10 border border-[#D3D925]/20 text-[#D3D925] font-black text-sm">
                           Rs. {route.basePrice}
                         </div>
                         {route.isRoundTrip && (
-                          <div className="text-[9px] font-black uppercase tracking-widest mt-1 opacity-50 flex justify-end">Round Trip</div>
+                          <div className="text-[9px] font-black uppercase tracking-widest mt-1 opacity-50 flex justify-end text-white/60">Round Trip</div>
                         )}
                       </TableCell>
 

@@ -18,10 +18,10 @@ interface ScheduleTabProps {
 }
 
 const scheduleStatusStyles: Record<string, string> = {
-    ACTIVE:    "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
-    SUSPENDED: "bg-amber-500/10 text-amber-600 border-amber-500/30",
-    DRAFT:     "bg-blue-500/10 text-blue-600 border-blue-500/30",
-    INACTIVE:  "bg-red-500/10 text-red-600 border-red-500/30",
+    ACTIVE:    "bg-white/5 text-white border-white/10",
+    SUSPENDED: "bg-white/5 text-white border-white/10",
+    DRAFT:     "bg-white/5 text-white border-white/10",
+    INACTIVE:  "bg-white/5 text-white border-white/10",
 };
 
 const recurrenceLabel = (rec: string, days: number[]) => {
@@ -75,7 +75,7 @@ function SuspendModal({ scheduleId, onClose, onSuccess }: {
             <div className="bg-background rounded-2xl shadow-2xl border w-full max-w-md p-6 space-y-5">
                 <div className="flex items-center justify-between">
                     <h3 className="text-base font-black flex items-center gap-2">
-                        <PauseCircle className="w-4 h-4 text-amber-500" /> Suspend Service
+                        <PauseCircle className="w-4 h-4 text-white" /> Suspend Service
                     </h3>
                     <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
                         <X className="w-4 h-4" />
@@ -112,7 +112,7 @@ function SuspendModal({ scheduleId, onClose, onSuccess }: {
                             className="w-full rounded-lg border bg-muted/20 px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/30"
                         />
                         {suspendUntil && (
-                            <p className="text-[11px] text-amber-600 font-bold mt-1 flex items-center gap-1">
+                            <p className="text-[11px] text-white font-bold mt-1 flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
                                 Service will auto-resume on {new Date(suspendUntil).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                             </p>
@@ -125,7 +125,7 @@ function SuspendModal({ scheduleId, onClose, onSuccess }: {
                     <Button
                         onClick={() => mutation.mutate()}
                         disabled={!reason.trim() || mutation.isPending}
-                        className="flex-1 font-bold rounded-xl bg-amber-600 hover:bg-amber-700 text-white"
+                        className="flex-1 font-bold rounded-xl bg-white/5 hover:bg-white/5 text-white"
                     >
                         {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <PauseCircle className="w-4 h-4 mr-2" />}
                         Suspend
@@ -300,17 +300,17 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
             <Card className="overflow-hidden hover:shadow-md transition-shadow group">
                 {/* Suspension banner */}
                 {isSuspended && (
-                    <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-3">
+                    <div className="bg-white/5 border-b border-white/10 px-4 py-3">
                         <div className="flex items-start justify-between gap-3">
                             <div className="flex items-start gap-2 flex-1 min-w-0">
-                                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                <AlertTriangle className="w-4 h-4 text-white shrink-0 mt-0.5" />
                                 <div className="min-w-0">
-                                    <p className="text-xs font-black text-amber-700 uppercase tracking-wider">Service Suspended</p>
+                                    <p className="text-xs font-black text-white uppercase tracking-wider">Service Suspended</p>
                                     {sched.suspensionReason && (
-                                        <p className="text-xs text-amber-600/80 font-medium mt-0.5 truncate">{sched.suspensionReason}</p>
+                                        <p className="text-xs text-white/60 font-medium mt-0.5 truncate">{sched.suspensionReason}</p>
                                     )}
                                     {sched.suspendUntil && (
-                                        <p className="text-[11px] font-bold text-amber-600 mt-0.5">
+                                        <p className="text-[11px] font-bold text-white mt-0.5">
                                             Auto-resume: {formatDate(sched.suspendUntil)}
                                         </p>
                                     )}
@@ -320,7 +320,7 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
                                 size="sm"
                                 onClick={() => resumeMut.mutate()}
                                 disabled={resumeMut.isPending}
-                                className="h-8 px-3 rounded-lg font-bold text-xs shrink-0 bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
+                                className="h-8 px-3 rounded-lg font-bold text-xs shrink-0 bg-white/5 hover:bg-white/5 text-white shadow-sm"
                             >
                                 {resumeMut.isPending
                                     ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -348,9 +348,9 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
                     </div>
                 )}
 
-                <CardHeader className="pb-3 bg-muted/20">
+                <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-bold flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-white">
                             <MapPin className="h-4 w-4 text-primary/60" />
                             {getDirection(sched.variantId)}
                             {(sched.versionNumber || 1) > 1 && (
@@ -364,7 +364,7 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
                         </Badge>
                     </div>
                     {sched.variantId?.code && (
-                        <span className="text-xs font-mono text-muted-foreground/50">{sched.variantId.code}</span>
+                        <span className="text-xs text-muted-foreground/50">{sched.variantId.code}</span>
                     )}
                 </CardHeader>
 
@@ -395,7 +395,7 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
                     {/* Effective period */}
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>From: <span className="font-bold text-foreground">{formatDate(sched.effectiveFrom)}</span></span>
-                        <span>Until: <span className={`font-bold ${sched.effectiveUntil ? "text-amber-600" : "text-foreground"}`}>
+                        <span>Until: <span className={`font-bold ${sched.effectiveUntil ? "text-white" : "text-foreground"}`}>
                             {sched.effectiveUntil ? formatDate(sched.effectiveUntil) : "Indefinite"}
                         </span></span>
                     </div>
@@ -409,8 +409,8 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
 
                     {/* Fare override */}
                     {sched.fareOverride && (
-                        <div className="text-xs text-muted-foreground bg-amber-500/5 rounded-lg px-3 py-2 border border-amber-500/10">
-                            Fare Override: <span className="font-bold text-amber-700">₹{sched.fareOverride}</span>
+                        <div className="text-xs text-muted-foreground bg-white/5 rounded-lg px-3 py-2 border border-white/10">
+                            Fare Override: <span className="font-bold text-white">₹{sched.fareOverride}</span>
                         </div>
                     )}
 
@@ -431,7 +431,7 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
                                 size="sm"
                                 variant="outline"
                                 onClick={() => setShowSuspendModal(true)}
-                                className="flex-1 h-8 rounded-lg font-bold text-xs border-amber-500/30 text-amber-700 hover:bg-amber-500/10"
+                                className="flex-1 h-8 rounded-lg font-bold text-xs border-white/10 text-white hover:bg-white/5"
                             >
                                 <PauseCircle className="w-3.5 h-3.5 mr-1.5" /> Suspend
                             </Button>
@@ -487,11 +487,11 @@ const ScheduleTab = ({ schedules, fleet }: ScheduleTabProps) => {
         <div className="space-y-4">
             {/* Health banner */}
             {hasSuspended && (
-                <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                    <AlertTriangle className="w-5 h-5 text-white shrink-0" />
                     <div>
-                        <p className="text-sm font-black text-amber-700">Service Partially Suspended</p>
-                        <p className="text-xs text-amber-600/80">One or more schedules are suspended. Use the Resume button on each card to restore operations.</p>
+                        <p className="text-sm font-black text-white">Service Partially Suspended</p>
+                        <p className="text-xs text-white/60">One or more schedules are suspended. Use the Resume button on each card to restore operations.</p>
                     </div>
                 </div>
             )}

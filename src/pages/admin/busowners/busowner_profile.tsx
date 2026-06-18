@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   ArrowLeft, Mail, Phone, MapPin, Calendar, Edit, Bus, CreditCard,
   CheckCircle2, XCircle, AlertCircle, UploadCloud, Plus, Loader2, Building2, Activity,
-  Briefcase
+  Briefcase, Copy
 } from "lucide-react";
 import { toast } from "sonner";
 import { useModal } from "@/hooks/use-model-store";
@@ -22,15 +22,28 @@ import { useFetchOwnerDetail } from "@/hooks/useFetchBusOwner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BusOwnerDetailSkeleton } from "@/components/Skeletion_Loading/BusOwnerDetailSkeleton";
 import { getBrandsByOwner, createBrand } from "@/api/operatorBrandApi";
+import { StatCard } from "@/components/dashboard/StatCard";
 
 // ── Components for different tabs ─────────────────────────────────────────────
 
 const OverviewTab = ({ busOWnerDetail, taxReg, bankDet, ownerStatus, verificationStatus }: any) => {
+  const handleCopyBankDetails = () => {
+    const details = [
+      `Bank: ${bankDet.bankName || 'Not Provided'}`,
+      bankDet.branchName ? `Branch: ${bankDet.branchName}` : null,
+      `Account Number: ${bankDet.accountNumber || 'Not Provided'}`,
+      `Account Holder: ${bankDet.accountHolderName || 'Not Provided'}`
+    ].filter(Boolean).join('\n');
+    
+    navigator.clipboard.writeText(details);
+    toast.success("Bank details copied to clipboard!");
+  };
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-in fade-in duration-300">
-      <Card className="shadow-sm border-muted/40 lg:col-span-1">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between text-lg">
+      <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white lg:col-span-1">
+        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+          <CardTitle className="flex items-center gap-2 text-white">
             Owner Profile
             <Badge variant={ownerStatus === "active" ? "default" : "destructive"} className="text-[10px] font-bold">
               {ownerStatus.toUpperCase()}
@@ -49,7 +62,7 @@ const OverviewTab = ({ busOWnerDetail, taxReg, bankDet, ownerStatus, verificatio
                 </Avatar>
               </div>
               {verificationStatus === "approved" && (
-                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white rounded-full p-1 border-2 border-background shadow-sm">
+                <div className="absolute -bottom-2 -right-2 bg-white/5 text-white rounded-full p-1 border-2 border-background shadow-sm">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
               )}
@@ -80,43 +93,72 @@ const OverviewTab = ({ busOWnerDetail, taxReg, bankDet, ownerStatus, verificatio
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm border-muted/40 lg:col-span-2">
+      <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white lg:col-span-2">
         <CardHeader>
-          <CardTitle className="text-lg">Legal & Financial Details</CardTitle>
-          <CardDescription>Verified tax and banking information</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-white">Legal & Financial Details</CardTitle>
+          <CardDescription className="text-white/60">Verified tax and banking information</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mb-1">PAN/VAT Number</p>
-                <p className="text-base font-semibold">{taxReg.panNumber || "Not Provided"}</p>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4 p-4 rounded-xl border bg-muted/20 hover:bg-muted/30 transition-colors">
+                <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                  <Briefcase className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">PAN/VAT Number</p>
+                  <p className="text-lg font-black tracking-tight text-foreground">{taxReg.panNumber || "Not Provided"}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mb-1">Registration No</p>
-                <p className="text-base font-semibold">{taxReg.registrationNumber || "Not Provided"}</p>
+              <div className="flex items-center gap-4 p-4 rounded-xl border bg-muted/20 hover:bg-muted/30 transition-colors">
+                <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">Registration No</p>
+                  <p className="text-lg font-black tracking-tight text-foreground">{taxReg.registrationNumber || "Not Provided"}</p>
+                </div>
               </div>
             </div>
-            <div className="relative p-5 rounded-2xl bg-muted/30 border border-muted/50 overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <CreditCard className="h-16 w-16" />
+
+            <div className="relative p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 overflow-hidden shadow-xl group hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300">
+              <div className="absolute -right-6 -top-6 opacity-5 group-hover:opacity-10 transition-opacity duration-500">
+                <Building2 className="w-40 h-40 text-white" />
               </div>
-              <div className="relative space-y-4">
-                <div>
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Account Holder</p>
-                  <p className="text-sm font-bold text-foreground truncate">{bankDet.accountHolderName || "Not Provided"}</p>
-                </div>
-                <div className="flex justify-between items-end gap-2">
-                  <div className="flex-1">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Bank & Branch</p>
-                    <p className="text-xs font-semibold text-foreground/80 truncate">
-                      {bankDet.bankName ? `${bankDet.bankName} - ${bankDet.branchName || 'Main'}` : "Not Provided"}
+              <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="relative z-10 flex flex-col h-full justify-between gap-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1">Bank Account</p>
+                    <p className="text-base font-bold text-slate-100">
+                      {bankDet.bankName || "Not Provided"}
                     </p>
+                    {bankDet.branchName && (
+                      <p className="text-xs font-medium text-slate-400 mt-0.5">{bankDet.branchName} Branch</p>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Acc Number</p>
-                    <p className="text-sm font-mono font-bold tracking-tight text-primary">{bankDet.accountNumber || "N/A"}</p>
-                  </div>
+                  <button 
+                    onClick={handleCopyBankDetails}
+                    title="Copy All Bank Details"
+                    className="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl backdrop-blur-md border border-white/10 shadow-sm transition-all group/copy relative"
+                  >
+                    <Copy className="w-5 h-5 text-slate-200 absolute opacity-0 group-hover/copy:opacity-100 transition-opacity" />
+                    <CreditCard className="w-5 h-5 text-slate-200 group-hover/copy:opacity-0 transition-opacity" />
+                  </button>
+                </div>
+                
+                <div className="mt-2">
+                  <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1">Account Number</p>
+                  <p className="text-xl font-bold tracking-[0.2em] text-white">
+                    {bankDet.accountNumber ? bankDet.accountNumber.replace(/(\d{4})/g, '$1 ').trim() : "XXXX XXXX XXXX XXXX"}
+                  </p>
+                </div>
+
+                <div className="mt-1">
+                  <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1">Account Holder</p>
+                  <p className="text-sm font-bold text-slate-200 uppercase tracking-wide truncate">
+                    {bankDet.accountHolderName || "NOT PROVIDED"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -131,12 +173,12 @@ const KycDocsTab = ({ verificationStatus, documentSections, busOWnerDetail, id, 
   const hasRejectedDocs = verificationStatus === "rejected" || documentSections.some((d: any) => d.rejectionReason);
   
   return (
-    <Card className="shadow-sm border-muted/40 animate-in fade-in duration-300">
+    <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white animate-in fade-in duration-300">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>KYC Verification Status</CardTitle>
-            <CardDescription>
+            <CardTitle className="flex items-center gap-2 text-white">KYC Verification Status</CardTitle>
+            <CardDescription className="text-white/60">
               {verificationStatus === "pending" ? "Documents are currently under review." : "Document verification history and status."}
             </CardDescription>
           </div>
@@ -159,7 +201,7 @@ const KycDocsTab = ({ verificationStatus, documentSections, busOWnerDetail, id, 
               <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-muted/10 gap-4">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5">
-                    {isVerified && <CheckCircle2 className="h-5 w-5 text-emerald-500" />}
+                    {isVerified && <CheckCircle2 className="h-5 w-5 text-white" />}
                     {isRejected && <XCircle className="h-5 w-5 text-destructive" />}
                     {(isPending || notSubmitted) && <AlertCircle className="h-5 w-5 text-muted-foreground" />}
                   </div>
@@ -168,7 +210,7 @@ const KycDocsTab = ({ verificationStatus, documentSections, busOWnerDetail, id, 
                     {isRejected ? (
                       <p className="text-xs text-destructive mt-0.5 font-medium">Rejected: {doc.rejectionReason}</p>
                     ) : isVerified ? (
-                      <p className="text-xs text-emerald-600 font-medium mt-0.5">Verified</p>
+                      <p className="text-xs text-white font-medium mt-0.5">Verified</p>
                     ) : notSubmitted ? (
                       <p className="text-xs text-muted-foreground mt-0.5">Not submitted</p>
                     ) : (
@@ -221,15 +263,15 @@ const OperatorsTab = ({ ownerId }: { ownerId: string }) => {
   });
 
   return (
-    <Card className="shadow-sm border-muted/40 animate-in fade-in duration-300">
-      <CardHeader className="flex flex-row items-center justify-between pb-4">
+    <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white animate-in fade-in duration-300">
+      <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
         <div>
-          <CardTitle>Operator Brands</CardTitle>
-          <CardDescription>Commercial operating identities and their fleets under this owner.</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-white">Operator Brands</CardTitle>
+          <CardDescription className="text-white/60">Commercial operating identities and their fleets under this owner.</CardDescription>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2 font-bold rounded-xl h-10 bg-indigo-600 hover:bg-indigo-700">
+            <Button className="gap-2 font-bold rounded-xl h-10 bg-white/5 hover:bg-white/5">
               <Plus className="w-4 h-4" /> Add Operator
             </Button>
           </DialogTrigger>
@@ -306,18 +348,18 @@ const OperatorsTab = ({ ownerId }: { ownerId: string }) => {
                   <TableCell>
                     <div>
                       <p className="font-bold text-sm">{b.brandName}</p>
-                      <p className="text-[10px] text-muted-foreground font-mono uppercase mt-0.5">{b.brandCode}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase mt-0.5">{b.brandCode}</p>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={`text-[10px] font-black border-none ${b.status === "ACTIVE" ? "bg-emerald-100 text-emerald-700" : b.status === "SUSPENDED" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
+                    <Badge variant="outline" className={`text-[10px] font-black border-none ${b.status === "ACTIVE" ? "bg-white/5 text-white" : b.status === "SUSPENDED" ? "bg-white/5 text-white" : "bg-white/5 text-white"}`}>
                       {b.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="font-medium text-sm"><span className="flex items-center gap-1.5"><Bus className="w-3.5 h-3.5 text-muted-foreground"/> {b.fleetCount} buses</span></TableCell>
                   <TableCell className="font-bold text-sm">{b.commissionRate}%</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                    <Button variant="ghost" size="sm" className="font-bold text-white hover:text-white hover:bg-white/5"
                       onClick={() => navigate(`/admin/bus-owners/operator/${b._id}`)}>
                       Manage
                     </Button>
@@ -336,36 +378,40 @@ const FinancialTab = ({ busOWnerDetail, recentPayments }: any) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="shadow-sm border-muted/40">
-          <CardContent className="p-5">
-            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">This Month Revenue</p>
-            <p className="text-2xl font-black">{busOWnerDetail.monthlyRevenue || "NPR 0"}</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-muted/40">
-          <CardContent className="p-5">
-            <p className="text-[10px] uppercase font-bold text-amber-600/70 tracking-widest mb-1">Pending Settlement</p>
-            <p className="text-2xl font-black text-amber-600">{busOWnerDetail.pendingSettlement ? `NPR ${busOWnerDetail.pendingSettlement}` : "NPR 0"}</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-muted/40">
-          <CardContent className="p-5">
-            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Last Payout</p>
-            <p className="text-xl font-bold mt-1">{busOWnerDetail.lastPayoutDate ? new Date(busOWnerDetail.lastPayoutDate).toLocaleDateString() : "N/A"}</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-muted/40">
-          <CardContent className="p-5">
-            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Default Commission</p>
-            <p className="text-xl font-bold mt-1 text-primary">{busOWnerDetail.defaultCommissionRate || 8}% platform cut</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="This Month Revenue"
+          value={busOWnerDetail.monthlyRevenue || "NPR 0"}
+          icon={Activity}
+          subtitle="Total income"
+          changeType="neutral"
+        />
+        <StatCard
+          title="Pending Settlement"
+          value={busOWnerDetail.pendingSettlement ? `NPR ${busOWnerDetail.pendingSettlement}` : "NPR 0"}
+          icon={AlertCircle}
+          subtitle="To be paid out"
+          changeType="negative"
+        />
+        <StatCard
+          title="Last Payout"
+          value={busOWnerDetail.lastPayoutDate ? new Date(busOWnerDetail.lastPayoutDate).toLocaleDateString() : "N/A"}
+          icon={Calendar}
+          subtitle="Recent settlement"
+          changeType="neutral"
+        />
+        <StatCard
+          title="Default Commission"
+          value={`${busOWnerDetail.defaultCommissionRate || 8}% platform`}
+          icon={Briefcase}
+          subtitle="Revenue share"
+          changeType="neutral"
+        />
       </div>
 
-      <Card className="shadow-sm border-muted/40">
+      <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
         <CardHeader>
-          <CardTitle>Settlement Batches</CardTitle>
-          <CardDescription>History of payouts made to this owner.</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-white">Settlement Batches</CardTitle>
+          <CardDescription className="text-white/60">History of payouts made to this owner.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-xl border overflow-hidden">
@@ -387,7 +433,7 @@ const FinancialTab = ({ busOWnerDetail, recentPayments }: any) => {
                     <TableCell className="text-sm font-bold">{payment.amount}</TableCell>
                     <TableCell className="text-sm">{payment.date}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-[10px] border-none font-black px-2 bg-emerald-100 text-emerald-700">
+                      <Badge variant="outline" className="text-[10px] border-none font-black px-2 bg-white/5 text-white">
                         {payment.status.toUpperCase()}
                       </Badge>
                     </TableCell>
@@ -408,10 +454,10 @@ const FinancialTab = ({ busOWnerDetail, recentPayments }: any) => {
 
 const ActivityLogTab = () => {
   return (
-    <Card className="shadow-sm border-muted/40 animate-in fade-in duration-300">
+    <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white animate-in fade-in duration-300">
       <CardHeader>
-        <CardTitle>Activity Log</CardTitle>
-        <CardDescription>Timestamped log of every admin action on this owner.</CardDescription>
+        <CardTitle className="flex items-center gap-2 text-white">Activity Log</CardTitle>
+        <CardDescription className="text-white/60">Timestamped log of every admin action on this owner.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border-2 border-dashed border-muted rounded-xl">
@@ -467,11 +513,11 @@ const BusOwnerDetail = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
+            <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
               {busOWnerDetail.busOwnerDoc?.companyName || "Bus Owner Profile"}
-              {verificationStatus === "approved" && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+              {verificationStatus === "approved" && <CheckCircle2 className="w-5 h-5 text-[#D3D925]" />}
             </h2>
-            <p className="text-muted-foreground text-sm font-medium mt-0.5">
+            <p className="text-white/60 mt-1 font-medium text-sm">
               Owner ID: {busOWnerDetail.busOwnerDoc?.busOwnerId || busOWnerDetail.busOwnerDoc?._id || id}
             </p>
           </div>
@@ -491,7 +537,7 @@ const BusOwnerDetail = () => {
           </TabsTrigger>
           <TabsTrigger value="kyc" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
             KYC Docs
-            {verificationStatus !== "approved" && <div className="w-2 h-2 rounded-full bg-amber-500 ml-1" />}
+            {verificationStatus !== "approved" && <div className="w-2 h-2 rounded-full bg-white/5 ml-1" />}
           </TabsTrigger>
           <TabsTrigger value="operators" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
             Operators

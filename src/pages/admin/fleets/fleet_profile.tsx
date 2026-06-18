@@ -90,7 +90,7 @@ const BusDetail = () => {
                             {fleet.approvalStatus}
                         </Badge>
                     </div>
-                    <p className="text-muted-foreground mt-1 flex items-center gap-2 font-mono text-sm tracking-tighter">
+                    <p className="text-muted-foreground mt-1 flex items-center gap-2 text-sm tracking-tighter">
                         <Bus className="h-4 w-4" />
                         {fleet.busNumber} • {fleet.fleetId}
                     </p>
@@ -114,8 +114,8 @@ const BusDetail = () => {
                 <div className="lg:col-span-1 space-y-8">
                     {/* Vehicle Overview Card */}
                     <Card className="border-t-4 border-t-primary shadow-lg overflow-hidden group">
-                        <CardHeader className="bg-muted/30 pb-4">
-                            <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-primary/80">
+                        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                            <CardTitle className="flex items-center gap-2 text-white">
                                 <Bus className="h-4 w-4" /> Vehicle Overview
                             </CardTitle>
                         </CardHeader>
@@ -132,7 +132,7 @@ const BusDetail = () => {
                                     <Badge variant={getStatusVariant(fleet.status)} className="rounded-full px-4 py-1 uppercase text-[10px] font-black tracking-widest">
                                         {fleet.status}
                                     </Badge>
-                                    <Badge variant="outline" className="rounded-full border-muted-foreground/30 px-3 py-1 font-mono text-[10px] uppercase tracking-tighter">
+                                    <Badge variant="outline" className="rounded-full border-muted-foreground/30 px-3 py-1 text-[10px] uppercase tracking-tighter">
                                         YEAR {fleet.registrationYear}
                                     </Badge>
                                 </div>
@@ -155,8 +155,8 @@ const BusDetail = () => {
 
                     {/* Owner Information Card */}
                     <Card className="shadow-lg border-l-4 border-l-primary/60">
-                        <CardHeader className="pb-4">
-                            <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-primary/80">
+                        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                            <CardTitle className="flex items-center gap-2 text-white">
                                 <User className="h-4 w-4" /> Owner Details
                             </CardTitle>
                         </CardHeader>
@@ -206,8 +206,8 @@ const BusDetail = () => {
                     <div className="grid md:grid-cols-2 gap-8">
                         {/* Image Showcase */}
                         <Card className="shadow-lg border-primary/10">
-                            <CardHeader className="pb-4">
-                                <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                                <CardTitle className="flex items-center gap-2 text-white">
                                     <Zap className="h-4 w-4 text-warning" /> Fleet Images
                                 </CardTitle>
                             </CardHeader>
@@ -234,8 +234,8 @@ const BusDetail = () => {
 
                         {/* Amenities */}
                         <Card className="shadow-lg border-primary/10 h-full">
-                            <CardHeader className="pb-4">
-                                <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                            <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                                <CardTitle className="flex items-center gap-2 text-white">
                                     <ShieldCheck className="h-4 w-4 text-success" /> Vehicle Amenities
                                 </CardTitle>
                             </CardHeader>
@@ -259,8 +259,8 @@ const BusDetail = () => {
 
                     {/* Boarding Points Section */}
                     <Card className="shadow-lg border-l-4 border-l-primary/60 border-primary/10">
-                        <CardHeader className="pb-4">
-                            <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+                        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                            <CardTitle className="flex items-center gap-2 text-white">
                                 <MapPin className="h-4 w-4 text-primary" /> Boarding Points Configuration
                             </CardTitle>
                             <CardDescription className="text-xs uppercase tracking-widest font-medium opacity-50 italic">
@@ -289,7 +289,7 @@ const BusDetail = () => {
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="text-[8px] font-black uppercase text-muted-foreground opacity-60">Coordinates</span>
-                                                    <span className="font-mono text-[10px] text-primary/80">{point.coordinates.lat?.toFixed(3)}N, {point.coordinates.lng?.toFixed(3)}E</span>
+                                                    <span className="text-[10px] text-primary/80">{point.coordinates.lat?.toFixed(3)}N, {point.coordinates.lng?.toFixed(3)}E</span>
                                                 </div>
                                             </div>
                                         </div>

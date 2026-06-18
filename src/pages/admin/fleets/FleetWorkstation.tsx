@@ -38,9 +38,9 @@ const FleetWorkstation = () => {
     const brand = fleet.brandId;
 
     const statusColor: Record<string, string> = {
-        ACTIVE: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
-        INACTIVE: "bg-red-500/10 text-red-600 border-red-500/30",
-        MAINTENANCE: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+        ACTIVE: "bg-white/5 text-white border-white/10",
+        INACTIVE: "bg-white/5 text-white border-white/10",
+        MAINTENANCE: "bg-white/5 text-white border-white/10",
     };
 
     return (
@@ -57,7 +57,7 @@ const FleetWorkstation = () => {
                             {fleet.status === "ACTIVE" ? "● LIVE" : fleet.status}
                         </Badge>
                     </div>
-                    <p className="text-muted-foreground mt-1 flex items-center gap-2 font-mono text-sm tracking-tight flex-wrap">
+                    <p className="text-muted-foreground mt-1 flex items-center gap-2 text-sm tracking-tight flex-wrap">
                         <Bus className="h-4 w-4 shrink-0" />
                         <span className="font-bold">{fleet.busNumber}</span>
                         <span className="opacity-40">•</span>
@@ -78,7 +78,7 @@ const FleetWorkstation = () => {
                         {fleet.averageRating > 0 && (
                             <span className="flex items-center gap-1">
                                 <span className="opacity-40">•</span>
-                                <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                                <Star className="h-3 w-3 text-white fill-amber-500" />
                                 <span className="font-bold">{fleet.averageRating.toFixed(1)}</span>
                                 <span className="opacity-50">({fleet.totalReviews})</span>
                             </span>

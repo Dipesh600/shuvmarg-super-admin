@@ -119,11 +119,11 @@ const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) =
         </div>
       </div>
 
-      <Card className="border-2 border-muted shadow-sm overflow-hidden">
-        <CardHeader className="bg-muted/10 pb-4 flex flex-row items-center justify-between">
+      <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white overflow-hidden">
+        <CardHeader className="bg-white/5 pb-4 flex flex-row items-center justify-between border-b border-white/5">
           <div>
-            <CardTitle className="text-lg font-black tracking-tighter leading-none mb-1">Fleet Roster</CardTitle>
-            <CardDescription className="text-[10px] font-bold uppercase tracking-widest">Total {fleets.length} vehicles registered</CardDescription>
+            <CardTitle className="text-lg font-black tracking-tighter leading-none mb-1 text-white">Fleet Roster</CardTitle>
+            <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-white/60">Total {fleets.length} vehicles registered</CardDescription>
           </div>
           <div className="flex gap-2">
             <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
@@ -153,14 +153,14 @@ const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) =
           ) : (
             <div className="rounded-md overflow-x-auto min-h-[300px]">
               <Table>
-                <TableHeader className="bg-muted/20">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary">Identity</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary">Class</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary hidden md:table-cell">Capacity & Layout</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary hidden lg:table-cell text-center">Reg. Year</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary text-center">Status / Approval</TableHead>
-                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-primary text-right">Actions</TableHead>
+                <TableHeader className="bg-white/5 border-b border-white/10">
+                  <TableRow className="hover:bg-transparent border-white/10">
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60">Identity</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60">Class</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60 hidden md:table-cell">Capacity & Layout</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60 hidden lg:table-cell text-center">Reg. Year</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60 text-center">Status / Approval</TableHead>
+                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-white/60 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -173,9 +173,9 @@ const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) =
                     }`}>
                       <TableCell className="align-top py-4">
                         <div className="flex flex-col gap-1">
-                          <span className="font-black tracking-tight text-sm text-foreground">{fleet.busName}</span>
-                          <span className="text-[10px] font-mono font-bold text-muted-foreground uppercase opacity-80 border-l-2 border-primary/50 pl-1">{fleet.busNumber}</span>
-                          <span className="text-[8px] font-black uppercase text-muted-foreground/50 tracking-widest tooltip mt-0.5" title={fleet._id}>
+                          <span className="font-black tracking-tight text-sm text-white/90">{fleet.busName}</span>
+                          <span className="text-[10px] font-mono font-bold text-white/60 uppercase opacity-80 border-l-2 border-white/20 pl-1">{fleet.busNumber}</span>
+                          <span className="text-[8px] font-black uppercase text-white/40 tracking-widest tooltip mt-0.5" title={fleet._id}>
                             ID: {fleet.fleetId}
                           </span>
                         </div>
