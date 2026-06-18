@@ -88,52 +88,52 @@ export function ReviewRefundDialog() {
 
   return (
     <Dialog open={isModelOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[550px] overflow-y-auto max-h-[90vh]">
+      <DialogContent className="sm:max-w-[550px] overflow-y-auto max-h-[90vh] bg-[#121212]/95 border-white/5 backdrop-blur-xl shadow-2xl text-white">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold">Review Refund Request</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-white">Review Refund Request</DialogTitle>
             <Badge variant="outline" className={`${statusColors[data.status]} capitalize px-2.5 py-0.5`}>
               {data.status}
             </Badge>
           </div>
-          <DialogDescription className="font-mono text-xs">
+          <DialogDescription className="font-mono text-xs text-white/60">
             Refund Ref: {data._id}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
           {/* Ticket & Customer Information */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-muted/30 p-4 rounded-xl border text-sm">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-white/5 p-4 rounded-xl border border-white/5 text-sm">
             <div>
-              <span className="text-xs text-muted-foreground block">Ticket ID</span>
-              <span className="font-mono font-medium">{data.booking?.ticketId || "—"}</span>
+              <span className="text-xs text-white/60 block">Ticket ID</span>
+              <span className="font-mono font-medium text-white">{data.booking?.ticketId || "—"}</span>
             </div>
             <div>
-              <span className="text-xs text-muted-foreground block">Customer Name</span>
-              <span className="font-medium">{data.user?.name || "—"}</span>
+              <span className="text-xs text-white/60 block">Customer Name</span>
+              <span className="font-medium text-white">{data.user?.name || "—"}</span>
             </div>
             <div>
-              <span className="text-xs text-muted-foreground block">Phone Number</span>
-              <span className="font-medium">{data.user?.phone || "—"}</span>
+              <span className="text-xs text-white/60 block">Phone Number</span>
+              <span className="font-medium text-white">{data.user?.phone || "—"}</span>
             </div>
             <div>
-              <span className="text-xs text-muted-foreground block">Original Payment</span>
-              <span className="font-medium capitalize">
+              <span className="text-xs text-white/60 block">Original Payment</span>
+              <span className="font-medium capitalize text-white">
                 {data.booking?.paymentMethod === "SM_WALLET" 
                   ? "Shuvmarg Money" 
                   : data.booking?.paymentMethod?.replace(/_/g, " ") || "—"}
               </span>
             </div>
             <div className="col-span-2">
-              <Separator className="my-1.5" />
+              <Separator className="my-1.5 bg-white/10" />
             </div>
             <div>
-              <span className="text-xs text-muted-foreground block">Route</span>
-              <span className="font-medium">{data.route || "—"}</span>
+              <span className="text-xs text-white/60 block">Route</span>
+              <span className="font-medium text-white">{data.route || "—"}</span>
             </div>
             <div>
-              <span className="text-xs text-muted-foreground block">Trip Date & Time</span>
-              <span className="font-medium">
+              <span className="text-xs text-white/60 block">Trip Date & Time</span>
+              <span className="font-medium text-white">
                 {data.tripDate ? format(new Date(data.tripDate), "d MMM yyyy") : "—"}{" "}
                 {data.departureTime ? `(${data.departureTime})` : ""}
               </span>
@@ -141,21 +141,21 @@ export function ReviewRefundDialog() {
           </div>
 
           {/* Refund Calculation breakdown */}
-          <div className="bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/15">
-            <h4 className="text-xs font-semibold text-emerald-800 uppercase tracking-wider mb-2">
+          <div className="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+            <h4 className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">
               Financial Breakdown
             </h4>
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Original Ticket Fare:</span>
-                <span className="font-medium">Rs. {data.originalAmount?.toLocaleString()}</span>
+                <span className="text-white/60">Original Ticket Fare:</span>
+                <span className="font-medium text-white">Rs. {data.originalAmount?.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-red-600">
+              <div className="flex justify-between text-rose-500">
                 <span>Cancellation Deduction Fee:</span>
                 <span>- Rs. {data.cancellationCharge?.toLocaleString()}</span>
               </div>
-              <Separator className="my-1.5" />
-              <div className="flex justify-between text-emerald-700 font-bold text-base">
+              <Separator className="my-1.5 bg-emerald-500/20" />
+              <div className="flex justify-between text-emerald-500 font-bold text-base">
                 <span>Total Payout Refund:</span>
                 <span>Rs. {data.refundAmount?.toLocaleString()}</span>
               </div>
@@ -163,30 +163,30 @@ export function ReviewRefundDialog() {
           </div>
 
           {/* User cancellation reason */}
-          <div className="bg-amber-500/5 p-4 rounded-xl border border-amber-500/15 text-sm">
-            <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider block mb-1">
+          <div className="bg-amber-500/10 p-4 rounded-xl border border-amber-500/20 text-sm">
+            <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block mb-1">
               Cancellation Reason
             </span>
-            <p className="italic text-muted-foreground">"{data.reason || "No reason specified"}"</p>
+            <p className="italic text-white/80">"{data.reason || "No reason specified"}"</p>
           </div>
 
           {/* Action Log (when completed or rejected) */}
           {(data.status === "completed" || data.status === "rejected") && (
-            <div className="bg-muted/50 p-4 rounded-xl border space-y-2 text-sm">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+            <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-2 text-sm">
+              <span className="text-xs font-semibold text-white/60 uppercase tracking-wider block">
                 Audit Trail & Processing Log
               </span>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-muted-foreground block">Processed Date:</span>
-                  <span className="font-medium">
+                  <span className="text-white/60 block">Processed Date:</span>
+                  <span className="font-medium text-white">
                     {data.processedAt ? format(new Date(data.processedAt), "d MMM yyyy, HH:mm") : "—"}
                   </span>
                 </div>
                 {data.status === "completed" && (
                   <div>
-                    <span className="text-muted-foreground block">Completed Date:</span>
-                    <span className="font-medium">
+                    <span className="text-white/60 block">Completed Date:</span>
+                    <span className="font-medium text-white">
                       {data.completedAt ? format(new Date(data.completedAt), "d MMM yyyy, HH:mm") : "—"}
                     </span>
                   </div>
@@ -194,20 +194,20 @@ export function ReviewRefundDialog() {
                 {data.status === "completed" && (
                   <>
                     <div>
-                      <span className="text-muted-foreground block">Payout Gateway:</span>
-                      <span className="font-medium capitalize">{data.refundGateway === "yatra_balance" ? "Shuvmarg Money" : data.refundGateway || "—"}</span>
+                      <span className="text-white/60 block">Payout Gateway:</span>
+                      <span className="font-medium capitalize text-white">{data.refundGateway === "yatra_balance" ? "Shuvmarg Money" : data.refundGateway || "—"}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground block">Reference ID:</span>
-                      <span className="font-mono font-medium">{data.refundGatewayId || "—"}</span>
+                      <span className="text-white/60 block">Reference ID:</span>
+                      <span className="font-mono font-medium text-white">{data.refundGatewayId || "—"}</span>
                     </div>
                   </>
                 )}
               </div>
               {data.remarks && (
-                <div className="mt-2 text-xs border-t pt-2">
-                  <span className="text-muted-foreground block font-medium">Remarks:</span>
-                  <p className="text-muted-foreground italic">"{data.remarks?.replace(/Yatra Balance/gi, "Shuvmarg Money")}"</p>
+                <div className="mt-2 text-xs border-t border-white/10 pt-2">
+                  <span className="text-white/60 block font-medium">Remarks:</span>
+                  <p className="text-white/80 italic">"{data.remarks?.replace(/Yatra Balance/gi, "Shuvmarg Money")}"</p>
                 </div>
               )}
             </div>
@@ -215,12 +215,12 @@ export function ReviewRefundDialog() {
 
           {/* Form Action Controls (Active States) */}
           {data.status === "pending" && (
-            <div className="space-y-3 pt-1 border-t">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <div className="space-y-3 pt-1 border-t border-white/5">
+              <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
                 Step 1: Initial Processing Action
               </h4>
               <div className="space-y-2">
-                <Label htmlFor="remarks" className="text-xs">
+                <Label htmlFor="remarks" className="text-xs text-white/80">
                   Process Remarks / internal notes (Mandatory for rejection)
                 </Label>
                 <Textarea
@@ -229,12 +229,12 @@ export function ReviewRefundDialog() {
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
                   rows={2}
-                  className="text-sm"
+                  className="text-sm bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                 />
               </div>
               <div className="flex gap-2">
                 <Button
-                  className="flex-1 bg-amber-600 hover:bg-amber-700 gap-1.5"
+                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-[#121212] font-bold gap-1.5"
                   disabled={isPending}
                   onClick={() => handleAction("processing")}
                 >
@@ -243,7 +243,7 @@ export function ReviewRefundDialog() {
                 </Button>
                 <Button
                   variant="destructive"
-                  className="flex-1 gap-1.5"
+                  className="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold gap-1.5"
                   disabled={isPending}
                   onClick={() => handleAction("rejected")}
                 >
@@ -255,31 +255,31 @@ export function ReviewRefundDialog() {
           )}
 
           {data.status === "processing" && (
-            <div className="space-y-4 pt-1 border-t">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <div className="space-y-4 pt-1 border-t border-white/5">
+              <h4 className="text-xs font-semibold text-white/60 uppercase tracking-wider">
                 Step 2: Payout Verification & Completion
               </h4>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="space-y-1.5">
-                  <Label htmlFor="gateway" className="text-xs">
+                  <Label htmlFor="gateway" className="text-xs text-white/80">
                     Payout Destination Gateway
                   </Label>
                   <Select value={gateway} onValueChange={setGateway}>
-                    <SelectTrigger id="gateway">
+                    <SelectTrigger id="gateway" className="bg-white/5 border-white/10 text-white focus:ring-[#D3D925]">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="esewa">eSewa Reversal</SelectItem>
-                      <SelectItem value="khalti">Khalti Refund</SelectItem>
-                      <SelectItem value="bank_transfer">Direct Bank Transfer</SelectItem>
-                      <SelectItem value="cash">Cash Settlement</SelectItem>
-                      <SelectItem value="yatra_balance">Shuvmarg Money</SelectItem>
-                      <SelectItem value="other">Other System Credit</SelectItem>
+                    <SelectContent className="bg-[#121212] border-white/10 text-white">
+                      <SelectItem value="esewa" className="focus:bg-white/10 focus:text-white">eSewa Reversal</SelectItem>
+                      <SelectItem value="khalti" className="focus:bg-white/10 focus:text-white">Khalti Refund</SelectItem>
+                      <SelectItem value="bank_transfer" className="focus:bg-white/10 focus:text-white">Direct Bank Transfer</SelectItem>
+                      <SelectItem value="cash" className="focus:bg-white/10 focus:text-white">Cash Settlement</SelectItem>
+                      <SelectItem value="yatra_balance" className="focus:bg-white/10 focus:text-white">Shuvmarg Money</SelectItem>
+                      <SelectItem value="other" className="focus:bg-white/10 focus:text-white">Other System Credit</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="gatewayId" className="text-xs">
+                  <Label htmlFor="gatewayId" className="text-xs text-white/80">
                     Transaction ID / Reference ID
                   </Label>
                   <Input
@@ -287,13 +287,13 @@ export function ReviewRefundDialog() {
                     placeholder="Ref or Txn Number"
                     value={gatewayId}
                     onChange={(e) => setGatewayId(e.target.value)}
-                    className="font-mono text-sm"
+                    className="font-mono text-sm bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="remarks" className="text-xs">
+                <Label htmlFor="remarks" className="text-xs text-white/80">
                   Completion Remarks / notes sent to customer
                 </Label>
                 <Textarea
@@ -302,13 +302,13 @@ export function ReviewRefundDialog() {
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
                   rows={2}
-                  className="text-sm"
+                  className="text-sm bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
                 />
               </div>
 
               <div className="flex gap-2 pt-2">
                 <Button
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 gap-1.5"
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-[#121212] font-bold gap-1.5"
                   disabled={isPending}
                   onClick={() => handleAction("completed")}
                 >
@@ -317,7 +317,7 @@ export function ReviewRefundDialog() {
                 </Button>
                 <Button
                   variant="destructive"
-                  className="gap-1.5"
+                  className="gap-1.5 bg-rose-500 hover:bg-rose-600 text-white font-bold"
                   disabled={isPending}
                   onClick={() => handleAction("rejected")}
                 >
@@ -329,8 +329,8 @@ export function ReviewRefundDialog() {
           )}
         </div>
 
-        <DialogFooter className="border-t pt-3">
-          <Button variant="outline" onClick={onClose} disabled={isPending} className="w-full sm:w-auto">
+        <DialogFooter className="border-t border-white/5 pt-3">
+          <Button variant="outline" onClick={onClose} disabled={isPending} className="w-full sm:w-auto bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white">
             Close
           </Button>
         </DialogFooter>
