@@ -219,8 +219,10 @@ export interface ScheduleHealthEntry {
         versionNumber?: number;
         suspensionReason?: string;
         suspendUntil?: string;
+        suspendedAt?: string;
+        operationalModel?: string;
         brandId?: TripBrand;
-        busId?: TripBus;
+        busId?: TripBus & { totalSeats?: number };
         driverId?: TripDriver;
         variantId?: TripVariant;
     };
@@ -233,7 +235,20 @@ export interface ScheduleHealthEntry {
         totalTrips: number;
         upcomingTrips: number;
         cancelledTrips: number;
+        missingDates: string[];
+        missingCount: number;
+        lastGeneratedDate: string | null;
+        lastGeneratedAt: string | null;
+        firstTripDate: string | null;
+        windowDays: number;
     };
+    suspensionInfo?: {
+        suspendedAt: string;
+        daysSuspended: number;
+        missedTrips: number;
+        autoResumeDate: string | null;
+        reason: string | null;
+    } | null;
 }
 
 export interface ScheduleHealthKPIs {
@@ -242,6 +257,7 @@ export interface ScheduleHealthKPIs {
     critical: number;
     warnings: number;
     healthy: number;
+    totalMissing: number;
 }
 
 export interface ScheduleHealthResponse {
@@ -254,6 +270,16 @@ export const getScheduleHealth = async (params?: {
     brandId?: string;
 }): Promise<ScheduleHealthResponse> => {
     const { data } = await api.get("/trips/schedule-health", { params });
+    return data.data;
+};
+
+/** Burst-generate trips for a specific schedule to fill gaps */
+export const burstGenerateTrips = async (scheduleId: string, days?: number): Promise<{
+    generated: number;
+    skipped: number;
+    errors: number;
+}> => {
+    const { data } = await api.post(`/schedules/${scheduleId}/burst`, { days });
     return data.data;
 };
 

@@ -12,6 +12,7 @@ import {
 } from "@/components/data_tables/kyc/KycColumns";
 import { useMemo } from "react";
 import KYCVerificationSkeleton from "@/components/Skeletion_Loading/KycVerificationSkeleton";
+import { StatCard } from "@/components/dashboard/StatCard";
 
 export default function KYCVerification() {
   const { data: allKyc, isLoading, isError, error } = useGetAllKyc();
@@ -78,56 +79,41 @@ export default function KYCVerification() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">KYC Verification</h1>
-        <p className="text-muted-foreground">
+        <h2 className="text-2xl font-bold tracking-tight text-white">KYC Verification</h2>
+        <p className="text-white/60 mt-1 font-medium text-sm">
           Manage and verify KYC documents for bus owners, agents, and fleet
         </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Bus Owner KYC</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {allKyc?.dashboard?.totalBusOwners}
-            </div>
-            <p className="text-xs text-muted-foreground">Total verifications</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Agent KYC</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {allKyc?.dashboard?.totalAgents}
-            </div>
-            <p className="text-xs text-muted-foreground">Total verifications</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Fleet KYC</CardTitle>
-            <Bus className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {allKyc?.dashboard?.totalFleets}
-            </div>
-            <p className="text-xs text-muted-foreground">Total verifications</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Bus Owner KYC"
+          value={allKyc?.dashboard?.totalBusOwners?.toString() || "0"}
+          icon={Building2}
+          subtitle="Total verifications"
+          changeType="neutral"
+        />
+        <StatCard
+          title="Agent KYC"
+          value={allKyc?.dashboard?.totalAgents?.toString() || "0"}
+          icon={Users}
+          subtitle="Total verifications"
+          changeType="neutral"
+        />
+        <StatCard
+          title="Fleet KYC"
+          value={allKyc?.dashboard?.totalFleets?.toString() || "0"}
+          icon={Bus}
+          subtitle="Total verifications"
+          changeType="neutral"
+        />
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="bus-owners" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="bus-owners" className="gap-2">
+        <TabsList className="inline-flex h-auto p-1.5 bg-muted/40 rounded-2xl border border-border/50 mb-6 gap-1 overflow-x-auto justify-start">
+          <TabsTrigger value="bus-owners" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
             <Building2 className="h-4 w-4" />
             Bus Owners
             {allKyc.dashboard.totalBusOwners > 0 && (
@@ -136,7 +122,7 @@ export default function KYCVerification() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="agents" className="gap-2">
+          <TabsTrigger value="agents" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
             <Users className="h-4 w-4" />
             Agents
             {allKyc.dashboard.totalAgents > 0 && (
@@ -145,7 +131,7 @@ export default function KYCVerification() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="fleet" className="gap-2">
+          <TabsTrigger value="fleet" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
             <Bus className="h-4 w-4" />
             Fleet
             {allKyc.dashboard.totalFleets > 0 && (
@@ -158,9 +144,9 @@ export default function KYCVerification() {
 
         {/* Bus Owners Tab */}
         <TabsContent value="bus-owners">
-          <Card>
+          <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
             <CardHeader>
-              <CardTitle>Bus Owner Verifications</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-white">Bus Owner Verifications</CardTitle>
             </CardHeader>
             <CardContent>
               <DataTable
@@ -175,9 +161,9 @@ export default function KYCVerification() {
 
         {/* Agents Tab */}
         <TabsContent value="agents">
-          <Card>
+          <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
             <CardHeader>
-              <CardTitle>Agent Verifications</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-white">Agent Verifications</CardTitle>
             </CardHeader>
             <CardContent>
               <DataTable
@@ -192,9 +178,9 @@ export default function KYCVerification() {
 
         {/* Fleet Tab */}
         <TabsContent value="fleet">
-          <Card>
+          <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
             <CardHeader>
-              <CardTitle>Fleet Verifications</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-white">Fleet Verifications</CardTitle>
             </CardHeader>
             <CardContent>
               <DataTable

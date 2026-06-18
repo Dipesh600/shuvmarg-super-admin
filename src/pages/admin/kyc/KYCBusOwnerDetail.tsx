@@ -22,13 +22,14 @@ import {
 import {
   ArrowLeft,
   FileText,
-  ExternalLink,
+  Eye,
   Building2,
   Loader2,
   AlertCircle,
   CheckCircle2,
   XCircle,
 } from "lucide-react";
+import DocumentViewerModal from "@/components/DocumentViewerModal";
 import { toast } from "sonner";
 import { useOwerKycDetails } from "@/hooks/useKycDetails";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -66,9 +67,9 @@ const displayEmail = (email: string | undefined | null): string => {
 /* ─── Badge helpers ─────────────────────────────────────────── */
 const sectionBadge = (verified: boolean | undefined, rejectionReason: string | null | undefined, hasDocuments: boolean) => {
   if (!hasDocuments) return <Badge variant="secondary" className="bg-gray-100 text-gray-600">Not Submitted</Badge>;
-  if (verified) return <Badge className="bg-green-100 text-green-800">Verified</Badge>;
+  if (verified) return <Badge className="bg-white/5 text-white">Verified</Badge>;
   if (rejectionReason) return <Badge variant="destructive">Rejected</Badge>;
-  return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+  return <Badge className="bg-white/5 text-white">Pending</Badge>;
 };
 
 /* ─── Component ─────────────────────────────────────────────── */
@@ -111,6 +112,17 @@ export default function KYCBusOwnerDetail() {
   const [finalApprovalDialog, setFinalApprovalDialog] = useState(false);
   const [finalRejectionDialog, setFinalRejectionDialog] = useState(false);
   const [finalRejectionReason, setFinalRejectionReason] = useState("");
+
+  // ── Secure document viewer state ─────────────────────────────────────────
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerKey, setViewerKey] = useState<string | null>(null);
+  const [viewerTitle, setViewerTitle] = useState<string>("Document");
+
+  const openDocumentViewer = (s3Key: string, label: string, index: number) => {
+    setViewerKey(s3Key);
+    setViewerTitle(index > 0 ? `${label} (${index + 1})` : label);
+    setViewerOpen(true);
+  };
 
   useEffect(() => {
     setDocumentStatuses(initialStatuses);
@@ -328,10 +340,10 @@ export default function KYCBusOwnerDetail() {
           <Badge
             className={
               kyc.verificationStatus === "approved"
-                ? "bg-green-100 text-green-800"
+                ? "bg-white/5 text-white"
                 : kyc.verificationStatus === "rejected"
-                ? "bg-red-100 text-red-800"
-                : "bg-yellow-100 text-yellow-800"
+                ? "bg-white/5 text-white"
+                : "bg-white/5 text-white"
             }
           >
             {kyc.verificationStatus?.toUpperCase()}
@@ -339,9 +351,9 @@ export default function KYCBusOwnerDetail() {
         </div>
 
         {/* Applicant Information */}
-        <Card>
+        <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">
               <Building2 className="h-5 w-5" />
               Applicant Information
             </CardTitle>
@@ -358,9 +370,9 @@ export default function KYCBusOwnerDetail() {
 
         {/* Associated Brands Information */}
         {brands.length > 0 && (
-          <Card>
+          <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-white">
                 <Building2 className="h-5 w-5 text-primary" />
                 Associated Brands ({brands.length})
               </CardTitle>
@@ -380,10 +392,10 @@ export default function KYCBusOwnerDetail() {
                         </div>
                         <div>
                           <p className="font-bold tracking-tight text-sm leading-tight">{brand.brandName}</p>
-                          <p className="text-xs text-muted-foreground uppercase font-mono tracking-widest">{brand.brandCode}</p>
+                          <p className="text-xs text-muted-foreground uppercase tracking-widest">{brand.brandCode}</p>
                         </div>
                       </div>
-                      <Badge variant="outline" className={`text-[10px] uppercase font-black tracking-widest px-1.5 py-0 border-none ${brand.status === "ACTIVE" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                      <Badge variant="outline" className={`text-[10px] uppercase font-black tracking-widest px-1.5 py-0 border-none ${brand.status === "ACTIVE" ? "bg-white/5 text-white" : "bg-white/5 text-white"}`}>
                         {brand.status}
                       </Badge>
                     </div>
@@ -416,17 +428,17 @@ export default function KYCBusOwnerDetail() {
             return (
               <Card
                 key={section.key}
-                className={
+                className={`border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white ${
                   section.verified
-                    ? "border-green-200 bg-green-50/50"
+                    ? "border-white/10 bg-white/5"
                     : section.rejectionReason
-                    ? "border-destructive/50 bg-destructive/5"
+                    ? "border-white/10 bg-white/5"
                     : ""
-                }
+                }`}
               >
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-base">
+                    <CardTitle className="flex items-center gap-2 text-white">
                       <FileText className="h-4 w-4" />
                       {section.title}
                     </CardTitle>
@@ -448,17 +460,17 @@ export default function KYCBusOwnerDetail() {
                     </div>
                   ))}
 
-                  {/* Document links */}
+                  {/* Document links — opens inline modal, no URL exposed */}
                   {hasDocuments ? (
-                    section.documents.map((url, i) => (
+                    section.documents.map((s3Key, i) => (
                       <Button
                         key={i}
                         variant="outline"
                         size="sm"
                         className="w-full justify-start"
-                        onClick={() => window.open(url, "_blank")}
+                        onClick={() => openDocumentViewer(s3Key, section.title, i)}
                       >
-                        <ExternalLink className="h-4 w-4 mr-2" />
+                        <Eye className="h-4 w-4 mr-2" />
                         View Document {i + 1}
                       </Button>
                     ))
@@ -491,9 +503,9 @@ export default function KYCBusOwnerDetail() {
         </div>
 
         {/* Final Decision */}
-        <Card className={kyc.verificationStatus === "approved" ? "border-green-200 bg-green-50/30" : kyc.verificationStatus === "rejected" ? "border-destructive/20 bg-destructive/5" : ""}>
+        <Card className={`border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white ${kyc.verificationStatus === "approved" ? "border-white/10 bg-white/5" : kyc.verificationStatus === "rejected" ? "border-white/10 bg-white/5" : ""}`}>
           <CardHeader>
-            <CardTitle>Final Decision</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-white">Final Decision</CardTitle>
             <CardDescription>
               {kyc.verificationStatus === "approved"
                 ? "This KYC application has been approved and the owner is active."
@@ -508,7 +520,7 @@ export default function KYCBusOwnerDetail() {
           </CardHeader>
           <CardContent className="flex gap-4">
             {kyc.verificationStatus === "approved" ? (
-              <div className="flex items-center gap-2 text-green-700 font-medium bg-green-100/50 px-4 py-2 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2 text-white font-medium bg-white/5 px-4 py-2 rounded-lg border border-white/10">
                 <CheckCircle2 className="h-5 w-5" />
                 Application Approved
               </div>
@@ -618,6 +630,16 @@ export default function KYCBusOwnerDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Secure Inline Document Viewer ───────────────────────────────────── */}
+      {/* The raw S3 key/presigned URL never appears in the browser address bar.
+          The document is streamed as a blob through the backend proxy and revoked on close. */}
+      <DocumentViewerModal
+        open={viewerOpen}
+        s3Key={viewerKey}
+        title={viewerTitle}
+        onClose={() => setViewerOpen(false)}
+      />
     </>
   );
 }
