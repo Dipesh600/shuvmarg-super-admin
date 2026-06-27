@@ -40,6 +40,8 @@ import {
   Sliders,
   Settings,
   LogOut,
+  UserRoundCheck,
+  ContactRound,
 } from "lucide-react";
 
 import { NavLink, useLocation } from "react-router-dom";
@@ -59,11 +61,12 @@ const GROUPS = [
   {
     label: "Operations",
     items: [
-      { title: "User Management",    url: "/admin/users",       icon: Users },
-      { title: "Agent Management",   url: "/admin/agents",      icon: Handshake },
-      { title: "Bus Owners",         url: "/admin/bus-owners",  icon: Building2 },
-      { title: "KYC Verification",   url: "/admin/kyc",         icon: ClipboardCheck },
-      { title: "Push Notifications", url: "/admin/notifications",icon: Bell },
+      { title: "User Management",    url: "/admin/users",             icon: Users },
+      { title: "Agent Management",   url: "/admin/agents",            icon: Handshake },
+      { title: "Agent Leads",        url: "/admin/agents/leads",      icon: ContactRound },
+      { title: "Bus Owners",         url: "/admin/bus-owners",        icon: Building2 },
+      { title: "KYC Verification",   url: "/admin/kyc",               icon: ClipboardCheck },
+      { title: "Push Notifications", url: "/admin/notifications",     icon: Bell },
     ],
   },
   {
@@ -160,11 +163,23 @@ export default function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 {group.items.map((item) => {
-                  // Exact match for dashboard, prefix match for the rest
+                  // Exact match for dashboard; for named sub-routes (e.g. agents/leads),
+                  // use exact URL match only. For parent routes (e.g. agents), be active
+                  // only if the path matches exactly OR starts with the URL followed by "/"
+                  // and is NOT itself a named sub-page (those have their own item).
+                  const NAMED_CHILDREN: Record<string, string[]> = {
+                    "/admin/agents":     ["/admin/agents/leads"],
+                    "/admin/bus-owners": ["/admin/bus-owners/leads"],
+                  };
+                  const namedChildren = NAMED_CHILDREN[item.url] ?? [];
+                  const isExactOrDetail =
+                    pathname === item.url ||
+                    (pathname.startsWith(item.url + "/") &&
+                      !namedChildren.some((c) => pathname === c || pathname.startsWith(c + "/")));
                   const isActive =
                     item.url === "/admin"
                       ? pathname === "/admin"
-                      : pathname === item.url || pathname.startsWith(item.url + "/");
+                      : isExactOrDetail || pathname === item.url;
 
                   return (
                     <SidebarMenuItem key={item.title}>

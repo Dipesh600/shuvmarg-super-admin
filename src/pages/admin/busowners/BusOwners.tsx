@@ -3,8 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, TrendingUp } from "lucide-react";
+import { Building2, TrendingUp, Users } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
+import { useNavigate } from "react-router-dom";
 import { columns } from "@/components/data_tables/owner/columns";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { DataTable } from "@/components/DataTable";
@@ -54,7 +55,8 @@ const busOwners = [
 
 const BusOwners = () => {
   const { onOpen } = useModal();
-   const { token } = useAuth();
+  const navigate = useNavigate();
+  const { token } = useAuth();
   // useQuery to fetch users can be added here
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ["busOwners"],
@@ -113,13 +115,23 @@ const BusOwners = () => {
             Manage bus owners and fleet operations
           </p>
         </div>
-        <Button
-          onClick={() => onOpen("addBusOwner",{})}
-          className="gap-2 bg-white hover:bg-white/90 text-black font-bold rounded-xl h-10 px-6 cursor-pointer w-full sm:w-auto"
-        >
-          <Building2 className="h-4 w-4" />
-          Add Owner
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => navigate("leads")}
+            variant="outline"
+            className="gap-2 border-white/20 text-white hover:bg-white/10 hover:text-white font-semibold rounded-xl h-10 px-5 cursor-pointer w-full sm:w-auto"
+          >
+            <Users className="h-4 w-4" />
+            Leads
+          </Button>
+          <Button
+            onClick={() => onOpen("addBusOwner",{})}
+            className="gap-2 bg-white hover:bg-white/90 text-black font-bold rounded-xl h-10 px-6 cursor-pointer w-full sm:w-auto"
+          >
+            <Building2 className="h-4 w-4" />
+            Add Owner
+          </Button>
+        </div>
       </div>
 
       {/* KPI CARDS */}
