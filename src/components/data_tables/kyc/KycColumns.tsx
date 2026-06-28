@@ -120,14 +120,14 @@ export const agentColumns: ColumnDef<any>[] = [
     cell: ({ row }) => <span className="font-mono text-[10px] text-white/60">{row.original.agentId}</span>,
   },
   {
-    accessorKey: "companyname",
+    accessorKey: "owner",
     header: "Agent Name",
-    cell: ({ row }) => <span className="font-bold text-sm text-white">{row.original.companyname || "—"}</span>,
+    cell: ({ row }) => <span className="font-bold text-sm text-white">{row.original.owner || "—"}</span>,
   },
   {
     accessorKey: "location",
     header: "Location",
-    cell: ({ row }) => <span className="text-sm text-white">{row.original.location ?? "Biratnagar"}</span>,
+    cell: ({ row }) => <span className="text-sm text-white">{row.original.location || "—"}</span>,
   },
   {
     accessorKey: "submitdate",

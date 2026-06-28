@@ -64,6 +64,38 @@ const statusBadge = (status: string) => {
   );
 };
 
+// ── Agent Type → readable label ───────────────────────────────────────────────
+const AGENT_TYPE_LABELS: Record<string, { label: string; className: string }> = {
+  DEFAULT:         { label: "Self-Service Agent",   className: "bg-violet-500/15 text-violet-300 border-violet-500/30" },
+  OPERATOR_LINKED: { label: "Operator-Linked Agent", className: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30" },
+};
+
+// ── Operation Type → readable label ──────────────────────────────────────────
+const OPERATION_TYPE_LABELS: Record<string, { label: string; className: string }> = {
+  // Current model enum values
+  ticket_counter: { label: "Ticket Counter",  className: "bg-orange-500/15 text-orange-300 border-orange-500/30" },
+  travel_agent:   { label: "Travel Agency",   className: "bg-teal-500/15 text-teal-300 border-teal-500/30" },
+  mobile_shop:    { label: "Mobile Shop",     className: "bg-blue-500/15 text-blue-300 border-blue-500/30" },
+  hotel:          { label: "Hotel / Lodge",   className: "bg-purple-500/15 text-purple-300 border-purple-500/30" },
+  individual:     { label: "Individual",      className: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
+  other:          { label: "Other",           className: "bg-neutral-500/15 text-neutral-300 border-neutral-500/30" },
+  // Legacy values (in case any old records used these)
+  shop:           { label: "Shop / Outlet",   className: "bg-orange-500/15 text-orange-300 border-orange-500/30" },
+  agency:         { label: "Travel Agency",   className: "bg-teal-500/15 text-teal-300 border-teal-500/30" },
+};
+
+function TypeBadge({
+  value,
+  labelMap,
+}: {
+  value?: string | null;
+  labelMap: Record<string, { label: string; className: string }>;
+}) {
+  if (!value) return <span className="text-sm font-medium text-white/40">—</span>;
+  const entry = labelMap[value] ?? { label: value, className: "bg-white/5 text-white/40 border-white/10" };
+  return <Badge className={`border text-xs ${entry.className}`}>{entry.label}</Badge>;
+}
+
 // ── Document type → human label (supports both uppercase and lowercase keys) ──
 const docLabel: Record<string, string> = {
   // uppercase (legacy)
@@ -296,12 +328,16 @@ export default function KYCAgentDetail() {
               <User className="h-4 w-4" />
               Applicant Information
             </CardTitle>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <TypeBadge value={agentDetails?.agentType} labelMap={AGENT_TYPE_LABELS} />
+              <TypeBadge value={agentDetails?.operationType ?? agentDetails?.businessType} labelMap={OPERATION_TYPE_LABELS} />
+            </div>
           </CardHeader>
           <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <InfoRow icon={<User />} label="Full Name" value={agentProfile?.name} />
-              <InfoRow icon={<Phone />} label="Phone" value={agentProfile?.phone} />
-              <InfoRow icon={<Mail />} label="Email" value={agentProfile?.email ?? "—"} />
+              <InfoRow icon={<User />} label="Full Name" value={agentProfile?.name ?? (agentDetails?.user as any)?.name ?? "—"} />
+              <InfoRow icon={<Phone />} label="Phone" value={agentProfile?.phone ?? (agentDetails?.user as any)?.phone ?? "—"} />
+              <InfoRow icon={<Mail />} label="Email" value={agentProfile?.email ?? (agentDetails?.user as any)?.email ?? "—"} />
               <InfoRow
                 icon={<MapPin />}
                 label="Location"
@@ -315,8 +351,14 @@ export default function KYCAgentDetail() {
               <InfoRow
                 icon={<Building2 />}
                 label="Business Type"
-                value={agentDetails?.operationType ?? agentDetails?.businessType ?? "—"}
+                value={
+                  OPERATION_TYPE_LABELS[agentDetails?.operationType ?? agentDetails?.businessType ?? ""]?.label
+                  ?? agentDetails?.operationType
+                  ?? agentDetails?.businessType
+                  ?? "—"
+                }
               />
+
               <InfoRow
                 icon={<MapPin />}
                 label="Shop Address"
@@ -345,8 +387,9 @@ export default function KYCAgentDetail() {
               <InfoRow
                 icon={<Info />}
                 label="Agent Type"
-                value={agentDetails?.agentType ?? "DEFAULT"}
+                value={AGENT_TYPE_LABELS[agentDetails?.agentType ?? ""]?.label ?? agentDetails?.agentType ?? "DEFAULT"}
               />
+
               <InfoRow
                 icon={<Clock />}
                 label="Monthly Volume"
@@ -588,7 +631,15 @@ export default function KYCAgentDetail() {
               Final Decision
             </CardTitle>
             <CardDescription className="text-white/60">
-            {documents.length === 0
+              {appStatus === "APPROVED"
+                ? "This application has been approved. The agent is now active."
+                : appStatus === "REJECTED"
+                ? "This application was rejected."
+                : appStatus === "SUSPENDED"
+                ? "This agent account is suspended."
+                : appStatus === "MORE_INFO"
+                ? "More information has been requested from the agent."
+                : documents.length === 0
                 ? "No documents submitted. You can still approve or reject this application."
                 : allVerified
                 ? "All documents verified — you can approve this agent."
@@ -598,42 +649,116 @@ export default function KYCAgentDetail() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-3">
-              {/* Approve — enabled when all docs verified OR no docs exist */}
-              <Button
-                size="lg"
-                className="bg-[#D3D925] text-[#003D38] hover:bg-[#c8ce20] font-bold gap-2 disabled:opacity-40"
-                disabled={(documents.length > 0 && !allVerified) || reviewMutation.isPending}
-                onClick={() => setApproveDialog(true)}
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Approve Agent
-              </Button>
+            {/* ── LOCKED: decision already made ── */}
+            {appStatus === "APPROVED" && (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-green-500/30 bg-green-500/10 w-fit">
+                <CheckCircle2 className="h-5 w-5 text-green-400" />
+                <span className="text-green-400 font-semibold">Application Approved</span>
+              </div>
+            )}
 
-              {/* More Info — always available */}
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 gap-2"
-                disabled={reviewMutation.isPending}
-                onClick={() => setMoreInfoDialog(true)}
-              >
-                <Info className="h-4 w-4" />
-                Request More Info
-              </Button>
+            {appStatus === "REJECTED" && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-red-500/30 bg-red-500/10 w-fit">
+                  <XCircle className="h-5 w-5 text-red-400" />
+                  <span className="text-red-400 font-semibold">Application Rejected</span>
+                </div>
+                {agentDetails?.rejectionReason && (
+                  <p className="text-sm text-white/50">Reason: {agentDetails.rejectionReason}</p>
+                )}
+                {/* Allow re-approving a rejected application */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-fit mt-1 border-white/20 text-white/60 hover:text-white"
+                  disabled={reviewMutation.isPending}
+                  onClick={() => setApproveDialog(true)}
+                >
+                  Override — Approve Application
+                </Button>
+              </div>
+            )}
 
-              {/* Reject */}
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20 gap-2"
-                disabled={reviewMutation.isPending}
-                onClick={() => setRejectDialog(true)}
-              >
-                <XCircle className="h-4 w-4" />
-                Reject Application
-              </Button>
-            </div>
+            {appStatus === "SUSPENDED" && (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-orange-500/30 bg-orange-500/10 w-fit">
+                <AlertTriangle className="h-5 w-5 text-orange-400" />
+                <span className="text-orange-400 font-semibold">Agent Suspended</span>
+              </div>
+            )}
+
+            {appStatus === "MORE_INFO" && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-blue-500/30 bg-blue-500/10 w-fit">
+                  <Info className="h-5 w-5 text-blue-400" />
+                  <span className="text-blue-400 font-semibold">Awaiting Agent Response</span>
+                </div>
+                {agentDetails?.moreInfoRequest && (
+                  <p className="text-sm text-white/50">Requested: {agentDetails.moreInfoRequest}</p>
+                )}
+                {/* Still allow approve / reject while waiting */}
+                <div className="flex flex-wrap gap-3 mt-1">
+                  <Button
+                    size="sm"
+                    className="bg-[#D3D925] text-[#003D38] hover:bg-[#c8ce20] font-bold gap-2 disabled:opacity-40"
+                    disabled={reviewMutation.isPending}
+                    onClick={() => setApproveDialog(true)}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Approve Now
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20 gap-2"
+                    disabled={reviewMutation.isPending}
+                    onClick={() => setRejectDialog(true)}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Reject Application
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* ── ACTIVE: pending / draft — show full action buttons ── */}
+            {(appStatus === "PENDING" || appStatus === "DRAFT") && (
+              <div className="flex flex-wrap gap-3">
+                {/* Approve — enabled when all docs verified OR no docs exist */}
+                <Button
+                  size="lg"
+                  className="bg-[#D3D925] text-[#003D38] hover:bg-[#c8ce20] font-bold gap-2 disabled:opacity-40"
+                  disabled={(documents.length > 0 && !allVerified) || reviewMutation.isPending}
+                  onClick={() => setApproveDialog(true)}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Approve Agent
+                </Button>
+
+                {/* More Info — always available */}
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-blue-500/40 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 gap-2"
+                  disabled={reviewMutation.isPending}
+                  onClick={() => setMoreInfoDialog(true)}
+                >
+                  <Info className="h-4 w-4" />
+                  Request More Info
+                </Button>
+
+                {/* Reject */}
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20 gap-2"
+                  disabled={reviewMutation.isPending}
+                  onClick={() => setRejectDialog(true)}
+                >
+                  <XCircle className="h-4 w-4" />
+                  Reject Application
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -684,7 +809,7 @@ export default function KYCAgentDetail() {
           <div className="py-2 space-y-2 text-sm">
             <div className="flex justify-between py-1 border-b border-white/5">
               <span className="text-white/60">Agent</span>
-              <span className="font-medium">{agentProfile?.name}</span>
+              <span className="font-medium">{agentProfile?.name ?? (agentDetails?.user as any)?.name ?? "—"}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-white/5">
               <span className="text-white/60">Commission Rate</span>

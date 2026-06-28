@@ -30,6 +30,7 @@ import {
   RefreshCw,
   Info,
   Loader2,
+  ContactRound,
 } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/agents/columns";
@@ -178,6 +179,12 @@ const Agents = () => {
             <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
           </Button>
           <Button
+            onClick={() => navigate("/admin/agents/leads")}
+            className="gap-2 cursor-pointer font-bold rounded-xl h-10 bg-white/5 hover:bg-white/10"
+          >
+            <ContactRound className="h-4 w-4" /> Agent Leads
+          </Button>
+          <Button
             onClick={() => onOpen("addAgent", {})}
             className="gap-2 cursor-pointer font-bold rounded-xl h-10 bg-white/5 hover:bg-white/10"
           >
@@ -192,7 +199,7 @@ const Agents = () => {
           title="Total Agents"
           value={(agentDashboard?.totalAgents || 0).toString()}
           icon={UserCog}
-          subtitle="Registered agents"
+          subtitle="Approved, pending & active"
           changeType="neutral"
         />
         <StatCard

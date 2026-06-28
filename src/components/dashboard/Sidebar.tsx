@@ -63,7 +63,6 @@ const GROUPS = [
     items: [
       { title: "User Management",    url: "/admin/users",             icon: Users },
       { title: "Agent Management",   url: "/admin/agents",            icon: Handshake },
-      { title: "Agent Leads",        url: "/admin/agents/leads",      icon: ContactRound },
       { title: "Bus Owners",         url: "/admin/bus-owners",        icon: Building2 },
       { title: "KYC Verification",   url: "/admin/kyc",               icon: ClipboardCheck },
       { title: "Push Notifications", url: "/admin/notifications",     icon: Bell },

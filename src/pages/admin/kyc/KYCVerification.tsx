@@ -41,10 +41,10 @@ export default function KYCVerification() {
         id: k.data._id,
         agentId: k.agentId,
         companyname: k.companyname,
-        location: k.location ?? "Biratnagar",
+        location: k.location || "—",
         owner: k.owner,
         submitdate: k.submitdate,
-        documents: 0,
+        documents: k.documents ?? 0,
         status: k.status,
       }));
   }, [kycData]);
