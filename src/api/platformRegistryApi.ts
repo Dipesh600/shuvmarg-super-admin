@@ -2,7 +2,17 @@ import { api } from "./axios";
 
 // ── Stop Registry (Layer 3 — The foundation) ─────────────────────────────────
 
-export const createStop = async (payload: { code: string; name: string; type?: string; state?: string }) => {
+export const createStop = async (payload: { 
+    code?: string; 
+    name: string; 
+    type?: string; 
+    province?: string; 
+    district?: string; 
+    municipality?: string; 
+    status?: string; 
+    aliases?: string[];
+    coordinates?: { lat: number; lng: number };
+}) => {
     const { data } = await api.post("/registry/stops", payload);
     return data;
 };
@@ -18,11 +28,15 @@ export const searchStops = async (q: string) => {
 };
 
 export type BulkStopEntry = {
-    code: string;
+    code?: string;
     name: string;
-    type?: "CITY" | "JUNCTION" | "TOWN" | "BORDER";
-    state?: string;
+    type?: "CITY" | "JUNCTION" | "TOWN" | "HIGHWAY_STOP" | "BORDER";
+    province?: string;
+    district?: string;
+    municipality?: string;
     aliases?: string | string[];
+    coordinates?: { lat: number; lng: number };
+
 };
 
 /** Dry-run scan — checks for duplicates. Does NOT write anything. */
@@ -109,7 +123,16 @@ export const getBoardingPointsByStop = async (stopCode: string) => {
 
 // ── CRUD: Update & Delete ──────────────────────────────────────────────────────
 
-export const updateStop = async (id: string, payload: { name?: string; type?: string; state?: string; status?: string }) => {
+export const updateStop = async (id: string, payload: {
+    name?: string;
+    type?: string;
+    province?: string;
+    district?: string;
+    municipality?: string;
+    aliases?: string[];
+    coordinates?: { lat: number; lng: number };
+    status?: string;
+}) => {
     const { data } = await api.patch(`/registry/stops/${id}`, payload);
     return data;
 };

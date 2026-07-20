@@ -9,19 +9,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Database, MapPin, Globe, ArrowRight, Sparkles, ListOrdered, Route, Pencil, Trash2, Search, X, Upload, AlertTriangle, CheckCircle2, FileJson, ChevronRight, SkipForward } from "lucide-react";
+import { Plus, Loader2, Database, MapPin, Globe, ArrowRight, Sparkles, ListOrdered, Route, Pencil, Trash2, Search, X, Upload, AlertTriangle, CheckCircle2, FileJson, ChevronRight, ChevronDown, SkipForward, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import { createStop, getAllStops, updateStop, deleteStop, createCorridor, getAllCorridors, updateCorridor, deleteCorridor, getVariantsByCorridor, updateVariant, deleteVariant, createRegistryBoardingPoint, getBoardingPointsByStop, updateRegistryBoardingPoint, deleteRegistryBoardingPoint, getAllRouteRequests, previewBulkStops, bulkImportStops } from "@/api/platformRegistryApi";
 import { CreateVariantModal, MapStopsModal } from "./VariantModals";
 import RouteRequestsPanel from "./RouteRequestsPanel";
+import { DiscoveryTab } from "./DiscoveryTab";
 import { cn } from "@/lib/utils";
 
 // ── Bulk Import Modal ───────────────────────────────────────────────────────────────────
 
 const EXAMPLE_JSON = `[
-  { "code": "KTM", "name": "Kathmandu", "type": "CITY", "state": "Bagmati" },
-  { "code": "PKR", "name": "Pokhara", "type": "CITY", "state": "Gandaki" },
-  { "code": "HTD", "name": "Hetauda", "type": "CITY", "state": "Bagmati" }
+  { "code": "KTM", "name": "Kathmandu", "type": "CITY", "province": "Bagmati", "district": "Kathmandu", "municipality": "Kathmandu Metropolitan" },
+  { "code": "PKR", "name": "Pokhara", "type": "CITY", "province": "Gandaki", "district": "Kaski", "municipality": "Pokhara Metropolitan" },
+  { "code": "HTD", "name": "Hetauda", "type": "CITY", "province": "Bagmati", "district": "Makwanpur", "municipality": "Hetauda Sub-Metropolitan" }
 ]`;
 
 type ScanReport = {
@@ -147,7 +148,7 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
             <div className="rounded-xl border border-white/5 p-4 bg-white/[0.02] space-y-2">
               <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Expected Format</p>
               <div className="grid grid-cols-4 gap-2 text-xs">
-                {[{f:"code",r:"Required",e:'"KTM"'},{f:"name",r:"Required",e:'"Kathmandu"'},{f:"type",r:"Optional",e:'"CITY"'},{f:"state",r:"Optional",e:'"Bagmati"'},{f:"aliases",r:"Optional",e:'["Kantipur"]'}].map(col => (
+                {[{f:"code",r:"Optional",e:'"KTM"'},{f:"name",r:"Required",e:'"Kathmandu"'},{f:"type",r:"Optional",e:'"CITY"'},{f:"province",r:"Optional",e:'"Bagmati"'}].map(col => (
                   <div key={col.f} className="space-y-0.5">
                     <p className="font-bold text-white">{col.f}</p>
                     <p className={`text-[10px] font-bold ${col.r === "Required" ? "text-white" : "text-white/50"}`}>{col.r}</p>
@@ -155,7 +156,7 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] text-white/50">type must be one of: CITY · JUNCTION · TOWN · BORDER &nbsp;&nbsp;|&nbsp;&nbsp; aliases can be array of strings &nbsp;&nbsp;|&nbsp;&nbsp; max 500 stops per batch</p>
+              <p className="text-[10px] text-white/50">type must be one of: CITY · JUNCTION · TOWN · HIGHWAY_STOP · BORDER &nbsp;&nbsp;|&nbsp;&nbsp; aliases can be array of strings &nbsp;&nbsp;|&nbsp;&nbsp; max 500 stops per batch</p>
             </div>
 
             <div className="flex gap-3 pt-1">
@@ -220,7 +221,7 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                             <td className="px-3 py-2 font-bold text-white/90">{s.code}</td>
                             <td className="px-3 py-2 font-bold">{s.name}</td>
                             <td className="px-3 py-2 text-white/50">{s.type}</td>
-                            <td className="px-3 py-2 text-white/50">{s.state || "—"}</td>
+                            <td className="px-3 py-2 text-white/50">{s.province || "—"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -336,9 +337,10 @@ const StopRegistryTab = () => {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [editStop, setEditStop] = useState<any | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", type: "CITY", state: "", aliases: "" });
+  const [editForm, setEditForm] = useState({ name: "", type: "CITY", province: "", district: "", municipality: "", aliases: "", lat: "", lng: "" });
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
-  const [form, setForm] = useState({ code: "", name: "", type: "CITY", state: "", aliases: "" });
+  const [form, setForm] = useState({ code: "", name: "", type: "CITY", province: "", district: "", municipality: "", aliases: "", lat: "", lng: "" });
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const { data, isLoading } = useQuery({ queryKey: ["stops"], queryFn: getAllStops });
   const stops = data?.data || [];
@@ -346,19 +348,77 @@ const StopRegistryTab = () => {
   const filtered = useMemo(() =>
     stops.filter((s: any) =>
       s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.code.toLowerCase().includes(search.toLowerCase())
+      (s.code && s.code.toLowerCase().includes(search.toLowerCase()))
     ), [stops, search]);
+
+  const tree = useMemo(() => {
+    const t: any = {};
+    filtered.forEach((s: any) => {
+      const p = s.province || "Uncategorized";
+      const d = s.district || "Uncategorized";
+      const m = s.municipality || "Uncategorized";
+      if (!t[p]) t[p] = {};
+      if (!t[p][d]) t[p][d] = {};
+      if (!t[p][d][m]) t[p][d][m] = [];
+      t[p][d][m].push(s);
+    });
+    return t;
+  }, [filtered]);
+
+  const uniqueDistricts = useMemo(() => Array.from(new Set(stops.map((s: any) => s.district).filter(Boolean))).sort(), [stops]);
+  const uniqueMunicipalities = useMemo(() => Array.from(new Set(stops.map((s: any) => s.municipality).filter(Boolean))).sort(), [stops]);
+
+  const toggleExpand = (key: string) => {
+    setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const createMutation = useMutation({
     mutationFn: createStop,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["stops"] }); toast.success("Stop added."); setOpen(false); setForm({ code: "", name: "", type: "CITY", state: "", aliases: "" }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["stops"] }); toast.success("Stop added."); setOpen(false); setForm({ code: "", name: "", type: "CITY", province: "", district: "", municipality: "", aliases: "", lat: "", lng: "" }); },
     onError: (e: any) => toast.error(e.response?.data?.message || e.message),
   });
 
   const editMutation = useMutation({
     mutationFn: ({ id, payload }: any) => updateStop(id, payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["stops"] }); toast.success("Stop updated."); setEditStop(null); },
-    onError: (e: any) => toast.error(e.response?.data?.message || e.message),
+    // Optimistically update the cache so the tree re-groups the stop immediately
+    onMutate: async ({ id, payload }: any) => {
+      await qc.cancelQueries({ queryKey: ["stops"] });
+      const previous = qc.getQueryData(["stops"]);
+      qc.setQueryData(["stops"], (old: any) => {
+        if (!old?.data || !Array.isArray(old.data)) return old;
+        return {
+          ...old,
+          data: old.data.map((s: any) =>
+            s._id === id
+              ? {
+                  ...s,
+                  ...(payload.name      && { name: payload.name }),
+                  ...(payload.type      && { type: payload.type }),
+                  ...(payload.province  !== undefined && { province:     payload.province }),
+                  ...(payload.district  !== undefined && { district:     payload.district }),
+                  ...(payload.municipality !== undefined && { municipality: payload.municipality }),
+                  ...(payload.aliases   !== undefined && { aliases:      payload.aliases }),
+                  ...(payload.coordinates !== undefined && { coordinates:  payload.coordinates }),
+                }
+              : s
+          )
+        };
+      });
+      return { previous };
+    },
+    onError: (_e: any, _vars: any, context: any) => {
+      // Roll back on failure
+      if (context?.previous) qc.setQueryData(["stops"], context.previous);
+      toast.error(_e.response?.data?.message || _e.message);
+    },
+    onSuccess: () => {
+      toast.success("Stop updated.");
+      setEditStop(null);
+    },
+    onSettled: () => {
+      // Always reconcile with server state after the call
+      qc.invalidateQueries({ queryKey: ["stops"] });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -380,7 +440,6 @@ const StopRegistryTab = () => {
           {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2"><X className="w-3.5 h-3.5 text-white/50" /></button>}
         </div>
         <div className="flex items-center gap-2">
-          {/* Bulk Import Button */}
           <Button
             id="bulk-import-stops-btn"
             variant="outline"
@@ -394,27 +453,37 @@ const StopRegistryTab = () => {
             <DialogTrigger asChild>
               <Button className="gap-2 font-bold rounded-xl h-10 px-5"><Plus className="w-4 h-4" /> Add Stop</Button>
             </DialogTrigger>
-          <DialogContent className="sm:max-w-[420px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden">
+          <DialogContent className="sm:max-w-[500px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden">
             <div className="bg-[#121212] p-7 border-b border-white/5 text-white">
               <DialogHeader><DialogTitle className="text-lg font-bold text-white flex items-center gap-2.5"><div className="p-1.5 bg-white/10 rounded-lg"><MapPin className="w-4 h-4 text-white" /></div>Register Stop Node</DialogTitle></DialogHeader>
               <p className="text-white/50 text-sm font-medium mt-1.5 ml-9">Add a city or junction to the global registry.</p>
             </div>
             <div className="p-7 space-y-4 bg-[#0a0a0a]">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Short Code</Label><Input placeholder="KTM" className="h-11 rounded-xl font-bold uppercase" value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} /></div>
+                <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Short Code (Optional)</Label><Input placeholder="KTM" className="h-11 rounded-xl font-bold uppercase" value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} /></div>
                 <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Full Name</Label><Input placeholder="Kathmandu" className="h-11 rounded-xl font-bold" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Type</Label>
-                  <Select value={form.type} onValueChange={v => setForm({ ...form, type: v })}><SelectTrigger className="h-11 rounded-xl font-bold"><SelectValue /></SelectTrigger><SelectContent className="rounded-xl"><SelectItem value="CITY">City</SelectItem><SelectItem value="JUNCTION">Junction</SelectItem><SelectItem value="TOWN">Town</SelectItem><SelectItem value="BORDER">Border</SelectItem></SelectContent></Select>
+                  <Select value={form.type} onValueChange={v => setForm({ ...form, type: v })}><SelectTrigger className="h-11 rounded-xl font-bold"><SelectValue /></SelectTrigger><SelectContent className="rounded-xl"><SelectItem value="CITY">City</SelectItem><SelectItem value="JUNCTION">Junction</SelectItem><SelectItem value="TOWN">Town</SelectItem><SelectItem value="HIGHWAY_STOP">Highway Stop</SelectItem><SelectItem value="BORDER">Border</SelectItem></SelectContent></Select>
                 </div>
-                <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Province</Label><Input placeholder="Bagmati" className="h-11 rounded-xl font-bold" value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Province</Label><Input placeholder="Bagmati" className="h-11 rounded-xl font-bold" value={form.province} onChange={e => setForm({ ...form, province: e.target.value })} /></div>
               </div>
-              <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Aliases (Comma Separated)</Label><Input placeholder="Kantipur, Yen" className="h-11 rounded-xl font-bold" value={form.aliases} onChange={e => setForm({ ...form, aliases: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">District</Label><Input list="district-list" placeholder="Kathmandu" className="h-11 rounded-xl font-bold" value={form.district} onChange={e => setForm({ ...form, district: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Municipality</Label><Input list="municipality-list" placeholder="KMC" className="h-11 rounded-xl font-bold" value={form.municipality} onChange={e => setForm({ ...form, municipality: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Aliases (Comma Separated)</Label><Input placeholder="Kantipur, Yen" className="h-11 rounded-xl font-bold" value={form.aliases} onChange={e => setForm({ ...form, aliases: e.target.value })} /></div>
+                <div className="grid grid-cols-2 gap-2">
+                   <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Latitude</Label><Input type="number" placeholder="27.7172" className="h-11 rounded-xl font-bold" value={form.lat} onChange={e => setForm({ ...form, lat: e.target.value })} /></div>
+                   <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Longitude</Label><Input type="number" placeholder="85.3240" className="h-11 rounded-xl font-bold" value={form.lng} onChange={e => setForm({ ...form, lng: e.target.value })} /></div>
+                </div>
+              </div>
             </div>
             <DialogFooter className="p-7 pt-0 bg-[#0a0a0a] gap-3">
               <Button variant="outline" onClick={() => setOpen(false)} className="font-bold rounded-xl h-11">Cancel</Button>
-              <Button className="h-11 rounded-xl font-bold bg-[#121212] hover:bg-white/10 text-white px-8" disabled={createMutation.isPending} onClick={() => createMutation.mutate({ ...form, aliases: form.aliases.split(',').map(s => s.trim()).filter(s => s.length > 0) })}>
+              <Button className="h-11 rounded-xl font-bold bg-[#121212] hover:bg-white/10 text-white px-8" disabled={createMutation.isPending} onClick={() => createMutation.mutate({ ...form, aliases: form.aliases.split(',').map(s => s.trim()).filter(s => s.length > 0), coordinates: (form.lat && form.lng) ? { lat: Number(form.lat), lng: Number(form.lng) } : undefined })}>
                 {createMutation.isPending && <Loader2 className="mr-2 w-4 h-4 animate-spin" />} Register Stop
               </Button>
             </DialogFooter>
@@ -423,92 +492,147 @@ const StopRegistryTab = () => {
         </div>
       </div>
 
-      {/* Bulk Import Modal */}
       <BulkImportStopsModal
         open={bulkOpen}
         onClose={() => setBulkOpen(false)}
         onSuccess={() => qc.invalidateQueries({ queryKey: ["stops"] })}
       />
 
-      {/* Edit Stop Modal */}
       <Dialog open={!!editStop} onOpenChange={() => setEditStop(null)}>
-        <DialogContent className="sm:max-w-[400px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-[500px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden">
           <div className="bg-[#121212] p-6 border-b border-white/5 text-white"><DialogHeader><DialogTitle className="text-base font-bold text-white flex items-center gap-2"><div className="p-1.5 bg-white/10 rounded-lg"><Pencil className="w-3.5 h-3.5" /></div>Edit Stop</DialogTitle></DialogHeader>
-            <p className="text-white/50 text-xs mt-1 ml-8">Code is permanent — only name, type, and province are editable.</p>
+            <p className="text-white/50 text-xs mt-1 ml-8">Code is permanent — other fields are editable.</p>
           </div>
           <div className="p-6 space-y-4 bg-[#0a0a0a]">
-            <div className="px-3 py-2 rounded-lg bg-white/5 border"><p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Code (read-only)</p><p className="font-bold text-[#D3D925]">{editStop?.code}</p></div>
-            <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Name</Label><Input className="h-10 rounded-xl font-bold" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} /></div>
+            <div className="px-3 py-2 rounded-lg bg-white/5 border flex gap-2 items-center"><p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Code (read-only)</p><p className="font-bold text-[#D3D925]">{editStop?.code || "—"}</p></div>
             <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Name</Label><Input className="h-10 rounded-xl font-bold" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} /></div>
               <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Type</Label>
-                <Select value={editForm.type} onValueChange={v => setEditForm(f => ({ ...f, type: v }))}><SelectTrigger className="h-10 rounded-xl font-bold"><SelectValue /></SelectTrigger><SelectContent className="rounded-xl"><SelectItem value="CITY">City</SelectItem><SelectItem value="JUNCTION">Junction</SelectItem><SelectItem value="TOWN">Town</SelectItem><SelectItem value="BORDER">Border</SelectItem></SelectContent></Select>
+                <Select value={editForm.type} onValueChange={v => setEditForm(f => ({ ...f, type: v }))}><SelectTrigger className="h-10 rounded-xl font-bold"><SelectValue /></SelectTrigger><SelectContent className="rounded-xl"><SelectItem value="CITY">City</SelectItem><SelectItem value="JUNCTION">Junction</SelectItem><SelectItem value="TOWN">Town</SelectItem><SelectItem value="HIGHWAY_STOP">Highway Stop</SelectItem><SelectItem value="BORDER">Border</SelectItem></SelectContent></Select>
               </div>
-              <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Province</Label><Input className="h-10 rounded-xl font-bold" value={editForm.state} onChange={e => setEditForm(f => ({ ...f, state: e.target.value }))} /></div>
             </div>
-            <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Aliases (Comma Separated)</Label><Input className="h-10 rounded-xl font-bold" value={editForm.aliases} onChange={e => setEditForm(f => ({ ...f, aliases: e.target.value }))} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Province</Label><Input className="h-10 rounded-xl font-bold" value={editForm.province} onChange={e => setEditForm(f => ({ ...f, province: e.target.value }))} /></div>
+              <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">District</Label><Input list="district-list" className="h-10 rounded-xl font-bold" value={editForm.district} onChange={e => setEditForm(f => ({ ...f, district: e.target.value }))} /></div>
+            </div>
+            <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Municipality</Label><Input list="municipality-list" className="h-10 rounded-xl font-bold" value={editForm.municipality} onChange={e => setEditForm(f => ({ ...f, municipality: e.target.value }))} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Aliases (Comma Separated)</Label><Input className="h-10 rounded-xl font-bold" value={editForm.aliases} onChange={e => setEditForm(f => ({ ...f, aliases: e.target.value }))} /></div>
+              <div className="grid grid-cols-2 gap-2">
+                 <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Latitude</Label><Input type="number" className="h-10 rounded-xl font-bold" value={editForm.lat} onChange={e => setEditForm(f => ({ ...f, lat: e.target.value }))} /></div>
+                 <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Longitude</Label><Input type="number" className="h-10 rounded-xl font-bold" value={editForm.lng} onChange={e => setEditForm(f => ({ ...f, lng: e.target.value }))} /></div>
+              </div>
+            </div>
           </div>
           <DialogFooter className="p-6 pt-0 bg-[#0a0a0a] gap-2">
             <Button variant="outline" onClick={() => setEditStop(null)} className="font-bold rounded-xl h-10">Cancel</Button>
-            <Button className="h-10 rounded-xl font-bold bg-[#121212] hover:bg-white/10 text-white px-6" disabled={editMutation.isPending} onClick={() => editMutation.mutate({ id: editStop._id, payload: { ...editForm, aliases: editForm.aliases.split(',').map(s => s.trim()).filter(s => s.length > 0) } })}>
+            <Button className="h-10 rounded-xl font-bold bg-[#121212] hover:bg-white/10 text-white px-6" disabled={editMutation.isPending} onClick={() => editMutation.mutate({ id: editStop._id, payload: { ...editForm, aliases: editForm.aliases ? editForm.aliases.split(',').map(s => s.trim()).filter(s => s.length > 0) : [], coordinates: (editForm.lat !== "" || editForm.lng !== "") ? { lat: Number(editForm.lat) || null, lng: Number(editForm.lng) || null } : { lat: null, lng: null } } })}>
               {editMutation.isPending && <Loader2 className="mr-2 w-3.5 h-3.5 animate-spin" />} Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <DialogContent className="sm:max-w-[360px] rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
-          <div className="bg-[#121212] p-6 border-b border-white/10 text-white"><DialogHeader><DialogTitle className="text-base font-bold text-white flex items-center gap-2"><Trash2 className="w-4 h-4" />Remove Stop</DialogTitle></DialogHeader></div>
-          <div className="p-6 space-y-3 bg-[#0a0a0a]">
-            <p className="text-sm font-medium">Remove <strong>{deleteTarget?.name}</strong> ({deleteTarget?.code}) from the registry?</p>
-            <p className="text-xs text-white/50">If this stop is used in any route sequences, deletion will be blocked.</p>
+        <DialogContent aria-describedby={undefined} className="sm:max-w-[400px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden">
+          <div className="bg-[#121212] p-6 text-white text-center border-b border-white/5">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <DialogTitle className="text-lg font-bold mb-1">Delete Stop Node</DialogTitle>
+            <p className="text-white/50 text-sm">Are you sure you want to delete {deleteTarget?.name}?</p>
           </div>
-          <DialogFooter className="p-6 pt-0 bg-[#0a0a0a] gap-2">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="font-bold rounded-xl h-10">Cancel</Button>
-            <Button className="bg-white/5 hover:bg-white/5 text-white h-10 rounded-xl font-bold px-6" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate(deleteTarget._id)}>
-              {deleteMutation.isPending && <Loader2 className="mr-2 w-3.5 h-3.5 animate-spin" />} Delete
-            </Button>
+          <DialogFooter className="p-6 bg-[#0a0a0a] gap-2 sm:justify-center flex-row">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="font-bold rounded-xl h-11 w-full sm:w-auto">Cancel</Button>
+            <Button variant="destructive" onClick={() => deleteMutation.mutate(deleteTarget._id)} className="font-bold rounded-xl h-11 w-full sm:w-auto px-8" disabled={deleteMutation.isPending}>{deleteMutation.isPending && <Loader2 className="mr-2 w-4 h-4 animate-spin" />}Delete Permanently</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <div className="rounded-2xl border overflow-hidden bg-[#121212]/20 backdrop-blur-sm">
-        <Table>
-          <TableHeader className="bg-white/5">
-            <TableRow className="hover:bg-transparent border-b border-white/5">
-              <TableHead className="font-bold text-xs uppercase tracking-wider">Code</TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-wider">Name</TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-wider">Type</TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-wider">Province</TableHead>
-              <TableHead className="font-bold text-xs uppercase tracking-wider w-24">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={5} className="h-32 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-[#D3D925]/40" /></TableCell></TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="h-32 text-center text-white/50 text-sm">{search ? `No stops matching "${search}"` : "No stops in registry."}</TableCell></TableRow>
-            ) : filtered.map((s: any) => (
-              <TableRow key={s._id} className="border-b border-white/5 group">
-                <TableCell><Badge variant="outline" className="font-bold text-[#D3D925] border-[#D3D925]/20 bg-[#D3D925]/10">{s.code}</Badge></TableCell>
-                <TableCell className="font-bold">{s.name}</TableCell>
-                <TableCell><Badge variant="secondary" className="text-[10px] font-bold uppercase">{s.type}</Badge></TableCell>
-                <TableCell className="text-white/50 text-sm">{s.state || "—"}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => { setEditStop(s); setEditForm({ name: s.name, type: s.type, state: s.state || "", aliases: (s.aliases || []).join(", ") }); }} className="w-7 h-7 rounded-lg border border-white/10 bg-[#0a0a0a] flex items-center justify-center hover:bg-white/5 transition-all"><Pencil className="w-3 h-3" /></button>
-                    <button onClick={() => setDeleteTarget(s)} className="w-7 h-7 rounded-lg border border-white/10 bg-[#0a0a0a] flex items-center justify-center hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive transition-all"><Trash2 className="w-3 h-3" /></button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      {/* Accordion Tree View */}
+      <div className="rounded-2xl border bg-[#121212]/20 backdrop-blur-sm p-4 space-y-4">
+        {isLoading ? (
+          <div className="h-32 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#D3D925]/40" /></div>
+        ) : filtered.length === 0 ? (
+          <div className="h-32 flex items-center justify-center text-white/50 text-sm">{search ? `No stops matching "${search}"` : "No stops in registry."}</div>
+        ) : (
+          Object.keys(tree).sort().map(pKey => (
+            <div key={pKey} className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.01]">
+              <button 
+                onClick={() => toggleExpand('p-'+pKey)} 
+                className="w-full flex items-center gap-3 p-3 text-left hover:bg-white/5 transition-colors border-b border-white/5"
+              >
+                {expanded['p-'+pKey] ? <ChevronDown className="w-4 h-4 text-white/50" /> : <ChevronRight className="w-4 h-4 text-white/50" />}
+                <MapPin className="w-4 h-4 text-[#D3D925]" />
+                <span className="font-bold text-sm tracking-wide uppercase">{pKey}</span>
+              </button>
+              {expanded['p-'+pKey] && (
+                <div className="pl-6 pr-3 py-2 space-y-2 bg-black/20">
+                  {Object.keys(tree[pKey]).sort().map(dKey => (
+                    <div key={dKey} className="border border-white/5 rounded-lg overflow-hidden">
+                      <button 
+                        onClick={() => toggleExpand('d-'+pKey+'-'+dKey)} 
+                        className="w-full flex items-center gap-2 p-2.5 text-left hover:bg-white/5 transition-colors border-b border-white/5"
+                      >
+                        {expanded['d-'+pKey+'-'+dKey] ? <ChevronDown className="w-4 h-4 text-white/50" /> : <ChevronRight className="w-4 h-4 text-white/50" />}
+                        <span className="font-semibold text-sm text-white/90">{dKey} District</span>
+                      </button>
+                      {expanded['d-'+pKey+'-'+dKey] && (
+                        <div className="pl-6 pr-2 py-2 space-y-2 bg-black/40">
+                          {Object.keys(tree[pKey][dKey]).sort().map(mKey => (
+                            <div key={mKey} className="border border-white/5 rounded-lg overflow-hidden bg-[#0a0a0a]">
+                              <button 
+                                onClick={() => toggleExpand('m-'+pKey+'-'+dKey+'-'+mKey)} 
+                                className="w-full flex items-center gap-2 p-2 text-left hover:bg-white/5 transition-colors border-b border-white/5"
+                              >
+                                {expanded['m-'+pKey+'-'+dKey+'-'+mKey] ? <ChevronDown className="w-3.5 h-3.5 text-white/40" /> : <ChevronRight className="w-3.5 h-3.5 text-white/40" />}
+                                <span className="font-medium text-xs text-white/80">{mKey}</span>
+                                <span className="ml-auto text-[10px] text-white/40 font-bold bg-white/5 px-1.5 py-0.5 rounded">{tree[pKey][dKey][mKey].length}</span>
+                              </button>
+                              {expanded['m-'+pKey+'-'+dKey+'-'+mKey] && (
+                                <div className="p-2 space-y-1">
+                                  {tree[pKey][dKey][mKey].map((s: any) => (
+                                    <div key={s._id} className="flex items-center justify-between p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] group transition-colors">
+                                      <div className="flex items-center gap-3">
+                                        <Badge variant="outline" className="text-[10px] font-bold text-[#D3D925] border-[#D3D925]/20 bg-[#D3D925]/10">{s.code || "—"}</Badge>
+                                        <span className="font-bold text-sm">{s.name}</span>
+                                        <Badge variant="secondary" className="text-[9px] font-bold uppercase ml-2">{s.type}</Badge>
+                                      </div>
+                                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => { setEditStop(s); setEditForm({ name: s.name, type: s.type, province: s.province || "", district: s.district || "", municipality: s.municipality || "", aliases: (s.aliases || []).join(", "), lat: s.coordinates?.lat?.toString() || "", lng: s.coordinates?.lng?.toString() || "" }); }} className="w-7 h-7 rounded-lg border border-white/10 bg-black flex items-center justify-center hover:bg-white/10 transition-all"><Pencil className="w-3 h-3" /></button>
+                                        <button onClick={() => setDeleteTarget(s)} className="w-7 h-7 rounded-lg border border-white/10 bg-black flex items-center justify-center hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive transition-all"><Trash2 className="w-3 h-3" /></button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
+
+      <datalist id="district-list">
+        {(uniqueDistricts as string[]).map((d) => (
+          <option key={d} value={d} />
+        ))}
+      </datalist>
+      <datalist id="municipality-list">
+        {(uniqueMunicipalities as string[]).map((m) => (
+          <option key={m} value={m} />
+        ))}
+      </datalist>
     </div>
   );
 };
+
 
 // ── Layer 1+2: Corridor & Variant Tab ────────────────────────────────────────
 
@@ -1000,6 +1124,9 @@ const PlatformRegistry = () => {
             </span>
           )}
         </TabsTrigger>
+        <TabsTrigger value="discovery" className="flex items-center gap-2 px-8 py-3.5 text-sm font-bold rounded-2xl data-[state=active]:bg-[#0a0a0a] data-[state=active]:text-[#D3D925] data-[state=active]:shadow-xl border border-transparent">
+          <Navigation className="w-4 h-4" /> Discovery
+        </TabsTrigger>
       </TabsList>
 
       <Card className="border-none shadow-[0_20px_60px_rgba(0,0,0,0.06)] border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl rounded-[2.5rem] overflow-hidden">
@@ -1019,6 +1146,9 @@ const PlatformRegistry = () => {
           </TabsContent>
           <TabsContent value="route-requests" className="mt-0 animate-in fade-in duration-300">
             <RouteRequestsPanel />
+          </TabsContent>
+          <TabsContent value="discovery" className="mt-0 animate-in fade-in duration-300">
+            <DiscoveryTab />
           </TabsContent>
         </CardContent>
       </Card>

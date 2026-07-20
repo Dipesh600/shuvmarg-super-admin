@@ -4,6 +4,8 @@ export interface CreateCouponPayload {
   couponCode: string;
   title: string;
   description?: string;
+  category?: string;
+  imageUrl?: string;
   discountType: "percentage" | "fixed";
   discountValue: number;
   minOrderAmount?: number;
@@ -13,6 +15,25 @@ export interface CreateCouponPayload {
   totalUsageLimit?: number | null;
   perUserLimit?: number;
   applicableUserTypes?: string[];
+  designConfig?: {
+    edges?: {
+      top?: "smooth" | "ticket" | "torn" | "jagged";
+      bottom?: "smooth" | "ticket" | "torn" | "jagged";
+      left?: "smooth" | "ticket" | "torn" | "jagged";
+      right?: "smooth" | "ticket" | "torn" | "jagged";
+    };
+    typography?: {
+      titleAlignment?: "left" | "center" | "right";
+      descAlignment?: "left" | "center" | "right";
+      codeAlignment?: "left" | "center" | "right";
+    };
+    imageConfig?: {
+      scale?: number;
+      offsetX?: number;
+      offsetY?: number;
+      fit?: "cover" | "contain" | "fill";
+    };
+  };
 }
 
 export interface UpdateCouponPayload extends Partial<CreateCouponPayload> {}
@@ -62,5 +83,14 @@ export const getCouponStats = async () => {
 
 export const getCouponAnalytics = async (id: string) => {
   const { data } = await api.get(`/coupons/${id}/analytics`);
+  return data;
+};
+
+export const uploadCouponImage = async (file: File) => {
+  const formData = new FormData();
+  formData.append("image", file);
+  const { data } = await api.post("/coupons/upload-image", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data;
 };
