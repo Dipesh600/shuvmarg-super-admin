@@ -29,9 +29,10 @@ const EXAMPLE_JSON = `[
 type ScanReport = {
   toInsert: any[];
   duplicateCode: any[];
-  duplicateName: any[];
+  duplicateIdentity: any[];
+  duplicateWithinBatch: any[];
   invalid: any[];
-  summary: { total: number; new: number; skippedCode: number; skippedName: number; invalid: number };
+  summary: { total: number; new: number; skippedCode: number; skippedIdentity: number; skippedBatch: number; invalid: number };
 };
 
 const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess: () => void }) => {
@@ -183,7 +184,7 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
               {[
                 { label: "Total", val: report.summary.total, cls: "bg-white/5 border-white/5 text-white" },
                 { label: "New ✅", val: report.summary.new, cls: "bg-[#D3D925]/10 border-[#D3D925]/20 text-white/90" },
-                { label: "Skipped ⚠️", val: report.summary.skippedCode + report.summary.skippedName, cls: "bg-white/5 border-white/10 text-white" },
+                { label: "Skipped ⚠️", val: report.summary.skippedCode + report.summary.skippedIdentity + report.summary.skippedBatch, cls: "bg-white/5 border-white/10 text-white" },
                 { label: "Invalid ❌", val: report.summary.invalid, cls: "bg-white/5 border-white/10 text-white" },
               ].map(card => (
                 <div key={card.label} className={`rounded-xl border px-3 py-2.5 text-center ${card.cls}`}>
@@ -258,11 +259,11 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                 </div>
               )}
 
-              {/* Duplicate names */}
-              {report.duplicateName.length > 0 && (
+              {/* Duplicate identities */}
+              {report.duplicateIdentity.length > 0 && (
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1.5 flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5" /> {report.duplicateName.length} Duplicate Name — skipped
+                    <AlertTriangle className="w-3.5 h-3.5" /> {report.duplicateIdentity.length} Duplicate Identity — skipped
                   </p>
                   <div className="rounded-xl border border-white/10 overflow-hidden">
                     <table className="w-full text-xs">
@@ -272,11 +273,36 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                         <th className="px-3 py-2 text-left font-bold text-white">Existing Code</th>
                       </tr></thead>
                       <tbody>
-                        {report.duplicateName.map((s: any, i: number) => (
+                        {report.duplicateIdentity.map((s: any, i: number) => (
                           <tr key={i} className="border-t border-white/10">
                             <td className="px-3 py-2 font-bold text-white">{s.code}</td>
                             <td className="px-3 py-2 font-bold">{s.name}</td>
-                            <td className="px-3 py-2 text-white/50">{s.existingCode}</td>
+                            <td className="px-3 py-2 text-white/50">{s.existingStop?.code || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Duplicate within batch */}
+              {report.duplicateWithinBatch.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1.5 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" /> {report.duplicateWithinBatch.length} Duplicate Within Batch — skipped
+                  </p>
+                  <div className="rounded-xl border border-white/10 overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead><tr className="bg-white/5">
+                        <th className="px-3 py-2 text-left font-bold text-white">Code</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Name</th>
+                      </tr></thead>
+                      <tbody>
+                        {report.duplicateWithinBatch.map((s: any, i: number) => (
+                          <tr key={i} className="border-t border-white/10">
+                            <td className="px-3 py-2 font-bold text-white">{s.code}</td>
+                            <td className="px-3 py-2 font-bold">{s.name}</td>
                           </tr>
                         ))}
                       </tbody>
