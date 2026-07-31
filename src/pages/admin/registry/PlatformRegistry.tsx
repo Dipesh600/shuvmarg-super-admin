@@ -10,22 +10,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Database, MapPin, Globe, ArrowRight, Sparkles, ListOrdered, Route, Pencil, Trash2, Search, X, Upload, AlertTriangle, CheckCircle2, FileJson, ChevronRight, ChevronDown, SkipForward, Navigation } from "lucide-react";
+import { Plus, Loader2, MapPin, Globe, ArrowRight, Sparkles, Route, Pencil, Trash2, Search, X, ChevronRight, ChevronDown, Navigation } from "lucide-react";
 import { toast } from "sonner";
-import { createStop, getAllStops, updateStop, deleteStop, createCorridor, getAllCorridors, updateCorridor, deleteCorridor, getVariantsByCorridor, updateVariant, deleteVariant, createRegistryBoardingPoint, getBoardingPointsByStop, updateRegistryBoardingPoint, deleteRegistryBoardingPoint, getAllRouteRequests, previewBulkStops, bulkImportStops } from "@/api/platformRegistryApi";
+import { createCorridor, getAllCorridors, updateCorridor, deleteCorridor, getVariantsByCorridor, updateVariant, deleteVariant, createRegistryBoardingPoint, getBoardingPointsByStop, updateRegistryBoardingPoint, deleteRegistryBoardingPoint, getAllRouteRequests } from "@/api/platformRegistryApi";
 import { CreateVariantModal, MapStopsModal } from "./VariantModals";
 import RouteRequestsPanel from "./RouteRequestsPanel";
 import { DiscoveryTab } from "./DiscoveryTab";
 import { StopRegistryWorkspace } from "@/components/admin/stop-registry/StopRegistryWorkspace";
 import { cn } from "@/lib/utils";
-
-          <option key={m} value={m} />
-        ))}
-      </datalist>
-    </div>
-  );
-};
-
 
 // ── Layer 1+2: Corridor & Variant Tab ────────────────────────────────────────
 
