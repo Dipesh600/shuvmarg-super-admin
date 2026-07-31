@@ -241,16 +241,18 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                   <div className="rounded-xl border border-white/10 overflow-hidden">
                     <table className="w-full text-xs">
                       <thead><tr className="bg-white/5">
+                        <th className="px-3 py-2 text-left font-bold text-white">Row</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Code</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Your Name</th>
-                        <th className="px-3 py-2 text-left font-bold text-white">Existing Name</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Context</th>
                       </tr></thead>
                       <tbody>
                         {report.duplicateCode.map((s: any, i: number) => (
                           <tr key={i} className="border-t border-white/10">
+                            <td className="px-3 py-2 text-white/50">{s._sourceIndex !== undefined ? s._sourceIndex + 1 : "-"}</td>
                             <td className="px-3 py-2 font-bold text-white">{s.code}</td>
                             <td className="px-3 py-2 font-bold">{s.name}</td>
-                            <td className="px-3 py-2 text-white/50">{s.existingName}</td>
+                            <td className="px-3 py-2 text-white/50">{[s.district, s.municipality].filter(Boolean).join(", ")}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -268,16 +270,20 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                   <div className="rounded-xl border border-white/10 overflow-hidden">
                     <table className="w-full text-xs">
                       <thead><tr className="bg-white/5">
+                        <th className="px-3 py-2 text-left font-bold text-white">Row</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Code</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Name</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Existing Code</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Context</th>
                       </tr></thead>
                       <tbody>
                         {report.duplicateIdentity.map((s: any, i: number) => (
                           <tr key={i} className="border-t border-white/10">
+                            <td className="px-3 py-2 text-white/50">{s._sourceIndex !== undefined ? s._sourceIndex + 1 : "-"}</td>
                             <td className="px-3 py-2 font-bold text-white">{s.code}</td>
                             <td className="px-3 py-2 font-bold">{s.name}</td>
                             <td className="px-3 py-2 text-white/50">{s.existingStop?.code || "—"}</td>
+                            <td className="px-3 py-2 text-white/50">{[s.district, s.municipality].filter(Boolean).join(", ")}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -295,14 +301,18 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                   <div className="rounded-xl border border-white/10 overflow-hidden">
                     <table className="w-full text-xs">
                       <thead><tr className="bg-white/5">
+                        <th className="px-3 py-2 text-left font-bold text-white">Row</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Code</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Name</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Reason</th>
                       </tr></thead>
                       <tbody>
                         {report.duplicateWithinBatch.map((s: any, i: number) => (
                           <tr key={i} className="border-t border-white/10">
+                            <td className="px-3 py-2 text-white/50">{s._sourceIndex !== undefined ? s._sourceIndex + 1 : "-"}</td>
                             <td className="px-3 py-2 font-bold text-white">{s.code}</td>
                             <td className="px-3 py-2 font-bold">{s.name}</td>
+                            <td className="px-3 py-2 text-white/50">{s.conflictReason || "Conflict"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -320,12 +330,16 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                   <div className="rounded-xl border border-white/10 overflow-hidden">
                     <table className="w-full text-xs">
                       <thead><tr className="bg-white/5">
+                        <th className="px-3 py-2 text-left font-bold text-white w-12">Row</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Code</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Error</th>
                       </tr></thead>
                       <tbody>
                         {report.invalid.map((e: any, i: number) => (
                           <tr key={i} className="border-t border-white/10">
-                            <td className="px-3 py-2 text-white">{e.error}</td>
+                            <td className="px-3 py-2 text-white/50">{e.index !== null ? e.index + 1 : "-"}</td>
+                            <td className="px-3 py-2 text-white/70">{e.code || "-"}</td>
+                            <td className="px-3 py-2 text-white">{e.message || e.error}</td>
                           </tr>
                         ))}
                       </tbody>
