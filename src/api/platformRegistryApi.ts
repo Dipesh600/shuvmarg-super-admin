@@ -22,16 +22,6 @@ export const getAllStops = async () => {
     return data;
 };
 
-export const updateStop = async (id: string, payload: Record<string, unknown>) => {
-    const { data } = await api.put(`/registry/stops/${id}`, payload);
-    return data;
-};
-
-export const deleteStop = async (id: string) => {
-    const { data } = await api.delete(`/registry/stops/${id}`);
-    return data;
-};
-
 export const searchStops = async (q: string) => {
     const { data } = await api.get("/registry/stops/search", { params: { q } });
     return data;
@@ -136,12 +126,15 @@ export const getBoardingPointsByStop = async (stopCode: string) => {
 export const updateStop = async (id: string, payload: {
     name?: string;
     type?: string;
-    province?: string;
-    district?: string;
-    municipality?: string;
+    province?: string | null;
+    district?: string | null;
+    municipality?: string | null;
     aliases?: string[];
     coordinates?: { lat: number; lng: number };
     status?: string;
+    isSearchable?: boolean;
+    isRouteStop?: boolean;
+    parentStopId?: string | null;
 }) => {
     const { data } = await api.patch(`/registry/stops/${id}`, payload);
     return data;
