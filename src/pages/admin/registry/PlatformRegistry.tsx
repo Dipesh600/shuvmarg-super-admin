@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Database, MapPin, Globe, ArrowRight, Sparkles, ListOrdered, Route, Pencil, Trash2, Search, X, Upload, AlertTriangle, CheckCircle2, FileJson, ChevronRight, ChevronDown, SkipForward, Navigation } from "lucide-react";
 import { toast } from "sonner";
@@ -28,9 +29,10 @@ const EXAMPLE_JSON = `[
 type ScanReport = {
   toInsert: any[];
   duplicateCode: any[];
-  duplicateName: any[];
+  duplicateIdentity: any[];
+  duplicateWithinBatch: any[];
   invalid: any[];
-  summary: { total: number; new: number; skippedCode: number; skippedName: number; invalid: number };
+  summary: { total: number; new: number; skippedCode: number; skippedIdentity: number; skippedBatch: number; invalid: number };
 };
 
 const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onClose: () => void; onSuccess: () => void }) => {
@@ -182,7 +184,7 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
               {[
                 { label: "Total", val: report.summary.total, cls: "bg-white/5 border-white/5 text-white" },
                 { label: "New ✅", val: report.summary.new, cls: "bg-[#D3D925]/10 border-[#D3D925]/20 text-white/90" },
-                { label: "Skipped ⚠️", val: report.summary.skippedCode + report.summary.skippedName, cls: "bg-white/5 border-white/10 text-white" },
+                { label: "Skipped ⚠️", val: report.summary.skippedCode + report.summary.skippedIdentity + report.summary.skippedBatch, cls: "bg-white/5 border-white/10 text-white" },
                 { label: "Invalid ❌", val: report.summary.invalid, cls: "bg-white/5 border-white/10 text-white" },
               ].map(card => (
                 <div key={card.label} className={`rounded-xl border px-3 py-2.5 text-center ${card.cls}`}>
@@ -239,16 +241,18 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                   <div className="rounded-xl border border-white/10 overflow-hidden">
                     <table className="w-full text-xs">
                       <thead><tr className="bg-white/5">
+                        <th className="px-3 py-2 text-left font-bold text-white">Row</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Code</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Your Name</th>
-                        <th className="px-3 py-2 text-left font-bold text-white">Existing Name</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Context</th>
                       </tr></thead>
                       <tbody>
                         {report.duplicateCode.map((s: any, i: number) => (
                           <tr key={i} className="border-t border-white/10">
+                            <td className="px-3 py-2 text-white/50">{s._sourceIndex !== undefined ? s._sourceIndex + 1 : "-"}</td>
                             <td className="px-3 py-2 font-bold text-white">{s.code}</td>
                             <td className="px-3 py-2 font-bold">{s.name}</td>
-                            <td className="px-3 py-2 text-white/50">{s.existingName}</td>
+                            <td className="px-3 py-2 text-white/50">{[s.district, s.municipality].filter(Boolean).join(", ")}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -257,25 +261,58 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                 </div>
               )}
 
-              {/* Duplicate names */}
-              {report.duplicateName.length > 0 && (
+              {/* Duplicate identities */}
+              {report.duplicateIdentity.length > 0 && (
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1.5 flex items-center gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5" /> {report.duplicateName.length} Duplicate Name — skipped
+                    <AlertTriangle className="w-3.5 h-3.5" /> {report.duplicateIdentity.length} Duplicate Identity — skipped
                   </p>
                   <div className="rounded-xl border border-white/10 overflow-hidden">
                     <table className="w-full text-xs">
                       <thead><tr className="bg-white/5">
+                        <th className="px-3 py-2 text-left font-bold text-white">Row</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Code</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Name</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Existing Code</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Context</th>
                       </tr></thead>
                       <tbody>
-                        {report.duplicateName.map((s: any, i: number) => (
+                        {report.duplicateIdentity.map((s: any, i: number) => (
                           <tr key={i} className="border-t border-white/10">
+                            <td className="px-3 py-2 text-white/50">{s._sourceIndex !== undefined ? s._sourceIndex + 1 : "-"}</td>
                             <td className="px-3 py-2 font-bold text-white">{s.code}</td>
                             <td className="px-3 py-2 font-bold">{s.name}</td>
-                            <td className="px-3 py-2 text-white/50">{s.existingCode}</td>
+                            <td className="px-3 py-2 text-white/50">{s.existingStop?.code || "—"}</td>
+                            <td className="px-3 py-2 text-white/50">{[s.district, s.municipality].filter(Boolean).join(", ")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Duplicate within batch */}
+              {report.duplicateWithinBatch.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white mb-1.5 flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" /> {report.duplicateWithinBatch.length} Duplicate Within Batch — skipped
+                  </p>
+                  <div className="rounded-xl border border-white/10 overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead><tr className="bg-white/5">
+                        <th className="px-3 py-2 text-left font-bold text-white">Row</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Code</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Name</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Reason</th>
+                      </tr></thead>
+                      <tbody>
+                        {report.duplicateWithinBatch.map((s: any, i: number) => (
+                          <tr key={i} className="border-t border-white/10">
+                            <td className="px-3 py-2 text-white/50">{s._sourceIndex !== undefined ? s._sourceIndex + 1 : "-"}</td>
+                            <td className="px-3 py-2 font-bold text-white">{s.code}</td>
+                            <td className="px-3 py-2 font-bold">{s.name}</td>
+                            <td className="px-3 py-2 text-white/50">{s.conflictReason || "Conflict"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -293,12 +330,16 @@ const BulkImportStopsModal = ({ open, onClose, onSuccess }: { open: boolean; onC
                   <div className="rounded-xl border border-white/10 overflow-hidden">
                     <table className="w-full text-xs">
                       <thead><tr className="bg-white/5">
+                        <th className="px-3 py-2 text-left font-bold text-white w-12">Row</th>
+                        <th className="px-3 py-2 text-left font-bold text-white">Code</th>
                         <th className="px-3 py-2 text-left font-bold text-white">Error</th>
                       </tr></thead>
                       <tbody>
                         {report.invalid.map((e: any, i: number) => (
                           <tr key={i} className="border-t border-white/10">
-                            <td className="px-3 py-2 text-white">{e.error}</td>
+                            <td className="px-3 py-2 text-white/50">{e.index !== null ? e.index + 1 : "-"}</td>
+                            <td className="px-3 py-2 text-white/70">{e.code || "-"}</td>
+                            <td className="px-3 py-2 text-white">{e.message || e.error}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -337,9 +378,9 @@ const StopRegistryTab = () => {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [editStop, setEditStop] = useState<any | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", type: "CITY", province: "", district: "", municipality: "", aliases: "", lat: "", lng: "" });
+  const [editForm, setEditForm] = useState({ name: "", type: "CITY", province: "", district: "", municipality: "", aliases: "", lat: "", lng: "", isSearchable: true, isRouteStop: false, parentStopId: "none" });
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
-  const [form, setForm] = useState({ code: "", name: "", type: "CITY", province: "", district: "", municipality: "", aliases: "", lat: "", lng: "" });
+  const [form, setForm] = useState({ code: "", name: "", type: "CITY", province: "", district: "", municipality: "", aliases: "", lat: "", lng: "", isSearchable: true, isRouteStop: false, parentStopId: "none" });
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const { data, isLoading } = useQuery({ queryKey: ["stops"], queryFn: getAllStops });
@@ -374,7 +415,7 @@ const StopRegistryTab = () => {
 
   const createMutation = useMutation({
     mutationFn: createStop,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["stops"] }); toast.success("Stop added."); setOpen(false); setForm({ code: "", name: "", type: "CITY", province: "", district: "", municipality: "", aliases: "", lat: "", lng: "" }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["stops"] }); toast.success("Stop added."); setOpen(false); setForm({ code: "", name: "", type: "CITY", province: "", district: "", municipality: "", aliases: "", lat: "", lng: "", isSearchable: true, isRouteStop: false, parentStopId: "none" }); },
     onError: (e: any) => toast.error(e.response?.data?.message || e.message),
   });
 
@@ -480,10 +521,45 @@ const StopRegistryTab = () => {
                    <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Longitude</Label><Input type="number" placeholder="85.3240" className="h-11 rounded-xl font-bold" value={form.lng} onChange={e => setForm({ ...form, lng: e.target.value })} /></div>
                 </div>
               </div>
+              <div className="border-t border-white/10 pt-4 mt-2">
+                <p className="text-xs font-bold text-white/50 mb-3 uppercase tracking-widest">Capabilities</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-bold text-white">Searchable Place</Label>
+                      <p className="text-[10px] text-white/50">Appears in passenger search</p>
+                    </div>
+                    <Switch checked={form.isSearchable} onCheckedChange={(c) => setForm({ ...form, isSearchable: c })} />
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-bold text-white">Route Stop</Label>
+                      <p className="text-[10px] text-white/50">Used for boarding/dropping</p>
+                    </div>
+                    <Switch checked={form.isRouteStop} onCheckedChange={(c) => setForm({ ...form, isRouteStop: c })} />
+                  </div>
+                </div>
+                {form.isRouteStop && (
+                  <div className="mt-4 space-y-1.5">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Parent Stop (Optional)</Label>
+                    <Select value={form.parentStopId} onValueChange={(v) => setForm({ ...form, parentStopId: v })}>
+                      <SelectTrigger className="h-11 rounded-xl font-bold bg-[#121212] border-white/10 text-white">
+                        <SelectValue placeholder="Select broad searchable place..." />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl bg-[#121212] border-white/10 text-white">
+                        <SelectItem value="none" className="text-white/50">None</SelectItem>
+                        {stops.filter((s: any) => s.isSearchable).map((s: any) => (
+                          <SelectItem key={s._id} value={s._id}>{s.name} ({s.code || s.district})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
             </div>
             <DialogFooter className="p-7 pt-0 bg-[#0a0a0a] gap-3">
               <Button variant="outline" onClick={() => setOpen(false)} className="font-bold rounded-xl h-11">Cancel</Button>
-              <Button className="h-11 rounded-xl font-bold bg-[#121212] hover:bg-white/10 text-white px-8" disabled={createMutation.isPending} onClick={() => createMutation.mutate({ ...form, aliases: form.aliases.split(',').map(s => s.trim()).filter(s => s.length > 0), coordinates: (form.lat && form.lng) ? { lat: Number(form.lat), lng: Number(form.lng) } : undefined })}>
+              <Button className="h-11 rounded-xl font-bold bg-[#121212] hover:bg-white/10 text-white px-8" disabled={createMutation.isPending} onClick={() => createMutation.mutate({ ...form, parentStopId: form.parentStopId === 'none' ? null : form.parentStopId, aliases: form.aliases.split(',').map(s => s.trim()).filter(s => s.length > 0), coordinates: (form.lat && form.lng) ? { lat: Number(form.lat), lng: Number(form.lng) } : undefined })}>
                 {createMutation.isPending && <Loader2 className="mr-2 w-4 h-4 animate-spin" />} Register Stop
               </Button>
             </DialogFooter>
@@ -523,10 +599,45 @@ const StopRegistryTab = () => {
                  <div className="space-y-1.5"><Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Longitude</Label><Input type="number" className="h-10 rounded-xl font-bold" value={editForm.lng} onChange={e => setEditForm(f => ({ ...f, lng: e.target.value }))} /></div>
               </div>
             </div>
+            <div className="border-t border-white/10 pt-4 mt-2">
+              <p className="text-xs font-bold text-white/50 mb-3 uppercase tracking-widest">Capabilities</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-bold text-white">Searchable Place</Label>
+                    <p className="text-[10px] text-white/50">Appears in search</p>
+                  </div>
+                  <Switch checked={editForm.isSearchable} onCheckedChange={(c) => setEditForm(f => ({ ...f, isSearchable: c }))} />
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-bold text-white">Route Stop</Label>
+                    <p className="text-[10px] text-white/50">Used physically</p>
+                  </div>
+                  <Switch checked={editForm.isRouteStop} onCheckedChange={(c) => setEditForm(f => ({ ...f, isRouteStop: c }))} />
+                </div>
+              </div>
+              {editForm.isRouteStop && (
+                <div className="mt-4 space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Parent Stop (Optional)</Label>
+                  <Select value={editForm.parentStopId} onValueChange={(v) => setEditForm(f => ({ ...f, parentStopId: v }))}>
+                    <SelectTrigger className="h-11 rounded-xl font-bold bg-[#121212] border-white/10 text-white">
+                      <SelectValue placeholder="Select broad searchable place..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl bg-[#121212] border-white/10 text-white">
+                      <SelectItem value="none" className="text-white/50">None</SelectItem>
+                      {stops.filter((s: any) => s.isSearchable && s._id !== editStop?._id).map((s: any) => (
+                        <SelectItem key={s._id} value={s._id}>{s.name} ({s.code || s.district})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter className="p-6 pt-0 bg-[#0a0a0a] gap-2">
             <Button variant="outline" onClick={() => setEditStop(null)} className="font-bold rounded-xl h-10">Cancel</Button>
-            <Button className="h-10 rounded-xl font-bold bg-[#121212] hover:bg-white/10 text-white px-6" disabled={editMutation.isPending} onClick={() => editMutation.mutate({ id: editStop._id, payload: { ...editForm, aliases: editForm.aliases ? editForm.aliases.split(',').map(s => s.trim()).filter(s => s.length > 0) : [], coordinates: (editForm.lat !== "" || editForm.lng !== "") ? { lat: Number(editForm.lat) || null, lng: Number(editForm.lng) || null } : { lat: null, lng: null } } })}>
+            <Button className="h-10 rounded-xl font-bold bg-[#121212] hover:bg-white/10 text-white px-6" disabled={editMutation.isPending} onClick={() => editMutation.mutate({ id: editStop._id, payload: { ...editForm, parentStopId: editForm.parentStopId === 'none' ? null : editForm.parentStopId, aliases: editForm.aliases ? editForm.aliases.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0) : [], coordinates: (editForm.lat !== "" || editForm.lng !== "") ? { lat: Number(editForm.lat) || null, lng: Number(editForm.lng) || null } : { lat: null, lng: null } } })}>
               {editMutation.isPending && <Loader2 className="mr-2 w-3.5 h-3.5 animate-spin" />} Save Changes
             </Button>
           </DialogFooter>
@@ -597,9 +708,11 @@ const StopRegistryTab = () => {
                                         <Badge variant="outline" className="text-[10px] font-bold text-[#D3D925] border-[#D3D925]/20 bg-[#D3D925]/10">{s.code || "—"}</Badge>
                                         <span className="font-bold text-sm">{s.name}</span>
                                         <Badge variant="secondary" className="text-[9px] font-bold uppercase ml-2">{s.type}</Badge>
+                                        {s.isSearchable && <Badge variant="outline" className="text-[9px] font-bold uppercase border-blue-500/30 text-blue-400 bg-blue-500/10 ml-2">Searchable</Badge>}
+                                        {s.isRouteStop && <Badge variant="outline" className="text-[9px] font-bold uppercase border-orange-500/30 text-orange-400 bg-orange-500/10 ml-2">Route Stop</Badge>}
                                       </div>
                                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => { setEditStop(s); setEditForm({ name: s.name, type: s.type, province: s.province || "", district: s.district || "", municipality: s.municipality || "", aliases: (s.aliases || []).join(", "), lat: s.coordinates?.lat?.toString() || "", lng: s.coordinates?.lng?.toString() || "" }); }} className="w-7 h-7 rounded-lg border border-white/10 bg-black flex items-center justify-center hover:bg-white/10 transition-all"><Pencil className="w-3 h-3" /></button>
+                                        <button onClick={() => { setEditStop(s); setEditForm({ name: s.name, type: s.type, province: s.province || "", district: s.district || "", municipality: s.municipality || "", aliases: (s.aliases || []).join(", "), lat: s.coordinates?.lat?.toString() || "", lng: s.coordinates?.lng?.toString() || "", isSearchable: s.isSearchable ?? true, isRouteStop: s.isRouteStop ?? false, parentStopId: s.parentStopId || "none" }); }} className="w-7 h-7 rounded-lg border border-white/10 bg-black flex items-center justify-center hover:bg-white/10 transition-all"><Pencil className="w-3 h-3" /></button>
                                         <button onClick={() => setDeleteTarget(s)} className="w-7 h-7 rounded-lg border border-white/10 bg-black flex items-center justify-center hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive transition-all"><Trash2 className="w-3 h-3" /></button>
                                       </div>
                                     </div>
