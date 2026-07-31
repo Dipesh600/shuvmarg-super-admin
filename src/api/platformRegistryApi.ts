@@ -22,6 +22,16 @@ export const getAllStops = async () => {
     return data;
 };
 
+export const updateStop = async (id: string, payload: Record<string, unknown>) => {
+    const { data } = await api.put(`/registry/stops/${id}`, payload);
+    return data;
+};
+
+export const deleteStop = async (id: string) => {
+    const { data } = await api.delete(`/registry/stops/${id}`);
+    return data;
+};
+
 export const searchStops = async (q: string) => {
     const { data } = await api.get("/registry/stops/search", { params: { q } });
     return data;
