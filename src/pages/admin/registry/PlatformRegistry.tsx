@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, MapPin, Globe, ArrowRight, Sparkles, Route, Pencil, Trash2, Search, X, ChevronRight, ChevronDown, Navigation } from "lucide-react";
+import { Plus, Loader2, Database, MapPin, Globe, ArrowRight, Sparkles, Route, Pencil, Trash2, Search, X, ChevronRight, ChevronDown, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import { createCorridor, getAllCorridors, updateCorridor, deleteCorridor, getVariantsByCorridor, updateVariant, deleteVariant, createRegistryBoardingPoint, getBoardingPointsByStop, updateRegistryBoardingPoint, deleteRegistryBoardingPoint, getAllRouteRequests } from "@/api/platformRegistryApi";
 import { CreateVariantModal, MapStopsModal } from "./VariantModals";
