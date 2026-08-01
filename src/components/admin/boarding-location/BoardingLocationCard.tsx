@@ -1,4 +1,4 @@
-import { MapPin, Pencil, ShieldCheck, ShieldQuestion } from "lucide-react";
+import { MapPin, MoreHorizontal, Pencil, ShieldCheck, ShieldQuestion } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { BoardingLocation } from "./boardingLocationTypes";
@@ -16,9 +16,9 @@ export function BoardingLocationCard({
 }) {
   const verified = location.verificationStatus === "VERIFIED";
   return (
-    <article className="group rounded-2xl border border-white/10 bg-white/[0.025] p-4 transition hover:border-white/20 hover:bg-white/[0.04]">
+    <article className="group rounded-2xl border border-white/10 bg-white/[0.025] p-4 transition hover:border-[#EA4B2A]/25 hover:bg-white/[0.04]">
       <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-[#D3D925]/10 p-2 text-[#D3D925]"><MapPin className="size-4" /></div>
+        <div className="rounded-xl bg-[#EA4B2A]/10 p-2 text-[#EA4B2A]"><MapPin className="size-4" /></div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-bold text-white">{location.name}</h3>
@@ -28,13 +28,13 @@ export function BoardingLocationCard({
             </Badge>
             {location.status === "INACTIVE" && <Badge variant="outline">Inactive</Badge>}
           </div>
-          {location.landmark && <p className="mt-1 text-sm text-white/65">{location.landmark}</p>}
-          <p className="mt-2 font-mono text-[11px] text-white/40">{location.coordinates.lat.toFixed(6)}, {location.coordinates.lng.toFixed(6)}</p>
+          {(location.landmark || location.address) && <p className="mt-1 text-sm text-white/60">{location.landmark || location.address}</p>}
+          <p className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-white/30">{location.source.replaceAll("_", " ")}</p>
           {location.aliases.length > 0 && <p className="mt-2 truncate text-xs text-white/40">Also known as {location.aliases.join(", ")}</p>}
         </div>
         <div className="flex gap-1 opacity-70 transition group-hover:opacity-100">
-          <Button size="icon" variant="outline" className="size-8" onClick={onEdit} aria-label={`Edit ${location.name}`}><Pencil className="size-3.5" /></Button>
-          {location.status === "ACTIVE" && <Button size="sm" variant="outline" className="h-8 text-xs" disabled={deactivating} onClick={onDeactivate}>Deactivate</Button>}
+          <Button size="sm" variant="outline" className="h-8" onClick={onEdit}><Pencil className="size-3.5" />Edit</Button>
+          {location.status === "ACTIVE" && <Button size="icon" variant="ghost" className="size-8 text-white/45" disabled={deactivating} onClick={onDeactivate} aria-label={`Deactivate ${location.name}`}><MoreHorizontal className="size-4" /></Button>}
         </div>
       </div>
     </article>

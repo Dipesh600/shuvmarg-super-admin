@@ -7,9 +7,16 @@ import { NEPAL_CENTER } from "./boardingLocationMapUtils";
 
 const markerIcon = L.divIcon({
   className: "",
-  html: '<span style="display:block;width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#D3D925;border:3px solid #0a0a0a;box-shadow:0 4px 14px rgba(0,0,0,.45)"></span>',
+  html: '<span style="display:block;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#EA4B2A;border:3px solid white;box-shadow:0 4px 16px rgba(0,0,0,.45)"></span>',
   iconSize: [22, 22],
   iconAnchor: [11, 22],
+});
+
+const stopIcon = L.divIcon({
+  className: "",
+  html: '<span style="display:block;width:14px;height:14px;border-radius:50%;background:#30343B;border:3px solid white;box-shadow:0 3px 12px rgba(0,0,0,.4)"></span>',
+  iconSize: [14, 14],
+  iconAnchor: [7, 7],
 });
 
 function MapEvents({ onChange }: { onChange: (value: BoardingCoordinates) => void }) {
@@ -56,7 +63,8 @@ export function BoardingLocationMapPicker({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         <MapEvents onChange={onChange} />
-        <Recenter position={value} />
+        <Recenter position={value || center} />
+        {center && <Marker interactive={false} icon={stopIcon} position={[center.lat, center.lng]} />}
         {value && (
           <Marker
             draggable
@@ -73,7 +81,7 @@ export function BoardingLocationMapPicker({
         )}
       </MapContainer>
       <div className="pointer-events-none absolute bottom-7 left-3 z-[500] rounded-lg bg-[#0a0a0a]/85 px-3 py-2 text-[11px] text-white/70">
-        Click the map or drag the marker to set the exact location.
+        Grey: route stop · Orange: exact boarding place
       </div>
     </div>
   );
