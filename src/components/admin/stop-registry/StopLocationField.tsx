@@ -4,12 +4,14 @@ import { StopMapPicker } from "./StopMapPicker";
 import { stopDistanceMeters, validStopCoordinates } from "./stopMapSelection";
 
 export function StopLocationField({
-  value, parentStop, allStops, editingStopId, onSelect,
+  value, parentStop, allStops, editingStopId, searchHint, searchContext, onSelect,
 }: {
   value: StopMapSelection | null;
   parentStop: AdminStop | null;
   allStops: AdminStop[];
   editingStopId?: string | null;
+  searchHint: string;
+  searchContext: string;
   onSelect: (selection: StopMapSelection) => void;
 }) {
   const focus = value?.coordinates || (validStopCoordinates(parentStop?.coordinates)
@@ -38,7 +40,7 @@ export function StopLocationField({
       {value ? <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300"><CheckCircle2 className="size-3.5" />Position selected</span>
         : <span className="flex items-center gap-1.5 rounded-full bg-orange-500/10 px-2.5 py-1 text-[11px] font-semibold text-orange-300"><MapPin className="size-3.5" />Required</span>}
     </div>
-    <StopMapPicker value={value} parentStop={parentStop} nearbyStops={nearbyStops} onSelect={onSelect} />
+    <StopMapPicker value={value} parentStop={parentStop} nearbyStops={nearbyStops} searchHint={searchHint} searchContext={searchContext} onSelect={onSelect} />
     {value && <div className="grid gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs sm:grid-cols-2">
       <div><span className="text-white/45">Captured position</span><p className="mt-1 font-mono text-white/85">{value.coordinates.lat.toFixed(6)}, {value.coordinates.lng.toFixed(6)}</p></div>
       <div><span className="text-white/45">Map result</span><p className="mt-1 text-white/85">{value.coordinateSuggestedAddress || "Pinned position confirmed"}</p></div>

@@ -7,14 +7,16 @@ import { NEPAL_CENTER } from "./boardingLocationMapUtils";
 import { BOARDING_MAP_STYLES, boardingMarkerIcon } from "./boardingGoogleMapPresentation";
 import { getSuggestedLocationType, getSuggestedPlaceName } from "./boardingGooglePlaceDetails";
 import { BoardingLocationMapToolbar } from "./BoardingLocationMapToolbar";
+import { normalizeGooglePlaceAddress } from "@/lib/googlePlaceFormatting";
 
 type GoogleResult = google.maps.places.PlaceResult | google.maps.GeocoderResult;
 
 export function BoardingLocationMapPicker({
-  value, center, existingLocations, onChange,
+  value, center, routeStopName, existingLocations, onChange,
 }: {
   value: BoardingCoordinates | null;
   center: BoardingCoordinates | null;
+  routeStopName: string;
   existingLocations: BoardingLocation[];
   onChange: (selection: BoardingMapSelection) => void;
 }) {
@@ -79,7 +81,7 @@ export function BoardingLocationMapPicker({
           providerMetadata: {
             provider: "GOOGLE",
             placeId: place?.place_id || result?.place_id || null,
-            suggestedAddress: place?.formatted_address || result?.formatted_address || null,
+            suggestedAddress: normalizeGooglePlaceAddress(place || result),
           },
         });
         if (place) publish();
@@ -106,7 +108,7 @@ export function BoardingLocationMapPicker({
         const place = autocomplete.getPlace();
         const position = place.geometry?.location;
         if (position) {
-          setSearchText(place.name || place.formatted_address || "");
+          setSearchText(place.name || normalizeGooglePlaceAddress(place) || "");
           select(position.toJSON(), "GOOGLE_PLACE", undefined, place);
         }
       }));
@@ -141,7 +143,7 @@ export function BoardingLocationMapPicker({
           setError("No matching place was found. Try a nearby landmark or place the pin manually.");
           return;
         }
-        setSearchText(result.formatted_address);
+        setSearchText(normalizeGooglePlaceAddress(result) || result.formatted_address);
         selectRef.current?.(position.toJSON(), "GOOGLE_PLACE", undefined, result);
       },
     );
@@ -160,9 +162,13 @@ export function BoardingLocationMapPicker({
     <div className="relative min-h-[460px] overflow-hidden rounded-2xl border border-white/10 bg-[#121212]">
       <div ref={containerRef} className="absolute inset-0" />
       <BoardingLocationMapToolbar inputRef={searchRef} value={searchText} searching={searching} onChange={setSearchText} onSearch={searchMap} onCurrentLocation={useCurrentLocation} />
+      {center && <div className="pointer-events-none absolute left-3 top-[68px] z-10 flex items-center gap-2 rounded-lg border border-white/10 bg-[#0a0a0a]/90 px-3 py-2 text-xs text-white/80 shadow-lg">
+        <span className="size-2.5 rounded-full bg-[#555B65] ring-2 ring-white/20" />
+        Route stop: <strong className="text-white">{routeStopName}</strong>
+      </div>}
       {loading && <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#121212]"><Loader2 className="size-6 animate-spin text-[#F97316]" /></div>}
       {error && <p className="absolute bottom-14 left-3 right-3 z-10 rounded-lg bg-red-950/90 px-3 py-2 text-xs text-red-100">{error}</p>}
-      <div className="pointer-events-none absolute bottom-7 left-3 z-10 rounded-lg bg-[#0a0a0a]/90 px-3 py-2 text-[11px] text-white/70">Search, click, or drag the pin · Grey: route stop · Orange: saved places</div>
+      <div className="pointer-events-none absolute bottom-7 left-3 z-10 rounded-lg bg-[#0a0a0a]/90 px-3 py-2 text-[11px] text-white/70">Grey: selected route stop · Orange: saved places · New pin: draggable</div>
     </div>
   );
 }

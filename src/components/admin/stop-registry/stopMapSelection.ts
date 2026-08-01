@@ -1,5 +1,6 @@
 /// <reference types="google.maps" />
 import type { StopCoordinates, StopMapSelection } from "./stopRegistryTypes";
+import { isGooglePlusCode, normalizeGooglePlaceAddress } from "@/lib/googlePlaceFormatting";
 
 type PlaceLike = {
   name?: string;
@@ -20,6 +21,8 @@ export function buildStopMapSelection(
   place?: PlaceLike,
   accuracy?: number,
 ): StopMapSelection {
+  const normalizedAddress = normalizeGooglePlaceAddress(place);
+  const placeName = place?.name?.trim();
   return {
     coordinates,
     coordinateSource: source,
@@ -27,8 +30,9 @@ export function buildStopMapSelection(
     coordinateCapturedAt: new Date().toISOString(),
     coordinateProvider: "GOOGLE",
     coordinatePlaceId: place?.place_id || null,
-    coordinateSuggestedAddress: place?.formatted_address || null,
-    suggestedName: place?.name || place?.formatted_address?.split(",")[0]?.trim(),
+    coordinateSuggestedAddress: normalizedAddress,
+    suggestedName: placeName && !isGooglePlusCode(placeName)
+      ? placeName : normalizedAddress?.split(",")[0]?.trim(),
     suggestedProvince: component(place, ["administrative_area_level_1"]),
     suggestedDistrict: component(place, ["administrative_area_level_2"]),
     suggestedMunicipality: component(place, [

@@ -84,6 +84,8 @@ export const StopForm: React.FC<StopFormProps> = ({
           parentStop={parentStop}
           allStops={allStops}
           editingStopId={editingStopId}
+          searchHint={form.name}
+          searchContext={[form.municipality, form.district, form.province, "Nepal"].filter(Boolean).join(", ")}
           onSelect={handleMapSelection}
         />
       </div>

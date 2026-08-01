@@ -12,10 +12,14 @@ import { buildStopMapSelection, validStopCoordinates } from "./stopMapSelection"
 const NEPAL_CENTER: StopCoordinates = { lat: 28.3949, lng: 84.124 };
 type GooglePlace = google.maps.places.PlaceResult | google.maps.GeocoderResult;
 
-export function StopMapPicker({ value, parentStop, nearbyStops, onSelect }: {
+export function StopMapPicker({
+  value, parentStop, nearbyStops, searchHint, searchContext, onSelect,
+}: {
   value: StopMapSelection | null;
   parentStop: AdminStop | null;
   nearbyStops: AdminStop[];
+  searchHint: string;
+  searchContext: string;
   onSelect: (selection: StopMapSelection) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -24,11 +28,13 @@ export function StopMapPicker({ value, parentStop, nearbyStops, onSelect }: {
   const geocoderRef = useRef<google.maps.Geocoder | null>(null);
   const onSelectRef = useRef(onSelect);
   const initialRef = useRef({ value, parentStop, nearbyStops });
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
+  const suggestedSearch = [searchHint.trim(), searchContext.trim()].filter(Boolean).join(", ");
+  const visibleSearchText = searchText ?? suggestedSearch;
 
   useEffect(() => {
     let disposed = false;
@@ -105,10 +111,13 @@ export function StopMapPicker({ value, parentStop, nearbyStops, onSelect }: {
   }, []);
 
   const search = () => {
-    const query = searchText.trim();
+    const query = visibleSearchText.trim();
     if (!query || !geocoderRef.current) return setError("Enter a stop, town, junction or landmark to search.");
     setSearching(true); setError("");
-    geocoderRef.current.geocode({ address: query, componentRestrictions: { country: "NP" } }, (results, status) => {
+    const contextualQuery = searchContext.trim() &&
+      !query.toLocaleLowerCase().includes(searchContext.trim().toLocaleLowerCase())
+      ? `${query}, ${searchContext}` : query;
+    geocoderRef.current.geocode({ address: contextualQuery, componentRestrictions: { country: "NP" } }, (results, status) => {
       setSearching(false);
       const result = results?.[0]; const position = result?.geometry.location;
       if (status !== "OK" || !result || !position) return setError("No matching place was found. Try a nearby landmark or click the map.");
@@ -130,7 +139,7 @@ export function StopMapPicker({ value, parentStop, nearbyStops, onSelect }: {
     <div ref={containerRef} className="absolute inset-0" />
     <form className="absolute left-3 right-3 top-3 z-10 flex gap-2 rounded-xl border border-white/10 bg-[#0a0a0a]/95 p-2 shadow-xl" onSubmit={(event) => { event.preventDefault(); search(); }}>
       <MapPin className="ml-2 mt-2 size-4 shrink-0 text-[#F97316]" />
-      <Input ref={searchRef} value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="Search stop, town, junction or landmark" className="h-9 border-0 bg-transparent text-sm focus-visible:ring-0" />
+      <Input ref={searchRef} value={visibleSearchText} onChange={(event) => setSearchText(event.target.value)} placeholder="Search stop, town, junction or landmark" className="h-9 border-0 bg-transparent text-sm focus-visible:ring-0" />
       <Button type="submit" size="sm" className="h-9 bg-[#F97316] text-black hover:bg-[#fb923c]" disabled={searching}>{searching ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}<span className="hidden sm:inline">Search</span></Button>
       <Button type="button" variant="outline" size="sm" className="h-9" onClick={currentLocation}><Crosshair className="size-4" /><span className="hidden xl:inline">Current location</span></Button>
     </form>

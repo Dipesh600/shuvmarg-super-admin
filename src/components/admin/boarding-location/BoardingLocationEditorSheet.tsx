@@ -11,12 +11,14 @@ import { NearbyLocationMatches } from "./NearbyLocationMatches";
 import { createBoardingLocation, findNearbyBoardingLocations, updateBoardingLocation } from "./boardingLocationApi";
 import { distanceMeters, validCoordinates } from "./boardingLocationMapUtils";
 import type { BoardingLocationEditorProps, BoardingLocationFormState, BoardingMapSelection } from "./boardingLocationTypes";
+import { normalizeGooglePlaceAddress } from "@/lib/googlePlaceFormatting";
 
 function initialState(props: BoardingLocationEditorProps): BoardingLocationFormState {
   const location = props.location;
   return {
     name: location?.name || "", aliases: location?.aliases.join(", ") || "",
-    landmark: location?.landmark || "", address: location?.address || "",
+    landmark: location?.landmark || "",
+    address: normalizeGooglePlaceAddress(location?.address) || "",
     locationType: location?.locationType || "ROADSIDE",
     gateOrBay: location?.gateOrBay || "", directionHint: location?.directionHint || "",
     coordinates: location?.coordinates || null,
@@ -102,7 +104,8 @@ export function BoardingLocationEditorSheet(props: BoardingLocationEditorProps) 
         </SheetHeader>
         <div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-3">
-            <BoardingLocationMapPicker value={form.coordinates} center={stopCoordinates} existingLocations={existingForMap} onChange={applyMapSelection} />
+            <BoardingLocationMapPicker value={form.coordinates} center={stopCoordinates} routeStopName={props.stop.name} existingLocations={existingForMap} onChange={applyMapSelection} />
+            {!stopCoordinates && <p className="flex gap-2 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-200"><AlertTriangle className="size-4 shrink-0" />{props.stop.name} has no registered map position yet, so it cannot be shown as the reference marker. Add its coordinates in Stop Registry first.</p>}
             {farFromStop && <p className="flex gap-2 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-200"><AlertTriangle className="size-4 shrink-0" />This point is over 5 km from {props.stop.name}. Check the route stop and marker.</p>}
             <NearbyLocationMatches locations={nearbyLocations} onUse={(location) => { props.onSaved(location); props.onOpenChange(false); }} reason={nearbyReason} onReasonChange={setNearbyReason} />
           </div>
