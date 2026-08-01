@@ -185,3 +185,13 @@
   scrollbar-width: thin;
   scrollbar-color: #3B3B3F transparent;
 }
+/* Google Places suggestions render outside Radix sheets. */
+.pac-container {
+  z-index: 100000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: #111 !important;
+  color: #fff !important;
+}
+.pac-item { border-color: rgba(255, 255, 255, 0.08) !important; color: #aaa !important; }
+.pac-item:hover, .pac-item-selected { background: #1f1f1f !important; }
+.pac-item-query { color: #fff !important; }
