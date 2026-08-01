@@ -5,13 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { getAllStops, createStop, updateStop, deleteStop } from "@/api/platformRegistryApi";
-import {
-  AdminStop,
-  StopFilterState,
-  StopFormState,
-  getStopId,
-  getParentStopIdString,
-} from "./stopRegistryTypes";
+import { getStopId, getParentStopIdString } from "./stopRegistryTypes";
+import type { AdminStop, StopFilterState, StopFormState } from "./stopRegistryTypes";
 import { buildStopTree, getAncestorStopIds, getChildStopsForParent } from "./stopRegistryTree";
 import { filterStops, DEFAULT_STOP_FILTERS } from "./stopRegistryFilters";
 import { StopRegistryHeader } from "./StopRegistryHeader";
@@ -39,8 +34,7 @@ const EMPTY_FORM: StopFormState = {
   district: "",
   municipality: "",
   aliases: "",
-  lat: "",
-  lng: "",
+  mapSelection: null,
   isSearchable: true,
   isRouteStop: false,
   parentStopId: "none",
@@ -140,8 +134,20 @@ export const StopRegistryWorkspace: React.FC = () => {
       district: stop.district || "",
       municipality: stop.municipality || "",
       aliases: Array.isArray(stop.aliases) ? stop.aliases.join(", ") : "",
-      lat: stop.coordinates?.lat?.toString() || "",
-      lng: stop.coordinates?.lng?.toString() || "",
+      mapSelection:
+        Number.isFinite(stop.coordinates?.lat) && Number.isFinite(stop.coordinates?.lng)
+          ? {
+              coordinates: {
+                lat: Number(stop.coordinates?.lat), lng: Number(stop.coordinates?.lng),
+              },
+              coordinateSource: stop.coordinateSource || "MAP_PIN",
+              coordinateAccuracyMeters: stop.coordinateAccuracyMeters ?? null,
+              coordinateCapturedAt: stop.coordinateCapturedAt || new Date().toISOString(),
+              coordinateProvider: stop.coordinateProvider ?? null,
+              coordinatePlaceId: stop.coordinatePlaceId ?? null,
+              coordinateSuggestedAddress: stop.coordinateSuggestedAddress ?? null,
+            }
+          : null,
       isSearchable: stop.isSearchable ?? true,
       isRouteStop: stop.isRouteStop ?? false,
       parentStopId: parentId || "none",
@@ -219,14 +225,8 @@ export const StopRegistryWorkspace: React.FC = () => {
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
 
-    const parsedLat = formState.lat !== "" ? Number(formState.lat) : null;
-    const parsedLng = formState.lng !== "" ? Number(formState.lng) : null;
-
-    if (parsedLat !== null && (isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90)) {
-      return toast.error("Latitude must be a valid number between -90 and 90.");
-    }
-    if (parsedLng !== null && (isNaN(parsedLng) || parsedLng < -180 || parsedLng > 180)) {
-      return toast.error("Longitude must be a valid number between -180 and 180.");
+    if (!formState.mapSelection) {
+      return toast.error("Select the stop position on the map before saving.");
     }
 
     const payload: Parameters<typeof createStop>[0] = {
@@ -236,8 +236,16 @@ export const StopRegistryWorkspace: React.FC = () => {
       district: formState.district.trim() || undefined,
       municipality: formState.municipality.trim() || undefined,
       aliases: aliasesArray,
-      coordinates:
-        parsedLat !== null && parsedLng !== null ? { lat: parsedLat, lng: parsedLng } : undefined,
+      isSearchable: formState.isSearchable,
+      isRouteStop: formState.isRouteStop,
+      parentStopId: formState.parentStopId === "none" ? null : formState.parentStopId,
+      coordinates: formState.mapSelection.coordinates,
+      coordinateSource: formState.mapSelection.coordinateSource,
+      coordinateAccuracyMeters: formState.mapSelection.coordinateAccuracyMeters,
+      coordinateCapturedAt: formState.mapSelection.coordinateCapturedAt,
+      coordinateProvider: formState.mapSelection.coordinateProvider,
+      coordinatePlaceId: formState.mapSelection.coordinatePlaceId,
+      coordinateSuggestedAddress: formState.mapSelection.coordinateSuggestedAddress,
     };
 
     if (editingStop) {
@@ -247,9 +255,6 @@ export const StopRegistryWorkspace: React.FC = () => {
           id: editId,
           payload: {
             ...payload,
-            isSearchable: formState.isSearchable,
-            isRouteStop: formState.isRouteStop,
-            parentStopId: formState.parentStopId === "none" ? null : formState.parentStopId,
           },
         });
       }

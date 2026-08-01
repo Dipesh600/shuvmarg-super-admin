@@ -2,7 +2,8 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, MapPin, Pencil } from "lucide-react";
-import { AdminStop, StopFormState, getStopId } from "./stopRegistryTypes";
+import { getStopId } from "./stopRegistryTypes";
+import type { AdminStop, StopFormState } from "./stopRegistryTypes";
 import { StopForm } from "./StopForm";
 
 interface StopEditorSheetProps {
@@ -33,7 +34,7 @@ export const StopEditorSheet: React.FC<StopEditorSheetProps> = ({
     <Dialog open={open} onOpenChange={(val) => { if (!val) onClose(); }}>
       <DialogContent
         aria-describedby={undefined}
-        className="sm:max-w-[560px] max-h-[90vh] rounded-2xl border-none shadow-2xl p-0 overflow-hidden flex flex-col bg-[#0a0a0a]"
+        className="sm:max-w-[1120px] max-h-[92vh] rounded-2xl border-none shadow-2xl p-0 overflow-hidden flex flex-col bg-[#0a0a0a]"
       >
         {/* Sheet Header */}
         <div className="bg-[#121212] p-6 border-b border-white/5 text-white shrink-0">
@@ -75,7 +76,7 @@ export const StopEditorSheet: React.FC<StopEditorSheetProps> = ({
           </Button>
           <Button
             onClick={onSubmit}
-            disabled={isSubmitting || !formState.name.trim()}
+            disabled={isSubmitting || !formState.name.trim() || !formState.mapSelection}
             className="h-10 rounded-xl font-bold bg-[#D3D925] text-black hover:bg-[#D9CD25] px-6 gap-2"
           >
             {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}

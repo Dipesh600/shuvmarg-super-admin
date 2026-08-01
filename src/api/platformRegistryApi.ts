@@ -11,7 +11,16 @@ export const createStop = async (payload: {
     municipality?: string; 
     status?: string; 
     aliases?: string[];
+    isSearchable?: boolean;
+    isRouteStop?: boolean;
+    parentStopId?: string | null;
     coordinates?: { lat: number; lng: number };
+    coordinateSource?: "GOOGLE_PLACE" | "MAP_PIN" | "ADMIN_GPS" | "DISCOVERY";
+    coordinateAccuracyMeters?: number | null;
+    coordinateCapturedAt?: string;
+    coordinateProvider?: "GOOGLE" | "MAPBOX" | null;
+    coordinatePlaceId?: string | null;
+    coordinateSuggestedAddress?: string | null;
 }) => {
     const { data } = await api.post("/registry/stops", payload);
     return data;
@@ -114,6 +123,12 @@ export const updateStop = async (id: string, payload: {
     municipality?: string | null;
     aliases?: string[];
     coordinates?: { lat: number; lng: number };
+    coordinateSource?: "GOOGLE_PLACE" | "MAP_PIN" | "ADMIN_GPS" | "DISCOVERY";
+    coordinateAccuracyMeters?: number | null;
+    coordinateCapturedAt?: string;
+    coordinateProvider?: "GOOGLE" | "MAPBOX" | null;
+    coordinatePlaceId?: string | null;
+    coordinateSuggestedAddress?: string | null;
     status?: string;
     isSearchable?: boolean;
     isRouteStop?: boolean;
