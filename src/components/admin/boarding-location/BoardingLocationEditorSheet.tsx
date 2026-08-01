@@ -86,10 +86,9 @@ export function BoardingLocationEditorSheet(props: BoardingLocationEditorProps) 
     coordinateAccuracyMeters: selection.coordinateAccuracyMeters,
     capturedAt: selection.capturedAt,
     providerMetadata: selection.providerMetadata || null,
-    name: current.name || selection.suggestedName || "",
-    address: current.address || selection.providerMetadata?.suggestedAddress || "",
-    locationType: current.locationType === "ROADSIDE" && selection.suggestedLocationType
-      ? selection.suggestedLocationType : current.locationType,
+    name: selection.suggestedName || current.name,
+    address: selection.providerMetadata?.suggestedAddress || current.address,
+    locationType: selection.suggestedLocationType || current.locationType,
   }));
   const canSubmit = Boolean(form.name.trim() && form.coordinates) &&
     (props.location !== null || nearbyLocations.length === 0 || Boolean(nearbyReason));
@@ -104,8 +103,8 @@ export function BoardingLocationEditorSheet(props: BoardingLocationEditorProps) 
         </SheetHeader>
         <div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-3">
-            <BoardingLocationMapPicker value={form.coordinates} center={stopCoordinates} routeStopName={props.stop.name} existingLocations={existingForMap} onChange={applyMapSelection} />
-            {!stopCoordinates && <p className="flex gap-2 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-200"><AlertTriangle className="size-4 shrink-0" />{props.stop.name} has no registered map position yet, so it cannot be shown as the reference marker. Add its coordinates in Stop Registry first.</p>}
+            <BoardingLocationMapPicker key={stopId} value={form.coordinates} routeStop={props.stop} existingLocations={existingForMap} onChange={applyMapSelection} />
+            {!stopCoordinates && <p className="flex gap-2 rounded-xl border border-sky-400/20 bg-sky-400/10 p-3 text-xs text-sky-100"><AlertTriangle className="size-4 shrink-0" />{props.stop.name} has no saved coordinates, so the map locates it from its name, municipality, district and province. Confirm the grey reference marker before placing the boarding point.</p>}
             {farFromStop && <p className="flex gap-2 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-200"><AlertTriangle className="size-4 shrink-0" />This point is over 5 km from {props.stop.name}. Check the route stop and marker.</p>}
             <NearbyLocationMatches locations={nearbyLocations} onUse={(location) => { props.onSaved(location); props.onOpenChange(false); }} reason={nearbyReason} onReasonChange={setNearbyReason} />
           </div>
