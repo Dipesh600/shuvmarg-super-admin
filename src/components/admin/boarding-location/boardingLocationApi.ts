@@ -1,5 +1,5 @@
 import { api } from "@/api/axios";
-import type { BoardingCoordinates, BoardingLocation } from "./boardingLocationTypes";
+import type { BoardingAssignmentReview, BoardingCoordinates, BoardingLocation } from "./boardingLocationTypes";
 
 type LocationPayload = {
   stopId: string;
@@ -53,4 +53,21 @@ export async function findNearbyBoardingLocations(
     },
   });
   return response.data.data as BoardingLocation[];
+}
+
+export async function listBoardingAssignmentReviews(status = "PENDING_REVIEW") {
+  const response = await api.get("/registry/operator-boarding-assignments", {
+    params: { status },
+  });
+  return response.data.data as BoardingAssignmentReview[];
+}
+
+export async function reviewBoardingAssignment(
+  id: string, status: "ACTIVE" | "REJECTED", rejectionReason?: string,
+) {
+  const response = await api.patch(
+    `/registry/operator-boarding-assignments/${id}/review`,
+    { status, rejectionReason },
+  );
+  return response.data.data as BoardingAssignmentReview;
 }

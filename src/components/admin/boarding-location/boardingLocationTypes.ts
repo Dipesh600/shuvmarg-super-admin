@@ -36,3 +36,16 @@ export interface BoardingLocationEditorProps {
   onOpenChange: (open: boolean) => void;
   onSaved: (location: BoardingLocation) => void;
 }
+
+export interface BoardingAssignmentReview {
+  id: string;
+  usage: "PICKUP" | "DROP" | "BOTH";
+  displayName: string | null;
+  status: "PENDING_REVIEW" | "ACTIVE" | "INACTIVE" | "REJECTED";
+  rejectionReason: string | null;
+  boardingLocation: {
+    id: string; name: string; status: string; verificationStatus: string;
+    stop: { id: string; name: string; code: string } | null;
+  } | null;
+  brand: { id: string; name: string; code: string; status: string } | null;
+}

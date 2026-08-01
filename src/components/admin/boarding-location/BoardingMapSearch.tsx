@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,9 +20,15 @@ export function BoardingMapSearch({
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const lastRequestAt = useRef(0);
 
   async function search() {
     if (query.trim().length < 3 || loading) return;
+    if (Date.now() - lastRequestAt.current < 1_000) {
+      setError("Please wait a moment before searching again.");
+      return;
+    }
+    lastRequestAt.current = Date.now();
     setLoading(true);
     setError("");
     try {
@@ -73,6 +79,7 @@ export function BoardingMapSearch({
               {result.display_name}
             </button>
           ))}
+          <p className="px-3 py-2 text-[10px] text-white/35">Search data © OpenStreetMap contributors</p>
         </div>
       )}
     </div>

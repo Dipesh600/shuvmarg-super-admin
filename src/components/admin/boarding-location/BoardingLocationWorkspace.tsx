@@ -10,6 +10,7 @@ import { BoardingLocationCard } from "./BoardingLocationCard";
 import { BoardingLocationEditorSheet } from "./BoardingLocationEditorSheet";
 import { BoardingStopSelector } from "./BoardingStopSelector";
 import { DeactivateBoardingLocationDialog } from "./DeactivateBoardingLocationDialog";
+import { OperatorAssignmentReviewPanel } from "./OperatorAssignmentReviewPanel";
 import { deactivateBoardingLocation, listBoardingLocations } from "./boardingLocationApi";
 import { validCoordinates } from "./boardingLocationMapUtils";
 import type { BoardingLocation } from "./boardingLocationTypes";
@@ -55,14 +56,15 @@ export function BoardingLocationWorkspace() {
         <Button disabled={!selectedStop} onClick={() => setEditor({ open: true, location: null })}><Plus className="size-4" />Add location</Button>
       </header>
       <div className="flex flex-col gap-5 lg:flex-row">
-        <BoardingStopSelector stops={stops} selected={selectedStop} search={search} onSearch={setSearch} onSelect={setSelectedStop} />
+        {stopsQuery.isError ? <QueryError message="Unable to load operational route stops." onRetry={() => void stopsQuery.refetch()} /> : <BoardingStopSelector stops={stops} selected={selectedStop} search={search} onSearch={setSearch} onSelect={setSelectedStop} />}
         <section className="min-h-[570px] min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#0a0a0a]">
           {!selectedStop ? <Empty message="Select an operational route stop to manage its exact boarding locations." /> : <>
             <div className="flex items-center justify-between border-b border-white/10 p-5"><div><h3 className="font-bold text-white">{selectedStop.name}</h3><p className="text-xs text-white/40">{selectedStop.code} · {locations.length} canonical location{locations.length === 1 ? "" : "s"}</p></div>{validCoordinates(selectedStop.coordinates) && <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] text-emerald-300">Stop fallback eligible</span>}</div>
-            <div className="space-y-3 p-5">{locationsQuery.isLoading ? <Loader /> : locations.length === 0 ? <Empty message={validCoordinates(selectedStop.coordinates) ? "No specific location is configured. The route stop itself remains the safe fallback." : "No location exists and this stop has no map coordinates for fallback."} /> : locations.map((location) => <BoardingLocationCard key={location.id} location={location} onEdit={() => setEditor({ open: true, location })} onDeactivate={() => setLocationToDeactivate(location)} deactivating={deactivate.isPending} />)}</div>
+            <div className="space-y-3 p-5">{locationsQuery.isLoading ? <Loader /> : locationsQuery.isError ? <QueryError message="Unable to load boarding locations." onRetry={() => void locationsQuery.refetch()} /> : locations.length === 0 ? <Empty message={validCoordinates(selectedStop.coordinates) ? "No specific location is configured. The route stop itself remains the safe fallback." : "No location exists and this stop has no map coordinates for fallback."} /> : locations.map((location) => <BoardingLocationCard key={location.id} location={location} onEdit={() => setEditor({ open: true, location })} onDeactivate={() => setLocationToDeactivate(location)} deactivating={deactivate.isPending} />)}</div>
           </>}
         </section>
       </div>
+      <OperatorAssignmentReviewPanel />
       {selectedStop && editor.open && <BoardingLocationEditorSheet open stop={selectedStop} location={editor.location} onOpenChange={(open) => setEditor({ open, location: open ? editor.location : null })} onSaved={() => void queryClient.invalidateQueries({ queryKey: ["boarding-locations", stopId] })} />}
       <DeactivateBoardingLocationDialog location={locationToDeactivate} pending={deactivate.isPending} onClose={() => setLocationToDeactivate(null)} onConfirm={() => locationToDeactivate && deactivate.mutate(locationToDeactivate.id)} />
     </div>
@@ -71,3 +73,4 @@ export function BoardingLocationWorkspace() {
 
 function Loader() { return <div className="flex h-40 items-center justify-center"><Loader2 className="size-5 animate-spin text-[#D3D925]" /></div>; }
 function Empty({ message }: { message: string }) { return <div className="flex min-h-56 flex-col items-center justify-center p-8 text-center"><MapPin className="mb-3 size-8 text-white/15" /><p className="max-w-sm text-sm text-white/45">{message}</p></div>; }
+function QueryError({ message, onRetry }: { message: string; onRetry: () => void }) { return <div className="flex min-h-40 flex-col items-center justify-center gap-3 p-6 text-center"><p className="text-sm text-red-300">{message}</p><Button type="button" variant="outline" size="sm" onClick={onRetry}>Retry</Button></div>; }
