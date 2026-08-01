@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,22 +8,20 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Database, MapPin, Globe, ArrowRight, Sparkles, Route, Pencil, Trash2, Search, X, ChevronRight, ChevronDown, Navigation } from "lucide-react";
+import { Plus, Loader2, Database, MapPin, Globe, ArrowRight, Sparkles, Route, Pencil, Trash2, Navigation, ListOrdered } from "lucide-react";
 import { toast } from "sonner";
-import { createCorridor, getAllCorridors, updateCorridor, deleteCorridor, getVariantsByCorridor, updateVariant, deleteVariant, createRegistryBoardingPoint, getBoardingPointsByStop, updateRegistryBoardingPoint, deleteRegistryBoardingPoint, getAllRouteRequests } from "@/api/platformRegistryApi";
+import { createCorridor, getAllCorridors, getAllStops, updateCorridor, deleteCorridor, getVariantsByCorridor, updateVariant, deleteVariant, getAllRouteRequests } from "@/api/platformRegistryApi";
 import { CreateVariantModal, MapStopsModal } from "./VariantModals";
 import RouteRequestsPanel from "./RouteRequestsPanel";
 import { DiscoveryTab } from "./DiscoveryTab";
 import { StopRegistryWorkspace } from "@/components/admin/stop-registry/StopRegistryWorkspace";
-import { cn } from "@/lib/utils";
+import { BoardingLocationWorkspace } from "@/components/admin/boarding-location/BoardingLocationWorkspace";
 
 // ── Layer 1+2: Corridor & Variant Tab ────────────────────────────────────────
 
 // Inline sub-component: shows variants for a corridor row
 const CorridorVariants = ({ corridor, onAddVariant, onMapStops, onEditVariant, onDeleteVariant }: any) => {
-  const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["variants", corridor._id],
     queryFn: () => getVariantsByCorridor(corridor._id),
@@ -61,10 +59,10 @@ const CorridorTab = () => {
   const [stopsModal, setStopsModal] = useState<{ open: boolean; variant: any | null }>({ open: false, variant: null });
   const [editCorridor, setEditCorridor] = useState<any | null>(null);
   const [editCorridorForm, setEditCorridorForm] = useState({ notes: "", isSymmetric: true });
-  const [deleteCorridor, setDeleteCorridor] = useState<any | null>(null);
+  const [corridorToDelete, setCorridorToDelete] = useState<any | null>(null);
   const [editVariant, setEditVariant] = useState<any | null>(null);
   const [editVariantForm, setEditVariantForm] = useState({ name: "", type: "STANDARD", distanceKm: "", durationMinutes: "" });
-  const [deleteVariant, setDeleteVariant] = useState<any | null>(null);
+  const [variantToDelete, setVariantToDelete] = useState<any | null>(null);
 
   const { data: stopsData } = useQuery({ queryKey: ["stops"], queryFn: getAllStops });
   const { data, isLoading } = useQuery({ queryKey: ["corridors"], queryFn: getAllCorridors });
@@ -85,20 +83,20 @@ const CorridorTab = () => {
 
   const deleteCorridorMutation = useMutation({
     mutationFn: (id: string) => deleteCorridor(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["corridors"] }); toast.success("Corridor deleted."); setDeleteCorridor(null); },
-    onError: (e: any) => { toast.error(e.response?.data?.message || e.message); setDeleteCorridor(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["corridors"] }); toast.success("Corridor deleted."); setCorridorToDelete(null); },
+    onError: (e: any) => { toast.error(e.response?.data?.message || e.message); setCorridorToDelete(null); },
   });
 
   const editVariantMutation = useMutation({
     mutationFn: ({ id, payload }: any) => updateVariant(id, payload),
-    onSuccess: (_, vars) => { qc.invalidateQueries({ queryKey: ["variants"] }); toast.success("Variant updated."); setEditVariant(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["variants"] }); toast.success("Variant updated."); setEditVariant(null); },
     onError: (e: any) => toast.error(e.response?.data?.message || e.message),
   });
 
   const deleteVariantMutation = useMutation({
     mutationFn: (id: string) => deleteVariant(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["variants"] }); toast.success("Variant deleted."); setDeleteVariant(null); },
-    onError: (e: any) => { toast.error(e.response?.data?.message || e.message); setDeleteVariant(null); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["variants"] }); toast.success("Variant deleted."); setVariantToDelete(null); },
+    onError: (e: any) => { toast.error(e.response?.data?.message || e.message); setVariantToDelete(null); },
   });
 
   return (
@@ -195,13 +193,13 @@ const CorridorTab = () => {
                     onAddVariant={() => setVariantModal({ open: true, corridor: c })}
                     onMapStops={(v: any) => setStopsModal({ open: true, variant: v })}
                     onEditVariant={(v: any) => { setEditVariant(v); setEditVariantForm({ name: v.name, type: v.type, distanceKm: v.distanceKm || "", durationMinutes: v.durationMinutes || "" }); }}
-                    onDeleteVariant={(v: any) => setDeleteVariant(v)}
+                    onDeleteVariant={(v: any) => setVariantToDelete(v)}
                   />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => { setEditCorridor(c); setEditCorridorForm({ notes: c.notes || "", isSymmetric: c.isSymmetric }); }} className="w-7 h-7 rounded-lg border border-white/10 bg-[#0a0a0a] flex items-center justify-center hover:bg-white/5 transition-all"><Pencil className="w-3 h-3" /></button>
-                    <button onClick={() => setDeleteCorridor(c)} className="w-7 h-7 rounded-lg border border-white/10 bg-[#0a0a0a] flex items-center justify-center hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive transition-all"><Trash2 className="w-3 h-3" /></button>
+                    <button onClick={() => setCorridorToDelete(c)} className="w-7 h-7 rounded-lg border border-white/10 bg-[#0a0a0a] flex items-center justify-center hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive transition-all"><Trash2 className="w-3 h-3" /></button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -235,16 +233,16 @@ const CorridorTab = () => {
     </Dialog>
 
     {/* Delete Corridor Modal */}
-    <Dialog open={!!deleteCorridor} onOpenChange={() => setDeleteCorridor(null)}>
+    <Dialog open={!!corridorToDelete} onOpenChange={() => setCorridorToDelete(null)}>
       <DialogContent className="sm:max-w-[360px] rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
         <div className="bg-[#121212] p-6 border-b border-white/10 text-white"><DialogHeader><DialogTitle className="text-base font-bold text-white flex items-center gap-2"><Trash2 className="w-4 h-4" />Delete Corridor</DialogTitle></DialogHeader></div>
         <div className="p-6 bg-[#0a0a0a] space-y-2">
-          <p className="text-sm font-medium">Delete <strong>{deleteCorridor?.code}</strong>?</p>
+          <p className="text-sm font-medium">Delete <strong>{corridorToDelete?.code}</strong>?</p>
           <p className="text-xs text-white/50">Blocked if fleets are assigned or route sequences exist.</p>
         </div>
         <DialogFooter className="p-6 pt-0 bg-[#0a0a0a] gap-2">
-          <Button variant="outline" onClick={() => setDeleteCorridor(null)} className="font-bold rounded-xl h-10">Cancel</Button>
-          <Button variant="destructive" className="h-10 rounded-xl font-bold px-6" disabled={deleteCorridorMutation.isPending} onClick={() => deleteCorridorMutation.mutate(deleteCorridor._id)}>
+          <Button variant="outline" onClick={() => setCorridorToDelete(null)} className="font-bold rounded-xl h-10">Cancel</Button>
+          <Button variant="destructive" className="h-10 rounded-xl font-bold px-6" disabled={deleteCorridorMutation.isPending} onClick={() => deleteCorridorMutation.mutate(corridorToDelete._id)}>
             {deleteCorridorMutation.isPending && <Loader2 className="mr-2 w-3.5 h-3.5 animate-spin" />} Delete
           </Button>
         </DialogFooter>
@@ -275,13 +273,13 @@ const CorridorTab = () => {
     </Dialog>
 
     {/* Delete Variant Modal */}
-    <Dialog open={!!deleteVariant} onOpenChange={() => setDeleteVariant(null)}>
+    <Dialog open={!!variantToDelete} onOpenChange={() => setVariantToDelete(null)}>
       <DialogContent className="sm:max-w-[340px] rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
         <div className="bg-[#121212] p-6 border-b border-white/10 text-white"><DialogHeader><DialogTitle className="text-base font-bold text-white flex items-center gap-2"><Trash2 className="w-4 h-4" />Delete Variant</DialogTitle></DialogHeader></div>
-        <div className="p-6 bg-[#0a0a0a]"><p className="text-sm font-medium">Delete variant <strong>{deleteVariant?.name}</strong>? Its stop sequence will also be removed.</p></div>
+        <div className="p-6 bg-[#0a0a0a]"><p className="text-sm font-medium">Delete variant <strong>{variantToDelete?.name}</strong>? Its stop sequence will also be removed.</p></div>
         <DialogFooter className="p-6 pt-0 bg-[#0a0a0a] gap-2">
-          <Button variant="outline" onClick={() => setDeleteVariant(null)} className="font-bold rounded-xl h-10">Cancel</Button>
-          <Button variant="destructive" className="h-10 rounded-xl font-bold px-6" disabled={deleteVariantMutation.isPending} onClick={() => deleteVariantMutation.mutate(deleteVariant._id)}>
+          <Button variant="outline" onClick={() => setVariantToDelete(null)} className="font-bold rounded-xl h-10">Cancel</Button>
+          <Button variant="destructive" className="h-10 rounded-xl font-bold px-6" disabled={deleteVariantMutation.isPending} onClick={() => deleteVariantMutation.mutate(variantToDelete._id)}>
             {deleteVariantMutation.isPending && <Loader2 className="mr-2 w-3.5 h-3.5 animate-spin" />} Delete
           </Button>
         </DialogFooter>
@@ -299,170 +297,6 @@ const CorridorTab = () => {
 };
 
 
-// ── Layer 5: Boarding Hubs Tab (multi-hub per stop) ────────────────────────────────────
-const BoardingPointsTab = () => {
-  const qc = useQueryClient();
-  const [selectedStop, setSelectedStop] = useState<any | null>(null);
-  const [stopSearch, setStopSearch] = useState("");
-  const [addOpen, setAddOpen] = useState(false);
-  const [form, setForm] = useState({ pointName: "", landmark: "", type: "BOTH" });
-  const [editPoint, setEditPoint] = useState<any | null>(null);
-  const [editForm, setEditForm] = useState({ pointName: "", landmark: "", type: "BOTH" });
-  const [deletePoint, setDeletePoint] = useState<any | null>(null);
-
-  const { data: stopsData } = useQuery({ queryKey: ["stops"], queryFn: getAllStops });
-  const allStops = stopsData?.data || [];
-  const stops = useMemo(() => allStops.filter((s: any) =>
-    s.name.toLowerCase().includes(stopSearch.toLowerCase()) || s.code.toLowerCase().includes(stopSearch.toLowerCase())
-  ), [allStops, stopSearch]);
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["boarding-points", selectedStop?.code],
-    queryFn: () => getBoardingPointsByStop(selectedStop.code),
-    enabled: !!selectedStop,
-  });
-  const points = data?.data || [];
-
-  const createMutation = useMutation({
-    mutationFn: createRegistryBoardingPoint,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["boarding-points", selectedStop?.code] }); toast.success(`Hub added to ${selectedStop?.name}`); setForm({ pointName: "", landmark: "", type: "BOTH" }); setAddOpen(false); },
-    onError: (e: any) => toast.error(e.response?.data?.message || e.message),
-  });
-
-  const editMutation = useMutation({
-    mutationFn: ({ id, payload }: any) => updateRegistryBoardingPoint(id, payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["boarding-points", selectedStop?.code] }); toast.success("Hub updated."); setEditPoint(null); },
-    onError: (e: any) => toast.error(e.response?.data?.message || e.message),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteRegistryBoardingPoint(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["boarding-points", selectedStop?.code] }); toast.success("Hub deleted."); setDeletePoint(null); },
-    onError: (e: any) => { toast.error(e.response?.data?.message || e.message); setDeletePoint(null); },
-  });
-
-  const typeCls = (type: string) =>
-    type === "BOARDING" ? "bg-white/5 text-white/70 border-white/10"
-    : type === "DROPPING" ? "bg-white/5 text-white border-white/10"
-    : "bg-white/5 text-white/30 border-white/10";
-
-  return (
-    <div className="flex gap-5 h-[560px]">
-      {/* Left: Stop list with search */}
-      <div className="w-56 flex flex-col border rounded-2xl overflow-hidden bg-[#0a0a0a] shrink-0">
-        <div className="px-3 py-3 bg-white/[0.02] border-b space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Stop Registry</p>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-white/50" />
-            <Input placeholder="Search..." className="pl-7 h-7 rounded-lg text-xs" value={stopSearch} onChange={e => setStopSearch(e.target.value)} />
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {stops.length === 0 && <p className="text-[11px] text-white/50 italic p-3">{stopSearch ? "No matches" : "No stops yet."}</p>}
-          {stops.map((s: any) => (
-            <button key={s.code} onClick={() => { setSelectedStop(s); setAddOpen(false); setEditPoint(null); }}
-              className={`w-full text-left px-3 py-2.5 rounded-lg transition-all border ${selectedStop?.code === s.code ? "bg-[#121212] border-b border-white/5 text-white border-white/20" : "border-transparent hover:bg-white/5/60"}`}>
-              <p className={`text-xs font-bold truncate ${selectedStop?.code === s.code ? "text-white" : ""}`}>{s.name}</p>
-              <p className={`text-[9px] uppercase mt-0.5 ${selectedStop?.code === s.code ? "text-white/50" : "text-white/50"}`}>{s.code} · {s.type}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Right: Hub management */}
-      <div className="flex-1 flex flex-col border rounded-2xl overflow-hidden bg-[#0a0a0a] min-w-0">
-        {!selectedStop ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center text-white/50 p-8">
-            <MapPin className="w-10 h-10 mb-3 opacity-15" />
-            <p className="text-sm font-bold">Select a stop</p>
-            <p className="text-xs mt-1 opacity-60">Choose a city from the left to manage its boarding hubs</p>
-          </div>
-        ) : (
-          <>
-            <div className="px-5 py-4 border-b bg-white/[0.02] flex items-center justify-between shrink-0">
-              <div>
-                <p className="font-bold text-sm">{selectedStop.name}</p>
-                <p className="text-[10px] text-white/50 uppercase">{selectedStop.code} · {points.length} hub{points.length !== 1 ? "s" : ""}</p>
-              </div>
-              <Button size="sm" onClick={() => { setAddOpen(v => !v); setEditPoint(null); }}
-                className={`gap-1.5 h-8 text-xs font-bold rounded-xl ${addOpen ? "bg-white/5 text-white hover:bg-white/5/80 border" : "bg-[#121212] border-b border-white/5 text-white hover:bg-white/10"}`}>
-                <Plus className="w-3.5 h-3.5" />{addOpen ? "Cancel" : "Add Hub"}
-              </Button>
-            </div>
-
-            {addOpen && (
-              <div className="px-5 py-4 border-b bg-white/[0.02] shrink-0">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-3">New Hub · {selectedStop.name}</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-2 space-y-1"><Label className="text-[9px] font-bold uppercase tracking-widest text-white/50">Hub Name</Label><Input placeholder="e.g. Kalanki Bus Park" className="h-9 rounded-lg font-bold text-sm" value={form.pointName} onChange={e => setForm({ ...form, pointName: e.target.value })} /></div>
-                  <div className="space-y-1"><Label className="text-[9px] font-bold uppercase tracking-widest text-white/50">Purpose</Label>
-                    <Select value={form.type} onValueChange={v => setForm({ ...form, type: v })}><SelectTrigger className="h-9 rounded-lg font-bold text-sm"><SelectValue /></SelectTrigger><SelectContent className="rounded-xl"><SelectItem value="BOARDING">Boarding</SelectItem><SelectItem value="DROPPING">Dropping</SelectItem><SelectItem value="BOTH">Both</SelectItem></SelectContent></Select>
-                  </div>
-                  <div className="col-span-2 space-y-1"><Label className="text-[9px] font-bold uppercase tracking-widest text-white/50">Landmark (optional)</Label><Input placeholder="Near Kalanki Chowk" className="h-9 rounded-lg text-sm" value={form.landmark} onChange={e => setForm({ ...form, landmark: e.target.value })} /></div>
-                  <div className="flex items-end"><Button className="w-full h-9 rounded-lg font-bold text-sm bg-[#121212] hover:bg-white/10 text-white" disabled={createMutation.isPending || !form.pointName} onClick={() => createMutation.mutate({ stopCode: selectedStop.code, ...form })}>{createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}</Button></div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {isLoading && <div className="flex items-center justify-center h-24"><Loader2 className="w-5 h-5 animate-spin text-white/50/30" /></div>}
-              {!isLoading && points.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-center text-white/50">
-                  <MapPin className="w-8 h-8 mb-2 opacity-15" />
-                  <p className="text-sm font-bold">No hubs registered</p>
-                  <p className="text-xs mt-1 opacity-60">Click "Add Hub" to register the first boarding point</p>
-                </div>
-              )}
-              {!isLoading && points.map((p: any, i: number) => (
-                <div key={p._id}>
-                  {editPoint?._id === p._id ? (
-                    <div className="p-3 rounded-xl border-2 border-[#D3D925]/30 bg-[#D3D925]/10 space-y-3">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-[#D3D925]">Editing Hub #{i + 1}</p>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="col-span-2 space-y-1"><Label className="text-[9px] font-bold uppercase tracking-widest text-white/50">Name</Label><Input className="h-8 rounded-lg text-sm font-bold" value={editForm.pointName} onChange={e => setEditForm(f => ({ ...f, pointName: e.target.value }))} /></div>
-                        <div className="space-y-1"><Label className="text-[9px] font-bold uppercase tracking-widest text-white/50">Type</Label><Select value={editForm.type} onValueChange={v => setEditForm(f => ({ ...f, type: v }))}><SelectTrigger className="h-8 rounded-lg text-xs font-bold"><SelectValue /></SelectTrigger><SelectContent className="rounded-xl"><SelectItem value="BOARDING">Boarding</SelectItem><SelectItem value="DROPPING">Dropping</SelectItem><SelectItem value="BOTH">Both</SelectItem></SelectContent></Select></div>
-                        <div className="col-span-2 space-y-1"><Label className="text-[9px] font-bold uppercase tracking-widest text-white/50">Landmark</Label><Input className="h-8 rounded-lg text-sm" value={editForm.landmark} onChange={e => setEditForm(f => ({ ...f, landmark: e.target.value }))} /></div>
-                        <div className="flex gap-1 items-end">
-                          <Button size="sm" className="flex-1 h-8 rounded-lg font-bold text-xs bg-[#121212] hover:bg-white/10 text-white" disabled={editMutation.isPending} onClick={() => editMutation.mutate({ id: p._id, payload: editForm })}>{editMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}</Button>
-                          <Button size="sm" variant="outline" className="h-8 rounded-lg" onClick={() => setEditPoint(null)}><X className="w-3 h-3" /></Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-[#0a0a0a] hover:bg-white/[0.02] transition-all group/hub">
-                      <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/5 text-white/50 text-[10px] font-bold shrink-0">{i + 1}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">{p.pointName}</p>
-                        {p.landmark && <p className="text-[10px] text-white/50 mt-0.5">{p.landmark}</p>}
-                      </div>
-                      <Badge variant="outline" className={`text-[9px] font-bold shrink-0 ${typeCls(p.type)}`}>{p.type === "BOTH" ? "UNIVERSAL" : p.type}</Badge>
-                      <div className="flex items-center gap-1 opacity-0 group-hover/hub:opacity-100 transition-opacity shrink-0">
-                        <button onClick={() => { setEditPoint(p); setEditForm({ pointName: p.pointName, landmark: p.landmark || "", type: p.type }); setAddOpen(false); }} className="w-6 h-6 rounded-md border border-white/10 flex items-center justify-center hover:bg-white/5 transition-all"><Pencil className="w-3 h-3" /></button>
-                        <button onClick={() => setDeletePoint(p)} className="w-6 h-6 rounded-md border border-white/10 flex items-center justify-center hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all"><Trash2 className="w-3 h-3" /></button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Delete Hub Confirm */}
-      <Dialog open={!!deletePoint} onOpenChange={() => setDeletePoint(null)}>
-        <DialogContent className="sm:max-w-[320px] rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
-          <div className="bg-white/5 p-5 text-white"><DialogHeader><DialogTitle className="text-sm font-bold text-white flex items-center gap-2"><Trash2 className="w-4 h-4" />Remove Hub</DialogTitle></DialogHeader></div>
-          <div className="p-5 bg-[#0a0a0a]"><p className="text-sm font-medium">Remove <strong>{deletePoint?.pointName}</strong>?</p></div>
-          <DialogFooter className="p-5 pt-0 bg-[#0a0a0a] gap-2">
-            <Button variant="outline" onClick={() => setDeletePoint(null)} className="font-bold rounded-xl h-9 text-sm">Cancel</Button>
-            <Button variant="destructive" className="h-9 rounded-xl font-bold px-5 text-sm" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate(deletePoint._id)}>{deleteMutation.isPending && <Loader2 className="mr-1.5 w-3 h-3 animate-spin" />}Delete</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
@@ -487,7 +321,7 @@ const PlatformRegistry = () => {
     </div>
 
     <div className="p-5 rounded-2xl bg-[#D3D925]/10 border border-[#D3D925]/10 text-sm font-medium text-white/50">
-      <strong className="text-white">Build Order:</strong> Start with <strong>Stop Registry</strong> → then <strong>Corridors</strong> → then <strong>Boarding Hubs</strong>. Each layer depends on the one before it.
+      <strong className="text-white">Build Order:</strong> Start with <strong>Stop Registry</strong> → then <strong>Corridors</strong> → then <strong>Boarding Locations</strong>. Each layer depends on the one before it.
     </div>
 
     <Tabs defaultValue="stops" className="w-full">
@@ -499,7 +333,7 @@ const PlatformRegistry = () => {
           <Globe className="w-4 h-4" /> Corridors
         </TabsTrigger>
         <TabsTrigger value="hubs" className="flex items-center gap-2 px-8 py-3.5 text-sm font-bold rounded-2xl data-[state=active]:bg-[#0a0a0a] data-[state=active]:text-[#D3D925] data-[state=active]:shadow-xl border border-transparent">
-          <Sparkles className="w-4 h-4" /> Boarding Hubs
+          <Sparkles className="w-4 h-4" /> Boarding Locations
         </TabsTrigger>
         <TabsTrigger value="route-requests" className="flex items-center gap-2 px-8 py-3.5 text-sm font-bold rounded-2xl data-[state=active]:bg-[#0a0a0a] data-[state=active]:text-[#D3D925] data-[state=active]:shadow-xl border border-transparent">
           <Route className="w-4 h-4" /> Route Requests
@@ -527,7 +361,7 @@ const PlatformRegistry = () => {
             <CorridorTab />
           </TabsContent>
           <TabsContent value="hubs" className="mt-0 animate-in fade-in duration-300">
-            <BoardingPointsTab />
+            <BoardingLocationWorkspace />
           </TabsContent>
           <TabsContent value="route-requests" className="mt-0 animate-in fade-in duration-300">
             <RouteRequestsPanel />

@@ -104,23 +104,6 @@ export const getStopsForVariant = async (variantId: string) => {
     return data;
 };
 
-// ── Boarding Points (Layer 5) ──────────────────────────────────────────────────
-
-export const createRegistryBoardingPoint = async (payload: {
-    stopCode: string;
-    pointName: string;
-    landmark?: string;
-    type?: "BOARDING" | "DROPPING" | "BOTH";
-}) => {
-    const { data } = await api.post("/registry/boarding-points", payload);
-    return data;
-};
-
-export const getBoardingPointsByStop = async (stopCode: string) => {
-    const { data } = await api.get(`/registry/boarding-points/${stopCode}`);
-    return data;
-};
-
 // ── CRUD: Update & Delete ──────────────────────────────────────────────────────
 
 export const updateStop = async (id: string, payload: {
@@ -164,17 +147,6 @@ export const deleteVariant = async (id: string) => {
     const { data } = await api.delete(`/registry/variants/${id}`);
     return data;
 };
-
-export const updateRegistryBoardingPoint = async (id: string, payload: { pointName?: string; landmark?: string; type?: string }) => {
-    const { data } = await api.patch(`/registry/boarding-points/${id}`, payload);
-    return data;
-};
-
-export const deleteRegistryBoardingPoint = async (id: string) => {
-    const { data } = await api.delete(`/registry/boarding-points/${id}`);
-    return data;
-};
-
 
 // ── Operator Route Config ──────────────────────────────────────────────────────
 
@@ -288,4 +260,3 @@ export const reviewRouteRequest = async (
     const { data } = await api.patch(`/registry/route-requests/${id}`, payload);
     return data;
 };
-
