@@ -20,7 +20,7 @@ export function BoardingLocationFields({
     <div className="space-y-6">
       <div>
         <p className="text-sm font-semibold text-white">What should passengers recognise?</p>
-        <p className="mt-1 text-xs leading-relaxed text-white/45">Use a real public place name, gate, counter, or roadside landmark.</p>
+        <p className="mt-1 text-xs leading-relaxed text-white/45">Map search fills the name, address and likely place type. Confirm the passenger-specific details below.</p>
       </div>
 
       <div className="space-y-2">
@@ -31,6 +31,24 @@ export function BoardingLocationFields({
       <div className="space-y-2">
         <Label htmlFor="boarding-landmark">Nearby landmark</Label>
         <Input id="boarding-landmark" value={value.landmark} onChange={(event) => set("landmark", event.target.value)} placeholder="e.g. Opposite Bhatbhateni" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="boarding-type">Place type</Label>
+          <select id="boarding-type" value={value.locationType} onChange={(event) => set("locationType", event.target.value as BoardingLocationFormState["locationType"])} className="h-10 w-full rounded-md border border-white/10 bg-[#121212] px-3 text-sm text-white">
+            <option value="ROADSIDE">Roadside</option><option value="BUS_PARK">Bus park</option><option value="TERMINAL_GATE">Terminal gate</option><option value="BUS_BAY">Bus bay</option><option value="COUNTER">Counter</option><option value="LANDMARK">Landmark</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="boarding-gate">Gate, bay or counter</Label>
+          <Input id="boarding-gate" value={value.gateOrBay} onChange={(event) => set("gateOrBay", event.target.value)} placeholder="e.g. Gate 2" />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="boarding-direction">Road side or direction</Label>
+        <Input id="boarding-direction" value={value.directionHint} onChange={(event) => set("directionHint", event.target.value)} placeholder="e.g. Ring-road side towards Thankot" />
       </div>
 
       <div className="space-y-2">
@@ -51,7 +69,7 @@ export function BoardingLocationFields({
 
       <div className="flex gap-2 rounded-xl bg-white/[0.035] p-3 text-xs leading-relaxed text-white/45">
         <Info className="mt-0.5 size-4 shrink-0 text-[#EA4B2A]" />
-        Admin-created places are activated and verified automatically. You can deactivate them later from the location menu.
+        A map pin is a proposal. Save it for later review, or verify it only after checking access, road side, passenger recognition, and nearby matches.
       </div>
 
       <div className="rounded-xl border border-white/10 bg-black/20 p-3">

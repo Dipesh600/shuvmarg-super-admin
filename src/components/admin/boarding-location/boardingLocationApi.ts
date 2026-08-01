@@ -1,5 +1,5 @@
 import { api } from "@/api/axios";
-import type { BoardingAssignmentReview, BoardingCoordinates, BoardingLocation } from "./boardingLocationTypes";
+import type { BoardingAssignmentReview, BoardingCoordinates, BoardingLocation, BoardingOperatorAccess } from "./boardingLocationTypes";
 
 type LocationPayload = {
   stopId: string;
@@ -7,8 +7,17 @@ type LocationPayload = {
   aliases: string[];
   landmark: string | null;
   address: string | null;
+  locationType: string;
+  gateOrBay: string | null;
+  directionHint: string | null;
   coordinates: BoardingCoordinates;
+  coordinateSource: string;
+  coordinateAccuracyMeters: number | null;
+  capturedAt: string | null;
+  providerMetadata: BoardingLocation["providerMetadata"];
   verificationStatus: string;
+  verificationMethod: string | null;
+  nearbyReview?: { acknowledged: boolean; reason: string };
   status: string;
 };
 
@@ -70,4 +79,16 @@ export async function reviewBoardingAssignment(
     { status, rejectionReason },
   );
   return response.data.data as BoardingAssignmentReview;
+}
+
+export async function listBoardingLocationOperatorAccess(locationId: string) {
+  const response = await api.get(`/registry/boarding-locations/${locationId}/operator-access`);
+  return response.data.data as BoardingOperatorAccess[];
+}
+
+export async function enableBoardingLocationOperatorAccess(
+  locationId: string, brandId: string, usage: BoardingOperatorAccess["usage"],
+) {
+  const response = await api.put(`/registry/boarding-locations/${locationId}/operator-access`, { brandId, usage });
+  return response.data.data as BoardingOperatorAccess;
 }

@@ -1,4 +1,4 @@
-import { MapPin, MoreHorizontal, Pencil, ShieldCheck, ShieldQuestion } from "lucide-react";
+import { MapPin, MoreHorizontal, Pencil, ShieldCheck, ShieldQuestion, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { BoardingLocation } from "./boardingLocationTypes";
@@ -7,11 +7,13 @@ export function BoardingLocationCard({
   location,
   onEdit,
   onDeactivate,
+  onManageAccess,
   deactivating,
 }: {
   location: BoardingLocation;
   onEdit: () => void;
   onDeactivate: () => void;
+  onManageAccess: () => void;
   deactivating: boolean;
 }) {
   const verified = location.verificationStatus === "VERIFIED";
@@ -30,9 +32,11 @@ export function BoardingLocationCard({
           </div>
           {(location.landmark || location.address) && <p className="mt-1 text-sm text-white/60">{location.landmark || location.address}</p>}
           <p className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-white/30">{location.source.replaceAll("_", " ")}</p>
+          {verified && location.status === "ACTIVE" && <p className={`mt-2 text-xs font-semibold ${location.activeAssignmentCount ? "text-emerald-300" : "text-amber-300"}`}>{location.activeAssignmentCount ? `Visible to ${location.activeAssignmentCount} operator${location.activeAssignmentCount === 1 ? "" : "s"}` : "Not visible to passengers — assign an operator"}</p>}
           {location.aliases.length > 0 && <p className="mt-2 truncate text-xs text-white/40">Also known as {location.aliases.join(", ")}</p>}
         </div>
         <div className="flex gap-1 opacity-70 transition group-hover:opacity-100">
+          <Button size="sm" variant="outline" className="h-8" disabled={!verified || location.status !== "ACTIVE"} onClick={onManageAccess}><Users className="size-3.5" />Passenger access</Button>
           <Button size="sm" variant="outline" className="h-8" onClick={onEdit}><Pencil className="size-3.5" />Edit</Button>
           {location.status === "ACTIVE" && <Button size="icon" variant="ghost" className="size-8 text-white/45" disabled={deactivating} onClick={onDeactivate} aria-label={`Deactivate ${location.name}`}><MoreHorizontal className="size-4" /></Button>}
         </div>

@@ -5,9 +5,13 @@ import type { BoardingLocation } from "./boardingLocationTypes";
 export function NearbyLocationMatches({
   locations,
   onUse,
+  reason,
+  onReasonChange,
 }: {
   locations: BoardingLocation[];
   onUse: (location: BoardingLocation) => void;
+  reason: string;
+  onReasonChange: (reason: string) => void;
 }) {
   if (locations.length === 0) return null;
 
@@ -33,6 +37,17 @@ export function NearbyLocationMatches({
           </div>
         ))}
       </div>
+      <label className="mt-3 block text-xs font-medium text-amber-100/75">
+        Why is this a separate place?
+        <select value={reason} onChange={(event) => onReasonChange(event.target.value)} className="mt-2 h-10 w-full rounded-lg border border-amber-300/20 bg-[#17130b] px-3 text-sm text-white">
+          <option value="">Choose a reason before creating</option>
+          <option value="Opposite side of road">Opposite side of road</option>
+          <option value="Different terminal gate">Different terminal gate</option>
+          <option value="Separate bus bay">Separate bus bay</option>
+          <option value="Different entrance">Different entrance</option>
+          <option value="Operationally distinct place">Other operationally distinct place</option>
+        </select>
+      </label>
     </section>
   );
 }

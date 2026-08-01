@@ -8,6 +8,7 @@ import type { AdminStop } from "@/components/admin/stop-registry/stopRegistryTyp
 import { getStopId } from "@/components/admin/stop-registry/stopRegistryTypes";
 import { BoardingLocationCard } from "./BoardingLocationCard";
 import { BoardingLocationEditorSheet } from "./BoardingLocationEditorSheet";
+import { BoardingLocationOperatorAccessDialog } from "./BoardingLocationOperatorAccessDialog";
 import { BoardingStopSelector } from "./BoardingStopSelector";
 import { DeactivateBoardingLocationDialog } from "./DeactivateBoardingLocationDialog";
 import { OperatorAssignmentReviewPanel } from "./OperatorAssignmentReviewPanel";
@@ -16,21 +17,30 @@ import { deactivateBoardingLocation, listBoardingLocations } from "./boardingLoc
 import type { BoardingLocation } from "./boardingLocationTypes";
 
 export function BoardingLocationWorkspace() {
+  const savedStopKey = "shuvmarg.boarding-location.selected-stop";
   const queryClient = useQueryClient();
   const [view, setView] = useState<"places" | "requests">("places");
-  const [selectedStop, setSelectedStop] = useState<AdminStop | null>(null);
+  const [selectedStopId, setSelectedStopId] = useState(() => window.localStorage.getItem(savedStopKey) || "");
   const [search, setSearch] = useState("");
   const [editor, setEditor] = useState<{ open: boolean; location: BoardingLocation | null }>({ open: false, location: null });
   const [locationToDeactivate, setLocationToDeactivate] = useState<BoardingLocation | null>(null);
+  const [accessLocation, setAccessLocation] = useState<BoardingLocation | null>(null);
   const stopsQuery = useQuery({ queryKey: ["stops"], queryFn: getAllStops });
-  const stops = useMemo(() => {
+  const allRouteStops = useMemo(() => {
     const allStops = (stopsQuery.data?.data || []) as AdminStop[];
-    const query = search.trim().toLocaleLowerCase();
     return allStops.filter((stop) => stop.isRouteStop && stop.status === "ACTIVE")
-      .filter((stop) => !query || [stop.name, stop.code, stop.district, stop.municipality, ...(stop.aliases || [])]
-        .some((value) => value?.toLocaleLowerCase().includes(query)))
       .sort((left, right) => left.name.localeCompare(right.name));
-  }, [stopsQuery.data, search]);
+  }, [stopsQuery.data]);
+  const stops = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase();
+    return allRouteStops.filter((stop) => !query || [stop.name, stop.code, stop.district, stop.municipality, ...(stop.aliases || [])]
+      .some((value) => value?.toLocaleLowerCase().includes(query)));
+  }, [allRouteStops, search]);
+  const selectedStop = allRouteStops.find((stop) => getStopId(stop) === selectedStopId) || null;
+  const selectStop = (stop: AdminStop) => {
+    setSelectedStopId(getStopId(stop));
+    window.localStorage.setItem(savedStopKey, getStopId(stop));
+  };
   const stopId = getStopId(selectedStop);
   const locationsQuery = useQuery({
     queryKey: ["boarding-locations", stopId],
@@ -63,22 +73,30 @@ export function BoardingLocationWorkspace() {
       </div>
       {view === "requests" ? <OperatorAssignmentReviewPanel /> : (
         <div className="flex flex-col gap-5 lg:flex-row">
-          {stopsQuery.isError ? <QueryError message="Unable to load operational route stops." onRetry={() => void stopsQuery.refetch()} /> : <BoardingStopSelector stops={stops} selected={selectedStop} search={search} selectedLocationCount={locations.length} onSearch={setSearch} onSelect={setSelectedStop} />}
+          {stopsQuery.isError ? <QueryError message="Unable to load operational route stops." onRetry={() => void stopsQuery.refetch()} /> : <BoardingStopSelector stops={stops} selected={selectedStop} search={search} selectedLocationCount={locations.length} onSearch={setSearch} onSelect={selectStop} />}
           <section className="min-h-[610px] min-w-0 flex-1 overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a]">
             {!selectedStop ? <Empty title="Choose a route stop" message="Select a stop to see its fallback and precise boarding places." /> : <>
               <div className="border-b border-white/10 p-5"><h3 className="text-lg font-bold text-white">{selectedStop.name}</h3><p className="mt-1 text-xs text-white/40">{selectedStop.code} · {selectedStop.district || "District not provided"}</p></div>
               <div className="space-y-5 p-5">
                 <StopFallbackCard stop={selectedStop} onAdd={openCreate} />
                 <div><div className="mb-3 flex items-end justify-between"><div><h4 className="font-semibold text-white">Precise boarding places</h4><p className="mt-0.5 text-xs text-white/40">These replace the fallback when enabled for an operator.</p></div><span className="text-xs font-semibold text-white/45">{locations.length} total</span></div>
-                  {locationsQuery.isLoading ? <Loader /> : locationsQuery.isError ? <QueryError message="Unable to load boarding places." onRetry={() => void locationsQuery.refetch()} /> : locations.length === 0 ? <Empty title="No precise place yet" message="The stop fallback above remains available. Add a precise place only when passengers need clearer directions." compact /> : <div className="space-y-3">{locations.map((location) => <BoardingLocationCard key={location.id} location={location} onEdit={() => setEditor({ open: true, location })} onDeactivate={() => setLocationToDeactivate(location)} deactivating={deactivate.isPending} />)}</div>}
+                  {locationsQuery.isLoading ? <Loader /> : locationsQuery.isError ? <QueryError message="Unable to load boarding places." onRetry={() => void locationsQuery.refetch()} /> : locations.length === 0 ? <Empty title="No precise place yet" message="The stop fallback above remains available. Add a precise place only when passengers need clearer directions." compact /> : <div className="space-y-3">{locations.map((location) => <BoardingLocationCard key={location.id} location={location} onEdit={() => setEditor({ open: true, location })} onManageAccess={() => setAccessLocation(location)} onDeactivate={() => setLocationToDeactivate(location)} deactivating={deactivate.isPending} />)}</div>}
                 </div>
               </div>
             </>}
           </section>
         </div>
       )}
-      {selectedStop && editor.open && <BoardingLocationEditorSheet open stop={selectedStop} location={editor.location} onOpenChange={(open) => setEditor({ open, location: open ? editor.location : null })} onSaved={() => void queryClient.invalidateQueries({ queryKey: ["boarding-locations", stopId] })} />}
+      {selectedStop && editor.open && <BoardingLocationEditorSheet open stop={selectedStop} location={editor.location} existingLocations={locations} onOpenChange={(open) => setEditor({ open, location: open ? editor.location : null })} onSaved={(saved) => {
+        queryClient.setQueryData<BoardingLocation[]>(["boarding-locations", stopId], (current = []) => {
+          const exists = current.some((location) => location.id === saved.id);
+          return exists ? current.map((location) => location.id === saved.id ? saved : location) : [...current, saved];
+        });
+        if (saved.verificationStatus === "VERIFIED") setAccessLocation(saved);
+        void queryClient.invalidateQueries({ queryKey: ["boarding-locations", stopId] });
+      }} />}
       <DeactivateBoardingLocationDialog location={locationToDeactivate} pending={deactivate.isPending} onClose={() => setLocationToDeactivate(null)} onConfirm={() => locationToDeactivate && deactivate.mutate(locationToDeactivate.id)} />
+      <BoardingLocationOperatorAccessDialog location={accessLocation} onClose={() => setAccessLocation(null)} />
     </div>
   );
 }

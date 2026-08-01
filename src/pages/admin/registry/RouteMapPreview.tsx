@@ -42,19 +42,17 @@ const DARK_STYLES: google.maps.MapTypeStyle[] = [
 
 // ── Script loader (singleton) ─────────────────────────────────────────────────
 let _loading = false;
-let _loaded  = false;
 const _waiters: Array<() => void> = [];
 
 function loadGoogleMaps(apiKey: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (_loaded && window.google?.maps) { resolve(); return; }
+    if (window.google?.maps) { resolve(); return; }
     if (_loading) { _waiters.push(resolve); return; }
     _loading = true;
     const s     = document.createElement("script");
     s.src       = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places`;
     s.async     = true;
     s.onload    = () => {
-      _loaded  = true;
       _loading = false;
       resolve();
       _waiters.forEach(fn => fn());
@@ -85,11 +83,22 @@ interface Props {
   onSelect:        (routeIndex: number, info: GoogleRouteInfo) => void;
 }
 
+const attachAutocomplete = (input: HTMLInputElement | null) => {
+  if (!input || !window.google?.maps?.places) return;
+  new google.maps.places.Autocomplete(input, {
+    componentRestrictions: { country: "np" },
+    fields: ["name", "geometry"],
+  });
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter") event.preventDefault();
+  });
+};
+
 // ── Waypoint input with Places Autocomplete ───────────────────────────────────
 const WaypointInput: React.FC<{
   placeholder:   string;
   defaultValue?: string;
-  inputRef:      React.RefObject<HTMLInputElement>;
+  inputRef:      React.RefObject<HTMLInputElement | null>;
   onRemove?:     () => void;
   showRemove?:   boolean;
 }> = ({ placeholder, defaultValue = "", inputRef, onRemove, showRemove }) => (
@@ -123,6 +132,8 @@ export const GoogleRouteMap: React.FC<Props> = ({
   disabled,
   onSelect,
 }) => {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "";
+  const keyMissing = !apiKey || apiKey === "your_google_maps_api_key_here";
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef          = useRef<google.maps.Map | null>(null);
   const renderersRef    = useRef<google.maps.DirectionsRenderer[]>([]);
@@ -131,31 +142,21 @@ export const GoogleRouteMap: React.FC<Props> = ({
   // Input refs for autocomplete attachment
   const originRef = useRef<HTMLInputElement>(null!);
   const destRef   = useRef<HTMLInputElement>(null!);
-  const [waypointCount, setWaypointCount] = useState(0);
-  const waypointRefs   = useRef<React.RefObject<HTMLInputElement>[]>([]);
+  const [waypointRefs, setWaypointRefs] = useState<React.RefObject<HTMLInputElement | null>[]>([]);
 
   const [routes,   setRoutes]   = useState<google.maps.DirectionsRoute[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [hovered,  setHovered]  = useState<number | null>(null);
-  const [loading,  setLoading]  = useState(true);
+  const [loading,  setLoading]  = useState(!keyMissing);
   const [searching,setSearching]= useState(false);
-  const [error,    setError]    = useState<string | null>(null);
+  const [error,    setError]    = useState<string | null>(
+    keyMissing ? "VITE_GOOGLE_MAPS_API_KEY is not set in the frontend .env file." : null
+  );
   const [mapsReady,setMapsReady]= useState(false);
-
-  // ── Ensure we have the right number of waypoint refs ───────────────────────
-  while (waypointRefs.current.length < waypointCount) {
-    waypointRefs.current.push(React.createRef<HTMLInputElement>());
-  }
-  waypointRefs.current.length = waypointCount;
 
   // ── Load Google Maps script ─────────────────────────────────────────────────
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "";
-    if (!apiKey || apiKey === "your_google_maps_api_key_here") {
-      setError("VITE_GOOGLE_MAPS_API_KEY is not set in the frontend .env file.");
-      setLoading(false);
-      return;
-    }
+    if (keyMissing) return;
     loadGoogleMaps(apiKey).then(() => {
       setMapsReady(true);
       setLoading(false);
@@ -163,7 +164,7 @@ export const GoogleRouteMap: React.FC<Props> = ({
       setError(err.message);
       setLoading(false);
     });
-  }, []);
+  }, [apiKey, keyMissing]);
 
   // ── Create map + Autocomplete once Maps is ready ────────────────────────────
   useEffect(() => {
@@ -188,20 +189,10 @@ export const GoogleRouteMap: React.FC<Props> = ({
   // ── Re-attach autocomplete whenever new waypoint inputs appear ─────────────
   useEffect(() => {
     if (!mapsReady) return;
-    waypointRefs.current.forEach(ref => {
+    waypointRefs.forEach(ref => {
       if (ref.current) attachAutocomplete(ref.current);
     });
-  }, [mapsReady, waypointCount]);
-
-  const attachAutocomplete = (input: HTMLInputElement | null) => {
-    if (!input || !window.google?.maps?.places) return;
-    const ac = new google.maps.places.Autocomplete(input, {
-      componentRestrictions: { country: "np" },
-      fields: ["name", "geometry"],
-    });
-    // Prevent form submit on Enter
-    input.addEventListener("keydown", e => { if (e.key === "Enter") e.preventDefault(); });
-  };
+  }, [mapsReady, waypointRefs]);
 
   // ── Search / refresh route ──────────────────────────────────────────────────
   const doSearch = useCallback(async () => {
@@ -224,7 +215,7 @@ export const GoogleRouteMap: React.FC<Props> = ({
     renderersRef.current.forEach(r => r.setMap(null));
     renderersRef.current = [];
 
-    const waypointValues = waypointRefs.current
+    const waypointValues = waypointRefs
       .map(r => r.current?.value?.trim())
       .filter(Boolean) as string[];
 
@@ -287,11 +278,13 @@ export const GoogleRouteMap: React.FC<Props> = ({
     }
 
     setSearching(false);
-  }, [waypointCount]);
+  }, [waypointRefs]);
 
   // Auto-search on mount once maps is ready
   useEffect(() => {
-    if (mapsReady) doSearch();
+    if (!mapsReady) return;
+    const timer = window.setTimeout(() => void doSearch(), 0);
+    return () => window.clearTimeout(timer);
   }, [mapsReady, doSearch]);
 
   // ── Update polyline highlight on hover / select ─────────────────────────────
@@ -337,9 +330,7 @@ export const GoogleRouteMap: React.FC<Props> = ({
       if (!routeLeg.steps) continue;
       for (const step of routeLeg.steps) {
         // encoded_lat_lngs is the step-level encoded polyline
-        const enc =
-          (step as any).encoded_lat_lngs ||
-          (step as any).polyline?.points;
+        const enc = step.encoded_lat_lngs || step.polyline?.points;
         if (enc) stepPolylines.push(enc);
       }
     }
@@ -363,20 +354,14 @@ export const GoogleRouteMap: React.FC<Props> = ({
   };
 
   // ── Waypoint management ─────────────────────────────────────────────────────
-  const addWaypoint = () => setWaypointCount(c => c + 1);
+  const addWaypoint = () => {
+    setWaypointRefs(current => [...current, React.createRef<HTMLInputElement>()]);
+  };
   const removeWaypoint = (i: number) => {
-    // Remove the value from the input then collapse it
-    if (waypointRefs.current[i]?.current) {
-      waypointRefs.current[i].current!.value = "";
-    }
-    waypointRefs.current.splice(i, 1);
-    setWaypointCount(c => Math.max(0, c - 1));
+    setWaypointRefs(current => current.filter((_, index) => index !== i));
   };
 
   // ── Render ──────────────────────────────────────────────────────────────────
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "";
-  const keyMissing = !apiKey || apiKey === "your_google_maps_api_key_here";
-
   return (
     <div className="space-y-4">
 
@@ -392,10 +377,10 @@ export const GoogleRouteMap: React.FC<Props> = ({
           />
 
           {/* Dynamic waypoints */}
-          {Array.from({ length: waypointCount }, (_, i) => (
+          {waypointRefs.map((waypointRef, i) => (
             <WaypointInput
               key={i}
-              inputRef={waypointRefs.current[i]}
+              inputRef={waypointRef}
               placeholder={`Via waypoint ${i + 1} (optional)`}
               showRemove
               onRemove={() => removeWaypoint(i)}
