@@ -19,6 +19,12 @@ export interface AdminStop {
     lat: number | null;
     lng: number | null;
   } | null;
+  coordinateSource?: StopCoordinateSource | null;
+  coordinateAccuracyMeters?: number | null;
+  coordinateCapturedAt?: string | null;
+  coordinateProvider?: "GOOGLE" | "MAPBOX" | null;
+  coordinatePlaceId?: string | null;
+  coordinateSuggestedAddress?: string | null;
   parentStopId: string | AdminStopParent | null;
   isSearchable: boolean;
   isRouteStop: boolean;
@@ -26,6 +32,24 @@ export interface AdminStop {
   status: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export type StopCoordinates = { lat: number; lng: number };
+export type StopCoordinateSource =
+  | "GOOGLE_PLACE" | "MAP_PIN" | "ADMIN_GPS" | "DISCOVERY";
+
+export interface StopMapSelection {
+  coordinates: StopCoordinates;
+  coordinateSource: StopCoordinateSource;
+  coordinateAccuracyMeters: number | null;
+  coordinateCapturedAt: string;
+  coordinateProvider: "GOOGLE" | "MAPBOX" | null;
+  coordinatePlaceId: string | null;
+  coordinateSuggestedAddress: string | null;
+  suggestedName?: string;
+  suggestedProvince?: string;
+  suggestedDistrict?: string;
+  suggestedMunicipality?: string;
 }
 
 export interface StopTreeNode {
@@ -51,8 +75,7 @@ export interface StopFormState {
   district: string;
   municipality: string;
   aliases: string;
-  lat: string;
-  lng: string;
+  mapSelection: StopMapSelection | null;
   isSearchable: boolean;
   isRouteStop: boolean;
   parentStopId: string;

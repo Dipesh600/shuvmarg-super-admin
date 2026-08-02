@@ -11,12 +11,14 @@ import { NearbyLocationMatches } from "./NearbyLocationMatches";
 import { createBoardingLocation, findNearbyBoardingLocations, updateBoardingLocation } from "./boardingLocationApi";
 import { distanceMeters, validCoordinates } from "./boardingLocationMapUtils";
 import type { BoardingLocationEditorProps, BoardingLocationFormState, BoardingMapSelection } from "./boardingLocationTypes";
+import { normalizeGooglePlaceAddress } from "@/lib/googlePlaceFormatting";
 
 function initialState(props: BoardingLocationEditorProps): BoardingLocationFormState {
   const location = props.location;
   return {
     name: location?.name || "", aliases: location?.aliases.join(", ") || "",
-    landmark: location?.landmark || "", address: location?.address || "",
+    landmark: location?.landmark || "",
+    address: normalizeGooglePlaceAddress(location?.address) || "",
     locationType: location?.locationType || "ROADSIDE",
     gateOrBay: location?.gateOrBay || "", directionHint: location?.directionHint || "",
     coordinates: location?.coordinates || null,
@@ -84,10 +86,9 @@ export function BoardingLocationEditorSheet(props: BoardingLocationEditorProps) 
     coordinateAccuracyMeters: selection.coordinateAccuracyMeters,
     capturedAt: selection.capturedAt,
     providerMetadata: selection.providerMetadata || null,
-    name: current.name || selection.suggestedName || "",
-    address: current.address || selection.providerMetadata?.suggestedAddress || "",
-    locationType: current.locationType === "ROADSIDE" && selection.suggestedLocationType
-      ? selection.suggestedLocationType : current.locationType,
+    name: selection.suggestedName || current.name,
+    address: selection.providerMetadata?.suggestedAddress || current.address,
+    locationType: selection.suggestedLocationType || current.locationType,
   }));
   const canSubmit = Boolean(form.name.trim() && form.coordinates) &&
     (props.location !== null || nearbyLocations.length === 0 || Boolean(nearbyReason));
@@ -102,7 +103,8 @@ export function BoardingLocationEditorSheet(props: BoardingLocationEditorProps) 
         </SheetHeader>
         <div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-3">
-            <BoardingLocationMapPicker value={form.coordinates} center={stopCoordinates} existingLocations={existingForMap} onChange={applyMapSelection} />
+            <BoardingLocationMapPicker key={stopId} value={form.coordinates} routeStop={props.stop} existingLocations={existingForMap} onChange={applyMapSelection} />
+            {!stopCoordinates && <p className="flex gap-2 rounded-xl border border-sky-400/20 bg-sky-400/10 p-3 text-xs text-sky-100"><AlertTriangle className="size-4 shrink-0" />{props.stop.name} has no saved coordinates, so the map locates it from its name, municipality, district and province. Confirm the grey reference marker before placing the boarding point.</p>}
             {farFromStop && <p className="flex gap-2 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-200"><AlertTriangle className="size-4 shrink-0" />This point is over 5 km from {props.stop.name}. Check the route stop and marker.</p>}
             <NearbyLocationMatches locations={nearbyLocations} onUse={(location) => { props.onSaved(location); props.onOpenChange(false); }} reason={nearbyReason} onReasonChange={setNearbyReason} />
           </div>

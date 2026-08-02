@@ -2,10 +2,12 @@ import React, { useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AdminStop, StopFormState, getStopId } from "./stopRegistryTypes";
+import { getStopId } from "./stopRegistryTypes";
+import type { AdminStop, StopFormState } from "./stopRegistryTypes";
 import { getDescendantStopIds } from "./stopRegistryTree";
 import { StopRoleFields } from "./StopRoleFields";
 import { StopGeographyFields } from "./StopGeographyFields";
+import { StopLocationField } from "./StopLocationField";
 
 interface StopFormProps {
   form: StopFormState;
@@ -59,8 +61,36 @@ export const StopForm: React.FC<StopFormProps> = ({
     onChange((prev) => ({ ...prev, [key]: value }));
   };
 
+  const parentStop = allStops.find((stop) => getStopId(stop) === form.parentStopId) || null;
+  const handleMapSelection = (selection: StopFormState["mapSelection"]) => {
+    if (!selection) return;
+    onChange((current) => ({
+      ...current,
+      mapSelection: selection,
+      name: current.name.trim() ? current.name : selection.suggestedName || "",
+      province: current.province.trim() ? current.province : selection.suggestedProvince || "",
+      district: current.district.trim() ? current.district : selection.suggestedDistrict || "",
+      municipality: current.municipality.trim()
+        ? current.municipality : selection.suggestedMunicipality || "",
+    }));
+  };
+
   return (
-    <div className="space-y-5">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)] lg:items-start">
+      <div className="order-1 lg:sticky lg:top-0">
+        <StopLocationField
+          key={`${editingStopId || "new"}:${form.parentStopId}`}
+          value={form.mapSelection}
+          parentStop={parentStop}
+          allStops={allStops}
+          editingStopId={editingStopId}
+          searchHint={form.name}
+          searchContext={[form.municipality, form.district, form.province, "Nepal"].filter(Boolean).join(", ")}
+          onSelect={handleMapSelection}
+        />
+      </div>
+
+      <div className="order-2 space-y-5">
       {/* Basic Information */}
       <div className="space-y-3">
         <span className="text-[11px] font-bold uppercase tracking-widest text-white/50 block">
@@ -187,39 +217,6 @@ export const StopForm: React.FC<StopFormProps> = ({
         </Select>
       </div>
 
-      {/* Coordinates */}
-      <div className="space-y-1.5 border-t border-white/10 pt-4">
-        <span className="text-[11px] font-bold uppercase tracking-widest text-white/50 block">
-          Coordinates (Optional)
-        </span>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">
-              Latitude (-90 to 90)
-            </Label>
-            <Input
-              type="number"
-              step="any"
-              placeholder="27.7172"
-              className="h-10 rounded-xl font-bold bg-[#121212] border-white/10 text-white"
-              value={form.lat}
-              onChange={(e) => updateField("lat", e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">
-              Longitude (-180 to 180)
-            </Label>
-            <Input
-              type="number"
-              step="any"
-              placeholder="85.3240"
-              className="h-10 rounded-xl font-bold bg-[#121212] border-white/10 text-white"
-              value={form.lng}
-              onChange={(e) => updateField("lng", e.target.value)}
-            />
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import type { BoardingLocationType } from "./boardingLocationTypes";
+import { isGooglePlusCode, normalizeGooglePlaceAddress } from "@/lib/googlePlaceFormatting";
 
 type GooglePlaceDetails = {
   name?: string;
@@ -13,12 +14,12 @@ const NAME_COMPONENTS = [
 ];
 
 export function getSuggestedPlaceName(place?: GooglePlaceDetails) {
-  if (place?.name?.trim()) return place.name.trim();
+  if (place?.name?.trim() && !isGooglePlusCode(place.name)) return place.name.trim();
   const component = place?.address_components?.find((item) =>
     NAME_COMPONENTS.some((type) => item.types.includes(type)),
   );
   return component?.long_name?.trim()
-    || place?.formatted_address?.split(",")[0]?.trim()
+    || normalizeGooglePlaceAddress(place)?.split(",")[0]?.trim()
     || undefined;
 }
 
