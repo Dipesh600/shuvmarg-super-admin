@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Bus, Image as ImageIcon, FileText, ChevronRight, ChevronLeft, ShieldCheck, CheckCircle2, Route, MapPin, Clock, Navigation } from "lucide-react";
+import { Bus, Image as ImageIcon, FileText, ChevronRight, ChevronLeft, ShieldCheck, CheckCircle2, Route } from "lucide-react";
 import { useCreateOwnerFleet } from "@/hooks/useOwnerFleets";
 import { useFetchAllCorridors } from "@/hooks/usePlatformRegistry";
 import { useQuery } from "@tanstack/react-query";

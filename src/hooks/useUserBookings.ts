@@ -2,12 +2,14 @@
 import { getUserBookings } from "@/api/suspendApi";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
-export function useUserBookings(id:string | undefined) {
+
+export function useUserBookings(id: string | undefined) {
   const { token } = useAuth();
   return useQuery({
-    queryKey: ["user-bookings"],
-     enabled: !!token,
-     refetchOnWindowFocus:false,
-    queryFn: ()=> getUserBookings(id ?? ""),
+    // Include userId in queryKey so navigating between profiles refetches data
+    queryKey: ["user-bookings", id],
+    enabled: !!token && !!id,
+    refetchOnWindowFocus: false,
+    queryFn: () => getUserBookings(id ?? ""),
   });
 }

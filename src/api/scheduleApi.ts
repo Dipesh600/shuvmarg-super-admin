@@ -9,7 +9,7 @@ export const createSchedule = async (payload: {
     variantId?: string;
     operatorRouteConfigId?: string;
     driverId?: string;
-    seatTemplateId: string;
+    seatTemplateId?: string;
     departureTime: string;          // "HH:MM"
     arrivalTime: string;            // "HH:MM"
     shift: "day" | "night";

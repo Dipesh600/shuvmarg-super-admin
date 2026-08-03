@@ -1,20 +1,12 @@
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type BusOwner = {
   id: string,
+  busOwnerKycId?: string,
   name: string,
   phone: string
   profileImg: string
@@ -22,29 +14,24 @@ type BusOwner = {
   verified: string
   status: string
 }
+
+const OwnerActionsCell = ({ id }: { id: string }) => {
+  const navigate = useNavigate();
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
+      onClick={() => navigate(`/admin/bus-owners/${id}`)}
+      title="View Profile"
+    >
+      <ArrowRight className="h-4 w-4" />
+      <span className="sr-only">View Profile</span>
+    </Button>
+  );
+};
+
 export const columns: ColumnDef<BusOwner>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
   {
     accessorKey: "profileImg",
     header: "Profile Image",
@@ -63,7 +50,8 @@ export const columns: ColumnDef<BusOwner>[] = [
   },
   {
     accessorKey: "name",
-    header: "Bus Owner"
+    header: "Bus Owner",
+    cell: ({ row }) => <span className="font-medium text-white/90">{row.getValue("name")}</span>,
   },
   {
     accessorKey: "email",
@@ -73,20 +61,18 @@ export const columns: ColumnDef<BusOwner>[] = [
       const isInternal = email && email.includes("@shuvmarg.internal");
       return (
         <div className="text-sm">
-          <div>{isInternal ? <span className="text-muted-foreground italic">No email provided</span> : email}</div>
-          <div className="text-muted-foreground">{phone}</div>
+          <div>{isInternal ? <span className="text-white/40 italic">No email provided</span> : <span className="text-white/80">{email}</span>}</div>
+          <div className="text-white/60 font-medium">{phone}</div>
         </div>
       );
     },
   },
-
-
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
       const { status } = row.original;
-      return <Badge variant={status as BadgeProps["variant"]}>{status}</Badge>;
+      return <Badge variant={status as BadgeProps["variant"]} className="font-bold">{status}</Badge>;
     },
   },
   {
@@ -94,37 +80,12 @@ export const columns: ColumnDef<BusOwner>[] = [
     header: "Verified",
     cell: ({ row }) => {
       const { verified } = row.original;
-      return <Badge variant={verified ? "Verified" : "Pending"}>{verified ? "verified" : "pending"}</Badge>;
+      return <Badge variant={verified ? "Verified" : "Pending"} className="font-bold">{verified ? "verified" : "pending"}</Badge>;
     },
   },
-
-
-
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => {
-      const { id } = row.original;
-      const navigate = useNavigate();
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigate(`${window.location}/${id}`)}>
-              View Profile
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate(`/admin/kyc/bus-owner/${row.original.busOwnerKycId}`)}>View Kyc Details</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate(`/admin/bus-owners/${id}?tab=operators`)}>Manage Brands</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+    cell: ({ row }) => <OwnerActionsCell id={row.original.id} />,
   },
 ];

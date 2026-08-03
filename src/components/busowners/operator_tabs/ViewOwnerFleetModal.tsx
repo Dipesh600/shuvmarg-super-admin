@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose
 } from "@/components/ui/dialog";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Bus, MapPin, Users, Settings, Activity, Calendar, Eye, ShieldCheck,
-  Map, Wifi, FileText, ExternalLink, AlertTriangle, Route, Clock,
+  Map, Wifi, FileText, AlertTriangle, Route, Clock,
   XCircle, LayoutGrid, RotateCcw, Loader2, CheckCircle2, Upload
 } from "lucide-react";
 import { useFetchFleetDetail } from "@/hooks/useOwnerFleets";
@@ -16,6 +16,7 @@ import { resubmitFleetById, reuploadFleetDocument } from "@/api/busOwnerFleetApi
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import DocumentViewerModal from "@/components/DocumentViewerModal";
 
 interface ViewOwnerFleetModalProps {
   id: string | null;
@@ -41,6 +42,17 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
   const data = response?.data;
   const approvalStatus = data?.approvalStatus ?? "PENDING";
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // ── Secure document viewer state ─────────────────────────────────────────
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerKey, setViewerKey] = useState<string | null>(null);
+  const [viewerTitle, setViewerTitle] = useState<string>("Document");
+
+  const openDocumentViewer = (s3Key: string, label: string) => {
+    setViewerKey(s3Key);
+    setViewerTitle(label);
+    setViewerOpen(true);
+  };
 
   // Resubmit mutation
   const { mutate: resubmit, isPending: isResubmitting } = useMutation({
@@ -361,8 +373,8 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                         {extra && <p className="text-[10px] text-muted-foreground mb-1">Policy: {extra}</p>}
                         {validTill && <p className="text-[10px] text-muted-foreground mb-1">Valid till: {fmtDate(validTill)}</p>}
                         {url ? (
-                          <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1.5" onClick={() => window.open(url, "_blank")}>
-                            <ExternalLink className="h-3 w-3" /> View Document
+                          <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1.5" onClick={() => openDocumentViewer(url, label)}>
+                            <Eye className="h-3 w-3" /> View Document
                           </Button>
                         ) : (
                           <p className="text-[10px] italic text-muted-foreground/60 text-center pt-1">Not uploaded</p>
@@ -474,6 +486,12 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
           </div>
         ) : null}
       </DialogContent>
+      <DocumentViewerModal
+        open={viewerOpen}
+        s3Key={viewerKey}
+        title={viewerTitle}
+        onClose={() => setViewerOpen(false)}
+      />
     </Dialog>
   );
 };

@@ -111,12 +111,12 @@ const WalletAdjustmentDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[480px] bg-[#121212]/95 border-white/5 backdrop-blur-xl shadow-2xl text-white">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-white">
             {step === 1 ? "Adjust SM Money" : "Confirm Adjustment"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-white/60">
             {step === 1
               ? "This action creates a permanent audit record tied to your admin account."
               : "Review carefully — this cannot be undone."}
@@ -127,31 +127,31 @@ const WalletAdjustmentDialog = ({
         {step === 1 && (
           <div className="space-y-4 pt-2">
             {/* User context (read-only) */}
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0">
+            <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-lg">
+              <div className="w-10 h-10 rounded-full bg-[#D3D925]/10 flex items-center justify-center text-[#D3D925] font-bold shrink-0">
                 {user.name?.[0]?.toUpperCase() ?? "?"}
               </div>
               <div>
-                <div className="font-medium text-sm">{user.name}</div>
-                <div className="text-xs text-muted-foreground">{user.phone}</div>
+                <div className="font-medium text-sm text-white/90">{user.name}</div>
+                <div className="text-xs text-white/60">{user.phone}</div>
               </div>
               <div className="ml-auto text-right">
-                <div className="text-xs text-muted-foreground">Current Balance</div>
-                <div className="font-semibold">{formatCurrency(currentBalance)}</div>
+                <div className="text-xs text-white/60">Current Balance</div>
+                <div className="font-semibold text-white">{formatCurrency(currentBalance)}</div>
               </div>
             </div>
 
             {/* Type selector */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Operation</label>
+              <label className="text-sm font-medium text-white/90">Operation</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setType("credit")}
                   className={`flex items-center justify-center gap-2 h-10 rounded-md border text-sm font-medium transition-all cursor-pointer ${
                     type === "credit"
-                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-600"
-                      : "border-border text-muted-foreground hover:border-foreground/20"
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-500"
+                      : "border-white/10 text-white/60 hover:border-white/20 hover:text-white"
                   }`}
                 >
                   <TrendingUp className="h-4 w-4" />
@@ -162,8 +162,8 @@ const WalletAdjustmentDialog = ({
                   onClick={() => setType("debit")}
                   className={`flex items-center justify-center gap-2 h-10 rounded-md border text-sm font-medium transition-all cursor-pointer ${
                     type === "debit"
-                      ? "border-red-500 bg-red-500/10 text-red-600"
-                      : "border-border text-muted-foreground hover:border-foreground/20"
+                      ? "border-rose-500 bg-rose-500/10 text-rose-500"
+                      : "border-white/10 text-white/60 hover:border-white/20 hover:text-white"
                   }`}
                 >
                   <TrendingDown className="h-4 w-4" />
@@ -174,7 +174,7 @@ const WalletAdjustmentDialog = ({
 
             {/* Amount */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Amount ({currency})</label>
+              <label className="text-sm font-medium text-white/90">Amount ({currency})</label>
               <input
                 type="number"
                 min="1"
@@ -182,10 +182,10 @@ const WalletAdjustmentDialog = ({
                 placeholder="Enter amount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D3D925]"
               />
               {type === "debit" && parsedAmount > currentBalance && (
-                <p className="text-xs text-destructive flex items-center gap-1">
+                <p className="text-xs text-rose-500 flex items-center gap-1">
                   <AlertTriangle className="h-3 w-3" />
                   Cannot debit more than current balance ({formatCurrency(currentBalance)})
                 </p>
@@ -202,16 +202,16 @@ const WalletAdjustmentDialog = ({
 
             {/* Purpose */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Purpose</label>
+              <label className="text-sm font-medium text-white/90">Purpose</label>
               <Select value={purpose} onValueChange={(v) => setPurpose(v as AdjustPurpose)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/5 border-white/10 text-white focus:ring-[#D3D925]">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin_adjustment">Admin Adjustment</SelectItem>
-                  <SelectItem value="bonus">Bonus</SelectItem>
-                  <SelectItem value="promotional">Promotional Credit</SelectItem>
-                  <SelectItem value="reversal">Transaction Reversal</SelectItem>
+                <SelectContent className="bg-[#121212] border-white/10 text-white">
+                  <SelectItem value="admin_adjustment" className="focus:bg-white/10 focus:text-white">Admin Adjustment</SelectItem>
+                  <SelectItem value="bonus" className="focus:bg-white/10 focus:text-white">Bonus</SelectItem>
+                  <SelectItem value="promotional" className="focus:bg-white/10 focus:text-white">Promotional Credit</SelectItem>
+                  <SelectItem value="reversal" className="focus:bg-white/10 focus:text-white">Transaction Reversal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -219,10 +219,10 @@ const WalletAdjustmentDialog = ({
             {/* Remarks */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Remarks</label>
+                <label className="text-sm font-medium text-white/90">Remarks</label>
                 <span
                   className={`text-[10px] ${
-                    remarks.trim().length >= 10 ? "text-muted-foreground" : "text-destructive"
+                    remarks.trim().length >= 10 ? "text-white/60" : "text-rose-500"
                   }`}
                 >
                   {remarks.trim().length}/10 min
@@ -232,17 +232,17 @@ const WalletAdjustmentDialog = ({
                 placeholder="Describe why this adjustment is needed — this becomes a permanent audit record..."
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+                className="flex w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white shadow-sm placeholder:text-white/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D3D925] resize-none"
                 rows={3}
               />
             </div>
 
             {/* Actions */}
             <div className="flex gap-2 pt-2">
-              <Button variant="outline" className="flex-1" onClick={handleClose}>
+              <Button variant="outline" className="flex-1 bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button className="flex-1" disabled={!isValid} onClick={() => setStep(2)}>
+              <Button className="flex-1 bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90 font-bold" disabled={!isValid} onClick={() => setStep(2)}>
                 Review & Confirm
               </Button>
             </div>
@@ -253,44 +253,44 @@ const WalletAdjustmentDialog = ({
         {step === 2 && (
           <div className="space-y-4 pt-2">
             {/* Summary */}
-            <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+            <div className="p-4 bg-white/5 border border-white/5 rounded-lg space-y-3">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">You are about to</p>
+                <p className="text-sm text-white/60">You are about to</p>
                 <p className="text-lg font-bold mt-1">
-                  <span className={type === "credit" ? "text-emerald-500" : "text-red-500"}>
+                  <span className={type === "credit" ? "text-emerald-500" : "text-rose-500"}>
                     {type === "credit" ? "Credit" : "Debit"} {formatCurrency(parsedAmount)}
                   </span>
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-white/60 mt-1">
                   {type === "credit" ? "to" : "from"}{" "}
-                  <span className="font-medium text-foreground">{user.name}</span>'s SM Money Balance
+                  <span className="font-medium text-white">{user.name}</span>'s SM Money Balance
                 </p>
               </div>
 
               <div className="flex items-center justify-center gap-3 py-2">
                 <div className="text-center">
-                  <div className="text-xs text-muted-foreground">Before</div>
-                  <div className="font-semibold">{formatCurrency(currentBalance)}</div>
+                  <div className="text-xs text-white/60">Before</div>
+                  <div className="font-semibold text-white">{formatCurrency(currentBalance)}</div>
                 </div>
-                <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                <ArrowRight className="h-5 w-5 text-white/40" />
                 <div className="text-center">
-                  <div className="text-xs text-muted-foreground">After</div>
-                  <div className={`font-semibold ${type === "credit" ? "text-emerald-500" : "text-red-500"}`}>
+                  <div className="text-xs text-white/60">After</div>
+                  <div className={`font-semibold ${type === "credit" ? "text-emerald-500" : "text-rose-500"}`}>
                     {formatCurrency(projectedBalance)}
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-border/50 pt-3 space-y-1">
+              <div className="border-t border-white/10 pt-3 space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Purpose</span>
-                  <Badge variant="outline" className="text-[10px]">
+                  <span className="text-white/60">Purpose</span>
+                  <Badge variant="outline" className="text-[10px] bg-white/5 border-white/10 text-white/80">
                     {purpose.replace(/_/g, " ")}
                   </Badge>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Remarks</span>
-                  <span className="text-right max-w-[240px] truncate">{remarks}</span>
+                  <span className="text-white/60">Remarks</span>
+                  <span className="text-right max-w-[240px] truncate text-white/90">{remarks}</span>
                 </div>
               </div>
             </div>
@@ -306,11 +306,11 @@ const WalletAdjustmentDialog = ({
 
             {/* Actions */}
             <div className="flex gap-2 pt-2">
-              <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
+              <Button variant="outline" className="flex-1 bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white" onClick={() => setStep(1)}>
                 Go Back
               </Button>
               <Button
-                className="flex-1 gap-2"
+                className="flex-1 gap-2 bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90 font-bold"
                 disabled={mutation.isPending}
                 onClick={handleConfirm}
               >

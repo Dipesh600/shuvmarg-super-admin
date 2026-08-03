@@ -46,14 +46,14 @@ const Fleet = () => {
       {/* Stats Cards — operationally meaningful */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card className="border-l-4 border-l-emerald-500">
-          <CardHeader className="pb-3 px-6">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Live on Network
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <CheckCircle2 className="h-4 w-4 text-white" /> Live on Network
             </CardTitle>
           </CardHeader>
           <CardContent className="px-6">
             <div className="text-2xl font-bold">{d?.liveOnNetwork ?? 0}</div>
-            <p className="text-xs text-emerald-600 font-semibold mt-0.5">
+            <p className="text-xs text-white font-semibold mt-0.5">
               {d?.totalRegistered
                 ? ((d.liveOnNetwork / d.totalRegistered) * 100).toFixed(0)
                 : 0}
@@ -63,45 +63,45 @@ const Fleet = () => {
         </Card>
 
         <Card className="border-l-4 border-l-sky-500">
-          <CardHeader className="pb-3 px-6">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Bus className="h-4 w-4 text-sky-500" /> In Garage / Setup
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Bus className="h-4 w-4 text-white" /> In Garage / Setup
             </CardTitle>
           </CardHeader>
           <CardContent className="px-6">
             <div className="text-2xl font-bold">{d?.inGarage ?? 0}</div>
-            <p className="text-xs text-sky-600 font-semibold mt-0.5">Approved, awaiting go-live</p>
+            <p className="text-xs text-white font-semibold mt-0.5">Approved, awaiting go-live</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader className="pb-3 px-6">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Wrench className="h-4 w-4 text-yellow-500" /> Under Maintenance
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Wrench className="h-4 w-4 text-white" /> Under Maintenance
             </CardTitle>
           </CardHeader>
           <CardContent className="px-6">
             <div className="text-2xl font-bold">{d?.underMaintenance ?? 0}</div>
-            <p className="text-xs text-yellow-600 font-semibold mt-0.5">Flagged for service</p>
+            <p className="text-xs text-white font-semibold mt-0.5">Flagged for service</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-orange-500">
-          <CardHeader className="pb-3 px-6">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4 text-orange-500" /> Pending Approval
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Clock className="h-4 w-4 text-white" /> Pending Approval
             </CardTitle>
           </CardHeader>
           <CardContent className="px-6">
             <div className="text-2xl font-bold">{d?.pendingApproval ?? 0}</div>
-            <p className="text-xs text-orange-600 font-semibold mt-0.5">Awaiting KYC sign-off</p>
+            <p className="text-xs text-white font-semibold mt-0.5">Awaiting KYC sign-off</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Live Dispatch Table */}
       <Card className="shadow-sm">
-        <CardHeader className="border-b">
+        <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Live Dispatch Board</CardTitle>
@@ -109,8 +109,8 @@ const Fleet = () => {
                 {fleets.length} bus{fleets.length !== 1 ? "es" : ""} currently active on the network
               </p>
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            <div className="flex items-center gap-1.5 text-xs font-bold text-white bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+              <span className="w-1.5 h-1.5 bg-white/5 rounded-full animate-pulse" />
               Live
             </div>
           </div>

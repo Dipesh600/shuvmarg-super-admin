@@ -188,21 +188,21 @@ const AmenityCard = ({
 }) => {
   const Icon = iconFromValue(amenity.icon);
   return (
-    <div className="group relative flex flex-col gap-4 p-5 rounded-2xl border-2 border-muted bg-background hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+    <div className="group relative flex flex-col gap-4 p-5 rounded-2xl border-2 border-muted bg-[#0a0a0a] hover:border-[#D3D925]/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
       {/* Status dot */}
       <div className={cn(
         "absolute top-3 right-3 w-2 h-2 rounded-full",
-        amenity.status ? "bg-emerald-500" : "bg-muted-foreground/30"
+        amenity.status ? "bg-[#D3D925]/100" : "bg-white/5-foreground/30"
       )} />
 
       {/* Icon + Name */}
       <div className="flex items-start gap-4">
-        <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+        <div className="p-3 rounded-xl bg-[#D3D925]/10 border border-[#D3D925]/20 text-[#D3D925] shrink-0 group-hover:bg-[#D3D925] group-hover:text-black transition-all duration-300">
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <p className="font-black text-sm leading-tight truncate">{amenity.name}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2 font-medium">
+          <p className="font-bold text-sm leading-tight truncate">{amenity.name}</p>
+          <p className="text-[10px] text-white/50 mt-0.5 line-clamp-2 font-medium">
             {amenity.description || "No description provided."}
           </p>
         </div>
@@ -210,19 +210,19 @@ const AmenityCard = ({
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-1 border-t border-muted">
-        <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest text-primary border-primary/20 bg-primary/5">
+        <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest text-[#D3D925] border-[#D3D925]/20 bg-[#D3D925]/10">
           Global
         </Badge>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
           <button
             onClick={() => onEdit(amenity)}
-            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/5 text-white/50 hover:text-white transition-colors"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => onDelete(amenity._id, amenity.name)}
-            className="p-1.5 rounded-lg hover:bg-rose-50 text-muted-foreground hover:text-rose-600 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/5 hover:bg-white/5 text-white/50 hover:text-white transition-colors"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -294,11 +294,11 @@ const AmenityFormModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="text-lg font-black tracking-tight flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+          <DialogTitle className="text-lg font-bold tracking-tight flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-[#D3D925]" />
             {isEdit ? "Edit Amenity" : "Add Platform Amenity"}
           </DialogTitle>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-white/50">
             {isEdit ? "Update this amenity in the global catalog." : "This amenity will be available to all bus operators on the platform."}
           </p>
         </DialogHeader>
@@ -306,7 +306,7 @@ const AmenityFormModal = ({
         <div className="space-y-5 py-2">
           {/* Name */}
           <div className="space-y-1.5">
-            <Label className="text-[10px] font-black uppercase tracking-widest">Amenity Name *</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest">Amenity Name *</Label>
             <Input
               placeholder="e.g. Free WiFi, Air Conditioning, USB Charging"
               value={name}
@@ -317,7 +317,7 @@ const AmenityFormModal = ({
 
           {/* Description */}
           <div className="space-y-1.5">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Description</Label>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Description</Label>
             <Textarea
               placeholder="Briefly describe what this amenity offers passengers..."
               value={description}
@@ -328,8 +328,8 @@ const AmenityFormModal = ({
 
           {/* Icon Picker */}
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              Icon <span className="normal-case font-medium text-muted-foreground/60">({ICON_OPTIONS.length} available — hover for label)</span>
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">
+              Icon <span className="normal-case font-medium text-white/50/60">({ICON_OPTIONS.length} available — hover for label)</span>
             </Label>
             <div className="grid grid-cols-10 gap-1 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
               {ICON_OPTIONS.map(({ value, label, Icon }) => (
@@ -341,8 +341,8 @@ const AmenityFormModal = ({
                   className={cn(
                     "aspect-square rounded-lg flex items-center justify-center transition-all border-2 relative group/icon",
                     icon === value
-                      ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/30 scale-105"
-                      : "bg-muted/40 text-muted-foreground border-transparent hover:border-muted hover:bg-muted hover:text-foreground"
+                      ? "bg-[#D3D925] text-black border-primary shadow-lg shadow-[#D3D925]/20 scale-105"
+                      : "bg-white/5 text-white/50 border-transparent hover:border-muted hover:bg-white/5 hover:text-white"
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -357,15 +357,15 @@ const AmenityFormModal = ({
 
           {/* Status toggle (edit only) */}
           {isEdit && (
-            <div className="flex items-center gap-3 p-3 rounded-xl border bg-muted/20">
+            <div className="flex items-center gap-3 p-3 rounded-xl border bg-white/[0.02]">
               <button type="button" onClick={() => setStatus(!status)}>
                 {status
-                  ? <ToggleRight className="h-6 w-6 text-emerald-500" />
-                  : <ToggleLeft className="h-6 w-6 text-muted-foreground" />}
+                  ? <ToggleRight className="h-6 w-6 text-[#D3D925]" />
+                  : <ToggleLeft className="h-6 w-6 text-white/50" />}
               </button>
               <div>
-                <p className="text-xs font-black">{status ? "Active" : "Inactive"}</p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs font-bold">{status ? "Active" : "Inactive"}</p>
+                <p className="text-[10px] text-white/50">
                   {status ? "Visible to operators when setting up fleets." : "Hidden from operators."}
                 </p>
               </div>
@@ -375,7 +375,7 @@ const AmenityFormModal = ({
 
         <DialogFooter className="pt-4 border-t gap-2">
           <Button variant="ghost" onClick={onClose} disabled={isPending}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isPending} className="font-black min-w-[130px]">
+          <Button onClick={handleSubmit} disabled={isPending} className="font-bold min-w-[130px]">
             {isPending
               ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</>
               : isEdit ? <><CheckCircle2 className="h-4 w-4 mr-2" />Update Amenity</>
@@ -411,12 +411,12 @@ const DeleteConfirmModal = ({
     <Dialog open={!!target} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[400px]">
         <div className="flex flex-col items-center text-center space-y-4 py-4">
-          <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-100">
-            <AlertTriangle className="h-8 w-8 text-rose-600" />
+          <div className="p-4 rounded-2xl bg-white/5 border-2 border-white/10">
+            <AlertTriangle className="h-8 w-8 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-black">Remove Amenity?</h3>
-            <p className="text-sm text-muted-foreground mt-1">
+            <h3 className="text-lg font-bold">Remove Amenity?</h3>
+            <p className="text-sm text-white/50 mt-1">
               <strong>"{target?.name}"</strong> will be removed from the global catalog. Fleets that currently reference this amenity won't be affected.
             </p>
           </div>
@@ -427,7 +427,7 @@ const DeleteConfirmModal = ({
             variant="destructive"
             onClick={() => mutate()}
             disabled={isPending}
-            className="font-black min-w-[120px]"
+            className="font-bold min-w-[120px]"
           >
             {isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Removing...</> : "Yes, Remove"}
           </Button>
@@ -465,32 +465,32 @@ const PlatformAmenities = () => {
     <div className="container mx-auto pb-16 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Page header */}
       <div className="flex items-center gap-5">
-        <div className="p-4 rounded-[1.5rem] bg-primary shadow-2xl shadow-primary/30 text-primary-foreground">
+        <div className="p-4 rounded-[1.5rem] bg-[#D3D925] shadow-2xl shadow-[#D3D925]/20 text-black">
           <Zap className="w-9 h-9" />
         </div>
         <div>
-          <h1 className="text-5xl font-black tracking-tighter">Amenities Catalog</h1>
-          <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs mt-1">
+          <h1 className="text-5xl font-bold tracking-tighter">Amenities Catalog</h1>
+          <p className="text-white/50 font-bold uppercase tracking-widest text-xs mt-1">
             Platform-Level Service Registry
           </p>
         </div>
       </div>
 
       {/* Context banner */}
-      <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 text-sm font-medium text-muted-foreground">
-        <strong className="text-foreground">How it works:</strong> Amenities defined here form the <strong>global catalog</strong>. When a bus operator registers a fleet, they pick from this list. You can also let them create custom amenities specific to their operation.
+      <div className="p-5 rounded-2xl bg-[#D3D925]/10 border border-[#D3D925]/10 text-sm font-medium text-white/50">
+        <strong className="text-white">How it works:</strong> Amenities defined here form the <strong>global catalog</strong>. When a bus operator registers a fleet, they pick from this list. You can also let them create custom amenities specific to their operation.
       </div>
 
       {/* KPI strip */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: "Total Amenities", value: amenities.length, color: "text-primary" },
-          { label: "Active", value: activeCount, color: "text-emerald-600" },
-          { label: "Inactive", value: amenities.length - activeCount, color: "text-muted-foreground" },
+          { label: "Total Amenities", value: amenities.length, color: "text-[#D3D925]" },
+          { label: "Active", value: activeCount, color: "text-[#D3D925]" },
+          { label: "Inactive", value: amenities.length - activeCount, color: "text-white/50" },
         ].map((kpi) => (
-          <div key={kpi.label} className="p-5 rounded-2xl border-2 border-muted bg-background text-center space-y-1">
-            <p className={cn("text-3xl font-black", kpi.color)}>{kpi.value}</p>
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{kpi.label}</p>
+          <div key={kpi.label} className="p-5 rounded-2xl border-2 border-muted bg-[#0a0a0a] text-center space-y-1">
+            <p className={cn("text-3xl font-bold", kpi.color)}>{kpi.value}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">{kpi.label}</p>
           </div>
         ))}
       </div>
@@ -498,7 +498,7 @@ const PlatformAmenities = () => {
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="relative max-w-xs w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
           <Input
             placeholder="Search amenities..."
             value={search}
@@ -506,7 +506,7 @@ const PlatformAmenities = () => {
             className="pl-9 h-10 font-medium text-sm"
           />
         </div>
-        <Button onClick={openCreate} className="h-10 px-6 font-black gap-2 shadow-lg shadow-primary/20">
+        <Button onClick={openCreate} className="h-10 px-6 font-bold gap-2 shadow-lg shadow-primary/20">
           <Plus className="h-4 w-4" /> Add Amenity
         </Button>
       </div>
@@ -515,25 +515,25 @@ const PlatformAmenities = () => {
       {isLoading ? (
         <div className="flex items-center justify-center py-24">
           <div className="flex flex-col items-center gap-3">
-            <Zap className="h-10 w-10 text-muted-foreground animate-pulse" />
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Loading catalog...</p>
+            <Zap className="h-10 w-10 text-white/50 animate-pulse" />
+            <p className="text-xs font-bold uppercase tracking-widest text-white/50">Loading catalog...</p>
           </div>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4 border-2 border-dashed rounded-3xl">
-          <div className="p-5 rounded-2xl bg-muted/30">
-            <Zap className="h-10 w-10 text-muted-foreground/40" />
+          <div className="p-5 rounded-2xl bg-white/[0.04]">
+            <Zap className="h-10 w-10 text-white/50/40" />
           </div>
           <div className="text-center">
-            <p className="font-black text-lg">
+            <p className="font-bold text-lg">
               {search ? "No matching amenities." : "No amenities in the catalog yet."}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-white/50 mt-1">
               {search ? "Try a different search term." : "Add your first amenity to get started."}
             </p>
           </div>
           {!search && (
-            <Button onClick={openCreate} variant="outline" className="font-black gap-2 mt-2">
+            <Button onClick={openCreate} variant="outline" className="font-bold gap-2 mt-2">
               <Plus className="h-4 w-4" /> Add First Amenity
             </Button>
           )}
@@ -551,10 +551,10 @@ const PlatformAmenities = () => {
           {/* Add new card */}
           <button
             onClick={openCreate}
-            className="flex flex-col items-center justify-center gap-2 p-5 rounded-2xl border-2 border-dashed border-primary/20 text-primary/40 hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-all duration-300 min-h-[140px]"
+            className="flex flex-col items-center justify-center gap-2 p-5 rounded-2xl border-2 border-dashed border-[#D3D925]/20 text-[#D3D925]/40 hover:border-primary/50 hover:text-[#D3D925] hover:bg-[#D3D925]/10 transition-all duration-300 min-h-[140px]"
           >
             <Plus className="h-6 w-6" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Add New</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Add New</span>
           </button>
         </div>
       )}

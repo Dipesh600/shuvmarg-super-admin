@@ -165,86 +165,86 @@ export function ResolveDisputeDialog() {
 
   return (
     <Dialog open={isModelOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto border-white/5 bg-[#121212]/95 backdrop-blur-xl shadow-2xl text-white">
         <DialogHeader>
-          <div className="flex items-center gap-2 text-destructive font-semibold mb-1">
+          <div className="flex items-center gap-2 text-rose-500 font-semibold mb-1">
             <AlertCircle className="h-5 w-5" />
             <span className="text-xs tracking-wider uppercase">High Priority Dispute</span>
           </div>
-          <DialogTitle className="text-2xl font-bold tracking-tight flex items-center justify-between">
+          <DialogTitle className="text-2xl font-bold tracking-tight flex items-center justify-between text-white">
             Resolve Dispute Center
           </DialogTitle>
-          <DialogDescription>
-            Process verification and record manual eSewa/Khalti refunds for Case ID: <span className="font-mono font-medium">{disputeData._id}</span>
+          <DialogDescription className="text-white/60">
+            Process verification and record manual eSewa/Khalti refunds for Case ID: <span className="font-mono font-medium text-white/90">{disputeData._id}</span>
           </DialogDescription>
         </DialogHeader>
 
         {/* Dispute Summary Context */}
-        <div className="bg-muted/50 border border-border rounded-lg p-4 mt-2 space-y-4">
+        <div className="bg-white/5 border border-white/5 rounded-lg p-4 mt-2 space-y-4">
           <div className="grid grid-cols-2 gap-4 text-xs sm:text-sm">
             <div>
-              <span className="text-muted-foreground block text-xs">Customer/Passenger</span>
-              <p className="font-semibold mt-0.5">{userName}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{userPhone} | {userEmail}</p>
+              <span className="text-white/60 block text-xs">Customer/Passenger</span>
+              <p className="font-semibold mt-0.5 text-white/90">{userName}</p>
+              <p className="text-xs text-white/40 mt-0.5">{userPhone} | {userEmail}</p>
             </div>
             <div>
-              <span className="text-muted-foreground block text-xs">Amount Charged</span>
-              <p className="font-semibold text-destructive text-lg mt-0.5">
+              <span className="text-white/60 block text-xs">Amount Charged</span>
+              <p className="font-semibold text-rose-500 text-lg mt-0.5">
                 Rs. {disputeData.totalAmount?.toLocaleString("en-IN") ?? "0"}
               </p>
-              <Badge variant="outline" className="text-[10px] mt-0.5 capitalize">
+              <Badge variant="outline" className="text-[10px] mt-0.5 capitalize bg-white/5 border-white/10 text-white/80">
                 Paid via {disputeData.gateway ?? "Gateway"}
               </Badge>
             </div>
           </div>
 
-          <Separator />
+          <Separator className="border-white/5" />
 
           {/* Trip Booking context */}
           <div className="text-xs sm:text-sm space-y-2">
-            <span className="text-muted-foreground block text-xs uppercase tracking-wide font-medium">Failed Booking Details</span>
+            <span className="text-white/40 block text-xs uppercase tracking-wide font-medium">Failed Booking Details</span>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <span className="text-muted-foreground/80 text-[11px] block">Route & Trip</span>
-                <span className="font-medium">{tripRoute}</span>
+                <span className="text-white/40 text-[11px] block">Route & Trip</span>
+                <span className="font-medium text-white/90">{tripRoute}</span>
               </div>
               <div>
-                <span className="text-muted-foreground/80 text-[11px] block">Trip Date</span>
-                <span className="font-medium">{tripDate}</span>
+                <span className="text-white/40 text-[11px] block">Trip Date</span>
+                <span className="font-medium text-white/90">{tripDate}</span>
               </div>
               <div>
-                <span className="text-muted-foreground/80 text-[11px] block">Booked Seats</span>
+                <span className="text-white/40 text-[11px] block">Booked Seats</span>
                 <div>
-                  <Badge variant="secondary" className="text-xs rounded-md py-0 px-2 mt-0.5">
+                  <Badge variant="outline" className="text-xs rounded-md py-0 px-2 mt-0.5 bg-white/5 border-white/10 text-white/80">
                     Seats {seats}
                   </Badge>
                 </div>
               </div>
               <div>
-                <span className="text-muted-foreground/80 text-[11px] block">Gateway Txn ID</span>
-                <span className="font-mono text-xs break-all">{disputeData.transactionId || "N/A"}</span>
+                <span className="text-white/40 text-[11px] block">Gateway Txn ID</span>
+                <span className="font-mono text-xs break-all text-white/90">{disputeData.transactionId || "N/A"}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <Separator className="my-2" />
+        <Separator className="my-2 border-white/5" />
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Status Selection */}
           <div className="space-y-1.5">
-            <Label htmlFor="refundStatus" className="text-sm font-semibold">
+            <Label htmlFor="refundStatus" className="text-sm font-semibold text-white/90">
               Refund Settlement Status
             </Label>
             <Select value={refundStatus} onValueChange={setRefundStatus}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white/5 border-white/10 text-white focus:ring-[#D3D925]">
                 <SelectValue placeholder="Select refund status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="COMPLETED">
+              <SelectContent className="bg-[#121212] border-white/10 text-white">
+                <SelectItem value="COMPLETED" className="focus:bg-white/10 focus:text-white">
                   COMPLETED (Refund successfully credited to customer)
                 </SelectItem>
-                <SelectItem value="PENDING">
+                <SelectItem value="PENDING" className="focus:bg-white/10 focus:text-white">
                   PENDING (Refund initiated / waiting bank cycle)
                 </SelectItem>
               </SelectContent>
@@ -253,9 +253,9 @@ export function ResolveDisputeDialog() {
 
           {/* Refund note / audit trail description */}
           <div className="space-y-1.5">
-            <Label htmlFor="refundNote" className="text-sm font-semibold flex items-center justify-between">
+            <Label htmlFor="refundNote" className="text-sm font-semibold flex items-center justify-between text-white/90">
               <span>Manual Refund Reference Note *</span>
-              <span className="text-xs text-muted-foreground font-normal">Visible to customer</span>
+              <span className="text-xs text-white/40 font-normal">Visible to customer</span>
             </Label>
             <Textarea
               id="refundNote"
@@ -264,26 +264,27 @@ export function ResolveDisputeDialog() {
               onChange={(e) => setRefundNote(e.target.value)}
               rows={3}
               required
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
             />
           </div>
 
           {/* Upload Verification Screenshot */}
           <div className="space-y-2">
-            <Label className="text-sm font-semibold flex items-center justify-between">
+            <Label className="text-sm font-semibold flex items-center justify-between text-white/90">
               <span>Upload Refund Screenshot *</span>
-              <span className="text-xs text-muted-foreground font-medium">Proof of Work Verification</span>
+              <span className="text-xs text-white/40 font-medium">Proof of Work Verification</span>
             </Label>
 
             {!imagePreview ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-border hover:border-primary/50 bg-muted/20 hover:bg-muted/50 cursor-pointer rounded-lg p-6 transition-all flex flex-col items-center justify-center gap-2 group text-center"
+                className="border-2 border-dashed border-white/20 hover:border-[#D3D925]/50 bg-white/5 hover:bg-white/10 cursor-pointer rounded-lg p-6 transition-all flex flex-col items-center justify-center gap-2 group text-center"
               >
-                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Upload className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
+                <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Upload className="h-5 w-5 text-white/40 group-hover:text-white" />
                 </div>
-                <p className="text-sm font-medium text-foreground">Click to upload refund receipt</p>
-                <p className="text-xs text-muted-foreground">Supports PNG, JPG, WebP (Max 5MB)</p>
+                <p className="text-sm font-medium text-white/90">Click to upload refund receipt</p>
+                <p className="text-xs text-white/40">Supports PNG, JPG, WebP (Max 5MB)</p>
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -293,15 +294,15 @@ export function ResolveDisputeDialog() {
                 />
               </div>
             ) : (
-              <div className="relative border border-border bg-muted/30 rounded-lg p-3 overflow-hidden flex items-center gap-3">
+              <div className="relative border border-white/10 bg-white/5 rounded-lg p-3 overflow-hidden flex items-center gap-3">
                 <img
                   src={imagePreview}
                   alt="Refund Proof preview"
-                  className="h-16 w-16 object-cover rounded-lg border border-border"
+                  className="h-16 w-16 object-cover rounded-lg border border-white/10"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{proofFile?.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-medium text-white/90 truncate">{proofFile?.name}</p>
+                  <p className="text-xs text-white/40">
                     {(proofFile!.size / (1024 * 1024)).toFixed(2)} MB • Ready to verify
                   </p>
                 </div>
@@ -310,7 +311,7 @@ export function ResolveDisputeDialog() {
                   variant="ghost"
                   size="icon"
                   onClick={removeFile}
-                  className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-full shrink-0"
+                  className="h-8 w-8 text-rose-500 hover:bg-rose-500/10 hover:text-rose-500 rounded-full shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -323,8 +324,9 @@ export function ResolveDisputeDialog() {
               id="notifyUser"
               checked={notifyUser}
               onCheckedChange={(checked) => setNotifyUser(checked as boolean)}
+              className="border-white/20 data-[state=checked]:bg-[#D3D925] data-[state=checked]:text-[#121212]"
             />
-            <label htmlFor="notifyUser" className="text-xs text-muted-foreground cursor-pointer select-none">
+            <label htmlFor="notifyUser" className="text-xs text-white/60 cursor-pointer select-none">
               Auto-notify customer via App Notification + SMS refund receipts
             </label>
           </div>
@@ -335,13 +337,14 @@ export function ResolveDisputeDialog() {
               variant="outline"
               onClick={onClose}
               disabled={isPending}
+              className="bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isPending}
-              className="px-6 flex items-center gap-1.5"
+              className="px-6 flex items-center gap-1.5 bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90 font-bold"
             >
               {isPending ? (
                 <>Resolving Dispute...</>

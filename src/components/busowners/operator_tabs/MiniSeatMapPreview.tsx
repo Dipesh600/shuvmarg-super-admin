@@ -1,5 +1,5 @@
 import React from "react";
-import { SeatConfig, SeatType, CellType } from "./SeatMapBuilder";
+import type { SeatConfig, SeatType, CellType } from "./SeatMapBuilder";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,

@@ -14,13 +14,13 @@ import {
   Phone,
   MapPin,
   Calendar,
-  Edit,
   CheckCircle,
   Wallet,
+  Shield,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import { useModal } from "@/hooks/use-model-store";
 import { SuspendDialog } from "@/components/models/suspended-model";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -35,25 +35,28 @@ import { UserTranscation } from "@/components/data_tables/users/transactionColum
 
 const UserDetail = () => {
   const { id } = useParams();
-  const { onOpen } = useModal();
   const navigate = useNavigate();
   const [userStatus, setUserStatus] = useState("");
   const { data: bookings } = useUserBookings(id ?? "");
+
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ["user", id],
     queryFn: () => getUserById(id as string),
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
+
   const { data: walletData, isLoading: walletLoading } = useQuery({
     queryKey: ["userWallet", id],
     queryFn: () => getUserBalance(id as string),
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
+
   useEffect(() => {
-    setUserStatus(data?.data?.status);
-  }, [data?.data?.status, id]);
+    setUserStatus(data?.data?.profile?.status);
+  }, [data?.data?.profile?.status, id]);
+
   if (isLoading) return <UserDetailSkeleton />;
 
   if (isError) {
@@ -63,39 +66,82 @@ const UserDetail = () => {
       </div>
     );
   }
-  const user = data?.data;
+
+  // Enriched response from the new backend endpoint
+  const enrichedData = data?.data;
+  const profile = enrichedData?.profile;
+  const metrics = enrichedData?.metrics;
+  const security = enrichedData?.security;
+  const referral = enrichedData?.referral;
+  const auditLog = enrichedData?.auditLog;
 
   const userData = {
-    id: user?._id,
-    name: user?.name,
-    email: user?.email,
-    phone: user?.phone,
-    status: user?.status,
-    verified: user?.isVerified,
-    joined: user?.createdAt?.split("T")[0],
-    address: user?.address || "Kathmandu, Nepal",
-    role: user?.role,
-    profileImg: user?.profilePicture || "",
-    lastLogin: "2024-01-28 10:30 AM",
+    id: profile?._id,
+    name: profile?.name,
+    email: profile?.email,
+    phone: profile?.phone,
+    status: profile?.status,
+    verified: profile?.isVerified,
+    joined: profile?.createdAt?.split("T")[0],
+    address: profile?.address || "Not provided",
+    role: profile?.role,
+    roles: profile?.roles || [],
+    profileImg: profile?.profilePicture || "",
+    gender: profile?.gender,
+    lastLogin: security?.lastLoginAt
+      ? new Date(security.lastLoginAt).toLocaleString()
+      : "Never",
   };
-  const userBookings = bookings?.data?.map((booking: any) => ({
-    id: booking._id,
-    scheduleRoute: {
-      from: booking?.scheduleInfo?.route?.from,
-      to: booking?.scheduleInfo?.route?.to,
-    },
-    bookedAt: booking?.createdAt,
-    amount: booking?.totalAmount,
-    status: booking?.status,
-  }));
-  const userTranscations = bookings?.data?.map((booking: any) => ({
+
+  // Map bookings from the getBookingsByUser endpoint
+  const userBookings = bookings?.data?.map((booking: any) => {
+    const trip = booking?.tripId;
+    const tripFrom = trip?.fromStopName || trip?.routeId?.from || "N/A";
+    const tripTo = trip?.toStopName || trip?.routeId?.to || "N/A";
+
+    const from =
+      booking?.bookedFrom ||
+      booking?.boardingPoint?.name ||
+      tripFrom;
+    const to =
+      booking?.bookedTo ||
+      booking?.droppingPoint?.name ||
+      tripTo;
+
+    return {
+      id: booking._id,
+      scheduleRoute: { from, to },
+      tripRoute:
+        (from !== tripFrom || to !== tripTo)
+          ? { from: tripFrom, to: tripTo }
+          : null,
+      bookedAt: booking?.createdAt,
+      amount: booking?.totalAmount,
+      status: booking?.status,
+    };
+  });
+
+  // Map transactions from the bookings data (using correct field names)
+  const userTransactions = bookings?.data?.map((booking: any) => ({
     id: booking?._id,
-    transactionId: booking?.transactionId,
-    type: booking?.refundStatus,
-    paymentDate: booking?.bookedAt,
+    transactionId: booking?.transactionId || "N/A",
+    type: booking?.status === "cancelled" ? "refund" : "none",
+    paymentDate: booking?.bookedAt || booking?.createdAt,
     amount: booking?.totalAmount,
-    method: booking?.gateway,
+    method: booking?.paymentMethod || "N/A",
   }));
+
+  // Format role label
+  const getRoleLabel = (role: string) => {
+    const labels: Record<string, string> = {
+      passenger: "Passenger",
+      busOwner: "Bus Owner",
+      agent: "Agent",
+      conductor: "Conductor",
+      driver: "Driver",
+    };
+    return labels[role] || role;
+  };
 
   return (
     <>
@@ -110,19 +156,10 @@ const UserDetail = () => {
         </Button>
         <div className="flex-1">
           <h2 className="text-2xl font-bold tracking-tight">User Details</h2>
-          <p className="text-muted-foreground">User ID: {id || userData.id}</p>
+          <p className="text-muted-foreground">Overview of user account and activity</p>
         </div>
         <div className="flex gap-2">
           <DeleteModel entityId={userData.id} entityType="user" />
-
-          <Button
-            onClick={() => onOpen("editUser", { data: userData })}
-            variant="outline"
-            className="gap-2 cursor-pointer"
-          >
-            <Edit className="h-4 w-4" />
-            Edit
-          </Button>
           <SuspendDialog
             entityType="user"
             entityName={`${userData.name}`}
@@ -133,13 +170,19 @@ const UserDetail = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1 h-fit">
+        {/* ── Profile Card ── */}
+        <Card className="lg:col-span-1 h-fit border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-white">
               Profile
               <Badge
-                variant={
-                  userData.status === "active" ? "default" : "destructive"
+                variant="outline"
+                className={
+                  userData.status === "active" 
+                    ? "capitalize bg-[#D3D925]/10 text-[#D3D925] border-[#D3D925]/20 font-medium" 
+                    : userData.status === "banned"
+                    ? "capitalize bg-white/5 text-white border-white/10 font-medium"
+                    : "capitalize bg-white/5 text-white/50 border-white/10 font-medium"
                 }
               >
                 {userData.status}
@@ -149,27 +192,38 @@ const UserDetail = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-center">
               <div className="w-24 h-24 overflow-hidden rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
-                {/* {userData.name[0]} */}
-                <img
-                  src={userData.profileImg}
-                  alt="profile_img"
-                  className="w-full rounded-full object-cover "
-                />
+                {userData.profileImg ? (
+                  <img
+                    src={userData.profileImg}
+                    alt="profile_img"
+                    className="w-full rounded-full object-cover "
+                  />
+                ) : (
+                  userData.name?.[0]?.toUpperCase() || "?"
+                )}
               </div>
             </div>
             <div className="text-center">
               <h3 className="text-xl font-semibold">{userData.name}</h3>
               {userData.verified && (
                 <div className="flex items-center justify-center gap-1 text-success text-sm mt-1">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  Verified {userData.role}
+                  <CheckCircle className="h-4 w-4 text-white" />
+                  Verified
                 </div>
               )}
+              {/* Roles badges */}
+              <div className="flex items-center justify-center gap-1 mt-2 flex-wrap">
+                {userData.roles.map((role: string) => (
+                  <Badge key={role} variant="outline" className="text-xs capitalize bg-white/5 text-white border-white/10">
+                    {getRoleLabel(role)}
+                  </Badge>
+                ))}
+              </div>
             </div>
             <div className="space-y-3 pt-4">
               <div className="flex items-center gap-3 text-sm">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{userData.email}</span>
+                <span>{userData.email || "Not provided"}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Phone className="h-4 w-4 text-muted-foreground" />
@@ -183,47 +237,113 @@ const UserDetail = () => {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span>Joined {userData.joined}</span>
               </div>
+              <div className="flex items-center gap-3 text-sm">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span>Last login: {userData.lastLogin}</span>
+              </div>
             </div>
+
+            {/* Suspension info if banned/inactive */}
+            {(userData.status === "banned" || userData.status === "inactive") &&
+              security?.suspensionReason && (
+                <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm font-medium text-destructive mb-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    Suspension Reason
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {security.suspensionReason}
+                  </p>
+                  {security.suspendedAt && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Since {new Date(security.suspendedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              )}
+
+            {/* Security overview */}
+            {security && (
+              <div className="mt-4 pt-4 border-t space-y-3">
+                <h4 className="text-sm font-medium text-muted-foreground">Security</h4>
+                <div className="flex items-center gap-3 text-sm">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1 flex justify-between">
+                    <span>Active Sessions</span>
+                    <span className="font-medium">{security.activeSessions}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1 flex justify-between">
+                    <span>Failed Logins</span>
+                    <span className="font-medium">{security.failedLoginAttempts}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex-1 flex justify-between">
+                    <span>Account Status</span>
+                    <span className="font-medium">
+                      {security.accountLocked ? "Locked" : security.forcePasswordChange ? "Reset Required" : "Normal"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Referral info */}
+            {referral && (
+              <div className="mt-4 pt-4 border-t space-y-2">
+                <h4 className="text-sm font-medium text-muted-foreground">Referral</h4>
+                <div className="flex justify-between text-sm">
+                  <span>Code</span>
+                  <Badge variant="outline" className="text-xs">
+                    {referral.code || "N/A"}
+                  </Badge>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Total Referrals</span>
+                  <span className="font-medium">{referral.totalReferrals}</span>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
+        {/* ── Activity Card ── */}
+        <Card className="lg:col-span-2 border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl">
           <CardHeader>
             <CardTitle>Activity Summary</CardTitle>
             <CardDescription>
-              User's recent activity and statistics
+              User's booking metrics and activity
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-4 mb-6">
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
+            <div className="grid gap-4 md:grid-cols-3 mb-6">
+              <div className="p-4 border border-white/5 bg-[#121212]/50 rounded-lg text-center">
                 <div className="text-2xl font-bold">
-                  {bookings?.totalBookings ?? 0}
+                  {metrics?.bookings?.total ?? bookings?.totalBookings ?? 0}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   Total Bookings
                 </div>
               </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
+              <div className="p-4 border border-white/5 bg-[#121212]/50 rounded-lg text-center">
                 <div className="text-2xl font-bold">
-                  NPR.{bookings?.totalBookingAmount ?? 0}
+                  NPR.{(metrics?.bookings?.totalSpent ?? bookings?.totalBookingAmount ?? 0).toLocaleString("en-IN")}
                 </div>
                 <div className="text-sm text-muted-foreground">Total Spent</div>
               </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <div className="text-sm font-medium">{userData.lastLogin}</div>
-                <div className="text-sm text-muted-foreground">Last Login</div>
-              </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center flex flex-col items-center justify-center relative group overflow-hidden border border-transparent hover:border-primary/20 transition-colors">
-                <div className="absolute inset-0 bg-primary/5 translate-y-[120%] group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-                <div className="text-2xl font-bold relative z-10">
+              <div className="p-4 rounded-lg text-center flex flex-col items-center justify-center relative group overflow-hidden border border-[#D3D925]/20 bg-[#D3D925]/5 hover:bg-[#D3D925]/10 hover:shadow-[0_0_20px_rgba(211,217,37,0.15)] transition-all duration-300">
+                <div className="text-2xl font-bold relative z-10 text-[#D3D925]">
                   {walletLoading ? "..." : `Rs. ${walletData?.balance?.toLocaleString("en-IN") ?? 0}`}
                 </div>
                 <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1 relative z-10">
-                  <Wallet className="h-3.5 w-3.5" /> SM Money
+                  <Wallet className="h-3.5 w-3.5 text-[#D3D925]/70" /> SM Money
                 </div>
-                <div 
-                  className="text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute bottom-1.5 z-10 font-medium cursor-pointer flex items-center gap-0.5 hover:underline" 
+                <div
+                  className="text-[10px] text-[#D3D925] opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute bottom-1.5 z-10 font-medium cursor-pointer flex items-center gap-0.5 hover:underline"
                   onClick={() => navigate(`/admin/wallet`)}
                 >
                   Manage &rarr;
@@ -235,13 +355,45 @@ const UserDetail = () => {
               <TabsList className="w-fit justify-start">
                 <TabsTrigger value="bookings">Bookings</TabsTrigger>
                 <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                {auditLog && auditLog.length > 0 && (
+                  <TabsTrigger value="auditLog">Admin Actions</TabsTrigger>
+                )}
               </TabsList>
               <TabsContent value="bookings" className="mt-4">
                 <DataTable columns={UserBooking} data={userBookings ?? []} />
               </TabsContent>
               <TabsContent value="transactions" className="mt-4">
-                <DataTable columns={UserTranscation} data={userTranscations ?? []} />
+                <DataTable columns={UserTranscation} data={userTransactions ?? []} />
               </TabsContent>
+              {auditLog && auditLog.length > 0 && (
+                <TabsContent value="auditLog" className="mt-4">
+                  <div className="space-y-3">
+                    {auditLog.map((entry: any, i: number) => (
+                      <div key={entry._id || i} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg text-sm">
+                        <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className="text-xs">{entry.action}</Badge>
+                            <span className="text-muted-foreground text-xs">
+                              {new Date(entry.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          {entry.reason && (
+                            <p className="text-muted-foreground mt-1 truncate">
+                              {entry.reason}
+                            </p>
+                          )}
+                          {entry.adminId && (
+                            <p className="text-muted-foreground text-xs mt-0.5">
+                              by {entry.adminId.email || "Admin"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              )}
             </Tabs>
           </CardContent>
         </Card>

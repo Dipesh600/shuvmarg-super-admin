@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getDriversByBrand, approveDriver, rejectDriver,
-  DriverProfile, DriverApprovalStatus,
-} from "@/api/driverApi";
+import { getDriversByBrand, approveDriver, rejectDriver } from "@/api/driverApi";
+import type { DriverProfile, DriverApprovalStatus } from "@/api/driverApi";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -83,10 +81,10 @@ const DriverCard: React.FC<{
   const hasCompliance    = licenseExpired || medicalExpired || licenseExpiring || medicalExpiring;
 
   return (
-    <Card className={`p-5 border shadow-none transition-colors ${
+    <Card className={`p-5 border backdrop-blur-md shadow-xl transition-colors ${
       hasCompliance
-        ? "border-amber-200 bg-amber-50/30 hover:border-amber-300"
-        : "border-muted bg-background hover:border-primary/20"
+        ? "border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40"
+        : "border-white/5 bg-[#121212]/30 hover:border-white/10"
     }`}>
       <div className="flex items-start justify-between gap-3">
 
@@ -97,9 +95,9 @@ const DriverCard: React.FC<{
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="font-black text-sm tracking-tight">{driver.fullName}</p>
+              <p className="font-black text-sm tracking-tight text-white/90">{driver.fullName}</p>
               {statusDot(driver.status)}
-              <span className="text-[9px] font-bold text-muted-foreground uppercase">{driver.status}</span>
+              <span className="text-[9px] font-bold text-white/50 uppercase">{driver.status}</span>
               {hasCompliance && (
                 <span className="flex items-center gap-0.5 text-[9px] font-black text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-md">
                   <AlertTriangle className="h-2.5 w-2.5" /> Compliance
@@ -107,8 +105,8 @@ const DriverCard: React.FC<{
               )}
             </div>
             <div className="flex items-center gap-2 mt-0.5">
-              <Phone className="h-3 w-3 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">{driver.phone}</span>
+              <Phone className="h-3 w-3 text-white/40" />
+              <span className="text-xs text-white/60">{driver.phone}</span>
             </div>
           </div>
         </div>
@@ -168,26 +166,26 @@ const DriverCard: React.FC<{
         </div>
       </div>
 
-      <Separator className="my-3" />
+      <Separator className="my-3 bg-white/5" />
 
       {/* Compliance row */}
       <div className="grid grid-cols-2 gap-3">
-        <div className={`rounded-lg p-2.5 space-y-0.5 ${licenseExpired ? "bg-red-50 border border-red-200" : licenseExpiring ? "bg-amber-50 border border-amber-200" : "bg-muted/30"}`}>
+        <div className={`rounded-lg p-2.5 space-y-0.5 ${licenseExpired ? "bg-red-500/10 border border-red-500/20 text-red-400" : licenseExpiring ? "bg-amber-500/10 border border-amber-500/20 text-amber-400" : "bg-white/5 border border-white/5"}`}>
           <div className="flex items-center gap-1.5 mb-1">
-            <CreditCard className="h-3 w-3 text-primary" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">License</span>
+            <CreditCard className="h-3 w-3 text-[#D3D925]" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/50">License</span>
           </div>
-          <p className="text-xs font-black tracking-wider">{driver.licenseNumber}</p>
+          <p className="text-xs font-black tracking-wider text-white/90">{driver.licenseNumber}</p>
           <div className="flex items-center gap-1 flex-wrap">
-            <Badge variant="outline" className="text-[8px] font-black px-1.5 py-0">{driver.licenseType}</Badge>
+            <Badge variant="outline" className="text-[8px] font-black px-1.5 py-0 border-white/10 text-white/70">{driver.licenseType}</Badge>
             {expiryWarning(driver.licenseExpiry)}
           </div>
         </div>
 
-        <div className={`rounded-lg p-2.5 space-y-0.5 ${medicalExpired ? "bg-red-50 border border-red-200" : medicalExpiring ? "bg-amber-50 border border-amber-200" : "bg-muted/30"}`}>
+        <div className={`rounded-lg p-2.5 space-y-0.5 ${medicalExpired ? "bg-red-500/10 border border-red-500/20 text-red-400" : medicalExpiring ? "bg-amber-500/10 border border-amber-500/20 text-amber-400" : "bg-white/5 border border-white/5"}`}>
           <div className="flex items-center gap-1.5 mb-1">
-            <ShieldCheck className="h-3 w-3 text-primary" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Medical Cert</span>
+            <ShieldCheck className="h-3 w-3 text-[#D3D925]" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-white/50">Medical Cert</span>
           </div>
           {driver.medicalCertExpiry ? (
             expiryWarning(driver.medicalCertExpiry)
@@ -202,9 +200,9 @@ const DriverCard: React.FC<{
 
       {/* Assigned bus */}
       {driver.assignedBusId && (
-        <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground font-bold">
+        <div className="mt-2 flex items-center gap-2 text-[10px] text-white/50 font-bold">
           <Clock className="h-3 w-3" />
-          Primary bus: <span className="text-foreground">{(driver.assignedBusId as any).busName} · {(driver.assignedBusId as any).busNumber}</span>
+          Primary bus: <span className="text-white/90">{(driver.assignedBusId as any).busName} · {(driver.assignedBusId as any).busNumber}</span>
         </div>
       )}
 

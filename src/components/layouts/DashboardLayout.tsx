@@ -18,7 +18,7 @@ export function DashboardLayout() {
           "flex flex-col flex-1 min-h-screen transition-all duration-300",
 
           // Desktop: Push content when sidebar open
-          !isMobile && open ? "ml-64" : "ml-16",
+          !isMobile && open ? "ml-64" : "ml-[70px]",
 
           // Mobile: Sidebar overlays, so content should never shift
           isMobile && "ml-0"

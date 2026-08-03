@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useMemo } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, Users, CheckCircle2, IndianRupee, CalendarOff, ArrowRight, Phone, User, LogOut, CheckCircle, XCircle, RefreshCw, Calendar, X, Loader2, AlertTriangle, AlertCircle, History, List } from "lucide-react";
+import {
+    Clock, Users, CalendarOff,
+    LogOut, CheckCircle, XCircle, RefreshCw, Calendar, X, Loader2, AlertTriangle,
+    ChevronLeft, ChevronRight,
+} from "lucide-react";
 import { useUpdateTripStatus } from "@/hooks/useFleetWorkstation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/axios";
@@ -25,17 +27,38 @@ interface OperationsTabProps {
 
 // ─── STATUS HELPERS ──────────────────────────────────────────────────────────
 const statusStyles: Record<string, string> = {
-    scheduled: "bg-blue-500/10 text-blue-600 border-blue-500/30",
-    boarding: "bg-amber-500/10 text-amber-600 border-amber-500/30",
-    "in-transit": "bg-violet-500/10 text-violet-600 border-violet-500/30",
-    completed: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
-    cancelled: "bg-red-500/10 text-red-600 border-red-500/30",
+    scheduled: "bg-white/5 text-white border-white/10",
+    boarding: "bg-white/5 text-white border-white/10",
+    "in-transit": "bg-white/5 text-white border-white/10",
+    completed: "bg-white/5 text-white border-white/10",
+    cancelled: "bg-white/5 text-white border-white/10",
 };
 
-const formatDate = (d: string) => {
-    const date = new Date(d);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const statusDot: Record<string, string> = {
+    scheduled: "bg-white/5",
+    boarding: "bg-white/5",
+    "in-transit": "bg-white/5",
+    completed: "bg-white/5",
+    cancelled: "bg-white/5",
 };
+
+const statusBorder: Record<string, string> = {
+    scheduled: "border-l-blue-500",
+    boarding: "border-l-amber-500",
+    "in-transit": "border-l-violet-500",
+    completed: "border-l-emerald-500",
+    cancelled: "border-l-red-500",
+};
+
+const statusBg: Record<string, string> = {
+    scheduled: "bg-white/5 hover:bg-white/5",
+    boarding: "bg-white/5 hover:bg-white/5",
+    "in-transit": "bg-white/5 hover:bg-white/5",
+    completed: "bg-white/5 hover:bg-white/5",
+    cancelled: "bg-white/5 hover:bg-white/5",
+};
+
+
 
 const getDirection = (variant: any, trip?: any) => {
     if (trip?.directionLabel) return trip.directionLabel;
@@ -45,90 +68,343 @@ const getDirection = (variant: any, trip?: any) => {
     return variant.direction === "RETURN" ? `${d} → ${o}` : `${o} → ${d}`;
 };
 
-// ─── TRIP TABLE COMPONENT (REUSABLE) ─────────────────────────────────────────
-const TripTable = ({ trips, fleet, onRowClick, onCancel, onReschedule }: { trips: any[]; fleet: any; onRowClick: (id: string) => void; onCancel?: (trip: any) => void; onReschedule?: (trip: any) => void; }) => {
-    const totalSeats = fleet?.totalSeats || 0;
+// ─── CALENDAR HELPERS ────────────────────────────────────────────────────────
 
-    if (!trips || trips.length === 0) {
-        return (
-            <Card className="border-dashed border-2 bg-muted/5">
-                <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                    <p className="font-bold">No trips found</p>
-                </CardContent>
-            </Card>
-        );
+const MONTH_NAMES = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+];
+
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const getCalendarDays = (year: number, month: number) => {
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    const days: { date: number; month: number; year: number; isCurrentMonth: boolean }[] = [];
+
+    // Previous month padding
+    for (let i = firstDay - 1; i >= 0; i--) {
+        days.push({ date: daysInPrevMonth - i, month: month - 1, year: month === 0 ? year - 1 : year, isCurrentMonth: false });
     }
 
+    // Current month
+    for (let d = 1; d <= daysInMonth; d++) {
+        days.push({ date: d, month, year, isCurrentMonth: true });
+    }
+
+    // Next month padding
+    const remaining = 42 - days.length; // 6 rows
+    for (let d = 1; d <= remaining; d++) {
+        days.push({ date: d, month: month + 1, year: month === 11 ? year + 1 : year, isCurrentMonth: false });
+    }
+
+    return days;
+};
+
+const dateKey = (y: number, m: number, d: number) =>
+    `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+
+const isToday = (y: number, m: number, d: number) => {
+    const now = new Date();
+    return now.getFullYear() === y && now.getMonth() === m && now.getDate() === d;
+};
+
+// ─── TRIP CARD (Calendar Cell) ───────────────────────────────────────────────
+const TripChip = ({ trip, totalSeats, onClick }: { trip: any; totalSeats: number; onClick: () => void }) => {
+    const s = trip.stats || {};
+    const occ = s.occupancyPct || 0;
+
     return (
-        <Card className="overflow-hidden">
-            <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-muted/30">
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest">Date</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest">Direction</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest">Dep</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest">Status</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-center">Booked</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-right">Revenue</TableHead>
-                            {(onCancel || onReschedule) && <TableHead className="text-[10px] font-black uppercase tracking-widest text-right">Actions</TableHead>}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {trips.map((trip: any) => {
-                            const s = trip.stats || {};
-                            return (
-                                <TableRow key={trip._id} className="cursor-pointer hover:bg-muted/10 transition-colors" onClick={() => onRowClick(trip._id)}>
-                                    <TableCell className="font-bold text-sm">
-                                        {formatDate(trip.tripDate)}
-                                        {trip.exceptionType === "EXTRA_RUN" && <Badge variant="secondary" className="ml-2 text-[8px] uppercase tracking-widest">Extra</Badge>}
-                                    </TableCell>
-                                    <TableCell className="text-sm font-medium">{getDirection(trip.variantId, trip)}</TableCell>
-                                    <TableCell>
-                                        <span className="font-mono text-sm">{trip.departureTime}</span>
-                                        {trip.exceptionType === "RESCHEDULED" && <span className="text-[10px] text-amber-600 block leading-none font-bold">Rescheduled</span>}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge className={`text-[9px] uppercase font-bold tracking-wider px-2 py-0 border ${statusStyles[trip.status] || "bg-muted"}`}>
-                                            {trip.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <span className="font-mono text-sm">{s.booked || 0}/{totalSeats}</span>
-                                        <span className={`block text-[10px] font-bold ${(s.occupancyPct || 0) >= 80 ? "text-emerald-600" : (s.occupancyPct || 0) >= 50 ? "text-amber-600" : "text-red-600"}`}>
-                                            {s.occupancyPct || 0}%
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="text-right font-bold text-sm">Rs. {(s.revenue || 0).toLocaleString()}</TableCell>
-                                    
-                                    {(onCancel || onReschedule) && (
-                                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                                            <div className="flex justify-end gap-2">
-                                                {onReschedule && trip.status === "scheduled" && (
-                                                    <Button variant="outline" size="sm" className="h-7 text-[10px] px-2 font-bold text-primary border-primary/20 hover:bg-primary/10" onClick={() => onReschedule(trip)}>
-                                                        Reschedule
-                                                    </Button>
-                                                )}
-                                                {onCancel && trip.status === "scheduled" && (
-                                                    <Button variant="outline" size="sm" className="h-7 text-[10px] px-2 font-bold text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => onCancel(trip)}>
-                                                        Cancel
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                    )}
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
+        <button
+            onClick={onClick}
+            className={`w-full text-left rounded-lg border-l-[3px] px-2 py-1.5 transition-all duration-200 cursor-pointer group ${statusBorder[trip.status] || "border-l-muted"} ${statusBg[trip.status] || "bg-muted/5 hover:bg-muted/10"}`}
+        >
+            <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] font-bold leading-none">{trip.departureTime}</span>
+                <Badge className={`text-[7px] uppercase font-black tracking-wider px-1 py-0 border-0 leading-tight ${statusStyles[trip.status] || "bg-muted"}`}>
+                    {trip.status === "in-transit" ? "transit" : trip.status === "scheduled" ? "sched" : trip.status === "completed" ? "done" : trip.status}
+                </Badge>
             </div>
-        </Card>
+
+            {/* Direction */}
+            <p className="text-[9px] text-muted-foreground truncate mt-0.5 leading-tight">
+                {getDirection(trip.variantId, trip)}
+            </p>
+
+            {/* Occupancy bar */}
+            {trip.status !== "cancelled" && (
+                <div className="mt-1 flex items-center gap-1">
+                    <div className="flex-1 h-[3px] bg-muted/30 rounded-full overflow-hidden">
+                        <div
+                            className={`h-full rounded-full transition-all ${occ >= 80 ? "bg-white/5" : occ >= 50 ? "bg-white/5" : "bg-white/5"}`}
+                            style={{ width: `${Math.min(100, occ)}%` }}
+                        />
+                    </div>
+                    <span className={`text-[8px] font-black ${occ >= 80 ? "text-white" : occ >= 50 ? "text-white" : "text-white"}`}>
+                        {s.booked || 0}/{totalSeats}
+                    </span>
+                </div>
+            )}
+
+            {/* Revenue for non-cancelled */}
+            {trip.status !== "cancelled" && s.revenue > 0 && (
+                <p className="text-[8px] font-bold text-muted-foreground mt-0.5">
+                    Rs.{s.revenue?.toLocaleString()}
+                </p>
+            )}
+
+            {/* Cancellation reason for cancelled */}
+            {trip.status === "cancelled" && trip.cancellationReason && (
+                <p className="text-[8px] text-white truncate mt-0.5 italic">{trip.cancellationReason}</p>
+            )}
+
+            {trip.exceptionType === "EXTRA_RUN" && (
+                <span className="text-[7px] font-black text-white uppercase">Extra Run</span>
+            )}
+            {trip.exceptionType === "RESCHEDULED" && (
+                <span className="text-[7px] font-black text-white uppercase">Rescheduled</span>
+            )}
+        </button>
     );
 };
 
+// ─── CALENDAR VIEW COMPONENT ─────────────────────────────────────────────────
+const CalendarView = ({
+    trips,
+    totalSeats,
+    onTripClick,
+    onCancel: _onCancel,
+    onReschedule: _onReschedule,
+}: {
+    trips: any[];
+    totalSeats: number;
+    onTripClick: (id: string) => void;
+    onCancel: (trip: any) => void;
+    onReschedule: (trip: any) => void;
+}) => {
+    const now = new Date();
+    const [viewYear, setViewYear] = useState(now.getFullYear());
+    const [viewMonth, setViewMonth] = useState(now.getMonth());
+    const [statusFilter, setStatusFilter] = useState<string>("all");
+
+    // Group trips by date key
+    const tripsByDate = useMemo(() => {
+        const map = new Map<string, any[]>();
+        for (const trip of trips) {
+            const d = new Date(trip.tripDate);
+            const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
+            if (!map.has(key)) map.set(key, []);
+            map.get(key)!.push(trip);
+        }
+        // Sort each day's trips by departure time
+        for (const [, dayTrips] of map) {
+            dayTrips.sort((a: any, b: any) => (a.departureTime || "").localeCompare(b.departureTime || ""));
+        }
+        return map;
+    }, [trips]);
+
+    // Calendar grid
+    const calendarDays = useMemo(() => getCalendarDays(viewYear, viewMonth), [viewYear, viewMonth]);
+
+    // Stats for current view
+    const monthStats = useMemo(() => {
+        let scheduled = 0, completed = 0, cancelled = 0, inTransit = 0, boarding = 0, totalRevenue = 0, totalBooked = 0;
+        for (const trip of trips) {
+            const d = new Date(trip.tripDate);
+            if (d.getFullYear() === viewYear && d.getMonth() === viewMonth) {
+                const s = trip.stats || {};
+                switch (trip.status) {
+                    case "scheduled": scheduled++; break;
+                    case "completed": completed++; break;
+                    case "cancelled": cancelled++; break;
+                    case "in-transit": inTransit++; break;
+                    case "boarding": boarding++; break;
+                }
+                totalRevenue += s.revenue || 0;
+                totalBooked += s.booked || 0;
+            }
+        }
+        return { scheduled, completed, cancelled, inTransit, boarding, totalRevenue, totalBooked, total: scheduled + completed + cancelled + inTransit + boarding };
+    }, [trips, viewYear, viewMonth]);
+
+    const navigateMonth = (delta: number) => {
+        let m = viewMonth + delta;
+        let y = viewYear;
+        if (m < 0) { m = 11; y--; }
+        if (m > 11) { m = 0; y++; }
+        setViewMonth(m);
+        setViewYear(y);
+    };
+
+    const goToToday = () => {
+        setViewYear(now.getFullYear());
+        setViewMonth(now.getMonth());
+    };
+
+    return (
+        <div className="space-y-4">
+            {/* Month Summary Cards */}
+            <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="rounded-xl bg-muted/30 border px-3 py-2.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Total</p>
+                    <p className="text-xl font-black">{monthStats.total}</p>
+                </div>
+                <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white">Scheduled</p>
+                    <p className="text-xl font-black text-white">{monthStats.scheduled}</p>
+                </div>
+                <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white">Completed</p>
+                    <p className="text-xl font-black text-white">{monthStats.completed}</p>
+                </div>
+                <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white">Cancelled</p>
+                    <p className="text-xl font-black text-white">{monthStats.cancelled}</p>
+                </div>
+                <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white">In Transit</p>
+                    <p className="text-xl font-black text-white">{monthStats.inTransit + monthStats.boarding}</p>
+                </div>
+                <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2.5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-white">Revenue</p>
+                    <p className="text-lg font-black text-white">₹{monthStats.totalRevenue.toLocaleString()}</p>
+                </div>
+            </div>
+
+            {/* Calendar Header */}
+            <Card className="overflow-hidden">
+                <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="sm" onClick={() => navigateMonth(-1)} className="h-8 w-8 p-0 rounded-lg">
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <h3 className="text-lg font-black tracking-tight min-w-[200px] text-center">
+                                    {MONTH_NAMES[viewMonth]} {viewYear}
+                                </h3>
+                                <Button variant="ghost" size="sm" onClick={() => navigateMonth(1)} className="h-8 w-8 p-0 rounded-lg">
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={goToToday} className="h-7 text-[10px] font-bold uppercase tracking-wider rounded-lg px-3">
+                                Today
+                            </Button>
+                        </div>
+
+                        {/* Status filter */}
+                        <div className="flex items-center gap-1.5">
+                            {[
+                                { key: "all", label: "All", color: "bg-muted" },
+                                { key: "scheduled", label: "Scheduled", color: "bg-white/5" },
+                                { key: "completed", label: "Completed", color: "bg-white/5" },
+                                { key: "cancelled", label: "Cancelled", color: "bg-white/5" },
+                                { key: "in-transit", label: "In Transit", color: "bg-white/5" },
+                            ].map((f) => (
+                                <button
+                                    key={f.key}
+                                    onClick={() => setStatusFilter(f.key)}
+                                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider transition-all ${
+                                        statusFilter === f.key
+                                            ? "bg-foreground text-background shadow-sm"
+                                            : "text-muted-foreground hover:bg-muted/50"
+                                    }`}
+                                >
+                                    <span className={`w-1.5 h-1.5 rounded-full ${f.color}`} />
+                                    {f.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </CardHeader>
+
+                <CardContent className="p-0">
+                    {/* Day Headers */}
+                    <div className="grid grid-cols-7 border-t border-b bg-muted/20">
+                        {DAY_NAMES.map((day) => (
+                            <div key={day} className="px-2 py-2 text-center">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                    {day}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7">
+                        {calendarDays.map((day, idx) => {
+                            const key = dateKey(day.year, day.month, day.date);
+                            const dayTrips = (tripsByDate.get(key) || []).filter(
+                                (t: any) => statusFilter === "all" || t.status === statusFilter
+                            );
+                            const isTodayCell = isToday(day.year, day.month, day.date);
+                            const hasCancelled = dayTrips.some((t: any) => t.status === "cancelled");
+                            const hasScheduled = dayTrips.some((t: any) => t.status === "scheduled");
+
+                            return (
+                                <div
+                                    key={idx}
+                                    className={`min-h-[120px] border-b border-r p-1.5 transition-colors ${
+                                        !day.isCurrentMonth ? "bg-muted/10 opacity-40" : ""
+                                    } ${isTodayCell ? "bg-primary/3 ring-1 ring-inset ring-primary/20" : ""}`}
+                                >
+                                    {/* Date number */}
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className={`text-xs font-bold leading-none ${
+                                            isTodayCell
+                                                ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center"
+                                                : "text-muted-foreground"
+                                        }`}>
+                                            {day.date}
+                                        </span>
+                                        <div className="flex items-center gap-0.5">
+                                            {hasCancelled && <span className="w-1.5 h-1.5 rounded-full bg-white/5" />}
+                                            {hasScheduled && <span className="w-1.5 h-1.5 rounded-full bg-white/5" />}
+                                        </div>
+                                    </div>
+
+                                    {/* Trip chips */}
+                                    <div className="space-y-1">
+                                        {dayTrips.slice(0, 4).map((trip: any) => (
+                                            <TripChip
+                                                key={trip._id}
+                                                trip={trip}
+                                                totalSeats={totalSeats}
+                                                onClick={() => onTripClick(trip._id)}
+                                            />
+                                        ))}
+                                        {dayTrips.length > 4 && (
+                                            <p className="text-[9px] font-bold text-muted-foreground text-center py-0.5">
+                                                +{dayTrips.length - 4} more
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Legend */}
+            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground px-1">
+                <span className="font-bold uppercase tracking-wider">Status:</span>
+                {Object.entries(statusDot).map(([status, dotClass]) => (
+                    <span key={status} className="flex items-center gap-1 capitalize">
+                        <span className={`w-2 h-2 rounded-full ${dotClass}`} />
+                        {status.replace("-", " ")}
+                    </span>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
 // ─── MAIN OPERATIONS TAB ─────────────────────────────────────────────────────
-const OperationsTab = ({ today, upcomingTrips, completedTrips, cancelledTrips, recentTrips, fleet, fleetId, schedules }: OperationsTabProps) => {
+const OperationsTab = ({ today, upcomingTrips: _upcomingTrips, completedTrips: _completedTrips, cancelledTrips: _cancelledTrips, recentTrips, fleet, fleetId, schedules }: OperationsTabProps) => {
     const qc = useQueryClient();
     
     // Modal states
@@ -175,23 +451,23 @@ const OperationsTab = ({ today, upcomingTrips, completedTrips, cancelledTrips, r
             />
 
             {/* Date-Range Exception Card */}
-            <Card className="border-amber-500/20 bg-amber-500/5">
+            <Card className="border-white/10 bg-white/5">
                 <CardContent className="py-4 px-5">
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-3">
-                            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                            <AlertTriangle className="w-5 h-5 text-white shrink-0 mt-0.5" />
                             <div>
-                                <p className="text-sm font-black text-amber-700">Date-Range Exception</p>
-                                <p className="text-xs text-amber-600/80 mt-0.5">Cancel all trips between two dates (maintenance, road closure). Master schedule is NOT suspended.</p>
+                                <p className="text-sm font-black text-white">Date-Range Exception</p>
+                                <p className="text-xs text-white/60 mt-0.5">Cancel all trips between two dates (maintenance, road closure). Master schedule is NOT suspended.</p>
                             </div>
                         </div>
-                        <Button size="sm" variant="outline" onClick={() => setShowCancelRange(true)} className="h-8 px-3 rounded-lg font-bold text-xs shrink-0 border-amber-500/40 text-amber-700 hover:bg-amber-500/10">
+                        <Button size="sm" variant="outline" onClick={() => setShowCancelRange(true)} className="h-8 px-3 rounded-lg font-bold text-xs shrink-0 border-white/10 text-white hover:bg-white/5">
                             <Calendar className="w-3.5 h-3.5 mr-1.5" /> Set Exception Window
                         </Button>
                     </div>
 
                     {showCancelRange && (
-                        <div className="mt-4 pt-4 border-t border-amber-500/20 space-y-3">
+                        <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-black uppercase tracking-wider text-muted-foreground block mb-1">Schedule</label>
@@ -217,7 +493,7 @@ const OperationsTab = ({ today, upcomingTrips, completedTrips, cancelledTrips, r
                             </div>
                             <div className="flex gap-2 justify-end">
                                 <Button size="sm" variant="outline" onClick={() => setShowCancelRange(false)} className="font-bold rounded-lg">Cancel</Button>
-                                <Button size="sm" onClick={() => cancelRangeMut.mutate()} disabled={!rangeSchedule || !rangeFrom || !rangeTo || !rangeReason || cancelRangeMut.isPending} className="font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white">
+                                <Button size="sm" onClick={() => cancelRangeMut.mutate()} disabled={!rangeSchedule || !rangeFrom || !rangeTo || !rangeReason || cancelRangeMut.isPending} className="font-bold rounded-lg bg-white/5 hover:bg-white/5 text-white">
                                     {cancelRangeMut.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />} Apply Exception
                                 </Button>
                             </div>
@@ -232,19 +508,9 @@ const OperationsTab = ({ today, upcomingTrips, completedTrips, cancelledTrips, r
                     <TabsTrigger value="today" className="gap-2 px-4 py-2 font-bold text-xs uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                         <Clock className="w-3.5 h-3.5" /> Today
                     </TabsTrigger>
-                    <TabsTrigger value="upcoming" className="gap-2 px-4 py-2 font-bold text-xs uppercase tracking-wider">
-                        <Calendar className="w-3.5 h-3.5" /> Upcoming
-                        <Badge variant="secondary" className="ml-1 px-1.5 py-0 h-4 text-[9px] bg-muted-foreground/20">{upcomingTrips?.length || 0}</Badge>
-                    </TabsTrigger>
-                    <TabsTrigger value="completed" className="gap-2 px-4 py-2 font-bold text-xs uppercase tracking-wider">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Completed
-                    </TabsTrigger>
-                    <TabsTrigger value="cancelled" className="gap-2 px-4 py-2 font-bold text-xs uppercase tracking-wider">
-                        <AlertCircle className="w-3.5 h-3.5" /> Cancelled
-                        {cancelledTrips?.length > 0 && <span className="w-2 h-2 rounded-full bg-red-500 ml-1" />}
-                    </TabsTrigger>
-                    <TabsTrigger value="all" className="gap-2 px-4 py-2 font-bold text-xs uppercase tracking-wider ml-auto text-muted-foreground">
-                        <List className="w-3.5 h-3.5" /> All Trips
+                    <TabsTrigger value="calendar" className="gap-2 px-4 py-2 font-bold text-xs uppercase tracking-wider">
+                        <Calendar className="w-3.5 h-3.5" /> Trip Calendar
+                        <Badge variant="secondary" className="ml-1 px-1.5 py-0 h-4 text-[9px] bg-muted-foreground/20">{recentTrips?.length || 0}</Badge>
                     </TabsTrigger>
                 </TabsList>
 
@@ -254,32 +520,32 @@ const OperationsTab = ({ today, upcomingTrips, completedTrips, cancelledTrips, r
                         <div className="space-y-4">
                             {/* Pulse Stats */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                <Card className="bg-blue-500/5 border-blue-500/20">
+                                <Card className="bg-white/5 border-white/10">
                                     <CardContent className="p-4 space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">Departure</p>
-                                        <p className="text-2xl font-black text-blue-700">{today.trip.departureTime}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-white">Departure</p>
+                                        <p className="text-2xl font-black text-white">{today.trip.departureTime}</p>
                                         <Badge className={`text-[9px] uppercase font-bold border-0 px-2 py-0 ${statusStyles[today.trip.status]}`}>{today.trip.status}</Badge>
                                     </CardContent>
                                 </Card>
-                                <Card className="bg-violet-500/5 border-violet-500/20">
+                                <Card className="bg-white/5 border-white/10">
                                     <CardContent className="p-4 space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-violet-600">Seats Booked</p>
-                                        <p className="text-2xl font-black text-violet-700">{today.stats?.seatsSold || 0} / {fleet?.totalSeats || 0}</p>
-                                        <p className="text-xs font-medium text-violet-600/70">{today.stats?.occupancyPct || 0}% Occupancy</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-white">Seats Booked</p>
+                                        <p className="text-2xl font-black text-white">{today.stats?.seatsSold || 0} / {fleet?.totalSeats || 0}</p>
+                                        <p className="text-xs font-medium text-white/60">{today.stats?.occupancyPct || 0}% Occupancy</p>
                                     </CardContent>
                                 </Card>
-                                <Card className="bg-emerald-500/5 border-emerald-500/20">
+                                <Card className="bg-white/5 border-white/10">
                                     <CardContent className="p-4 space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Boarded</p>
-                                        <p className="text-2xl font-black text-emerald-700">{today.stats?.boardingConfirmed || 0} / {today.stats?.totalBooked || 0}</p>
-                                        <p className="text-xs font-medium text-emerald-600/70">Verified by Conductor</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-white">Boarded</p>
+                                        <p className="text-2xl font-black text-white">{today.stats?.boardingConfirmed || 0} / {today.stats?.totalBooked || 0}</p>
+                                        <p className="text-xs font-medium text-white/60">Verified by Conductor</p>
                                     </CardContent>
                                 </Card>
-                                <Card className="bg-amber-500/5 border-amber-500/20">
+                                <Card className="bg-white/5 border-white/10">
                                     <CardContent className="p-4 space-y-2">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Revenue</p>
-                                        <p className="text-2xl font-black text-amber-700">Rs. {(today.stats?.revenue || 0).toLocaleString()}</p>
-                                        <p className="text-xs font-medium text-amber-600/70">Today's collections</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-white">Revenue</p>
+                                        <p className="text-2xl font-black text-white">Rs. {(today.stats?.revenue || 0).toLocaleString()}</p>
+                                        <p className="text-xs font-medium text-white/60">Today's collections</p>
                                     </CardContent>
                                 </Card>
                             </div>
@@ -299,12 +565,12 @@ const OperationsTab = ({ today, upcomingTrips, completedTrips, cancelledTrips, r
                                         </Button>
                                         
                                         {(today.trip.status === "scheduled" || today.trip.status === "boarding") && (
-                                            <Button variant="outline" className="font-bold border-violet-200 text-violet-700 bg-violet-50 hover:bg-violet-100" onClick={() => handleUpdateStatus(today.trip._id, "in-transit", "Mark trip as Departed?")}>
+                                            <Button variant="outline" className="font-bold border-white/10 text-white bg-white/5 hover:bg-white/5" onClick={() => handleUpdateStatus(today.trip._id, "in-transit", "Mark trip as Departed?")}>
                                                 <LogOut className="w-4 h-4 mr-2" /> Mark Departed
                                             </Button>
                                         )}
                                         {today.trip.status === "in-transit" && (
-                                            <Button variant="outline" className="font-bold border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100" onClick={() => handleUpdateStatus(today.trip._id, "completed", "Mark trip as Arrived?")}>
+                                            <Button variant="outline" className="font-bold border-white/10 text-white bg-white/5 hover:bg-white/5" onClick={() => handleUpdateStatus(today.trip._id, "completed", "Mark trip as Arrived?")}>
                                                 <CheckCircle className="w-4 h-4 mr-2" /> Mark Arrived
                                             </Button>
                                         )}
@@ -327,30 +593,15 @@ const OperationsTab = ({ today, upcomingTrips, completedTrips, cancelledTrips, r
                     )}
                 </TabsContent>
 
-                {/* 2. UPCOMING TAB */}
-                <TabsContent value="upcoming" className="mt-4 outline-none">
-                    <TripTable 
-                        trips={upcomingTrips} 
-                        fleet={fleet} 
-                        onRowClick={(id) => setManifestTripId(id)}
+                {/* 2. CALENDAR TAB */}
+                <TabsContent value="calendar" className="mt-4 outline-none">
+                    <CalendarView
+                        trips={recentTrips || []}
+                        totalSeats={fleet?.totalSeats || 0}
+                        onTripClick={(id) => setManifestTripId(id)}
                         onCancel={(t) => setShowCancelTripModal({ tripId: t._id, tripDate: t.tripDate })}
                         onReschedule={(t) => setShowRescheduleModal({ tripId: t._id, tripDate: t.tripDate, departureTime: t.departureTime, arrivalTime: t.arrivalTime })}
                     />
-                </TabsContent>
-
-                {/* 3. COMPLETED TAB */}
-                <TabsContent value="completed" className="mt-4 outline-none">
-                    <TripTable trips={completedTrips} fleet={fleet} onRowClick={(id) => setManifestTripId(id)} />
-                </TabsContent>
-
-                {/* 4. CANCELLED TAB */}
-                <TabsContent value="cancelled" className="mt-4 outline-none">
-                    <TripTable trips={cancelledTrips} fleet={fleet} onRowClick={(id) => setManifestTripId(id)} />
-                </TabsContent>
-
-                {/* 5. ALL TRIPS TAB */}
-                <TabsContent value="all" className="mt-4 outline-none">
-                    <TripTable trips={recentTrips} fleet={fleet} onRowClick={(id) => setManifestTripId(id)} />
                 </TabsContent>
             </Tabs>
 
@@ -411,7 +662,7 @@ function CancelTripModal({ tripId, tripDate, onClose, onSuccess }: any) {
     );
 }
 
-function RescheduleTripModal({ tripId, tripDate, currentDep, currentArr, onClose, onSuccess }: any) {
+function RescheduleTripModal({ tripId, tripDate: _tripDate, currentDep, currentArr, onClose, onSuccess }: any) {
     const [newDep, setNewDep] = useState(currentDep);
     const [newArr, setNewArr] = useState(currentArr);
     const [reason, setReason] = useState("");

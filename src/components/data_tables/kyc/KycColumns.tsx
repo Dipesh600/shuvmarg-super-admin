@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
-import { ShieldCheck, Clock, XCircle, Eye } from "lucide-react";
+import { ShieldCheck, Clock, XCircle, ArrowRight } from "lucide-react";
 
 /* ─── Status Badge helpers ──────────────────────────────────────── */
 
@@ -10,13 +10,13 @@ import { ShieldCheck, Clock, XCircle, Eye } from "lucide-react";
 const getOwnerStatusBadge = (status: string) => {
   switch (status?.toLowerCase()) {
     case "approved":
-      return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 font-black text-[10px] uppercase tracking-widest">Approved</Badge>;
+      return <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[10px] uppercase tracking-widest">Approved</Badge>;
     case "rejected":
-      return <Badge className="bg-rose-100 text-rose-800 border-rose-200 font-black text-[10px] uppercase tracking-widest">Rejected</Badge>;
+      return <Badge className="bg-rose-500/10 text-rose-400 border-rose-500/20 font-black text-[10px] uppercase tracking-widest">Rejected</Badge>;
     case "under_review":
-      return <Badge className="bg-blue-100 text-blue-800 border-blue-200 font-black text-[10px] uppercase tracking-widest">Under Review</Badge>;
+      return <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-black text-[10px] uppercase tracking-widest">Under Review</Badge>;
     default:
-      return <Badge className="bg-amber-100 text-amber-800 border-amber-200 font-black text-[10px] uppercase tracking-widest">Pending</Badge>;
+      return <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-black text-[10px] uppercase tracking-widest">Pending</Badge>;
   }
 };
 
@@ -25,21 +25,21 @@ const getFleetApprovalBadge = (status: string) => {
   switch (status?.toUpperCase()) {
     case "APPROVED":
       return (
-        <div className="flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full w-fit">
+        <div className="flex items-center gap-1 text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full w-fit">
           <ShieldCheck className="h-3 w-3" />
           <span className="font-black text-[10px] uppercase tracking-widest">Approved</span>
         </div>
       );
     case "REJECTED":
       return (
-        <div className="flex items-center gap-1 text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full w-fit">
+        <div className="flex items-center gap-1 text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full w-fit">
           <XCircle className="h-3 w-3" />
           <span className="font-black text-[10px] uppercase tracking-widest">Rejected</span>
         </div>
       );
     default:
       return (
-        <div className="flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full w-fit">
+        <div className="flex items-center gap-1 text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full w-fit">
           <Clock className="h-3 w-3" />
           <span className="font-black text-[10px] uppercase tracking-widest">Pending</span>
         </div>
@@ -60,29 +60,29 @@ export const busOwnerColumns: ColumnDef<any>[] = [
     accessorKey: "busownerId",
     header: "KYC ID",
     cell: ({ row }) => (
-      <span className="font-mono text-[10px] text-muted-foreground">{row.original.busownerId}</span>
+      <span className="font-mono text-[10px] text-white/60">{row.original.busownerId}</span>
     ),
   },
   {
     accessorKey: "companyname",
     header: "Company",
-    cell: ({ row }) => <span className="font-bold text-sm">{row.original.companyname || "—"}</span>,
+    cell: ({ row }) => <span className="font-bold text-sm text-white">{row.original.companyname || "—"}</span>,
   },
   {
     accessorKey: "owner",
     header: "Owner",
-    cell: ({ row }) => <span className="font-medium text-sm">{row.original.owner || "—"}</span>,
+    cell: ({ row }) => <span className="font-medium text-sm text-white">{row.original.owner || "—"}</span>,
   },
   {
     accessorKey: "submitdate",
     header: "Submitted",
-    cell: ({ row }) => <span className="text-xs text-muted-foreground">{fmtDate(row.original.submitdate)}</span>,
+    cell: ({ row }) => <span className="text-xs text-white/60">{fmtDate(row.original.submitdate)}</span>,
   },
   {
     accessorKey: "documents",
     header: "Docs",
     cell: ({ row }) => (
-      <span className="font-mono text-xs bg-muted/50 px-2 py-0.5 rounded-md">
+      <span className="font-mono text-xs bg-white/5 text-white/70 px-2 py-0.5 rounded-md border border-white/10">
         {row.original.documents ?? 0} files
       </span>
     ),
@@ -97,40 +97,14 @@ export const busOwnerColumns: ColumnDef<any>[] = [
     header: "Action",
     cell: ({ row }) => {
       const navigate = useNavigate();
-      const status = row.original.status?.toLowerCase();
-
-      if (status === "approved") {
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 font-black text-[10px] uppercase tracking-widest text-emerald-700 hover:bg-emerald-50"
-            onClick={() => navigate(`/admin/kyc/bus-owner/${row.original.ownerId}`)}
-          >
-            <ShieldCheck className="h-3 w-3" /> Approved
-          </Button>
-        );
-      }
-      if (status === "rejected") {
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 font-black text-[10px] uppercase tracking-widest text-rose-700 hover:bg-rose-50"
-            onClick={() => navigate(`/admin/kyc/bus-owner/${row.original.ownerId}`)}
-          >
-            <Eye className="h-3 w-3" /> View Decision
-          </Button>
-        );
-      }
       return (
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 font-black text-[10px] uppercase tracking-widest border-amber-300 text-amber-700 hover:bg-amber-50"
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
           onClick={() => navigate(`/admin/kyc/bus-owner/${row.original.ownerId}`)}
         >
-          <Clock className="h-3 w-3" /> Review
+          <ArrowRight className="h-4 w-4" />
         </Button>
       );
     },
@@ -143,28 +117,28 @@ export const agentColumns: ColumnDef<any>[] = [
   {
     accessorKey: "agentId",
     header: "KYC ID",
-    cell: ({ row }) => <span className="font-mono text-[10px] text-muted-foreground">{row.original.agentId}</span>,
+    cell: ({ row }) => <span className="font-mono text-[10px] text-white/60">{row.original.agentId}</span>,
   },
   {
-    accessorKey: "companyname",
+    accessorKey: "owner",
     header: "Agent Name",
-    cell: ({ row }) => <span className="font-bold text-sm">{row.original.companyname || "—"}</span>,
+    cell: ({ row }) => <span className="font-bold text-sm text-white">{row.original.owner || "—"}</span>,
   },
   {
     accessorKey: "location",
     header: "Location",
-    cell: ({ row }) => <span className="text-sm">{row.original.location ?? "Biratnagar"}</span>,
+    cell: ({ row }) => <span className="text-sm text-white">{row.original.location || "—"}</span>,
   },
   {
     accessorKey: "submitdate",
     header: "Submitted",
-    cell: ({ row }) => <span className="text-xs text-muted-foreground">{fmtDate(row.original.submitdate)}</span>,
+    cell: ({ row }) => <span className="text-xs text-white/60">{fmtDate(row.original.submitdate)}</span>,
   },
   {
     accessorKey: "documents",
     header: "Docs",
     cell: ({ row }) => (
-      <span className="font-mono text-xs bg-muted/50 px-2 py-0.5 rounded-md">
+      <span className="font-mono text-xs bg-white/5 text-white/70 px-2 py-0.5 rounded-md border border-white/10">
         {row.original.documents ?? 0} files
       </span>
     ),
@@ -180,13 +154,13 @@ export const agentColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const navigate = useNavigate();
       return (
-        <Button
-          variant="outline"
-          size="sm"
-          className="font-black text-[10px] uppercase tracking-widest"
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
           onClick={() => navigate(`/admin/kyc/agent/${row.original.id}`)}
         >
-          Review
+          <ArrowRight className="h-4 w-4" />
         </Button>
       );
     },
@@ -200,19 +174,19 @@ export const fleetColumns: ColumnDef<any>[] = [
     accessorKey: "fleetId",
     header: "Fleet ID",
     cell: ({ row }) => (
-      <span className="font-mono text-[10px] text-muted-foreground">{row.original.fleetId}</span>
+      <span className="font-mono text-[10px] text-white/60">{row.original.fleetId}</span>
     ),
   },
   {
     accessorKey: "busName",
     header: "Bus Name",
-    cell: ({ row }) => <span className="font-bold text-sm">{row.original.busName || "—"}</span>,
+    cell: ({ row }) => <span className="font-bold text-sm text-white">{row.original.busName || "—"}</span>,
   },
   {
     accessorKey: "busNumber",
     header: "Reg. Number",
     cell: ({ row }) => (
-      <span className="font-mono text-xs font-bold uppercase bg-muted/40 px-1.5 py-0.5 rounded">
+      <span className="font-mono text-xs font-bold uppercase bg-white/5 text-white border border-white/10 px-1.5 py-0.5 rounded">
         {row.original.busNumber || "—"}
       </span>
     ),
@@ -221,7 +195,7 @@ export const fleetColumns: ColumnDef<any>[] = [
     accessorKey: "brandName",
     header: "Brand",
     cell: ({ row }) => (
-      <span className="text-xs font-medium text-muted-foreground">
+      <span className="text-xs font-medium text-white/60">
         {row.original.brandName || "—"}
       </span>
     ),
@@ -229,18 +203,18 @@ export const fleetColumns: ColumnDef<any>[] = [
   {
     accessorKey: "owner",
     header: "Owner",
-    cell: ({ row }) => <span className="text-sm">{row.original.owner || "—"}</span>,
+    cell: ({ row }) => <span className="text-sm text-white">{row.original.owner || "—"}</span>,
   },
   {
     accessorKey: "submitdate",
     header: "Submitted",
-    cell: ({ row }) => <span className="text-xs text-muted-foreground">{fmtDate(row.original.submitdate)}</span>,
+    cell: ({ row }) => <span className="text-xs text-white/60">{fmtDate(row.original.submitdate)}</span>,
   },
   {
     accessorKey: "documents",
     header: "Docs",
     cell: ({ row }) => (
-      <span className="font-mono text-xs bg-muted/50 px-2 py-0.5 rounded-md">
+      <span className="font-mono text-xs bg-white/5 text-white/70 px-2 py-0.5 rounded-md border border-white/10">
         {row.original.documents ?? 0} files
       </span>
     ),
@@ -255,40 +229,14 @@ export const fleetColumns: ColumnDef<any>[] = [
     header: "Action",
     cell: ({ row }) => {
       const navigate = useNavigate();
-      const status = row.original.approvalStatus?.toUpperCase();
-
-      if (status === "APPROVED") {
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 font-black text-[10px] uppercase tracking-widest text-emerald-700 hover:bg-emerald-50"
-            onClick={() => navigate(`/admin/kyc/fleet/${row.original.id}`)}
-          >
-            <ShieldCheck className="h-3 w-3" /> Approved
-          </Button>
-        );
-      }
-      if (status === "REJECTED") {
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 font-black text-[10px] uppercase tracking-widest text-rose-700 hover:bg-rose-50"
-            onClick={() => navigate(`/admin/kyc/fleet/${row.original.id}`)}
-          >
-            <Eye className="h-3 w-3" /> View Decision
-          </Button>
-        );
-      }
       return (
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 font-black text-[10px] uppercase tracking-widest border-amber-300 text-amber-700 hover:bg-amber-50"
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
           onClick={() => navigate(`/admin/kyc/fleet/${row.original.id}`)}
         >
-          <Clock className="h-3 w-3" /> Review
+          <ArrowRight className="h-4 w-4" />
         </Button>
       );
     },

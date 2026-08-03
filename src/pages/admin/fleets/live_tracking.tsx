@@ -193,8 +193,8 @@ const FleetTracking = () => {
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4 mb-6">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
               <Bus className="h-4 w-4 text-primary" />
               Active Buses
             </CardTitle>
@@ -207,8 +207,8 @@ const FleetTracking = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
               <Navigation className="h-4 w-4 text-success" />
               Moving
             </CardTitle>
@@ -221,8 +221,8 @@ const FleetTracking = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
               <Clock className="h-4 w-4 text-muted-foreground" />
               Stopped
             </CardTitle>
@@ -235,8 +235,8 @@ const FleetTracking = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
               <AlertTriangle className="h-4 w-4 text-warning" />
               Delayed
             </CardTitle>

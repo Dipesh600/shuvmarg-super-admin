@@ -38,26 +38,26 @@ interface User {
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "active":
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>;
+      return <Badge variant="outline" className="bg-white/5 border-white/10 text-white">Active</Badge>;
     case "banned":
-      return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Banned</Badge>;
+      return <Badge variant="outline" className="bg-white/5 border-white/10 text-white">Banned</Badge>;
     default:
-      return <Badge variant="secondary">{status}</Badge>;
+      return <Badge variant="outline" className="bg-white/5 border-white/10 text-white/70">{status}</Badge>;
   }
 };
 
 const getRoleBadge = (role: string) => {
   switch (role) {
     case "admin":
-      return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">Admin</Badge>;
+      return <Badge variant="outline" className="bg-white/5 border-white/10 text-white">Admin</Badge>;
     case "busOwner":
-      return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Bus Owner</Badge>;
+      return <Badge variant="outline" className="bg-white/5 border-white/10 text-white">Bus Owner</Badge>;
     case "agent":
-      return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">Agent</Badge>;
+      return <Badge variant="outline" className="bg-white/5 border-white/10 text-white">Agent</Badge>;
     case "passenger":
-      return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Passenger</Badge>;
+      return <Badge variant="outline" className="bg-white/10 border-white/20 text-white/80">Passenger</Badge>;
     default:
-      return <Badge variant="secondary">{role}</Badge>;
+      return <Badge variant="outline" className="bg-white/5 border-white/10 text-white/70">{role}</Badge>;
   }
 };
 
@@ -91,10 +91,10 @@ if(isLoading) {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Push Notifications</h1>
-            <p className="text-muted-foreground">
+            <h2 className="text-2xl font-bold tracking-tight text-white">Push Notifications</h2>
+            <p className="text-white/60 mt-1 font-medium text-sm">
               Send push notifications to users
             </p>
           </div>
@@ -104,47 +104,47 @@ if(isLoading) {
         {/* Stats Cards */}
         {/* <div className="grid gap-4 md:grid-cols-3">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-white/5 bg-white/5">
+            <CardTitle className="text-sm font-medium text-white/80">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalUsers}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-              <UserCheck className="h-4 w-4 text-green-600" />
-            </CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-white/5 bg-white/5">
+            <CardTitle className="text-sm font-medium text-white/80">Active Users</CardTitle>
+            <UserCheck className="h-4 w-4 text-white" />
+          </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{activeUsers}</div>
+              <div className="text-2xl font-bold text-white">{activeUsers}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Banned Users</CardTitle>
-              <Ban className="h-4 w-4 text-red-600" />
-            </CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-white/5 bg-white/5">
+            <CardTitle className="text-sm font-medium text-white/80">Banned Users</CardTitle>
+            <Ban className="h-4 w-4 text-white" />
+          </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{bannedUsers}</div>
+              <div className="text-2xl font-bold text-white">{bannedUsers}</div>
             </CardContent>
           </Card>
         </div> */}
 
         {/* Users Table */}
-        <Card>
+        <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>All Users</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-white">All Users</CardTitle>
               <div className="flex items-center gap-2">
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-white/40" />
                   <Input
                     placeholder="Search users..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8 w-[300px]"
+                    className="pl-8 w-[300px] border-white/10 bg-white/5 text-white placeholder:text-white/40"
                   />
                 </div>
               </div>
@@ -153,47 +153,47 @@ if(isLoading) {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>SM Money</TableHead>
-                  <TableHead>Referrals</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="border-white/5 hover:bg-white/5">
+                  <TableHead className="text-white/60">User</TableHead>
+                  <TableHead className="text-white/60">Contact</TableHead>
+                  <TableHead className="text-white/60">Role</TableHead>
+                  <TableHead className="text-white/60">Status</TableHead>
+                  <TableHead className="text-white/60">SM Money</TableHead>
+                  <TableHead className="text-white/60">Referrals</TableHead>
+                  <TableHead className="text-white/60">Joined</TableHead>
+                  <TableHead className="text-white/60 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.map((user) => (
-                  <TableRow key={user._id}>
+                  <TableRow key={user._id} className="border-white/5 hover:bg-white/5">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
+                        <Avatar className="h-10 w-10 border border-white/10">
                           <AvatarImage src={user.profilePicture} alt={user.name} />
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-white/10 text-white">
                             {user.name?.charAt(0).toUpperCase() || "U"}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{user.name || "N/A"}</p>
-                          <p className="text-sm text-muted-foreground">{user.address || "N/A"}</p>
+                          <p className="font-medium text-white/90">{user.name || "N/A"}</p>
+                          <p className="text-sm text-white/60">{user.address || "N/A"}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="text-sm">{user.email || "N/A"}</p>
-                        <p className="text-sm text-muted-foreground">{user.phone}</p>
+                        <p className="text-sm text-white/80">{user.email || "N/A"}</p>
+                        <p className="text-sm text-white/60">{user.phone}</p>
                       </div>
                     </TableCell>
                     <TableCell>{getRoleBadge(user.role)}</TableCell>
                     <TableCell>{getStatusBadge(user.status)}</TableCell>
                     <TableCell>
-                      <span className="font-medium">{user.yatrapoints.toLocaleString()}</span>
+                      <span className="font-medium text-[#D3D925]">{(user.yatrapoints ?? 0).toLocaleString()}</span>
                     </TableCell>
-                    <TableCell>{user.totalReferrals}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-white/80">{user.totalReferrals}</TableCell>
+                    <TableCell className="text-white/80">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">

@@ -11,13 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Bus, MapPin, Users, Settings, Image as ImageIcon, Loader2, Route, CheckCircle2, LayoutGrid } from "lucide-react";
+import { Bus, Users, Settings, Image as ImageIcon, Loader2, Route, CheckCircle2, LayoutGrid } from "lucide-react";
 import { useFetchFleetDetail, useUpdateOwnerFleet } from "@/hooks/useOwnerFleets";
 import { useFetchAllCorridors } from "@/hooks/usePlatformRegistry";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SeatMapBuilder, { type SeatConfig } from "./SeatMapBuilder";
 import { cn } from "@/lib/utils";
@@ -33,7 +32,7 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
   id, 
   isOpen, 
   onClose,
-  ownerId
+  ownerId: _ownerId
 }) => {
   const { data: response, isLoading: isFleetLoading, isError, refetch } = useFetchFleetDetail(id || "");
   const updateMutation = useUpdateOwnerFleet(id || "");
@@ -108,7 +107,6 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
   }, [response, isOpen]);
 
   const isApproved = response?.data?.approvalStatus === "APPROVED";
-  const approvalStatus = response?.data?.approvalStatus || "PENDING";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

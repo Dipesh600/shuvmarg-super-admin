@@ -1,328 +1,671 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Printer, RefreshCw, XCircle, CheckCircle, Clock, User, MapPin, Calendar, Bus, ExternalLink, Ticket } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  ArrowLeft,
+  Printer,
+  RefreshCw,
+  XCircle,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  User,
+  MapPin,
+  Calendar,
+  Bus,
+  ExternalLink,
+  Ticket,
+  CreditCard,
+  Smartphone,
+  Hash,
+  Tag,
+  Users,
+  Navigation,
+  Moon,
+  Sun,
+  ShieldCheck,
+  Receipt,
+  Percent,
+  BadgeDollarSign,
+  ArrowRight,
+  Wallet,
+} from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { getBookingById } from "@/api/bookingsApi";
 import BookingDetailSkeleton from "@/components/Skeletion_Loading/BookingDetailSkeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { StatCard } from "@/components/dashboard/StatCard";
 
+/* ─── Helpers ───────────────────────────── */
+function statusIcon(s: string) {
+  switch (s?.toLowerCase()) {
+    case "booked":    return <CheckCircle className="h-3.5 w-3.5" />;
+    case "cancelled": return <XCircle className="h-3.5 w-3.5" />;
+    case "pending":   return <Clock className="h-3.5 w-3.5" />;
+    case "no_show":   return <AlertCircle className="h-3.5 w-3.5" />;
+    default:          return null;
+  }
+}
+
+const PM: Record<string, string> = {
+  ESEWA: "eSewa", KHALTI: "Khalti", IME_PAY: "IME Pay",
+  CONNECT_IPS: "ConnectIPS", CARD: "Card", CASH: "Cash",
+  AGENT: "Agent", SM_WALLET: "SM Money",
+  SM_WALLET_SPLIT: "SM Money (Split)", OTHER: "Other",
+};
+
+/* ─── Reusable layout helpers ──────────── */
+const DetailRow = ({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon?: React.ReactNode;
+}) => (
+  <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
+    <span className="text-sm text-white/60 flex items-center gap-2 font-medium">
+      {icon}
+      {label}
+    </span>
+    <span className="text-sm font-semibold text-right max-w-[55%] text-white">{value}</span>
+  </div>
+);
+
+// Admin UI Card styling (matches Analytics.tsx)
+const AdminCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`shadow-xl border border-white/5 bg-[#121212]/30 backdrop-blur-md rounded-2xl overflow-hidden ${className}`}>
+    {children}
+  </div>
+);
+
+/* ─── Main Component ─────────────────── */
 const BookingDetail = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  const navigate  = useNavigate();
+  const { id }    = useParams();
 
-  const { data: bookingResponse, isLoading, isError, error } = useQuery({
+  const { data: res, isLoading, isError, error } = useQuery({
     queryKey: ["booking", id],
-    queryFn: () => getBookingById(id as string),
-    enabled: !!id,
+    queryFn:  () => getBookingById(id as string),
+    enabled:  !!id,
   });
 
   if (isLoading) return <BookingDetailSkeleton />;
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-        <XCircle className="h-16 w-16 text-destructive" />
-        <h2 className="text-2xl font-bold">Failed to load booking</h2>
-        <p className="text-muted-foreground">{(error as Error).message}</p>
-        <Button onClick={() => navigate("/admin/bookings")}>Back to Bookings</Button>
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <XCircle className="h-14 w-14 text-white" />
+        <h2 className="text-2xl font-bold tracking-tight text-white">Failed to load booking</h2>
+        <p className="text-white/60 text-sm font-medium">{(error as Error).message}</p>
+        <Button 
+          className="bg-white/10 hover:bg-white/20 text-white rounded-xl px-6"
+          onClick={() => navigate("/admin/bookings")}
+        >
+          Back to Bookings
+        </Button>
       </div>
     );
   }
 
-  const booking = bookingResponse?.data;
+  const booking = res?.data;
 
-  const handleCancelBooking = () => {
-    toast.success("Booking cancellation initiated");
-  };
+  if (!booking) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <Ticket className="h-14 w-14 text-white/40" />
+        <h2 className="text-2xl font-bold tracking-tight text-white">Booking not found</h2>
+        <p className="text-white/60 text-sm font-medium">This ticket ID does not exist or was deleted.</p>
+        <Button 
+          className="bg-white/10 hover:bg-white/20 text-white rounded-xl px-6"
+          onClick={() => navigate("/admin/bookings")}
+        >
+          Back to Bookings
+        </Button>
+      </div>
+    );
+  }
 
-  const handleResendTicket = () => {
-    toast.success("Ticket resent to user");
-  };
+  /* Safe refs — populate can return null */
+  const trip     = booking.tripId  ?? {};
+  const route    = (trip as any).routeId ?? {};
+  const bus      = (trip as any).busId   ?? {};
+  const customer = booking.userId  ?? {};
+  const coupon   = booking.couponUsed ?? null;
 
-  const handlePrintTicket = () => {
-    window.print();
-  };
+  const hasDiscount = (booking.discountAmount ?? 0) > 0;
+  const hasSmMoney  = (booking.smMoneyUsed   ?? 0) > 0;
+  const isActive    = booking.status?.toLowerCase() === "booked";
+  const passengers: any[] = booking.passengerDetails ?? [];
+  const boardingPt  = booking.boardingPoint;
+  const droppingPt  = booking.droppingPoint;
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "booked":
-      case "confirmed":
-        return "default";
-      case "completed":
-        return "secondary";
-      case "pending":
-        return "outline";
-      case "cancelled":
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "booked":
-      case "confirmed":
-        return <CheckCircle className="h-5 w-5 text-success" />;
-      case "completed":
-        return <CheckCircle className="h-5 w-5 text-muted-foreground" />;
-      case "pending":
-        return <Clock className="h-5 w-5 text-warning" />;
-      case "cancelled":
-        return <XCircle className="h-5 w-5 text-destructive" />;
-      default:
-        return null;
-    }
-  };
+  const tripDate = (trip as any).tripDate
+    ? new Date((trip as any).tripDate).toLocaleDateString("en-NP", { day: "2-digit", month: "short", year: "numeric" })
+    : "—";
 
   return (
-    <>
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/bookings")} className="shrink-0">
+    <div className="font-sans text-white max-w-7xl mx-auto space-y-6 pb-12">
+      {/* ══════════════════════════════════════
+          PAGE HEADER
+      ══════════════════════════════════════ */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-10 w-10 rounded-full bg-white/5 hover:bg-white/10 text-white border border-white/5"
+          onClick={() => navigate("/admin/bookings")}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
+
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3">
-            <h2 className="text-3xl font-bold tracking-tight truncate">Booking Details</h2>
-            <Badge variant={getStatusColor(booking.status)} className="capitalize">
-              {booking.status}
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="text-2xl font-bold tracking-tight text-white">Booking Details</h2>
+            <Badge 
+              variant="outline" 
+              className="gap-1.5 capitalize text-xs px-2.5 py-0.5 font-bold"
+              style={{
+                backgroundColor: booking.status?.toLowerCase() === "booked" ? "rgba(211, 217, 37, 0.1)" : booking.status?.toLowerCase() === "cancelled" ? "rgba(244, 63, 94, 0.1)" : "rgba(255, 255, 255, 0.05)",
+                color: booking.status?.toLowerCase() === "booked" ? "#D3D925" : booking.status?.toLowerCase() === "cancelled" ? "#f43f5e" : "#fff",
+                borderColor: booking.status?.toLowerCase() === "booked" ? "rgba(211, 217, 37, 0.2)" : booking.status?.toLowerCase() === "cancelled" ? "rgba(244, 63, 94, 0.2)" : "rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              {statusIcon(booking.status)}
+              {booking.status?.replace("_", " ")}
             </Badge>
           </div>
-          <p className="text-muted-foreground mt-1 flex items-center gap-2">
-            <Ticket className="h-4 w-4" />
-            Ticket ID: <span className="font-mono font-medium">{booking.ticketId}</span>
+          <p className="text-white/50 mt-1 text-sm flex items-center gap-2 font-medium">
+            <Ticket className="h-4 w-4 shrink-0 text-white/50" />
+            <span className="font-bold tracking-wider text-white/80">#{booking.ticketId}</span>
+            <span className="text-white/20">|</span>
+            <span>Booked {new Date(booking.bookedAt).toLocaleString("en-NP", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
           </p>
         </div>
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          <Button variant="outline" size="sm" className="gap-2 flex-1 md:flex-none" onClick={handlePrintTicket}>
-            <Printer className="h-4 w-4" />
-            Print
+
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button 
+            className="bg-[#121212] hover:bg-white/5 text-white rounded-xl font-medium border border-white/10 gap-2 h-10"
+            onClick={() => window.print()}
+          >
+            <Printer className="h-4 w-4" /> Print
           </Button>
-          <Button variant="outline" size="sm" className="gap-2 flex-1 md:flex-none" onClick={handleResendTicket}>
-            <RefreshCw className="h-4 w-4" />
-            Resend Ticket
+          <Button 
+            className="bg-white hover:bg-white/90 text-black rounded-xl font-bold gap-2 h-10"
+            onClick={() => toast.success("Ticket resent")}
+          >
+            <RefreshCw className="h-4 w-4" /> Resend Ticket
           </Button>
-          {(booking.status.toLowerCase() === "booked" || booking.status.toLowerCase() === "confirmed") && (
-            <Button variant="destructive" size="sm" className="gap-2 flex-1 md:flex-none" onClick={handleCancelBooking}>
-              <XCircle className="h-4 w-4" />
-              Cancel Booking
+          {isActive && (
+            <Button 
+              className="bg-white/5 hover:bg-white/5 text-white rounded-xl font-semibold gap-2 h-10 border-0"
+              onClick={() => toast.success("Cancellation initiated")}
+            >
+              <XCircle className="h-4 w-4" /> Cancel
             </Button>
           )}
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Payment & Summary Card */}
-        <Card className="lg:col-span-1 shadow-sm border-t-4 border-t-primary h-fit">
-          <CardHeader className="pb-3 text-center">
-            <CardTitle className="text-lg text-muted-foreground uppercase tracking-widest font-semibold flex items-center justify-center gap-2">
-              {getStatusIcon(booking.status)}
-              Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center py-2">
-              <p className="text-4xl font-black text-primary tracking-tight">Rs. {booking.totalAmount.toLocaleString()}</p>
-              {booking.discountAmount > 0 && (
-                <p className="text-sm text-destructive line-through mt-1">
-                  Rs. {booking.originalAmount.toLocaleString()}
+      {/* ══════════════════════════════════════
+          STAT STRIP — 4 quick-scan metrics
+      ══════════════════════════════════════ */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <StatCard
+          title="Total Paid"
+          value={`Rs. ${(booking.totalAmount ?? 0).toLocaleString()}`}
+          icon={BadgeDollarSign}
+          subtitle={hasDiscount ? `Saved Rs. ${(booking.discountAmount ?? 0).toLocaleString()}` : undefined}
+          changeType="neutral"
+        />
+        <StatCard
+          title="Passengers"
+          value={(booking.seats ?? []).length.toString()}
+          icon={Users}
+          subtitle={(booking.seats ?? []).join(", ")}
+          changeType="neutral"
+        />
+        <StatCard
+          title="Travel Date"
+          value={tripDate}
+          icon={Calendar}
+          subtitle={`${booking.bookedDepartureTime ?? (trip as any).departureTime ?? "—"} → ${booking.bookedArrivalTime ?? (trip as any).arrivalTime ?? "—"}`}
+          changeType="neutral"
+        />
+        <StatCard
+          title="Vehicle"
+          value={(bus as any).busName ?? "—"}
+          icon={Bus}
+          subtitle={(bus as any).busNumber ?? undefined}
+          changeType="neutral"
+        />
+      </div>
+
+      {/* ══════════════════════════════════════
+          ROW A — Customer  |  Route
+      ══════════════════════════════════════ */}
+      <div className="grid gap-6 md:grid-cols-2">
+
+        {/* Customer ───────────────────────── */}
+        <AdminCard className="flex flex-col">
+          <div className="p-5 border-b border-white/5 flex items-center justify-between">
+            <h3 className="text-base font-bold flex items-center gap-2 text-white">
+              <User className="h-4 w-4 text-white/50" /> Customer Info
+            </h3>
+            <Button
+              variant="ghost"
+              className="h-8 gap-1.5 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-full px-3"
+              onClick={() => (customer as any)._id && navigate(`/admin/users/${(customer as any)._id}`)}
+            >
+              View Profile <ExternalLink className="h-3 w-3" />
+            </Button>
+          </div>
+          <div className="p-5 flex-1">
+            <div className="flex gap-4 items-center mb-6">
+              <Avatar className="h-16 w-16 border border-white/10 shrink-0">
+                <AvatarImage src={(customer as any).profilePicture} />
+                <AvatarFallback className="text-xl font-bold bg-white/5 text-white">
+                  {(customer as any).name?.charAt(0)?.toUpperCase() ?? "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-bold text-lg tracking-tight text-white">{(customer as any).name ?? "—"}</p>
+                <p className="text-sm font-medium text-white/60 mt-0.5">{(customer as any).phone ?? "—"}</p>
+                <p className="text-sm font-medium text-white/60">{(customer as any).email ?? "—"}</p>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <DetailRow
+                icon={<CreditCard className="h-4 w-4" />}
+                label="Payment Method"
+                value={<Badge className="bg-white/5 text-white hover:bg-white/10 border-white/10">{PM[booking.paymentMethod] ?? booking.paymentMethod ?? "—"}</Badge>}
+              />
+              <DetailRow
+                icon={<Smartphone className="h-4 w-4" />}
+                label="Booked Via"
+                value={<Badge className="bg-white/5 text-white hover:bg-white/10 border-white/10">{booking.bookedVia ?? "—"}</Badge>}
+              />
+              <DetailRow
+                icon={<ShieldCheck className="h-4 w-4" />}
+                label="Boarding Status"
+                value={
+                  <Badge className={`${booking.boardingConfirmed ? "bg-[#D3D925]/10 text-[#D3D925] border-[#D3D925]/20" : "bg-white/5 text-white/60 border-white/10"} border`}>
+                    {booking.boardingConfirmed ? "Confirmed" : "Not Confirmed"}
+                  </Badge>
+                }
+              />
+              {booking.transactionId && (
+                <DetailRow
+                  icon={<Hash className="h-4 w-4" />}
+                  label="Transaction ID"
+                  value={<span className="text-xs bg-white/5 px-2 py-1 rounded-md text-white/80 border border-white/5">{booking.transactionId}</span>}
+                />
+              )}
+            </div>
+          </div>
+        </AdminCard>
+
+        {/* Route ──────────────────────────── */}
+        <AdminCard className="flex flex-col">
+          <div className="p-5 border-b border-white/5 flex items-center justify-between">
+            <h3 className="text-base font-bold flex items-center gap-2 text-white">
+              <MapPin className="h-4 w-4 text-white/50" /> Route & Trip
+            </h3>
+            {(trip as any)._id && (
+              <Button
+                variant="ghost"
+                className="h-8 gap-1.5 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-full px-3"
+                onClick={() => navigate(`/admin/fleets/${(bus as any)._id}/workstation`)}
+              >
+                View Trip <ExternalLink className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          <div className="p-5 flex-1 flex flex-col">
+            {/* From → To hero */}
+            <div className="flex items-stretch gap-2 p-4 bg-white/[0.03] rounded-xl mb-6 border border-white/5">
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-1">From</p>
+                <p className="font-bold text-xl tracking-tight text-white">
+                  {booking.bookedFrom ?? (route as any).from ?? (trip as any).fromStopName ?? "—"}
                 </p>
+              </div>
+
+              <div className="flex flex-col items-center justify-center gap-1.5 px-3 shrink-0">
+                <p className="text-[10px] font-semibold text-white/60">
+                  {(route as any).duration ?? "N/A"}
+                </p>
+                <div className="flex items-center gap-1 w-full justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
+                  <div className="flex-1 h-[1px] bg-white/20 min-w-[32px]" />
+                  <ArrowRight className="h-3.5 w-3.5 text-white/40" />
+                </div>
+                <p className="text-[10px] font-medium text-white/40">{(route as any).distance ?? ""}</p>
+              </div>
+
+              <div className="flex-1 min-w-0 text-right">
+                <p className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-1">To</p>
+                <p className="font-bold text-xl tracking-tight text-white">
+                  {booking.bookedTo ?? (route as any).to ?? (trip as any).toStopName ?? "—"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="bg-white/[0.02] rounded-xl p-3 text-center border border-white/5">
+                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1">Date</p>
+                <p className="font-bold text-sm text-white">{tripDate}</p>
+              </div>
+              <div className="bg-white/[0.02] rounded-xl p-3 text-center border border-white/5">
+                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1">Departs</p>
+                <p className="font-bold text-sm text-white">{booking.bookedDepartureTime ?? (trip as any).departureTime ?? "—"}</p>
+              </div>
+              <div className="bg-white/[0.02] rounded-xl p-3 text-center border border-white/5">
+                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1">Arrives</p>
+                <p className="font-bold text-sm text-white">{booking.bookedArrivalTime ?? (trip as any).arrivalTime ?? "—"}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-white/60 text-sm font-semibold flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-white/40" /> Seats Booked
+              </span>
+              <div className="flex gap-1.5 flex-wrap justify-end">
+                {(booking.seats ?? []).map((s: string) => (
+                  <Badge key={s} className="bg-white/10 hover:bg-white/10 text-white font-bold px-2 py-0.5 border border-white/10">{s}</Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </AdminCard>
+      </div>
+
+      {/* ══════════════════════════════════════
+          ROW B — Vehicle | Payment | Breakdown
+      ══════════════════════════════════════ */}
+      <div className="grid gap-6 md:grid-cols-3">
+
+        {/* Vehicle ────────────────────────── */}
+        <AdminCard>
+          <div className="p-5 border-b border-white/5">
+            <h3 className="text-base font-bold flex items-center gap-2 text-white">
+              <Bus className="h-4 w-4 text-white/50" /> Vehicle
+            </h3>
+          </div>
+          <div className="p-5">
+            <div
+              className="group flex items-center justify-between p-4 bg-white/[0.03] rounded-xl cursor-pointer hover:bg-white/[0.05] transition-colors mb-5 border border-white/5"
+              onClick={() => (bus as any)._id && navigate(`/admin/fleets/${(bus as any)._id}/workstation`)}
+            >
+              <div>
+                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1">Bus Name</p>
+                <p className="font-bold text-base text-white group-hover:text-white/80 transition-colors">
+                  {(bus as any).busName ?? "—"}
+                </p>
+              </div>
+              {(bus as any)._id && (
+                <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                  <ArrowRight className="h-4 w-4 text-white/60" />
+                </div>
               )}
-              <p className="text-xs text-muted-foreground mt-2">
-                Booked on {new Date(booking.bookedAt).toLocaleString()}
+            </div>
+
+            <div className="space-y-1">
+              <DetailRow
+                icon={<Tag className="h-4 w-4" />}
+                label="Plate No."
+                value={
+                  <span className="bg-white/10 border border-white/5 px-2 py-1 rounded-md text-xs font-bold text-white">
+                    {(bus as any).busNumber ?? "—"}
+                  </span>
+                }
+              />
+              <DetailRow
+                icon={<Bus className="h-4 w-4" />}
+                label="Service"
+                value={
+                  <Badge variant="outline" className="text-[10px] border-white/10 text-white/80 font-bold bg-white/[0.02]">
+                    {(bus as any).busType ?? "—"}
+                  </Badge>
+                }
+              />
+              <DetailRow
+                icon={(trip as any).shift === "night" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                label="Shift"
+                value={
+                  <Badge className="bg-white/5 text-white/80 hover:bg-white/10 border border-white/5 capitalize font-bold">
+                    {(trip as any).shift ?? "—"}
+                  </Badge>
+                }
+              />
+            </div>
+          </div>
+        </AdminCard>
+
+        {/* Payment Info ───────────────────── */}
+        <AdminCard>
+          <div className="p-5 border-b border-white/5">
+            <h3 className="text-base font-bold flex items-center gap-2 text-white">
+              <CreditCard className="h-4 w-4 text-white/50" /> Payment
+            </h3>
+          </div>
+          <div className="p-5">
+            <div className="text-center mb-5 bg-white/[0.03] p-4 rounded-xl border border-white/5">
+              <p className="text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-1">Amount Paid</p>
+              <p className="text-3xl font-bold tracking-tight text-white">
+                Rs. {(booking.totalAmount ?? 0).toLocaleString()}
               </p>
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm items-center">
-                <span className="text-muted-foreground flex items-center gap-2"><Calendar className="h-4 w-4" /> Travel Date</span>
-                <span className="font-bold">{new Date(booking.tripId.tripDate).toLocaleDateString()}</span>
-              </div>
-              <div className="flex justify-between text-sm items-center">
-                <span className="text-muted-foreground flex items-center gap-2"><Clock className="h-4 w-4" /> From</span>
-                <span className="font-bold">{booking.tripId.departureTime}</span>
-              </div>
-              <div className="flex justify-between text-sm items-center">
-                <span className="text-muted-foreground flex items-center gap-2"><MapPin className="h-4 w-4" /> Seats</span>
-                <div className="flex gap-1 flex-wrap justify-end">
-                  {booking.seats.map((seat: string) => (
-                    <Badge key={seat} variant="secondary" className="text-[10px] uppercase">{seat}</Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="bg-muted/50 p-4 rounded-xl space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Price Breakdown</h4>
-              <div className="flex justify-between text-sm">
-                <span>Base Fare</span>
-                <span>Rs. {booking.originalAmount.toLocaleString()}</span>
-              </div>
-              {booking.discountAmount > 0 && (
-                <div className="flex justify-between text-sm text-destructive font-medium">
-                  <span>Coupon Discount</span>
-                  <span>-Rs. {booking.discountAmount.toLocaleString()}</span>
+              {hasDiscount && (
+                <div className="mt-2 flex items-center justify-center gap-2 text-sm font-semibold">
+                  <span className="text-white/40 line-through">Rs. {(booking.originalAmount ?? 0).toLocaleString()}</span>
+                  <span className="text-[#D3D925]">Saved Rs. {(booking.discountAmount ?? 0).toLocaleString()}</span>
                 </div>
               )}
-              {booking.smMoneyUsed > 0 && (
-                <div className="flex justify-between text-sm text-primary font-medium">
-                  <span>SM Money Used</span>
-                  <span>-Rs. {booking.smMoneyUsed.toLocaleString()}</span>
-                </div>
-              )}
-              <Separator className="bg-primary/20" />
-              <div className="flex justify-between font-bold text-base text-foreground">
-                <span>Gateway Paid</span>
-                <span>Rs. {booking.gatewayAmount ? booking.gatewayAmount.toLocaleString() : booking.totalAmount.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between font-black text-lg text-primary">
-                <span>Total Paid</span>
-                <span>Rs. {booking.totalAmount.toLocaleString()}</span>
-              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Details Cards Container */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Customer Information */}
-          <Card className="shadow-sm border-l-4 border-l-primary/60">
-            <CardHeader className="pb-3 px-6">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                Customer Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-6">
-              <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-                <Avatar className="h-20 w-20 border-4 border-muted">
-                  <AvatarImage src={booking.userId.profilePicture} />
-                  <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
-                    {booking.userId.name?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid md:grid-cols-2 gap-x-12 gap-y-4 flex-1">
-                  <div>
-                    <h5 className="text-xs font-bold text-muted-foreground uppercase opacity-70 mb-1">Full Name</h5>
-                    <p className="font-bold text-lg">{booking.userId.name}</p>
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-muted-foreground uppercase opacity-70 mb-1">Phone Number</h5>
-                    <p className="font-bold text-lg underline underline-offset-4 decoration-primary/30">{booking.userId.phone}</p>
-                  </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-muted-foreground uppercase opacity-70 mb-1">Email Address</h5>
-                    <p className="font-medium text-muted-foreground">{booking.userId.email}</p>
-                  </div>
-                  <div className="flex items-end">
-                    <Button 
-                      variant="link" 
-                      className="p-0 h-auto text-primary font-bold hover:no-underline group"
-                      onClick={() => navigate(`/admin/users/${booking.userId._id}`)}
-                    >
-                      View Full Profile <ExternalLink className="h-3 w-3 ml-1 transition-transform group-hover:translate-x-1" />
-                    </Button>
-                  </div>
+            <div className="space-y-1">
+              <DetailRow
+                icon={<CreditCard className="h-4 w-4" />}
+                label="Method"
+                value={<Badge className="bg-white/5 text-white/80 hover:bg-white/10 border border-white/10">{PM[booking.paymentMethod] ?? booking.paymentMethod ?? "—"}</Badge>}
+              />
+              <DetailRow
+                icon={<Smartphone className="h-4 w-4" />}
+                label="Channel"
+                value={<Badge className="bg-white/5 text-white/80 hover:bg-white/10 border border-white/10">{booking.bookedVia ?? "—"}</Badge>}
+              />
+              {booking.transactionId && (
+                <DetailRow
+                  icon={<Hash className="h-4 w-4" />}
+                  label="Txn ID"
+                  value={<span className="text-[11px] bg-white/5 px-2 py-1 rounded-md text-white/80 border border-white/5">{booking.transactionId}</span>}
+                />
+              )}
+            </div>
+          </div>
+        </AdminCard>
+
+        {/* Price Breakdown ────────────────── */}
+        <AdminCard>
+          <div className="p-5 border-b border-white/5">
+            <h3 className="text-base font-bold flex items-center gap-2 text-white">
+              <Receipt className="h-4 w-4 text-white/50" /> Fare Breakdown
+            </h3>
+          </div>
+          <div className="p-5">
+            <div className="space-y-1">
+              <DetailRow
+                icon={<BadgeDollarSign className="h-4 w-4" />}
+                label="Base Fare"
+                value={`Rs. ${(booking.originalAmount ?? 0).toLocaleString()}`}
+              />
+              {hasDiscount && (
+                <DetailRow
+                  icon={<Percent className="h-4 w-4" />}
+                  label={`Coupon${booking.couponCode ? ` (${booking.couponCode})` : ""}`}
+                  value={
+                    <span className="text-white font-bold">
+                      −Rs. {(booking.discountAmount ?? 0).toLocaleString()}
+                    </span>
+                  }
+                />
+              )}
+              {hasSmMoney && (
+                <DetailRow
+                  icon={<Wallet className="h-4 w-4" />}
+                  label="SM Money"
+                  value={
+                    <span className="text-[#D3D925] font-bold">
+                      −Rs. {(booking.smMoneyUsed ?? 0).toLocaleString()}
+                    </span>
+                  }
+                />
+              )}
+              <DetailRow
+                icon={<CreditCard className="h-4 w-4" />}
+                label="Gateway Paid"
+                value={`Rs. ${((booking.gatewayAmount ?? booking.totalAmount) ?? 0).toLocaleString()}`}
+              />
+            </div>
+
+            <div className="mt-5 p-4 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
+              <span className="font-bold text-sm text-white/80 uppercase tracking-wider">Total Paid</span>
+              <span className="font-bold text-xl tracking-tight text-white">
+                Rs. {(booking.totalAmount ?? 0).toLocaleString()}
+              </span>
+            </div>
+
+            {/* Coupon detail card */}
+            {coupon && hasDiscount && (
+              <div
+                className="mt-4 p-4 rounded-xl bg-white/[0.03] border border-white/5 cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={() => navigate(`/admin/offers/${(coupon as any)._id}`)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-white/50">Coupon Used</p>
+                  <ArrowRight className="h-3 w-3 text-white/40" />
                 </div>
+                <p className="font-bold text-base text-white">{(coupon as any).couponCode}</p>
+                {(coupon as any).title && (
+                  <p className="text-xs font-medium text-white/50 mt-1">{(coupon as any).title}</p>
+                )}
+                <p className="text-xs text-[#D3D925] font-bold mt-2 inline-flex bg-[#D3D925]/10 px-2 py-1 rounded-md border border-[#D3D925]/20">
+                  {(coupon as any).discountType === "percentage"
+                    ? `${(coupon as any).discountValue}% off`
+                    : `Rs. ${(coupon as any).discountValue} off`}
+                  {(coupon as any).maxDiscountAmount
+                    ? ` (max Rs. ${(coupon as any).maxDiscountAmount})`
+                    : ""}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
+        </AdminCard>
+      </div>
 
-          {/* Trip & Bus Info */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Travel Info */}
-            <Card className="shadow-sm border-l-4 border-l-primary/60">
-              <CardHeader className="pb-3 px-6">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  Trip Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-6 space-y-6">
-                <div className="flex flex-col gap-4">
-                  <div className="space-y-4 p-4 bg-muted/40 rounded-xl border border-muted/60">
-                    <div className="flex justify-between items-center pr-2">
-                      <div className="space-y-0.5">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase opacity-70 px-1">Source</p>
-                        <p className="font-black text-xl">{booking.tripId.routeId.from}</p>
-                      </div>
-                      <div className="flex flex-col items-center flex-1 px-4">
-                        <Badge variant="outline" className="text-[9px] mb-1 font-bold">{booking.tripId.routeId.duration}</Badge>
-                        <div className="w-full h-[2px] bg-primary relative">
-                           <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary" />
-                        </div>
-                        <p className="text-[9px] mt-1 text-muted-foreground">{booking.tripId.routeId.distance}</p>
-                      </div>
-                      <div className="space-y-0.5 text-right">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase opacity-70">Destination</p>
-                        <p className="font-black text-xl">{booking.tripId.routeId.to}</p>
-                      </div>
+      {/* ══════════════════════════════════════
+          ROW C — Boarding & Dropping (conditional)
+      ══════════════════════════════════════ */}
+      {(boardingPt?.name || droppingPt?.name) && (
+        <div className="grid gap-6 md:grid-cols-2">
+          {boardingPt?.name && (
+            <AdminCard className="p-5">
+              <h3 className="text-xs font-semibold flex items-center gap-2 text-white/50 uppercase tracking-wider mb-3">
+                <Navigation className="h-4 w-4" /> Boarding Point
+              </h3>
+              <p className="font-bold text-lg text-white">{boardingPt.name}</p>
+              {boardingPt.time && <p className="text-sm font-medium text-white/60 mt-1">{boardingPt.time}</p>}
+            </AdminCard>
+          )}
+          {droppingPt?.name && (
+            <AdminCard className="p-5">
+              <h3 className="text-xs font-semibold flex items-center gap-2 text-white/50 uppercase tracking-wider mb-3">
+                <MapPin className="h-4 w-4" /> Dropping Point
+              </h3>
+              <p className="font-bold text-lg text-white">{droppingPt.name}</p>
+              {droppingPt.time && <p className="text-sm font-medium text-white/60 mt-1">{droppingPt.time}</p>}
+            </AdminCard>
+          )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════
+          ROW D — Passenger Manifest (conditional)
+      ══════════════════════════════════════ */}
+      {passengers.length > 0 && (
+        <AdminCard>
+          <div className="p-5 border-b border-white/5 flex items-center gap-3">
+            <Users className="h-4 w-4 text-white/50" />
+            <h3 className="text-base font-bold text-white">Passenger Manifest</h3>
+            <Badge className="bg-white/10 text-white/80 border-0 font-bold px-2">{passengers.length}</Badge>
+          </div>
+          <div className="p-5">
+            <div className="space-y-3">
+              {passengers.map((p: any, i: number) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-4 gap-4 items-center p-4 bg-white/[0.03] rounded-xl border border-white/5 hover:bg-white/[0.05] transition-colors"
+                >
+                  <div className="flex items-center gap-4 col-span-1">
+                    <div className="h-10 w-10 shrink-0 bg-white/5 border border-white/10 rounded-full flex items-center justify-center font-bold text-sm text-white/80">
+                      {p.seatNo}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">Name</p>
+                      <p className="font-bold text-sm text-white truncate">{p.name}</p>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-muted/20 rounded-lg border border-dashed">
-                       <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Departure</p>
-                       <p className="font-bold">{booking.tripId.departureTime}</p>
-                    </div>
-                    <div className="p-3 bg-muted/20 rounded-lg border border-dashed">
-                       <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Arrival</p>
-                       <p className="font-bold">{booking.tripId.arrivalTime}</p>
-                    </div>
+                  <div>
+                    <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">Age</p>
+                    <p className="font-semibold text-sm text-white/80">{p.age > 0 ? p.age : "—"}</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Bus Info */}
-            <Card className="shadow-sm border-l-4 border-l-primary/60">
-              <CardHeader className="pb-3 px-6">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Bus className="h-5 w-5 text-primary" />
-                  Vehicle Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-6 space-y-5">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center group cursor-pointer" onClick={() => navigate(`/admin/fleets/${booking.tripId.busId._id}/workstation`)}>                    <div>
-                                            <p className="text-xs font-bold text-muted-foreground uppercase opacity-70 mb-0.5">Bus Name</p>
-                      <p className="font-black text-lg group-hover:text-primary transition-colors">{booking.tripId.busId.busName}</p>
-                    </div>
-                    <Badge variant="secondary" className="font-bold uppercase tracking-tighter text-[10px]">VEHICLE REG</Badge>
+                  <div>
+                    <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">Gender</p>
+                    <p className="font-semibold text-sm text-white/80 capitalize">{p.gender ?? "—"}</p>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase opacity-70 mb-0.5">Plate Number</p>
-                      <p className="font-bold font-mono text-sm bg-muted/60 w-fit px-2 py-0.5 rounded">{booking.tripId.busId.busNumber}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase opacity-70 mb-0.5">Service Type</p>
-                      <Badge variant="outline" className="font-black text-[10px] border-primary/40 text-primary">{booking.tripId.busId.busType}</Badge>
-                    </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-0.5">ID Proof</p>
+                    <p className="text-sm font-medium text-white/60 truncate">
+                      {p.idType
+                        ? `${p.idType.replace(/_/g, " ")}${p.idNumber ? ` · ${p.idNumber}` : ""}`
+                        : "—"}
+                    </p>
                   </div>
                 </div>
-                
-                <Separator />
+              ))}
+            </div>
+          </div>
+        </AdminCard>
+      )}
 
-                <div className="flex justify-between items-center">
-                   <p className="text-[10px] font-bold text-muted-foreground uppercase">Shift Mode</p>
-                   <Badge className="font-black h-5 text-[9px] uppercase">{booking.tripId.shift}</Badge>
-                </div>
-              </CardContent>
-            </Card>
+      {/* ══════════════════════════════════════
+          ROW E — Cancellation (conditional)
+      ══════════════════════════════════════ */}
+      {booking.status === "cancelled" && (booking.cancellationReason || booking.cancelledBy) && (
+        <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+          <div className="p-5 border-b border-white/10 flex items-center gap-2">
+            <XCircle className="h-4 w-4 text-white" />
+            <h3 className="text-base font-bold text-white">Cancellation Details</h3>
+          </div>
+          <div className="p-5 space-y-4">
+            <DetailRow
+              label="Cancelled By"
+              icon={<User className="h-4 w-4" />}
+              value={<Badge className="bg-white/5 text-white border border-white/10 capitalize font-bold">{booking.cancelledBy ?? "—"}</Badge>}
+            />
+            {booking.cancellationReason && (
+              <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-white/60 mb-1">Reason</p>
+                <p className="text-sm font-medium text-white/60 leading-relaxed">{booking.cancellationReason}</p>
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    </>
+      )}
+    </div>
   );
 };
 

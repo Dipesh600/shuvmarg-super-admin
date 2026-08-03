@@ -16,9 +16,9 @@
  */
 
 import { useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, GitBranch, AlertTriangle, Circle, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, GitBranch, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TimelineTabProps {
@@ -39,29 +39,23 @@ const CANVAS_W     = WINDOW_DAYS * DAY_PX;
 
 // Status color config
 const SCHED_COLORS: Record<string, { bar: string; text: string; border: string }> = {
-    ACTIVE:    { bar: "bg-emerald-500",  text: "text-emerald-50",  border: "border-emerald-600" },
-    SUSPENDED: { bar: "bg-amber-500",    text: "text-amber-50",    border: "border-amber-600" },
-    DRAFT:     { bar: "bg-blue-400",     text: "text-blue-50",     border: "border-blue-500" },
+    ACTIVE:    { bar: "bg-white/5",  text: "text-white",  border: "border-white/10" },
+    SUSPENDED: { bar: "bg-white/5",    text: "text-white",    border: "border-white/10" },
+    DRAFT:     { bar: "bg-white/5",     text: "text-white",     border: "border-white/10" },
     INACTIVE:  { bar: "bg-slate-400",    text: "text-slate-50",    border: "border-slate-500" },
 };
 
 const TRIP_COLORS: Record<string, string> = {
-    scheduled:  "bg-emerald-400 border-emerald-600",
-    boarding:   "bg-amber-400 border-amber-600",
-    "in-transit": "bg-violet-400 border-violet-600",
+    scheduled:  "bg-white/5 border-white/10",
+    boarding:   "bg-white/5 border-white/10",
+    "in-transit": "bg-white/5 border-white/10",
     completed:  "bg-slate-400 border-slate-500",
-    cancelled:  "bg-red-500 border-red-700",
-    RESCHEDULED: "bg-orange-400 border-orange-600",
-    EXTRA_RUN:  "bg-purple-400 border-purple-600",
+    cancelled:  "bg-white/5 border-white/10",
+    RESCHEDULED: "bg-white/5 border-white/10",
+    EXTRA_RUN:  "bg-white/5 border-white/10",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const today = () => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-};
-
 const dayOffset = (date: Date | string | null, origin: Date): number => {
     if (!date) return -9999;
     const d = new Date(date);
@@ -139,7 +133,7 @@ function DateHeader({ originDate }: { originDate: Date }) {
 }
 
 // ─── Schedule Row ─────────────────────────────────────────────────────────────
-function ScheduleRow({ sched, trips, originDate, todayPx }: {
+function ScheduleRow({ sched, trips, originDate, todayPx: _todayPx }: {
     sched: any;
     trips: any[];
     originDate: Date;
@@ -183,7 +177,7 @@ function ScheduleRow({ sched, trips, originDate, todayPx }: {
                     </p>
                     {sched.versionNumber > 1 && <p className="text-primary font-bold">v{sched.versionNumber}</p>}
                     {sched.status === "SUSPENDED" && sched.suspensionReason && (
-                        <p className="text-amber-600 font-bold">⚠ {sched.suspensionReason}</p>
+                        <p className="text-white font-bold">⚠ {sched.suspensionReason}</p>
                     )}
                 </div>
             }>
@@ -215,7 +209,7 @@ function ScheduleRow({ sched, trips, originDate, todayPx }: {
                         <div className="space-y-0.5">
                             <p className="font-black">{fmtDate(trip.tripDate)}</p>
                             <p className="text-muted-foreground">{trip.departureTime} → {trip.arrivalTime}</p>
-                            <p className={`font-bold capitalize ${trip.status === "cancelled" ? "text-red-400" : "text-emerald-400"}`}>
+                            <p className={`font-bold capitalize ${trip.status === "cancelled" ? "text-white" : "text-white"}`}>
                                 {trip.exceptionType && trip.exceptionType !== "NONE" ? trip.exceptionType : trip.status}
                             </p>
                         </div>
@@ -240,7 +234,7 @@ const LegendItem = ({ color, label }: { color: string; label: string }) => (
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const TimelineTab = ({ schedules, recentTrips, upcomingTrips, fleet }: TimelineTabProps) => {
+const TimelineTab = ({ schedules, recentTrips, upcomingTrips, fleet: _fleet }: TimelineTabProps) => {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Origin = PAST_DAYS before today
@@ -303,15 +297,15 @@ const TimelineTab = ({ schedules, recentTrips, upcomingTrips, fleet }: TimelineT
 
             {/* Legend */}
             <div className="flex flex-wrap gap-4 px-1">
-                <LegendItem color="bg-emerald-500" label="Active" />
-                <LegendItem color="bg-amber-500"   label="Suspended" />
+                <LegendItem color="bg-white/5" label="Active" />
+                <LegendItem color="bg-white/5"   label="Suspended" />
                 <LegendItem color="bg-slate-400"   label="Inactive / Sealed" />
-                <LegendItem color="bg-blue-400"    label="Draft" />
+                <LegendItem color="bg-white/5"    label="Draft" />
                 <div className="w-px h-4 bg-border/40 self-center" />
-                <LegendItem color="bg-emerald-400 border border-emerald-600 rounded-full" label="Scheduled trip" />
-                <LegendItem color="bg-red-500 border border-red-700 rounded-full"    label="Cancelled trip" />
-                <LegendItem color="bg-orange-400 border border-orange-600 rounded-full" label="Rescheduled" />
-                <LegendItem color="bg-purple-400 border border-purple-600 rounded-full" label="Extra run" />
+                <LegendItem color="bg-white/5 border border-white/10 rounded-full" label="Scheduled trip" />
+                <LegendItem color="bg-white/5 border border-white/10 rounded-full"    label="Cancelled trip" />
+                <LegendItem color="bg-white/5 border border-white/10 rounded-full" label="Rescheduled" />
+                <LegendItem color="bg-white/5 border border-white/10 rounded-full" label="Extra run" />
             </div>
 
             {/* Canvas */}
@@ -339,10 +333,10 @@ const TimelineTab = ({ schedules, recentTrips, upcomingTrips, fleet }: TimelineT
                                     <span className="text-[10px] text-muted-foreground/60 truncate pl-3.5">{dir}</span>
                                     <div className="flex items-center gap-1 pl-3.5">
                                         <Badge className={`text-[8px] uppercase font-black tracking-wider px-1.5 py-0 border ${
-                                            sched.status === "ACTIVE" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600" :
-                                            sched.status === "SUSPENDED" ? "border-amber-500/30 bg-amber-500/10 text-amber-600" :
-                                            sched.status === "INACTIVE" ? "border-red-500/30 bg-red-500/10 text-red-600" :
-                                            "border-blue-500/30 bg-blue-500/10 text-blue-600"
+                                            sched.status === "ACTIVE" ? "border-white/10 bg-white/5 text-white" :
+                                            sched.status === "SUSPENDED" ? "border-white/10 bg-white/5 text-white" :
+                                            sched.status === "INACTIVE" ? "border-white/10 bg-white/5 text-white" :
+                                            "border-white/10 bg-white/5 text-white"
                                         }`}>{sched.status}</Badge>
                                         {(sched.versionNumber || 1) > 1 && (
                                             <span className="text-[8px] font-black text-primary flex items-center gap-0.5">
@@ -385,10 +379,10 @@ const TimelineTab = ({ schedules, recentTrips, upcomingTrips, fleet }: TimelineT
 
             {/* Stats summary below */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <StatCard label="Active Schedules"  value={schedules.filter(s => s.status === "ACTIVE").length}    accent="text-emerald-600" />
-                <StatCard label="Suspended"          value={schedules.filter(s => s.status === "SUSPENDED").length} accent="text-amber-600" />
+                <StatCard label="Active Schedules"  value={schedules.filter(s => s.status === "ACTIVE").length}    accent="text-white" />
+                <StatCard label="Suspended"          value={schedules.filter(s => s.status === "SUSPENDED").length} accent="text-white" />
                 <StatCard label="Upcoming Trips"     value={upcomingTrips?.length || 0}  accent="text-primary" />
-                <StatCard label="Exception Trips"    value={allTrips.filter(t => t.exceptionType && t.exceptionType !== "NONE").length} accent="text-orange-600" />
+                <StatCard label="Exception Trips"    value={allTrips.filter(t => t.exceptionType && t.exceptionType !== "NONE").length} accent="text-white" />
             </div>
         </div>
     );

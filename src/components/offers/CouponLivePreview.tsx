@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { Smartphone, Globe, Ticket, Calendar, Info } from "lucide-react";
-import { format } from "date-fns";
+import { useState, useEffect } from "react";
+import { Smartphone, Globe, Paperclip } from "lucide-react";
 
 interface PreviewData {
   couponCode: string;
   title: string;
   description: string;
+  category?: string;
+  imageUrl?: string;
   discountType: "percentage" | "fixed";
   discountValue: number;
   minOrderAmount: number;
@@ -13,281 +14,236 @@ interface PreviewData {
   validFrom: string;
   validTo: string;
   perUserLimit: number;
+  designConfig?: {
+    edges?: {
+      top?: "smooth" | "ticket" | "torn" | "jagged";
+      bottom?: "smooth" | "ticket" | "torn" | "jagged";
+      left?: "smooth" | "ticket" | "torn" | "jagged";
+      right?: "smooth" | "ticket" | "torn" | "jagged";
+    };
+    typography?: {
+      titleAlignment?: "left" | "center" | "right";
+      descAlignment?: "left" | "center" | "right";
+      codeAlignment?: "left" | "center" | "right";
+    };
+    imageConfig?: {
+      scale?: number;
+      offsetX?: number;
+      offsetY?: number;
+      fit?: "cover" | "contain" | "fill";
+    };
+  };
 }
+
+const getEdgeConfig = (type: string, edge: 'top'|'bottom'|'left'|'right') => {
+  let gap = 0, mask = '', size = '', pos = '', repeat = '';
+  const isY = edge === 'left' || edge === 'right';
+  
+  if (type === 'ticket') {
+    gap = 6;
+    if (isY) {
+      mask = `radial-gradient(circle at ${edge==='left'?'0px':'6px'} 12px, transparent 6px, black 6.5px)`;
+      size = `6px 24px`;
+      pos = `${edge==='left'?'0px':'100%'} 0px`;
+      repeat = `repeat-y`;
+    } else {
+      mask = `radial-gradient(circle at 12px ${edge==='top'?'0px':'6px'}, transparent 6px, black 6.5px)`;
+      size = `24px 6px`;
+      pos = `0px ${edge==='top'?'0px':'100%'}`;
+      repeat = `repeat-x`;
+    }
+  } else if (type === 'torn') {
+    gap = 8;
+    if (isY) {
+      mask = `radial-gradient(circle at ${edge==='left'?'0px':'8px'} 16px, transparent 8px, black 8.5px)`;
+      size = `8px 32px`;
+      pos = `${edge==='left'?'0px':'100%'} 0px`;
+      repeat = `repeat-y`;
+    } else {
+      mask = `radial-gradient(circle at 16px ${edge==='top'?'0px':'8px'}, transparent 8px, black 8.5px)`;
+      size = `32px 8px`;
+      pos = `0px ${edge==='top'?'0px':'100%'}`;
+      repeat = `repeat-x`;
+    }
+  } else if (type === 'jagged') {
+    gap = 4;
+    if (isY) {
+      mask = `radial-gradient(circle at ${edge==='left'?'0px':'4px'} 8px, transparent 4px, black 4.5px)`;
+      size = `4px 16px`;
+      pos = `${edge==='left'?'0px':'100%'} 0px`;
+      repeat = `repeat-y`;
+    } else {
+      mask = `radial-gradient(circle at 8px ${edge==='top'?'0px':'4px'}, transparent 4px, black 4.5px)`;
+      size = `16px 4px`;
+      pos = `0px ${edge==='top'?'0px':'100%'}`;
+      repeat = `repeat-x`;
+    }
+  }
+  return { gap, mask, size, pos, repeat };
+};
+
+const generateMaskStyle = (edges: any) => {
+  if (!edges) return {};
+  const e = {
+    top: edges.top || 'smooth',
+    bottom: edges.bottom || 'smooth',
+    left: edges.left || 'smooth',
+    right: edges.right || 'smooth'
+  };
+  
+  if (e.top === 'smooth' && e.bottom === 'smooth' && e.left === 'smooth' && e.right === 'smooth') {
+    return {};
+  }
+
+  const masks = [];
+  const sizes = [];
+  const positions = [];
+  const repeats = [];
+  
+  const tc = getEdgeConfig(e.top, 'top');
+  const bc = getEdgeConfig(e.bottom, 'bottom');
+  const lc = getEdgeConfig(e.left, 'left');
+  const rc = getEdgeConfig(e.right, 'right');
+  
+  // Base center
+  masks.push(`linear-gradient(black, black)`);
+  sizes.push(`calc(100% - ${lc.gap + rc.gap}px) calc(100% - ${tc.gap + bc.gap}px)`);
+  positions.push(`${lc.gap}px ${tc.gap}px`);
+  repeats.push(`no-repeat`);
+  
+  if (tc.gap > 0) { masks.push(tc.mask); sizes.push(tc.size); positions.push(tc.pos); repeats.push(tc.repeat); }
+  if (bc.gap > 0) { masks.push(bc.mask); sizes.push(bc.size); positions.push(bc.pos); repeats.push(bc.repeat); }
+  if (lc.gap > 0) { masks.push(lc.mask); sizes.push(lc.size); positions.push(lc.pos); repeats.push(lc.repeat); }
+  if (rc.gap > 0) { masks.push(rc.mask); sizes.push(rc.size); positions.push(rc.pos); repeats.push(rc.repeat); }
+  
+  const maskImage = masks.join(', ');
+  const maskSize = sizes.join(', ');
+  const maskPosition = positions.join(', ');
+  const maskRepeat = repeats.join(', ');
+  
+  return {
+    WebkitMaskImage: maskImage,
+    WebkitMaskSize: maskSize,
+    WebkitMaskPosition: maskPosition,
+    WebkitMaskRepeat: maskRepeat,
+    maskImage: maskImage,
+    maskSize: maskSize,
+    maskPosition: maskPosition,
+    maskRepeat: maskRepeat,
+  };
+};
 
 interface CouponLivePreviewProps {
   data: PreviewData;
 }
 
-const isEmpty = (v: unknown) => v === undefined || v === null || v === "" || v === 0;
+const UnifiedPreview = ({ data, scale = 1 }: { data: PreviewData; scale?: number }) => {
+  const isOperator = data.category === "Operator Offer";
+  const isExclusive = data.category === "Exclusive";
 
-// ─── Mobile Card Preview (matches Sumarg AMOLED theme) ───────────────────────
-const MobilePreview = ({ data }: { data: PreviewData }) => {
-  const discountLabel = isEmpty(data.discountValue)
-    ? "—% OFF"
-    : data.discountType === "percentage"
-    ? `${data.discountValue}% OFF`
-    : `Rs. ${Number(data.discountValue).toLocaleString()} OFF`;
+  const design = data.designConfig || {};
 
-  const codeLabel = data.couponCode || "YOURCODE";
-  const titleLabel = data.title || "Offer title will appear here";
-  const descLabel = data.description || "Offer description will appear here.";
+  let maskStyle = {};
+  
+  // Default values based on category logic if edges are not defined
+  if (!design.edges) {
+    if (isExclusive) {
+      maskStyle = generateMaskStyle({ top: 'torn', bottom: 'torn', left: 'torn', right: 'torn' });
+    } else if (isOperator) {
+      maskStyle = generateMaskStyle({ top: 'smooth', bottom: 'smooth', left: 'ticket', right: 'ticket' });
+    } else {
+      maskStyle = generateMaskStyle({ top: 'smooth', bottom: 'smooth', left: 'ticket', right: 'ticket' }); // Default 'stamp-edge'
+    }
+  } else {
+    maskStyle = generateMaskStyle(design.edges);
+  }
 
-  const validFromStr =
-    data.validFrom ? format(new Date(data.validFrom), "d MMM yy") : "—";
-  const validToStr =
-    data.validTo ? format(new Date(data.validTo), "d MMM yy") : "—";
+  const bgClass = isOperator ? "bg-white" : "bg-[#F8F1E3]";
 
-  return (
-    <div
-      style={{
-        background: "linear-gradient(135deg, rgba(0,86,78,0.95) 0%, rgba(0,61,56,0.98) 100%)",
-        borderRadius: 24,
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 12px 40px rgba(0,86,78,0.35)",
-        overflow: "hidden",
-        padding: 0,
-        width: "100%",
-        maxWidth: 340,
-        margin: "0 auto",
-        fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
-      }}
-    >
-      {/* Top gradient band */}
-      <div
-        style={{
-          background:
-            data.discountType === "percentage"
-              ? "linear-gradient(90deg, #7c3aed, #4f46e5)"
-              : "linear-gradient(90deg, #00564e, #0d9488)",
-          padding: "14px 20px 10px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <div>
-          <span
-            style={{
-              color: "#D3D925",
-              fontSize: 24,
-              fontWeight: 700,
-              letterSpacing: -0.5,
-            }}
-          >
-            {discountLabel}
-          </span>
-          {data.discountType === "percentage" && data.maxDiscountAmount && data.maxDiscountAmount > 0 && (
-            <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 1 }}>
-              Max save Rs. {Number(data.maxDiscountAmount).toLocaleString()}
-            </div>
-          )}
-        </div>
-        <div
-          style={{
-            background: "rgba(255,255,255,0.15)",
-            borderRadius: 12,
-            padding: "6px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <Ticket style={{ width: 14, height: 14, color: "#D3D925" }} />
-          <span style={{ color: "#fff", fontSize: 12, fontWeight: 600 }}>
-            {data.perUserLimit || 1}x / user
-          </span>
-        </div>
-      </div>
+  // Image Config
+  const imgConf = design.imageConfig || {};
+  const imgFitClass = imgConf.fit === "cover" ? "object-cover" : 
+                      imgConf.fit === "fill" ? "object-fill" : "object-contain";
+  // scale is stored as 0-300 (100 = 1x), offsets as -50 to 50 (%)
+  const imgScale = (imgConf.scale ?? 100) / 100;
+  const imgOffsetX = imgConf.offsetX ?? 0;
+  const imgOffsetY = imgConf.offsetY ?? 0;
 
-      {/* Dashed divider (coupon tear line) */}
-      <div style={{ position: "relative", height: 1, margin: "0 20px" }}>
-        <div style={{ position: "absolute", left: -28, top: -10, width: 20, height: 20, borderRadius: "50%", background: "#0a0a0a" }} />
-        <div style={{ borderTop: "1.5px dashed rgba(255,255,255,0.15)", margin: "10px 4px" }} />
-        <div style={{ position: "absolute", right: -28, top: -10, width: 20, height: 20, borderRadius: "50%", background: "#0a0a0a" }} />
-      </div>
+  // Typography Config
+  const typo = design.typography || {};
+  const titleAlignClass = typo.titleAlignment === 'center' ? 'text-center' : typo.titleAlignment === 'right' ? 'text-right' : 'text-left';
+  const descAlignClass = typo.descAlignment === 'center' ? 'text-center' : typo.descAlignment === 'right' ? 'text-right' : 'text-left';
+  const codeAlignClass = typo.codeAlignment === 'center' ? 'self-center' : typo.codeAlignment === 'right' ? 'self-end' : 'self-start';
+  
+  const fallbackImage = isExclusive ? "/images/offers/gift.webp" : isOperator ? "/images/offers/ticket.webp" : "/images/offers/bus.webp";
+  
+  const [imgError, setImgError] = useState(false);
+  
+  useEffect(() => {
+    setImgError(false);
+  }, [data.imageUrl, fallbackImage]);
 
-      {/* Main content */}
-      <div style={{ padding: "14px 20px 20px" }}>
-        {/* Code pill */}
-        <div
-          style={{
-            background: "rgba(211,217,37,0.12)",
-            border: "1.5px dashed #D3D925",
-            borderRadius: 10,
-            padding: "8px 14px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 12,
-          }}
-        >
-          <span
-            style={{
-              color: "#D3D925",
-              fontFamily: "monospace",
-              fontWeight: 700,
-              fontSize: 15,
-              letterSpacing: 3,
-            }}
-          >
-            {codeLabel}
-          </span>
-        </div>
+  const displayImageUrl = (!data.imageUrl || imgError) ? null : data.imageUrl;
 
-        {/* Title */}
-        <div style={{ color: "#F5F7F6", fontWeight: 600, fontSize: 14, marginBottom: 4, lineHeight: 1.4 }}>
-          {titleLabel}
-        </div>
-        {/* Description */}
-        <div style={{ color: "#B7C7C3", fontSize: 12, lineHeight: 1.5, marginBottom: 14 }}>
-          {descLabel}
-        </div>
-
-        {/* Footer row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ color: "#B7C7C3", fontSize: 11, display: "flex", alignItems: "center", gap: 4 }}>
-            <Calendar style={{ width: 11, height: 11 }} />
-            {validFromStr} – {validToStr}
-          </div>
-          {data.minOrderAmount > 0 && (
-            <div style={{ color: "#B7C7C3", fontSize: 11, display: "flex", alignItems: "center", gap: 3 }}>
-              <Info style={{ width: 10, height: 10 }} />
-              Min Rs. {Number(data.minOrderAmount).toLocaleString()}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* CTA button */}
-      <div style={{ padding: "0 20px 20px" }}>
-        <div
-          style={{
-            background: "#D3D925",
-            borderRadius: 16,
-            padding: "12px 0",
-            textAlign: "center",
-            color: "#003D38",
-            fontWeight: 600,
-            fontSize: 14,
-            cursor: "default",
-          }}
-        >
-          Apply Coupon
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ─── Website / All Offers Page Card Preview ──────────────────────────────────
-const WebPreview = ({ data }: { data: PreviewData }) => {
-  const discountLabel = isEmpty(data.discountValue)
-    ? "— OFF"
-    : data.discountType === "percentage"
-    ? `${data.discountValue}% OFF`
-    : `Rs. ${Number(data.discountValue).toLocaleString()} OFF`;
-
-  const codeLabel = data.couponCode || "YOURCODE";
-  const titleLabel = data.title || "Offer title will appear here";
-  const descLabel = data.description || "Offer description will appear here.";
-
-  const validToStr =
-    data.validTo ? format(new Date(data.validTo), "d MMM yyyy") : "—";
-
-  const isPercentage = data.discountType === "percentage";
+  const title = data.title || "Offer Title";
+  const code = data.couponCode || "YOURCODE";
+  const desc = data.description || "Offer description will appear here";
 
   return (
-    <div
-      style={{
-        background: "linear-gradient(135deg, rgba(0,86,78,0.92) 0%, rgba(0,61,56,0.96) 100%)",
-        borderRadius: 20,
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 8px 32px rgba(0,86,78,0.25)",
-        display: "flex",
-        overflow: "hidden",
-        maxWidth: 480,
-        margin: "0 auto",
-        fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
-      }}
-    >
-      {/* Left discount column */}
-      <div
-        style={{
-          background: isPercentage
-            ? "linear-gradient(160deg, #7c3aed, #4f46e5)"
-            : "linear-gradient(160deg, #00564e, #0d9488)",
-          minWidth: 110,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "20px 12px",
-          position: "relative",
-          gap: 6,
-        }}
-      >
-        <span style={{ color: "#D3D925", fontSize: 28, fontWeight: 800, lineHeight: 1 }}>
-          {isEmpty(data.discountValue)
-            ? "—"
-            : data.discountType === "percentage"
-            ? `${data.discountValue}%`
-            : `Rs.${Number(data.discountValue).toLocaleString()}`}
-        </span>
-        <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 11, fontWeight: 600 }}>
-          {discountLabel.includes("%") ? "DISCOUNT" : "FLAT OFF"}
-        </span>
-        {/* Cutout circles */}
-        <div style={{ position: "absolute", right: -10, top: "50%", transform: "translateY(-50%)", width: 20, height: 20, borderRadius: "50%", background: "#0a0a0a" }} />
-      </div>
-
-      {/* Dashed border */}
-      <div style={{ borderLeft: "1.5px dashed rgba(255,255,255,0.12)", margin: "16px 0" }} />
-
-      {/* Right content */}
-      <div style={{ flex: 1, padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-          <div>
-            <div style={{ color: "#F5F7F6", fontWeight: 600, fontSize: 13, lineHeight: 1.4, marginBottom: 3 }}>
-              {titleLabel}
-            </div>
-            <div style={{ color: "#B7C7C3", fontSize: 11, lineHeight: 1.5 }}>
-              {descLabel}
-            </div>
-          </div>
+    <div style={{ transform: `scale(${scale})`, transformOrigin: "center center", width: "100%", maxWidth: "450px" }}>
+      <div className="relative group w-full aspect-[1.75/1] min-h-[220px] shrink-0 hover:z-50 cursor-pointer">
+        {/* Orange background layer */}
+        <div className="absolute inset-0 rounded-2xl drop-shadow-xl z-0 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-[1.02]">
+          <div className="absolute inset-0 orange-grid-bg rounded-2xl"></div>
         </div>
-
-        {/* Code row */}
-        <div
-          style={{
-            background: "rgba(211,217,37,0.1)",
-            border: "1px dashed rgba(211,217,37,0.5)",
-            borderRadius: 8,
-            padding: "5px 10px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            alignSelf: "flex-start",
-          }}
-        >
-          <span style={{ color: "#D3D925", fontFamily: "monospace", fontWeight: 700, fontSize: 13, letterSpacing: 2 }}>
-            {codeLabel}
-          </span>
-        </div>
-
-        {/* Meta */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {data.minOrderAmount > 0 && (
-            <span style={{ color: "#B7C7C3", fontSize: 10 }}>
-              Min Rs. {Number(data.minOrderAmount).toLocaleString()}
-            </span>
-          )}
-          <span style={{ color: "#B7C7C3", fontSize: 10 }}>
-            Valid till {validToStr}
-          </span>
-          <span style={{ color: "#B7C7C3", fontSize: 10 }}>
-            {data.perUserLimit || 1}x per user
-          </span>
+        
+        {/* Main white/cream card */}
+        <div className={`relative ${bgClass} rounded-2xl h-full p-5 flex items-center justify-between shadow-md overflow-hidden transition-transform duration-300 group-hover:-rotate-2 group-hover:-translate-x-1.5 group-hover:-translate-y-1.5`} style={maskStyle}>
+           <div className="absolute inset-0 opacity-50 mix-blend-multiply pointer-events-none" style={{ backgroundImage: 'url(/images/image.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+           <div className="absolute top-0 bottom-0 right-[45%] w-px border-l-2 border-dashed border-gray-300 opacity-60 z-20" />
+           <Paperclip className="absolute -top-3 right-[calc(45%-14px)] w-8 h-8 text-gray-400 drop-shadow-sm z-30 -rotate-12" />
+           
+           <div className={`relative z-10 flex flex-col w-[55%] pr-2 h-full justify-center items-stretch`}>
+             {isExclusive ? (
+               <span className={`bg-[#ff7828] text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-2 shrink-0 self-start`}>{data.category || "Exclusive"}</span>
+             ) : (
+               <span className={`bg-[#ff7828]/10 text-[#ff7828] text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-2 shrink-0 self-start`}>{data.category || "General Offer"}</span>
+             )}
+             
+             <h3 className={`text-[#015db8] text-[20px] sm:text-[24px] font-black font-display uppercase leading-[1.05] tracking-tight mb-2 line-clamp-2 ${titleAlignClass}`} title={title}>{title}</h3>
+             <p className={`text-gray-600 text-[10px] sm:text-xs font-medium mb-3 line-clamp-2 ${descAlignClass}`} title={desc}>{desc}</p>
+             
+             <div className={`inline-flex items-center border border-dashed border-[#ff7828]/50 px-2 py-1 rounded-md bg-white ${codeAlignClass}`}>
+               <span className="text-gray-500 font-medium text-[10px] sm:text-xs mr-2">Code</span>
+               <span className="text-[#ff7828] font-bold text-xs sm:text-sm">{code}</span>
+             </div>
+           </div>
+           
+           <div className="relative z-10 w-[45%] flex flex-col justify-between items-end h-full pt-1">
+             <div className="w-full flex justify-center items-center relative flex-grow pl-2">
+               {displayImageUrl ? (
+                 <img 
+                   key={displayImageUrl} 
+                   src={displayImageUrl} 
+                   alt="Offer visual" 
+                   className={`w-full h-full ${imgFitClass} drop-shadow-md`} 
+                   style={{
+                     transform: `scale(${imgScale}) translate(${imgOffsetX}%, ${imgOffsetY}%)`,
+                     transformOrigin: 'center center',
+                     transition: 'transform 0.15s ease',
+                   }}
+                   onError={() => setImgError(true)} 
+                 />
+               ) : (
+                 <span className="text-[#015db8] text-xl md:text-2xl font-black uppercase tracking-widest mt-4">
+                   Offer
+                 </span>
+               )}
+             </div>
+              <p className="text-[9px] sm:text-[10px] font-medium tracking-wide mt-2 text-right text-gray-400">
+                * T&C apply
+              </p>
+           </div>
         </div>
       </div>
     </div>
@@ -299,15 +255,24 @@ export const CouponLivePreview = ({ data }: CouponLivePreviewProps) => {
   const [tab, setTab] = useState<"mobile" | "web">("mobile");
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      <style dangerouslySetInnerHTML={{__html: `
+        .orange-grid-bg {
+          background-color: #ff7828;
+          background-image: linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+          background-size: 14px 14px;
+          background-position: center;
+        }
+      `}} />
+
       {/* Tab switcher */}
-      <div className="flex items-center gap-1 p-1 bg-muted rounded-xl mb-6 self-start">
+      <div className="flex items-center gap-1 p-1 bg-[#121212]/50 border border-white/5 rounded-xl mb-6 self-start">
         <button
           onClick={() => setTab("mobile")}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             tab === "mobile"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-[#D3D925] text-[#121212] font-bold shadow-sm"
+              : "text-white/60 hover:text-white hover:bg-white/5"
           }`}
         >
           <Smartphone className="w-4 h-4" />
@@ -317,8 +282,8 @@ export const CouponLivePreview = ({ data }: CouponLivePreviewProps) => {
           onClick={() => setTab("web")}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             tab === "web"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-[#D3D925] text-[#121212] font-bold shadow-sm"
+              : "text-white/60 hover:text-white hover:bg-white/5"
           }`}
         >
           <Globe className="w-4 h-4" />
@@ -332,20 +297,20 @@ export const CouponLivePreview = ({ data }: CouponLivePreviewProps) => {
         Live Preview — updates as you type
       </p>
 
-      {/* Preview */}
-      <div className="flex items-center justify-center flex-1 min-h-0">
+      {/* Preview Container */}
+      <div className="flex items-center justify-center flex-1 min-h-[250px] w-full border border-dashed border-white/10 rounded-2xl bg-black/20 p-4">
         {tab === "mobile" ? (
-          <MobilePreview data={data} />
+          <UnifiedPreview data={data} scale={0.85} />
         ) : (
-          <WebPreview data={data} />
+          <UnifiedPreview data={data} scale={1} />
         )}
       </div>
 
       {/* Context hint */}
       <p className="text-[11px] text-muted-foreground text-center mt-4">
         {tab === "mobile"
-          ? "Shown in the 'Exclusive Offers' carousel on the home screen"
-          : "Shown on the All Offers & Checkout coupon pages"}
+          ? "Preview showing how coupon appears on mobile app screens"
+          : "Preview showing how coupon appears on the main website"}
       </p>
     </div>
   );

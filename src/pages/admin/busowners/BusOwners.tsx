@@ -3,9 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, TrendingUp } from "lucide-react";
+import { Building2, TrendingUp, Users } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
+import { useNavigate } from "react-router-dom";
 import { columns } from "@/components/data_tables/owner/columns";
+import { StatCard } from "@/components/dashboard/StatCard";
 import { DataTable } from "@/components/DataTable";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
@@ -53,7 +55,8 @@ const busOwners = [
 
 const BusOwners = () => {
   const { onOpen } = useModal();
-   const { token } = useAuth();
+  const navigate = useNavigate();
+  const { token } = useAuth();
   // useQuery to fetch users can be added here
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ["busOwners"],
@@ -103,82 +106,72 @@ const BusOwners = () => {
   return (
     <>
       {/* PAGE HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          <h2 className="text-2xl font-bold tracking-tight text-white">
             Bus Owner Management
           </h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-white/60 mt-1 font-medium text-sm">
             Manage bus owners and fleet operations
           </p>
         </div>
-        <Button
-          onClick={() => onOpen("addBusOwner",{})}
-          className="gap-2 active:bg-blue-800 cursor-pointer w-full sm:w-auto"
-        >
-          <Building2 className="h-4 w-4" />
-          Add Owner
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => navigate("leads")}
+            variant="outline"
+            className="gap-2 border-white/20 text-white hover:bg-white/10 hover:text-white font-semibold rounded-xl h-10 px-5 cursor-pointer w-full sm:w-auto"
+          >
+            <Users className="h-4 w-4" />
+            Leads
+          </Button>
+          <Button
+            onClick={() => onOpen("addBusOwner",{})}
+            className="gap-2 bg-white hover:bg-white/90 text-black font-bold rounded-xl h-10 px-6 cursor-pointer w-full sm:w-auto"
+          >
+            <Building2 className="h-4 w-4" />
+            Add Owner
+          </Button>
+        </div>
       </div>
 
       {/* KPI CARDS */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Owners</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {busOwnerDashboard?.totalBusOwners || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              All onboarded accounts
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Verified Owners</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {busOwnerDashboard?.verifiedOwners?.split(" ")[0] || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {busOwnerDashboard?.verifiedOwners || "0% of total"}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Pending KYC</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {busOwnerDashboard?.pendingKyc || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">Awaiting verification</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Fleets</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {busOwnerDashboard?.totalFleets || 0}
-            </div>
-            <p className="text-xs text-success">Managed buses</p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        <StatCard
+          title="Total Owners"
+          value={(busOwnerDashboard?.totalBusOwners || 0).toString()}
+          icon={Building2}
+          subtitle="All onboarded accounts"
+          changeType="neutral"
+        />
+        <StatCard
+          title="Verified Owners"
+          value={(busOwnerDashboard?.verifiedOwners?.split(" ")[0] || 0).toString()}
+          icon={TrendingUp}
+          subtitle={busOwnerDashboard?.verifiedOwners || "0% of total"}
+          changeType="positive"
+        />
+        <StatCard
+          title="Pending KYC"
+          value={(busOwnerDashboard?.pendingKyc || 0).toString()}
+          icon={Building2}
+          subtitle="Awaiting verification"
+          changeType="negative"
+        />
+        <StatCard
+          title="Total Fleets"
+          value={(busOwnerDashboard?.totalFleets || 0).toString()}
+          icon={TrendingUp}
+          subtitle="Managed buses"
+          changeType="positive"
+        />
       </div>
 
       {/* BUS OWNER DIRECTORY */}
-      <Card>
+      <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <CardTitle>Bus Owner Directory</CardTitle>
-            <Badge variant="outline" className="gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">Bus Owner Directory</CardTitle>
+            <Badge variant="outline" className="gap-2 bg-white/5 border-white/10 text-white hover:bg-white/10">
               <TrendingUp className="h-3 w-3" /> Total Fleet: {busOwnerDashboard?.totalFleets || 0} Buses
             </Badge>
           </div>

@@ -1,23 +1,135 @@
 import { api } from "./axios";
 
-// get all agents
-const getAllAgents = async () => {
-  const { data } = await api.get("/getAllAgents");
+// ── AGENT QUERIES ──────────────────────────────────────────────────────────────
+
+// get all agents (optional ?status=PENDING&type=DEFAULT)
+const getAllAgents = async (params?: { status?: string; type?: string }) => {
+  const { data } = await api.get("/getAllAgents", { params });
   return data;
 };
 
-// get agent by id
-const getAgentById = async (userId: string) => {
-  const { data } = await api.post("/getAgentDetails", {
-    id: userId,
-  });
-  return data;
-};
-
-// get agent dashboard data
+// get agent dashboard stats
 const getAgentDashboardData = async () => {
   const { data } = await api.get("/agentDashboard");
   return data;
 };
 
-export { getAgentById, getAllAgents, getAgentDashboardData };
+// get pending applications only
+const getPendingAgentApplications = async () => {
+  const { data } = await api.get("/getAllAgents", { params: { status: "PENDING" } });
+  return data;
+};
+
+// get MORE_INFO applications
+const getMoreInfoAgentApplications = async () => {
+  const { data } = await api.get("/getAllAgents", { params: { status: "MORE_INFO" } });
+  return data;
+};
+
+// get agent detail by userId / agentId / Agent._id (returns profile + KYC docs with presigned URLs)
+const getAgentById = async (id: string) => {
+  const { data } = await api.post("/getAgentDetails", { id });
+  return data;
+};
+
+// search users by phone or name (for the "Find User" step in agent onboarding)
+const searchUsersByPhone = async (query: string) => {
+  const { data } = await api.get("/getAllUsers", {
+    params: { search: query, limit: 8 },
+  });
+  return data;
+};
+
+// ── ADMIN-INITIATED AGENT CREATION ────────────────────────────────────────────
+
+// Step 1 — Convert existing user account to agent role (creates bare Agent doc)
+const makeUserAgent = async (userId: string) => {
+  const { data } = await api.post("/makeUserAgent", { id: userId });
+  return data;
+};
+
+// Step 2 — Fill agent profile fields + auto-approve OPERATOR_LINKED agents
+export type FinalizeAgentPayload = {
+  id: string;                          // Agent._id returned from makeUserAgent
+  agentType: "DEFAULT" | "OPERATOR_LINKED";
+  // Operator link (OPERATOR_LINKED only)
+  linkedOperatorId?: string;
+  busAccessScope?: "ALL_OPERATOR_BUSES" | "SPECIFIC_ROUTES";
+  allowedRouteIds?: string[];
+  // Personal
+  district?: string;
+  municipality?: string;
+  // Business
+  businessName?: string;
+  shopAddress?: string;
+  operationType?: string;
+  claimedMonthlyVolume?: string;
+  currentOperators?: string;
+  // Settlement (optional — can be filled later)
+  settlementMethod?: "BANK" | "ESEWA" | "KHALTI";
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountName?: string;
+  esewaNumber?: string;
+  khaltiNumber?: string;
+  // Admin config
+  commissionRate?: number;
+  minSettlementThreshold?: number;
+  adminNotes?: string;
+};
+
+const finalizeAgentSetup = async (payload: FinalizeAgentPayload) => {
+  const { data } = await api.patch("/finalizeAgentSetup", payload);
+  return data;
+};
+
+// ── OPERATOR BRANDS ────────────────────────────────────────────────────────────
+
+// Get all operator brands (for OPERATOR_LINKED agent brand selector dropdown)
+const getAllBrands = async () => {
+  const { data } = await api.get("/brands");
+  return data;
+};
+
+// Get route services for a brand (for SPECIFIC_ROUTES picker)
+const getBrandRouteServices = async (brandId: string) => {
+  const { data } = await api.get(`/brands/${brandId}/route-services`);
+  return data;
+};
+
+// ── ONBOARDING REVIEW ─────────────────────────────────────────────────────────
+
+export type AgentReviewPayload = {
+  id: string;
+  applicationStatus?: "APPROVED" | "REJECTED" | "MORE_INFO" | "SUSPENDED";
+  rejectionReason?: string;
+  moreInfoRequest?: string;
+  isPermanentlyRejected?: boolean;
+  commissionRate?: number;
+  minSettlementThreshold?: number;
+  adminNotes?: string;
+  documentVerifications?: {
+    type: string;
+    verified?: boolean;
+    rejectionReason?: string;
+  }[];
+};
+
+const reviewAgentApplication = async (payload: AgentReviewPayload) => {
+  const { data } = await api.patch("/agentKycStatus", payload);
+  return data;
+};
+
+export {
+  getAllAgents,
+  getAgentDashboardData,
+  getPendingAgentApplications,
+  getMoreInfoAgentApplications,
+  getAgentById,
+  searchUsersByPhone,
+  makeUserAgent,
+  finalizeAgentSetup,
+  getAllBrands,
+  getBrandRouteServices,
+  reviewAgentApplication,
+};

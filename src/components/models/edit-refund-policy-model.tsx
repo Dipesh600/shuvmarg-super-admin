@@ -56,16 +56,16 @@ export const EditRefundPolicyDialog = () => {
   }, [data]);
   return (
     <Dialog open={isModelOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] bg-[#121212]/95 border-white/5 backdrop-blur-xl shadow-2xl text-white">
         <DialogHeader>
-          <DialogTitle>Edit Refund Policy</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-white">Edit Refund Policy</DialogTitle>
+          <DialogDescription className="text-white/60">
             Update the refund policy details and percentages
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="policyName">Policy Name</Label>
+            <Label htmlFor="policyName" className="text-white/80">Policy Name</Label>
             <Input
               id="policyName"
               value={formData.policyName}
@@ -73,10 +73,11 @@ export const EditRefundPolicyDialog = () => {
                 setFormData({ ...formData, policyName: e.target.value })
               }
               placeholder="e.g., 24h Before Departure"
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description" className="text-white/80">Description</Label>
             <Textarea
               id="description"
               value={formData.description}
@@ -85,11 +86,12 @@ export const EditRefundPolicyDialog = () => {
               }
               placeholder="Describe when this policy applies"
               rows={2}
+              className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="refundPercentage">Refund Percentage (%)</Label>
+              <Label htmlFor="refundPercentage" className="text-white/80">Refund Percentage (%)</Label>
               <Input
                 id="refundPercentage"
                 type="number"
@@ -102,10 +104,11 @@ export const EditRefundPolicyDialog = () => {
                     refundPercentage: Number(e.target.value),
                   })
                 }
+                className="bg-white/5 border-white/10 text-white focus-visible:ring-[#D3D925]"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="deductionPercentage">
+              <Label htmlFor="deductionPercentage" className="text-white/80">
                 Deduction Percentage (%)
               </Label>
               <Input
@@ -120,12 +123,13 @@ export const EditRefundPolicyDialog = () => {
                     deductionPercentage: Number(e.target.value),
                   })
                 }
+                className="bg-white/5 border-white/10 text-white focus-visible:ring-[#D3D925]"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="minHours">Minimum Hours</Label>
+              <Label htmlFor="minHours" className="text-white/80">Minimum Hours</Label>
               <Input
                 id="minHours"
                 type="number"
@@ -134,10 +138,11 @@ export const EditRefundPolicyDialog = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, minHours: Number(e.target.value) })
                 }
+                className="bg-white/5 border-white/10 text-white focus-visible:ring-[#D3D925]"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="maxHours">Maximum Hours (optional)</Label>
+              <Label htmlFor="maxHours" className="text-white/80">Maximum Hours (optional)</Label>
               <Input
                 id="maxHours"
                 type="number"
@@ -150,11 +155,12 @@ export const EditRefundPolicyDialog = () => {
                   })
                 }
                 placeholder="Leave empty for no limit"
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
               />
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="color">Policy Color</Label>
+            <Label htmlFor="color" className="text-white/80">Policy Color</Label>
             <div className="flex gap-2 items-center">
               <Input
                 id="color"
@@ -163,7 +169,7 @@ export const EditRefundPolicyDialog = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, color: e.target.value })
                 }
-                className="w-16 h-10 p-1 cursor-pointer"
+                className="w-16 h-10 p-1 cursor-pointer bg-transparent border-white/10"
               />
               <Input
                 value={formData.color}
@@ -171,20 +177,21 @@ export const EditRefundPolicyDialog = () => {
                   setFormData({ ...formData, color: e.target.value })
                 }
                 placeholder="#008000"
-                className="flex-1"
+                className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-[#D3D925]"
               />
             </div>
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="border-t border-white/5 pt-3 mt-4">
           <Button
             disabled={isPending}
             variant="outline"
             onClick={() => onClose()}
+            className="bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white"
           >
             Cancel
           </Button>
-          <Button disabled={isPending} onClick={handleSubmit}>
+          <Button disabled={isPending} onClick={handleSubmit} className="bg-[#D3D925] text-[#121212] hover:bg-[#D3D925]/90 font-bold">
             {isPending ? "Saving Changes..." : "Save Changes"}
           </Button>
         </DialogFooter>

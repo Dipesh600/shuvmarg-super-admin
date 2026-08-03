@@ -72,8 +72,11 @@ const AgentDetail = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h2 className="text-2xl font-bold tracking-tight">Agent Details</h2>
-          <p className="text-muted-foreground">Agent ID: { agentData?.id}</p>
+          <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            {agentData.name || "Agent Details"}
+            {agentData.status === "Verified" && <CheckCircle className="w-5 h-5 text-[#D3D925]" />}
+          </h2>
+          <p className="text-white/60 mt-1 font-medium text-sm">Agent ID: { agentData?.id}</p>
         </div>
         <div className="flex gap-2">
           <DeleteModel
@@ -94,11 +97,11 @@ const AgentDetail = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
+        <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white lg:col-span-1">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-white">
               Profile
-              <Badge variant={agentData.status === "Verified" ? "Success" : "Failed"}>
+              <Badge variant="outline" className={agentData.status === "Verified" ? "text-white border-white/10 bg-white/5" : "text-white border-white/10 bg-white/5"}>
                 {agentData.status}
               </Badge>
             </CardTitle>
@@ -110,96 +113,96 @@ const AgentDetail = () => {
               </div>
             </div>
             <div className="text-center">
-              <h3 className="text-xl font-semibold">{agentData.name}</h3>
-              <p className="text-sm text-muted-foreground">{agentData.agencyName}</p>
+              <h3 className="text-xl font-semibold text-white">{agentData.name}</h3>
+              <p className="text-sm text-white/60 mt-1">{agentData.agencyName}</p>
               {agentData.status === "Verified" && (
-                <div className="flex items-center justify-center gap-1 text-success text-sm mt-1">
-                  <CheckCircle className="h-4 w- text-green-500" />
+                <div className="flex items-center justify-center gap-1 text-[#D3D925] text-sm mt-1">
+                  <CheckCircle className="h-4 w-4" />
                   Verified Agent
                 </div>
               )}
             </div>
-            <div className="space-y-3 pt-4">
+            <div className="space-y-3 pt-4 border-t border-white/5">
               <div className="flex items-center gap-3 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground" />
+                <Mail className="h-4 w-4 text-white/60" />
                 <span>{agentData.email}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <Phone className="h-4 w-4 text-muted-foreground" />
+                <Phone className="h-4 w-4 text-white/60" />
                 <span>{agentData.phone}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <MapPin className="h-4 w-4 text-white/60" />
                 <span>{agentData.location}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Calendar className="h-4 w-4 text-white/60" />
                 <span>Joined {agentData.joined}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <TrendingUp className="h-4 w-4 text-white/60" />
                 <span>Commission: {agentData.commission}</span>
               </div>
             </div>
-            <div className="pt-4 border-t space-y-2">
+            <div className="pt-4 border-t border-white/5 space-y-2">
               <div className="text-sm">
-                <span className="text-muted-foreground">PAN:</span> {agentData.panNumber}
+                <span className="text-white/60">PAN:</span> {agentData.panNumber}
               </div>
               <div className="text-sm">
-                <span className="text-muted-foreground">Bank:</span> {agentData.bankDetails}
+                <span className="text-white/60">Bank:</span> {agentData.bankDetails}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
+        <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white lg:col-span-2">
           <CardHeader>
-            <CardTitle>Performance Overview</CardTitle>
-            <CardDescription>Agent's performance metrics and history</CardDescription>
+            <CardTitle className="flex items-center gap-2 text-white">Performance Overview</CardTitle>
+            <CardDescription className="text-white/60">Agent's performance metrics and history</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3 mb-6">
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <div className="text-2xl font-bold">{agentData.totalApplications}</div>
-                <div className="text-sm text-muted-foreground">Total Applications</div>
+              <div className="p-4 bg-white/5 border border-white/5 rounded-lg text-center">
+                <div className="text-2xl font-bold text-white">{agentData.totalApplications}</div>
+                <div className="text-sm text-white/60">Total Applications</div>
               </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <div className="text-2xl font-bold">{agentData.totalEarnings}</div>
-                <div className="text-sm text-muted-foreground">Total Earnings</div>
+              <div className="p-4 bg-white/5 border border-white/5 rounded-lg text-center">
+                <div className="text-2xl font-bold text-[#D3D925]">{agentData.totalEarnings}</div>
+                <div className="text-sm text-white/60">Total Earnings</div>
               </div>
-              <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <div className="text-2xl font-bold">{agentData.monthlyEarnings}</div>
-                <div className="text-sm text-muted-foreground">This Month</div>
+              <div className="p-4 bg-white/5 border border-white/5 rounded-lg text-center">
+                <div className="text-2xl font-bold text-white">{agentData.monthlyEarnings}</div>
+                <div className="text-sm text-white/60">This Month</div>
               </div>
             </div>
 
             <Tabs defaultValue="applications">
-              <TabsList className="w-full justify-start">
-                <TabsTrigger value="applications">Applications</TabsTrigger>
-                <TabsTrigger value="payouts">Payouts</TabsTrigger>
+              <TabsList className="w-full justify-start bg-transparent border-b border-white/5 rounded-none h-auto p-0 mb-4 gap-4">
+                <TabsTrigger value="applications" className="px-0 py-3 data-[state=active]:bg-transparent data-[state=active]:text-[#D3D925] data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-[#D3D925] rounded-none">Applications</TabsTrigger>
+                <TabsTrigger value="payouts" className="px-0 py-3 data-[state=active]:bg-transparent data-[state=active]:text-[#D3D925] data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-[#D3D925] rounded-none">Payouts</TabsTrigger>
               </TabsList>
               <TabsContent value="applications" className="mt-4">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Route</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Commission</TableHead>
-                      <TableHead>Status</TableHead>
+                    <TableRow className="border-white/5 hover:bg-white/5">
+                      <TableHead className="text-white/60">ID</TableHead>
+                      <TableHead className="text-white/60">User</TableHead>
+                      <TableHead className="text-white/60">Route</TableHead>
+                      <TableHead className="text-white/60">Date</TableHead>
+                      <TableHead className="text-white/60">Commission</TableHead>
+                      <TableHead className="text-white/60">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {agentData.recentApplications.map((app) => (
-                      <TableRow key={app.id}>
+                      <TableRow key={app.id} className="border-white/5 hover:bg-white/5">
                         <TableCell className="font-medium">{app.id}</TableCell>
-                        <TableCell>{app.user}</TableCell>
-                        <TableCell>{app.route}</TableCell>
-                        <TableCell>{app.date}</TableCell>
-                        <TableCell>{app.commission}</TableCell>
+                        <TableCell className="text-white/80">{app.user}</TableCell>
+                        <TableCell className="text-white/80">{app.route}</TableCell>
+                        <TableCell className="text-white/80">{app.date}</TableCell>
+                        <TableCell className="text-[#D3D925] font-medium">{app.commission}</TableCell>
                         <TableCell>
-                          <Badge variant={app.status === "Confirmed" ? "default" : "secondary"}>
+                          <Badge variant="outline" className={app.status === "Confirmed" ? "text-white border-white/10 bg-white/5" : "text-white border-white/10 bg-white/5"}>
                             {app.status}
                           </Badge>
                         </TableCell>
@@ -211,23 +214,23 @@ const AgentDetail = () => {
               <TabsContent value="payouts" className="mt-4">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Payout ID</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Status</TableHead>
+                    <TableRow className="border-white/5 hover:bg-white/5">
+                      <TableHead className="text-white/60">Payout ID</TableHead>
+                      <TableHead className="text-white/60">Amount</TableHead>
+                      <TableHead className="text-white/60">Date</TableHead>
+                      <TableHead className="text-white/60">Method</TableHead>
+                      <TableHead className="text-white/60">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {agentData.payouts.map((payout) => (
-                      <TableRow key={payout.id}>
+                      <TableRow key={payout.id} className="border-white/5 hover:bg-white/5">
                         <TableCell className="font-medium">{payout.id}</TableCell>
-                        <TableCell>{payout.amount}</TableCell>
-                        <TableCell>{payout.date}</TableCell>
-                        <TableCell>{payout.method}</TableCell>
+                        <TableCell className="text-[#D3D925] font-medium">{payout.amount}</TableCell>
+                        <TableCell className="text-white/80">{payout.date}</TableCell>
+                        <TableCell className="text-white/80">{payout.method}</TableCell>
                         <TableCell>
-                          <Badge variant="default">{payout.status}</Badge>
+                          <Badge variant="outline" className="text-white border-white/10 bg-white/5">{payout.status}</Badge>
                         </TableCell>
                       </TableRow>
                     ))}

@@ -40,6 +40,8 @@ import Bookings from "./pages/admin/bookings/Bookings";
 import BookingDetail from "./pages/admin/bookings/BookingDetails";
 import PushNotifications from "./pages/admin/push_notification/PushNotification";
 import OperatorDetails from "./pages/admin/busowners/OperatorDetails";
+import PartnerLeads from "./pages/admin/busowners/PartnerLeads";
+import AgentLeads from "./pages/admin/agents/AgentLeads";
 import Settlements from "./pages/admin/settlements/Settlements";
 import TripManagement from "./pages/admin/trips/TripManagement";
 import PlatformRegistry from "./pages/admin/registry/PlatformRegistry";
@@ -76,8 +78,10 @@ const App = () => (
                 <Route path="users" element={<Users />} />
                 <Route path="users/:id" element={<UserDetail />} />
                 <Route path="agents" element={<Agents />} />
+                <Route path="agents/leads" element={<AgentLeads />} />
                 <Route path="agents/:id" element={<AgentDetail />} />
                 <Route path="bus-owners" element={<BusOwners />} />
+                <Route path="bus-owners/leads" element={<PartnerLeads />} />
                 <Route path="bus-owners/operator/:id" element={<OperatorDetails />} />
                 <Route path="bus-owners/:id" element={<BusOwnerDetail />} />
                 <Route path="fleets" element={<Fleet />} />

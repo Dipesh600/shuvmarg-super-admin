@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Users, IndianRupee, MapPin, Clock, CreditCard, Ticket, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Users, IndianRupee, Ticket, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useTripManifest } from "@/hooks/useFleetWorkstation";
 
 interface ManifestDrawerProps {
@@ -24,11 +23,6 @@ export function ManifestDrawer({ fleetId, tripId, open, onOpenChange }: Manifest
     const bookings = manifestData?.bookings || [];
     const summary = manifestData?.summary || {};
 
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "—";
-        return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-    };
-
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl flex flex-col gap-0 p-0 border-l border-border/40">
@@ -38,7 +32,7 @@ export function ManifestDrawer({ fleetId, tripId, open, onOpenChange }: Manifest
                         <SheetTitle className="text-xl font-black flex items-center gap-2">
                             Trip Manifest
                             {trip && (
-                                <Badge variant="outline" className="font-mono text-[10px] tracking-wider uppercase ml-2">
+                                <Badge variant="outline" className="text-[10px] tracking-wider uppercase ml-2">
                                     {trip.tripId}
                                 </Badge>
                             )}
@@ -88,13 +82,13 @@ export function ManifestDrawer({ fleetId, tripId, open, onOpenChange }: Manifest
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 flex items-center gap-1">
                                     <CheckCircle2 className="w-3 h-3" /> Boarded
                                 </p>
-                                <p className="text-xl font-black tracking-tighter text-emerald-600">{summary.boardedCount}</p>
+                                <p className="text-xl font-black tracking-tighter text-white">{summary.boardedCount}</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 flex items-center gap-1">
                                     <XCircle className="w-3 h-3" /> Cancelled
                                 </p>
-                                <p className="text-xl font-black tracking-tighter text-red-600">{summary.cancelledCount}</p>
+                                <p className="text-xl font-black tracking-tighter text-white">{summary.cancelledCount}</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 flex items-center gap-1">
@@ -134,23 +128,23 @@ function BookingCard({ booking }: { booking: any }) {
     const isNoShow = booking.status === "no_show";
 
     return (
-        <Card className={`overflow-hidden transition-all ${isCancelled ? "border-red-500/30 bg-red-500/5" : isNoShow ? "border-amber-500/30 bg-amber-500/5" : ""}`}>
+        <Card className={`overflow-hidden transition-all ${isCancelled ? "border-white/10 bg-white/5" : isNoShow ? "border-white/10 bg-white/5" : ""}`}>
             {/* Card Header (ID & Status) */}
             <div className={`px-4 py-2 border-b flex items-center justify-between ${
-                isCancelled ? "bg-red-500/10" : 
-                isNoShow ? "bg-amber-500/10" : 
-                booking.boardingConfirmed ? "bg-emerald-500/10" : "bg-muted/30"
+                isCancelled ? "bg-white/5" : 
+                isNoShow ? "bg-white/5" : 
+                booking.boardingConfirmed ? "bg-white/5" : "bg-muted/30"
             }`}>
                 <div className="flex items-center gap-2">
                     <Ticket className="w-4 h-4 opacity-50" />
-                    <span className="font-mono text-sm font-bold">{booking.ticketId}</span>
+                    <span className="text-sm font-bold">{booking.ticketId}</span>
                     <span className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/60 ml-2">
                         {new Date(booking.bookedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </span>
                 </div>
                 <Badge variant={isCancelled ? "destructive" : "outline"} className={`uppercase text-[10px] font-black tracking-wider ${
-                    booking.boardingConfirmed && !isCancelled ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" : 
-                    isNoShow ? "bg-amber-500/10 text-amber-600 border-amber-500/30" : ""
+                    booking.boardingConfirmed && !isCancelled ? "bg-white/5 text-white border-white/10" : 
+                    isNoShow ? "bg-white/5 text-white border-white/10" : ""
                 }`}>
                     {isCancelled ? "Cancelled" : booking.boardingConfirmed ? "Boarded" : isNoShow ? "No Show" : booking.status}
                 </Badge>
@@ -174,7 +168,7 @@ function BookingCard({ booking }: { booking: any }) {
                                                 {p.idType && ` • ${p.idType.replace("_", " ")}`}
                                             </p>
                                         </div>
-                                        <Badge variant="secondary" className="font-mono">{p.seatNo}</Badge>
+                                        <Badge variant="secondary" className="">{p.seatNo}</Badge>
                                     </div>
                                 ))}
                             </div>
@@ -221,14 +215,14 @@ function BookingCard({ booking }: { booking: any }) {
                                 </div>
                                 
                                 {booking.discountAmount > 0 && (
-                                    <div className="flex justify-between text-emerald-600">
+                                    <div className="flex justify-between text-white">
                                         <span>Discount {booking.couponCode ? `(${booking.couponCode})` : ""}</span>
                                         <span>- Rs. {booking.discountAmount.toLocaleString()}</span>
                                     </div>
                                 )}
                                 
                                 {booking.smMoneyUsed > 0 && (
-                                    <div className="flex justify-between text-blue-600">
+                                    <div className="flex justify-between text-white">
                                         <span>SM Money Used</span>
                                         <span>- Rs. {booking.smMoneyUsed.toLocaleString()}</span>
                                     </div>
@@ -254,12 +248,12 @@ function BookingCard({ booking }: { booking: any }) {
                                     {booking.transactionId && (
                                         <div className="flex justify-between items-center">
                                             <span className="text-xs text-muted-foreground">Txn ID</span>
-                                            <span className="text-xs font-mono">{booking.transactionId}</span>
+                                            <span className="text-xs">{booking.transactionId}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between items-center">
                                         <span className="text-xs text-muted-foreground">Channel</span>
-                                        <span className="text-xs font-mono">{booking.bookedVia || "APP"}</span>
+                                        <span className="text-xs">{booking.bookedVia || "APP"}</span>
                                     </div>
                                 </div>
                             </div>
@@ -267,21 +261,21 @@ function BookingCard({ booking }: { booking: any }) {
 
                         {/* Cancellation / Refund Block */}
                         {isCancelled && (
-                            <div className="mt-4 border border-red-500/30 bg-red-500/5 rounded-lg p-3 space-y-2">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-red-600 flex items-center gap-1">
+                            <div className="mt-4 border border-white/10 bg-white/5 rounded-lg p-3 space-y-2">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-1">
                                     <AlertCircle className="w-3 h-3" /> Cancellation Info
                                 </p>
                                 <p className="text-sm font-medium">{booking.cancellationReason || "No reason provided"}</p>
                                 
                                 {booking.refundId && (
-                                    <div className="mt-2 pt-2 border-t border-red-500/20 text-xs">
+                                    <div className="mt-2 pt-2 border-t border-white/10 text-xs">
                                         <div className="flex justify-between font-bold">
                                             <span>Refund Amount</span>
                                             <span>Rs. {booking.refundId.refundAmount?.toLocaleString()}</span>
                                         </div>
                                         <div className="flex justify-between mt-1">
                                             <span className="text-muted-foreground">Status</span>
-                                            <Badge variant="outline" className="text-[9px] uppercase border-red-500/30 text-red-600">
+                                            <Badge variant="outline" className="text-[9px] uppercase border-white/10 text-white">
                                                 {booking.refundId.status}
                                             </Badge>
                                         </div>

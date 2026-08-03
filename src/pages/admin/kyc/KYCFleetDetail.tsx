@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  ArrowLeft, FileText, CheckCircle2, XCircle, ExternalLink, Bus, Building2,
+  ArrowLeft, FileText, CheckCircle2, XCircle, Eye, Bus, Building2,
   ImageIcon, Loader2, LayoutGrid, Route, AlertTriangle, ShieldCheck, Clock
 } from "lucide-react";
+import DocumentViewerModal from "@/components/DocumentViewerModal";
 import { toast } from "sonner";
 import { useFetchFleetDetail, useUpdateOwnerFleet } from "@/hooks/useOwnerFleets";
 import { resubmitFleetById } from "@/api/busOwnerFleetApi";
@@ -24,9 +25,9 @@ const fmtDate = (d: string | null | undefined) =>
 
 /* ─── Badge helper ───────────────────────────────────────────────── */
 const ApprovalBadge = ({ status }: { status: string }) => {
-  if (status === "APPROVED") return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 font-black uppercase tracking-widest text-[10px]"><ShieldCheck className="h-3 w-3 mr-1" />Approved</Badge>;
-  if (status === "REJECTED") return <Badge className="bg-rose-100 text-rose-800 border-rose-200 font-black uppercase tracking-widest text-[10px]"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
-  return <Badge className="bg-amber-100 text-amber-800 border-amber-200 font-black uppercase tracking-widest text-[10px]"><Clock className="h-3 w-3 mr-1" />Pending Review</Badge>;
+  if (status === "APPROVED") return <Badge className="bg-white/5 text-white border-white/10 font-black uppercase tracking-widest text-[10px]"><ShieldCheck className="h-3 w-3 mr-1" />Approved</Badge>;
+  if (status === "REJECTED") return <Badge className="bg-white/5 text-white border-white/10 font-black uppercase tracking-widest text-[10px]"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>;
+  return <Badge className="bg-white/5 text-white border-white/10 font-black uppercase tracking-widest text-[10px]"><Clock className="h-3 w-3 mr-1" />Pending Review</Badge>;
 };
 
 export default function KYCFleetDetail() {
@@ -106,6 +107,17 @@ export default function KYCFleetDetail() {
   const [finalApprovalDialog, setFinalApprovalDialog] = useState(false);
   const [finalRejectionDialog, setFinalRejectionDialog] = useState(false);
   const [finalRejectionReason, setFinalRejectionReason] = useState("");
+
+  // ── Secure document viewer state ─────────────────────────────────────────
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerKey, setViewerKey] = useState<string | null>(null);
+  const [viewerTitle, setViewerTitle] = useState<string>("Document");
+
+  const openDocumentViewer = (s3Key: string, label: string, index?: number) => {
+    setViewerKey(s3Key);
+    setViewerTitle(index !== undefined && index > 0 ? `${label} (${index + 1})` : label);
+    setViewerOpen(true);
+  };
 
   /* Approval mutation — invalidates both fleet detail and roster caches */
   const updateMutation = useUpdateOwnerFleet(id!);
@@ -225,7 +237,7 @@ export default function KYCFleetDetail() {
             <h1 className="text-3xl font-bold tracking-tight">Fleet KYC Review</h1>
             <p className="text-muted-foreground text-sm">
               Reviewing documents for <span className="font-semibold text-foreground">{fleet.busName}</span>
-              <span className="font-mono ml-2 text-xs bg-muted px-2 py-0.5 rounded uppercase">{fleet.busNumber}</span>
+              <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded uppercase">{fleet.busNumber}</span>
             </p>
           </div>
           <ApprovalBadge status={approvalStatus} />
@@ -233,18 +245,18 @@ export default function KYCFleetDetail() {
 
         {/* Rejection banner */}
         {approvalStatus === "REJECTED" && fleet.rejectionReason && (
-          <div className="bg-rose-50 border-2 border-rose-200 p-5 rounded-2xl flex gap-3">
-            <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+          <div className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl flex gap-3">
+            <AlertTriangle className="h-5 w-5 text-white shrink-0 mt-0.5" />
             <div>
-              <p className="font-black text-rose-800 text-sm uppercase tracking-widest mb-1">Previously Rejected</p>
-              <p className="text-sm text-rose-700">{fleet.rejectionReason}</p>
+              <p className="font-black text-white text-sm uppercase tracking-widest mb-1">Previously Rejected</p>
+              <p className="text-sm text-white">{fleet.rejectionReason}</p>
             </div>
           </div>
         )}
 
         {/* Brand Context Card */}
         {ownerBrand && (
-          <Card className="border-primary/20 bg-primary/3">
+          <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
             <CardContent className="p-5 flex items-center gap-4">
               <div className="h-12 w-12 rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
                 {ownerBrand.logo
@@ -254,8 +266,8 @@ export default function KYCFleetDetail() {
               <div className="flex-1">
                 <div className="flex items-center gap-3">
                   <p className="font-black tracking-tight">{ownerBrand.brandName}</p>
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground bg-muted px-2 py-0.5 rounded">{ownerBrand.brandCode}</span>
-                  <Badge variant="outline" className={`text-[10px] font-black uppercase border-none ${ownerBrand.status === "ACTIVE" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{ownerBrand.status}</Badge>
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground bg-muted px-2 py-0.5 rounded">{ownerBrand.brandCode}</span>
+                  <Badge variant="outline" className={`text-[10px] font-black uppercase border-none ${ownerBrand.status === "ACTIVE" ? "bg-white/5 text-white" : "bg-white/5 text-white"}`}>{ownerBrand.status}</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">{ownerBrand.baseCity} · {ownerBrand.fleetCount || 0} vehicles registered</p>
               </div>
@@ -269,9 +281,9 @@ export default function KYCFleetDetail() {
         )}
 
         {/* Vehicle Info + Seat Map */}
-        <Card>
+        <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Bus className="h-5 w-5" /> Vehicle Information</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-white"><Bus className="h-5 w-5" /> Vehicle Information</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-6 items-start flex-wrap">
@@ -305,20 +317,20 @@ export default function KYCFleetDetail() {
         </Card>
 
         {/* Route / Corridor Status Card */}
-        <Card>
+        <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Route className="h-5 w-5" /> Route Assignment</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-white"><Route className="h-5 w-5" /> Route Assignment</CardTitle>
           </CardHeader>
           <CardContent>
             {fleet.corridorId ? (
-              <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+              <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                <ShieldCheck className="h-5 w-5 text-white shrink-0" />
                 <div>
-                  <p className="font-black text-sm text-emerald-800">Corridor Assigned</p>
+                  <p className="font-black text-sm text-white">Corridor Assigned</p>
                   <div className="flex flex-col mt-0.5">
-                    <span className="font-mono text-xs font-bold text-emerald-800">{fleet.corridorId?.code}</span>
+                    <span className="text-xs font-bold text-white">{fleet.corridorId?.code}</span>
                     {fleet.corridorId?.originId?.name && (
-                      <span className="text-[10px] text-emerald-700">
+                      <span className="text-[10px] text-white">
                         {fleet.corridorId.originId.name} → {fleet.corridorId.destinationId?.name}
                       </span>
                     )}
@@ -326,11 +338,11 @@ export default function KYCFleetDetail() {
                 </div>
               </div>
             ) : fleet.routeRequestId ? (
-              <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                <Clock className="h-5 w-5 text-amber-600 shrink-0" />
+              <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                <Clock className="h-5 w-5 text-white shrink-0" />
                 <div>
-                  <p className="font-black text-sm text-amber-800">Route Request Pending</p>
-                  <p className="text-xs text-amber-700">
+                  <p className="font-black text-sm text-white">Route Request Pending</p>
+                  <p className="text-xs text-white">
                     {fleet.routeRequestId?.originCity && fleet.routeRequestId?.destinationCity
                       ? `${fleet.routeRequestId.originCity} → ${fleet.routeRequestId.destinationCity}`
                       : "Request submitted — awaiting platform registry assignment"}
@@ -363,34 +375,34 @@ export default function KYCFleetDetail() {
               return (
                 <Card
                   key={section.key}
-                  className={
+                  className={`border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white ${
                     !hasDocuments ? "opacity-60 border-dashed" :
-                    (isPending && st.verified) || approvalStatus === "APPROVED" ? "border-emerald-200 bg-emerald-50/50" :
-                    (isPending && st.rejectionReason) || approvalStatus === "REJECTED" ? "border-rose-300 bg-rose-50/30" : ""
-                  }
+                    (isPending && st.verified) || approvalStatus === "APPROVED" ? "border-white/10 bg-white/5" :
+                    (isPending && st.rejectionReason) || approvalStatus === "REJECTED" ? "border-white/10 bg-white/5" : ""
+                  }`}
                 >
-                  <CardHeader className="pb-3">
+                  <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-white">
                         {section.icon} {section.title}
                       </CardTitle>
                       {/* Status chip */}
                       {!hasDocuments ? (
                         <Badge variant="secondary" className="text-[10px] font-black uppercase">Not Uploaded</Badge>
                       ) : approvalStatus === "APPROVED" ? (
-                        <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase"><CheckCircle2 className="h-3 w-3 mr-1" />Verified</Badge>
+                        <Badge className="bg-white/5 text-white text-[10px] font-black uppercase"><CheckCircle2 className="h-3 w-3 mr-1" />Verified</Badge>
                       ) : approvalStatus === "REJECTED" ? (
-                        <Badge className="bg-rose-100 text-rose-800 text-[10px] font-black uppercase"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>
+                        <Badge className="bg-white/5 text-white text-[10px] font-black uppercase"><XCircle className="h-3 w-3 mr-1" />Rejected</Badge>
                       ) : (
                         st.verified
-                          ? <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase"><CheckCircle2 className="h-3 w-3 mr-1" />Verified</Badge>
+                          ? <Badge className="bg-white/5 text-white text-[10px] font-black uppercase"><CheckCircle2 className="h-3 w-3 mr-1" />Verified</Badge>
                           : st.rejectionReason
-                          ? <Badge className="bg-rose-100 text-rose-800 text-[10px] font-black uppercase"><XCircle className="h-3 w-3 mr-1" />Flagged</Badge>
-                          : <Badge className="bg-amber-100 text-amber-800 text-[10px] font-black uppercase">Pending Review</Badge>
+                          ? <Badge className="bg-white/5 text-white text-[10px] font-black uppercase"><XCircle className="h-3 w-3 mr-1" />Flagged</Badge>
+                          : <Badge className="bg-white/5 text-white text-[10px] font-black uppercase">Pending Review</Badge>
                       )}
                     </div>
                     {isPending && st.rejectionReason && (
-                      <CardDescription className="text-rose-600 text-xs mt-1">
+                      <CardDescription className="text-white text-xs mt-1">
                         Reason: {st.rejectionReason}
                       </CardDescription>
                     )}
@@ -410,10 +422,10 @@ export default function KYCFleetDetail() {
                       <p className="text-xs text-muted-foreground italic text-center py-2">No file uploaded for this section.</p>
                     ) : (
                       <div className="space-y-1">
-                        {section.documents.map((url: string, idx: number) => (
+                        {section.documents.map((s3Key: string, idx: number) => (
                           <Button key={idx} variant="outline" size="sm" className="w-full justify-start text-xs"
-                            onClick={() => window.open(url, "_blank")}>
-                            <ExternalLink className="h-3 w-3 mr-2" />
+                            onClick={() => openDocumentViewer(s3Key, section.title, idx)}>
+                            <Eye className="h-3 w-3 mr-2" />
                             {section.key === "fleetImages" ? `View Image #${idx + 1}` : "View Document"}
                           </Button>
                         ))}
@@ -438,13 +450,13 @@ export default function KYCFleetDetail() {
         </div>
 
         {/* Final Decision Card */}
-        <Card className={
-          approvalStatus === "APPROVED" ? "border-emerald-200 bg-emerald-50/30" :
-          approvalStatus === "REJECTED" ? "border-rose-200 bg-rose-50/20" : ""
-        }>
+        <Card className={`border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white ${
+          approvalStatus === "APPROVED" ? "border-white/10 bg-white/5" :
+          approvalStatus === "REJECTED" ? "border-white/10 bg-white/5" : ""
+        }`}>
           <CardHeader>
-            <CardTitle>KYC Decision Record</CardTitle>
-            <CardDescription>
+            <CardTitle className="flex items-center gap-2 text-white">KYC Decision Record</CardTitle>
+            <CardDescription className="text-white/60">
               {approvalStatus === "APPROVED"
                 ? "This fleet has been approved and is cleared for operations."
                 : approvalStatus === "REJECTED"
@@ -459,11 +471,11 @@ export default function KYCFleetDetail() {
           <CardContent className="flex gap-4 flex-wrap">
             {approvalStatus === "APPROVED" ? (
               /* ── APPROVED state: sealed record, no actions ── */
-              <div className="flex items-center gap-3 text-emerald-700 font-semibold bg-emerald-100/60 px-5 py-4 rounded-xl border border-emerald-200 w-full">
+              <div className="flex items-center gap-3 text-white font-semibold bg-white/5 px-5 py-4 rounded-xl border border-white/10 w-full">
                 <ShieldCheck className="h-6 w-6 shrink-0" />
                 <div>
                   <p className="font-black text-sm">Fleet Approved</p>
-                  <p className="text-xs font-normal text-emerald-600 mt-0.5">
+                  <p className="text-xs font-normal text-white mt-0.5">
                     Approved on {fmtDate(fleet.approvedAt)} · Bus is ACTIVE and operational.
                   </p>
                 </div>
@@ -471,12 +483,12 @@ export default function KYCFleetDetail() {
             ) : approvalStatus === "REJECTED" ? (
               /* ── REJECTED state: show reason + allow resubmission ── */
               <div className="flex flex-col gap-3 w-full">
-                <div className="flex items-start gap-3 text-rose-700 bg-rose-100/60 px-5 py-4 rounded-xl border border-rose-200">
+                <div className="flex items-start gap-3 text-white bg-white/5 px-5 py-4 rounded-xl border border-white/10">
                   <XCircle className="h-6 w-6 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-black text-sm">Fleet Registration Rejected</p>
                     {fleet.rejectionReason && (
-                      <p className="text-xs font-normal text-rose-600 mt-1">
+                      <p className="text-xs font-normal text-white mt-1">
                         Reason on record: {fleet.rejectionReason}
                       </p>
                     )}
@@ -487,7 +499,7 @@ export default function KYCFleetDetail() {
                     variant="outline"
                     disabled={isResubmitting}
                     onClick={() => resubmit()}
-                    className="border-amber-400 text-amber-700 hover:bg-amber-50"
+                    className="border-white/10 text-white hover:bg-white/5"
                   >
                     {isResubmitting
                       ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -504,7 +516,7 @@ export default function KYCFleetDetail() {
                   size="lg"
                   disabled={isApproving || !canApprove}
                   onClick={() => setFinalApprovalDialog(true)}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black"
+                  className="bg-white/5 hover:bg-white/5 text-white font-black"
                 >
                   {isApproving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
                   Approve Fleet Registration
@@ -543,18 +555,18 @@ export default function KYCFleetDetail() {
         <DialogContent>
           <DialogHeader>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-white" />
               </div>
               <DialogTitle>Approve Fleet Registration</DialogTitle>
             </div>
             <DialogDescription>
-              You are approving <strong>{fleet.busName}</strong> ({fleet.busNumber?.toUpperCase()}). The bus will be marked <span className="font-bold text-emerald-600">ACTIVE</span>.
+              You are approving <strong>{fleet.busName}</strong> ({fleet.busNumber?.toUpperCase()}). The bus will be marked <span className="font-bold text-white">ACTIVE</span>.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFinalApprovalDialog(false)}>Cancel</Button>
-            <Button onClick={handleFinalApproval} disabled={isApproving} className="bg-emerald-600 hover:bg-emerald-700 text-white font-black">
+            <Button onClick={handleFinalApproval} disabled={isApproving} className="bg-white/5 hover:bg-white/5 text-white font-black">
               {isApproving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Processing...</> : "Confirm Approval"}
             </Button>
           </DialogFooter>
@@ -577,6 +589,14 @@ export default function KYCFleetDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Secure Inline Document Viewer ───────────────────────────────────── */}
+      <DocumentViewerModal
+        open={viewerOpen}
+        s3Key={viewerKey}
+        title={viewerTitle}
+        onClose={() => setViewerOpen(false)}
+      />
     </>
   );
 }

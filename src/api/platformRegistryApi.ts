@@ -2,7 +2,26 @@ import { api } from "./axios";
 
 // ── Stop Registry (Layer 3 — The foundation) ─────────────────────────────────
 
-export const createStop = async (payload: { code: string; name: string; type?: string; state?: string }) => {
+export const createStop = async (payload: { 
+    code?: string; 
+    name: string; 
+    type?: string; 
+    province?: string; 
+    district?: string; 
+    municipality?: string; 
+    status?: string; 
+    aliases?: string[];
+    isSearchable?: boolean;
+    isRouteStop?: boolean;
+    parentStopId?: string | null;
+    coordinates?: { lat: number; lng: number };
+    coordinateSource?: "GOOGLE_PLACE" | "MAP_PIN" | "ADMIN_GPS" | "DISCOVERY";
+    coordinateAccuracyMeters?: number | null;
+    coordinateCapturedAt?: string;
+    coordinateProvider?: "GOOGLE" | "MAPBOX" | null;
+    coordinatePlaceId?: string | null;
+    coordinateSuggestedAddress?: string | null;
+}) => {
     const { data } = await api.post("/registry/stops", payload);
     return data;
 };
@@ -18,11 +37,15 @@ export const searchStops = async (q: string) => {
 };
 
 export type BulkStopEntry = {
-    code: string;
+    code?: string;
     name: string;
-    type?: "CITY" | "JUNCTION" | "TOWN" | "BORDER";
-    state?: string;
+    type?: string;
+    province?: string;
+    district?: string;
+    municipality?: string;
     aliases?: string | string[];
+    coordinates?: { lat: number; lng: number };
+
 };
 
 /** Dry-run scan — checks for duplicates. Does NOT write anything. */
@@ -90,26 +113,27 @@ export const getStopsForVariant = async (variantId: string) => {
     return data;
 };
 
-// ── Boarding Points (Layer 5) ──────────────────────────────────────────────────
-
-export const createRegistryBoardingPoint = async (payload: {
-    stopCode: string;
-    pointName: string;
-    landmark?: string;
-    type?: "BOARDING" | "DROPPING" | "BOTH";
-}) => {
-    const { data } = await api.post("/registry/boarding-points", payload);
-    return data;
-};
-
-export const getBoardingPointsByStop = async (stopCode: string) => {
-    const { data } = await api.get(`/registry/boarding-points/${stopCode}`);
-    return data;
-};
-
 // ── CRUD: Update & Delete ──────────────────────────────────────────────────────
 
-export const updateStop = async (id: string, payload: { name?: string; type?: string; state?: string; status?: string }) => {
+export const updateStop = async (id: string, payload: {
+    name?: string;
+    type?: string;
+    province?: string | null;
+    district?: string | null;
+    municipality?: string | null;
+    aliases?: string[];
+    coordinates?: { lat: number; lng: number };
+    coordinateSource?: "GOOGLE_PLACE" | "MAP_PIN" | "ADMIN_GPS" | "DISCOVERY";
+    coordinateAccuracyMeters?: number | null;
+    coordinateCapturedAt?: string;
+    coordinateProvider?: "GOOGLE" | "MAPBOX" | null;
+    coordinatePlaceId?: string | null;
+    coordinateSuggestedAddress?: string | null;
+    status?: string;
+    isSearchable?: boolean;
+    isRouteStop?: boolean;
+    parentStopId?: string | null;
+}) => {
     const { data } = await api.patch(`/registry/stops/${id}`, payload);
     return data;
 };
@@ -138,17 +162,6 @@ export const deleteVariant = async (id: string) => {
     const { data } = await api.delete(`/registry/variants/${id}`);
     return data;
 };
-
-export const updateRegistryBoardingPoint = async (id: string, payload: { pointName?: string; landmark?: string; type?: string }) => {
-    const { data } = await api.patch(`/registry/boarding-points/${id}`, payload);
-    return data;
-};
-
-export const deleteRegistryBoardingPoint = async (id: string) => {
-    const { data } = await api.delete(`/registry/boarding-points/${id}`);
-    return data;
-};
-
 
 // ── Operator Route Config ──────────────────────────────────────────────────────
 
@@ -262,4 +275,3 @@ export const reviewRouteRequest = async (
     const { data } = await api.patch(`/registry/route-requests/${id}`, payload);
     return data;
 };
-

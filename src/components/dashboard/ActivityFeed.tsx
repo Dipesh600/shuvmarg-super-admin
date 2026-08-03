@@ -38,7 +38,7 @@ const activities: ActivityItem[] = [
     message: "New user registered: Rajesh Kumar",
     time: "2 mins ago",
     icon: UserPlus,
-   color: "text-blue-500",      // registrations
+   color: "text-blue-400",      // registrations
   },
   {
     id: 2,
@@ -46,7 +46,7 @@ const activities: ActivityItem[] = [
     message: "Agent verification completed: SUMA-AGT-234",
     time: "15 mins ago",
     icon: CheckCircle,
-   color: "text-green-500",     // verification
+   color: "text-[#D3D925]",     // verification
   },
   {
     id: 3,
@@ -54,7 +54,7 @@ const activities: ActivityItem[] = [
     message: "High-value transaction: Rs. 25,000",
     time: "28 mins ago",
     icon: DollarSign,
-color: "text-yellow-500",    // transaction
+color: "text-amber-400",    // transaction
   },
   {
     id: 4,
@@ -62,7 +62,7 @@ color: "text-yellow-500",    // transaction
     message: "Bus maintenance due: NP-BA-1234",
     time: "1 hour ago",
     icon: AlertTriangle,
-   color: "text-red-500",       // alert
+   color: "text-rose-400",       // alert
   },
   {
     id: 5,
@@ -70,7 +70,7 @@ color: "text-yellow-500",    // transaction
     message: "New agent application: Kathmandu",
     time: "2 hours ago",
     icon: UserPlus,
-  color: "text-blue-500",     // registrations
+  color: "text-blue-400",     // registrations
   },
 ];
 
@@ -79,10 +79,10 @@ color: "text-yellow-500",    // transaction
 // --------------------------
 export function ActivityFeed() {
   return (
-    <Card className="col-span-full lg:col-span-1">
+    <Card className="col-span-full lg:col-span-1 border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl">
       <CardHeader>
-        <CardTitle>Live Activity Stream</CardTitle>
-        <CardDescription>Real-time platform activities</CardDescription>
+        <CardTitle className="text-base font-bold text-white">Live Activity Stream</CardTitle>
+        <CardDescription className="text-white/50 text-sm">Real-time platform activities</CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -96,8 +96,7 @@ export function ActivityFeed() {
       <div
         className={`
           p-2 rounded-lg 
-          bg-muted 
-          dark:bg-muted/50 
+          bg-white/5 border border-white/5 shadow-sm 
           flex items-center justify-center
         `}
       >
@@ -111,10 +110,10 @@ export function ActivityFeed() {
       </div>
 
       <div className="flex-1 space-y-1">
-        <p className="text-sm font-medium leading-none">
+        <p className="text-sm font-bold text-white leading-tight">
           {activity.message}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs font-medium text-white/50 mt-1 block">
           {activity.time}
         </p>
       </div>

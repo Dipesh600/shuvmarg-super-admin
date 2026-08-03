@@ -114,34 +114,34 @@ const GatewayFees = () => {
       <div className="mb-6">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Payment Gateway Fees</h2>
-            <p className="text-muted-foreground mt-1">
+            <h2 className="text-2xl font-bold tracking-tight text-white">Payment Gateway Fees</h2>
+            <p className="text-white/60 mt-1 text-sm font-medium">
               Configure transaction fee percentages charged to passengers per payment method.
               These take effect immediately — no redeploy needed.
             </p>
           </div>
           <div className="flex items-center gap-2 mt-1">
             {isCustomized && (
-              <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+              <Badge variant="outline" className="text-xs text-[#D3D925] border-[#D3D925]/30 bg-[#D3D925]/10">
                 Customized
               </Badge>
             )}
             {!isCustomized && (
-              <Badge variant="outline" className="text-xs text-muted-foreground">
+              <Badge variant="outline" className="text-xs text-white/60 border-white/10">
                 Default values
               </Badge>
             )}
           </div>
         </div>
         {lastUpdated && (
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-white/40 mt-1">
             Last updated: {new Date(lastUpdated).toLocaleString()}
           </p>
         )}
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-40 text-muted-foreground gap-2">
+        <div className="flex items-center justify-center h-40 text-white/60 gap-2">
           <Loader2 className="animate-spin h-5 w-5" />
           <span>Loading configuration...</span>
         </div>
@@ -150,21 +150,21 @@ const GatewayFees = () => {
           {Object.entries(fees).map(([gateway, entry]) => {
             const meta = GATEWAY_META[gateway] ?? { displayName: entry.label || gateway };
             return (
-              <Card key={gateway}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Landmark className="h-4 w-4 text-primary" />
+              <Card key={gateway} className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
+                <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <div className="w-8 h-8 rounded-lg bg-[#D3D925]/10 flex items-center justify-center">
+                      <Landmark className="h-4 w-4 text-[#D3D925]" />
                     </div>
                     {meta.displayName}
                   </CardTitle>
                   {meta.note && (
-                    <CardDescription className="text-xs">{meta.note}</CardDescription>
+                    <CardDescription className="text-xs text-white/50">{meta.note}</CardDescription>
                   )}
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 pt-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor={`fee-${gateway}`} className="text-sm font-medium">
+                    <Label htmlFor={`fee-${gateway}`} className="text-sm font-medium text-white/80">
                       Fee Percentage
                     </Label>
                     <div className="relative">
@@ -176,14 +176,14 @@ const GatewayFees = () => {
                         max="100"
                         value={entry.feePercent}
                         onChange={(e) => handleFeeChange(gateway, e.target.value)}
-                        className="pr-8"
+                        className="pr-8 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-[#D3D925] focus-visible:ring-1 focus-visible:border-[#D3D925]"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-white/40">
                         %
                       </span>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-white/50">
                     On a Rs. 1000 ticket: Rs. {(1000 * entry.feePercent / 100).toFixed(2)} fee
                   </p>
                 </CardContent>
@@ -195,7 +195,7 @@ const GatewayFees = () => {
 
       {!loading && (
         <div className="flex items-center gap-3 mt-8">
-          <Button onClick={handleSave} disabled={isSaving} className="min-w-32">
+          <Button onClick={handleSave} disabled={isSaving} className="min-w-32 bg-[#D3D925] hover:bg-[#b5bc1b] text-black font-semibold">
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -205,11 +205,11 @@ const GatewayFees = () => {
               "Save Changes"
             )}
           </Button>
-          <Button variant="outline" onClick={handleReset} disabled={isSaving} className="gap-2">
+          <Button variant="outline" onClick={handleReset} disabled={isSaving} className="gap-2 bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white">
             <RefreshCw className="h-4 w-4" />
             Reset to Defaults
           </Button>
-          <Button variant="ghost" onClick={fetchConfig} disabled={loading || isSaving} className="gap-2 ml-auto">
+          <Button variant="ghost" onClick={fetchConfig} disabled={loading || isSaving} className="gap-2 ml-auto text-white/60 hover:text-white hover:bg-white/5">
             <RefreshCw className="h-4 w-4" />
             Reload
           </Button>
