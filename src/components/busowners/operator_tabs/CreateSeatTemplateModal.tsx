@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { LayoutGrid, Loader2 } from "lucide-react";
 import { useCreateSeatTemplate } from "@/hooks/useSeatTemplates";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import SeatMapBuilder, { SeatConfig } from "./SeatMapBuilder";
+import SeatMapBuilder from "./SeatMapBuilder";
+import type { SeatConfig } from "./SeatMapBuilder";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 

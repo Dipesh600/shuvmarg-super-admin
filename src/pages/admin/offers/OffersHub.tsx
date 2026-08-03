@@ -6,11 +6,9 @@ import {
   PlusCircle,
   Tag,
   Flame,
-  Clock,
   AlertTriangle,
   TrendingUp,
   Search,
-  SlidersHorizontal,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -50,7 +48,6 @@ export default function OffersHub() {
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [editTarget, setEditTarget] = useState<Coupon | null>(null);
 
   // Queries
   const { data: couponsData, isLoading } = useQuery({
@@ -283,7 +280,6 @@ export default function OffersHub() {
                       onToggleStatus={(id) => doToggle(id)}
                       onDelete={(id) => setDeleteTarget(id)}
                       onEdit={(c) => {
-                        setEditTarget(c);
                         navigate(`/admin/offers/create?edit=${c._id}`);
                       }}
                     />

@@ -29,7 +29,7 @@ const FleetWorkstation = () => {
         );
     }
 
-    const { fleet, today, schedules, recentTrips, upcomingTrips, completedTrips, cancelledTrips, financials, crew } = response?.data || {};
+    const { fleet, today, schedules, recentTrips, upcomingTrips, completedTrips, cancelledTrips, financials, crew: _crew } = response?.data || {};
     if (!fleet) return null;
 
     const corridor = fleet.corridorId;

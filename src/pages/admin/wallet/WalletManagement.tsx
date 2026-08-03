@@ -29,7 +29,6 @@ import {
   ShieldOff,
   AlertTriangle,
   CheckCircle,
-  ArrowRight,
   Activity,
   DollarSign,
   Snowflake,

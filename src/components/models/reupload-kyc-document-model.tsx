@@ -9,13 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useModal } from "@/hooks/use-model-store";
 import { useReuploadKycDocument } from "@/hooks/useReuploadKycDocument";
 import { useEffect, useState, useRef } from "react";
-import { Loader2, UploadCloud, FileText, X, Check } from "lucide-react";
+import { Loader2, UploadCloud, FileText, X } from "lucide-react";
 
 const formSchema = z.object({
   document: z.any().refine((val) => val !== undefined && val !== null, {
@@ -37,7 +36,6 @@ export const ReuploadKycDocumentModal = () => {
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   const {
-    register,
     handleSubmit,
     setValue,
     reset,

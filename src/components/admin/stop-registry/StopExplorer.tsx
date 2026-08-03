@@ -1,5 +1,6 @@
 import React from "react";
-import { AdminStop, StopTreeNode, getStopId } from "./stopRegistryTypes";
+import type { AdminStop, StopTreeNode } from "./stopRegistryTypes";
+import { getStopId } from "./stopRegistryTypes";
 import { StopTreeRow } from "./StopTreeRow";
 
 interface StopExplorerProps {

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Loader2, Upload, AlertTriangle, CheckCircle2, X, SkipForward, FileJson } from "lucide-react";
 import { toast } from "sonner";
 import { previewBulkStops, bulkImportStops } from "@/api/platformRegistryApi";
-import { ScanReport, BulkStopItem, BulkStopError } from "../stopRegistryTypes";
+import type { ScanReport, BulkStopItem, BulkStopError } from "../stopRegistryTypes";
 
 const EXAMPLE_JSON = `[
   { "code": "KTM", "name": "Kathmandu", "type": "CITY", "province": "Bagmati", "district": "Kathmandu", "municipality": "Kathmandu Metropolitan" },

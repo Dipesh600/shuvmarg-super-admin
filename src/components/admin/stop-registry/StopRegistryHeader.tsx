@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, FileJson, MapPin, Search, Route, AlertCircle } from "lucide-react";
-import { AdminStop } from "./stopRegistryTypes";
+import type { AdminStop } from "./stopRegistryTypes";
 
 interface StopRegistryHeaderProps {
   stops: AdminStop[];

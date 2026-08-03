@@ -1,7 +1,8 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, GitCommit, Layers } from "lucide-react";
-import { AdminStop, getStopId } from "./stopRegistryTypes";
+import type { AdminStop } from "./stopRegistryTypes";
+import { getStopId } from "./stopRegistryTypes";
 import { findParentStop, getChildStopsForParent } from "./stopRegistryTree";
 
 interface StopInspectorRelationshipsProps {

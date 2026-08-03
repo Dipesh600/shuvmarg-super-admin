@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  getDriversByBrand, approveDriver, rejectDriver,
-  DriverProfile, DriverApprovalStatus,
-} from "@/api/driverApi";
+import { getDriversByBrand, approveDriver, rejectDriver } from "@/api/driverApi";
+import type { DriverProfile, DriverApprovalStatus } from "@/api/driverApi";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";

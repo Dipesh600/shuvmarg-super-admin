@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TrendingUp, Users, DollarSign, Bus, RefreshCw, AlertCircle, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
+import { TrendingUp, Users, DollarSign, Bus, RefreshCw, AlertCircle, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import {
   Area, AreaChart, Bar, BarChart,
   CartesianGrid, ResponsiveContainer,

@@ -21,20 +21,6 @@ import {
 import { toast } from "sonner";
 import { getSettlements, paySettlement, type Settlement } from "@/api/settlementApi";
 
-const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  pending:    "outline",
-  processing: "secondary",
-  paid:       "default",
-  disputed:   "destructive",
-};
-
-const statusColor: Record<string, string> = {
-  pending:    "text-white",
-  processing: "text-white",
-  paid:       "text-white",
-  disputed:   "text-white",
-};
-
 export default function Settlements() {
   const queryClient = useQueryClient();
   const [selectedSettlement, setSelectedSettlement] = useState<Settlement | null>(null);

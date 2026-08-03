@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -77,7 +76,6 @@ export const CouponCard = ({ coupon, onToggleStatus, onDelete, onEdit }: CouponC
   const navigate = useNavigate();
   const status = getCouponStatus(coupon);
   const config = statusConfig[status];
-  const StatusIcon = config.icon;
   const usagePercent = coupon.totalUsageLimit
     ? Math.round((coupon.usedCount / coupon.totalUsageLimit) * 100)
     : null;

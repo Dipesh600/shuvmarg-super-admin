@@ -485,9 +485,9 @@ export default function Financial() {
                 { label: "Coupon bookings",    value: N(d?.couponImpact?.bookingsWithCoupon ?? 0), sub: `${d?.couponImpact?.couponUsageRate ?? 0}% of all bookings` },
                 { label: "Total discount given", value: Rs(d?.couponImpact?.discountGiven ?? 0),    sub: "Cash off for users", accent: "text-white" },
                 { label: "Revenue from coupon bookings", value: Rs(d?.couponImpact?.revenueFromCoupon ?? 0), sub: "Despite discount" },
-                { label: "Discount as % of GBV", value: `${d?.gbv?.allTime > 0 ? ((d?.gbv?.totalDiscount ?? 0) / d.gbv.allTime * 100).toFixed(1) : 0}%`,
+                { label: "Discount as % of GBV", value: `${(d?.gbv?.allTime ?? 0) > 0 ? (((d?.gbv?.totalDiscount ?? 0) / (d?.gbv?.allTime ?? 1)) * 100).toFixed(1) : 0}%`,
                   sub: Rs(d?.gbv?.totalDiscount ?? 0) + " total",
-                  accent: (d?.gbv?.allTime > 0 && (d?.gbv?.totalDiscount ?? 0) / d.gbv.allTime > 0.1) ? "text-white" : "" },
+                  accent: ((d?.gbv?.allTime ?? 0) > 0 && (d?.gbv?.totalDiscount ?? 0) / (d?.gbv?.allTime ?? 1) > 0.1) ? "text-white" : "" },
               ].map((item, i) => (
                 <div key={i} className="p-3 rounded-lg bg-white/5 border border-white/5">
                   <p className="text-[9px] font-black uppercase tracking-wider text-white/50 mb-1">{item.label}</p>

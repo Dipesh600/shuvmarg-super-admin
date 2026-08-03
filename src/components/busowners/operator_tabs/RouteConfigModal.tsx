@@ -248,12 +248,12 @@ export default function RouteConfigModal({ isOpen, onClose, brandId, editConfig 
       let computedArrival = tc.estimatedArrival; let computedDeparture = tc.estimatedDeparture;
       if (isFirst) { computedArrival = ""; } else if (isLast) { computedDeparture = ""; } else { computedDeparture = calculateDeparture(tc.estimatedArrival, tc.haltDuration || 5); }
       let currentDayOffsetForStop = currentDayOffset;
-      if (isFirst) { previousTimeMins = timeToMins(computedDeparture); }
+      if (isFirst) { previousTimeMins = timeToMins(computedDeparture || ""); }
       else {
-        const arrivalMins = timeToMins(computedArrival);
+        const arrivalMins = timeToMins(computedArrival || "");
         if (previousTimeMins !== -1 && arrivalMins < previousTimeMins) currentDayOffset += 1;
         currentDayOffsetForStop = currentDayOffset;
-        if (!isLast) { const departureMins = timeToMins(computedDeparture); if (departureMins < arrivalMins) currentDayOffset += 1; previousTimeMins = departureMins; }
+        if (!isLast) { const departureMins = timeToMins(computedDeparture || ""); if (departureMins < arrivalMins) currentDayOffset += 1; previousTimeMins = departureMins; }
       }
       return { stopId: tc.stopId, estimatedArrival: computedArrival, estimatedDeparture: computedDeparture, haltDuration: tc.haltDuration || 5, dayOffset: currentDayOffsetForStop, stopBehavior: isFirst ? "BOARDING_ONLY" : isLast ? "DROPPING_ONLY" : tc.stopBehavior };
     });

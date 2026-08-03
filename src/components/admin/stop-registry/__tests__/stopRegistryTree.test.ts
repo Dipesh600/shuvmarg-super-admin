@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { AdminStop } from "../stopRegistryTypes";
+import type { AdminStop } from "../stopRegistryTypes";
 import { buildStopTree, getChildStopsForParent, findParentStop, getDescendantStopIds } from "../stopRegistryTree";
 import { filterStops, DEFAULT_STOP_FILTERS } from "../stopRegistryFilters";
 

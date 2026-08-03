@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Users, IndianRupee, MapPin, Clock, CreditCard, Ticket, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Users, IndianRupee, Ticket, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useTripManifest } from "@/hooks/useFleetWorkstation";
 
 interface ManifestDrawerProps {
@@ -23,11 +22,6 @@ export function ManifestDrawer({ fleetId, tripId, open, onOpenChange }: Manifest
     const trip = manifestData?.trip;
     const bookings = manifestData?.bookings || [];
     const summary = manifestData?.summary || {};
-
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "—";
-        return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-    };
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>

@@ -40,8 +40,6 @@ import {
   Sliders,
   Settings,
   LogOut,
-  UserRoundCheck,
-  ContactRound,
 } from "lucide-react";
 
 import { NavLink, useLocation } from "react-router-dom";

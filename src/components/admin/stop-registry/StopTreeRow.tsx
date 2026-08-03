@@ -1,7 +1,8 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, ChevronDown, MapPin, GitCommit } from "lucide-react";
-import { AdminStop, StopTreeNode, getStopId } from "./stopRegistryTypes";
+import type { AdminStop, StopTreeNode } from "./stopRegistryTypes";
+import { getStopId } from "./stopRegistryTypes";
 
 interface StopTreeRowProps {
   node: StopTreeNode;

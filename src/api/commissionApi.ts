@@ -38,7 +38,7 @@ export const getCommissionSummary = async (): Promise<CommissionSummary> => {
 export const getCommissionHistory = async (params?: {
   page?: number;
   limit?: number;
-}) => {
+}): Promise<{ history: CommissionHistoryItem[]; total: number }> => {
   try {
     const { data } = await api.get("/commissions/history", { params });
     return data.data;

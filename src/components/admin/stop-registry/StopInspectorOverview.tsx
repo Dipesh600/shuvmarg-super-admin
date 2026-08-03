@@ -1,6 +1,6 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { AdminStop } from "./stopRegistryTypes";
+import type { AdminStop } from "./stopRegistryTypes";
 
 interface StopInspectorOverviewProps {
   stop: AdminStop;

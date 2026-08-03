@@ -39,7 +39,7 @@ export const searchStops = async (q: string) => {
 export type BulkStopEntry = {
     code?: string;
     name: string;
-    type?: "CITY" | "JUNCTION" | "TOWN" | "HIGHWAY_STOP" | "BORDER";
+    type?: string;
     province?: string;
     district?: string;
     municipality?: string;

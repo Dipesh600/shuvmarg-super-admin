@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
     CalendarDays, Clock, RotateCcw, ArrowRightLeft, Layers, MapPin,
     AlertTriangle, Play, PauseCircle, CheckCircle2, Loader2, Calendar, X,
-    GitBranch, ArrowRight, ChevronRight
+    GitBranch, ArrowRight
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { resumeSchedule, suspendSchedule, createScheduleVersion } from "@/api/scheduleApi";
@@ -465,7 +465,7 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
 }
 
 // ─── Main ScheduleTab ─────────────────────────────────────────────────────────
-const ScheduleTab = ({ schedules, fleet }: ScheduleTabProps) => {
+const ScheduleTab = ({ schedules, fleet: _fleet }: ScheduleTabProps) => {
     const qc = useQueryClient();
     const refresh = () => qc.invalidateQueries({ queryKey: ["fleet-workstation"] });
 

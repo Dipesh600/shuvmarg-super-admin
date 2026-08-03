@@ -240,9 +240,9 @@ function ExceptionTriageTab() {
                                 </div>
                                 <Button
                                     size="sm"
-                                    variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
+                                    variant="outline"
                                     onClick={() => trip.busId?._id && navigate(`/admin/fleets/${trip.busId._id}/workstation`)}
-                                    className="h-7 rounded-lg text-xs font-bold gap-1"
+                                    className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white h-7 rounded-lg text-xs font-bold gap-1"
                                 >
                                     <ExternalLink className="w-3 h-3" /> Workstation
                                 </Button>
@@ -259,7 +259,7 @@ function ExceptionTriageTab() {
                         <CardTitle className="flex items-center gap-2 text-white">
                             <AlertTriangle className="h-4 w-4" /> Exception Trips
                         </CardTitle>
-                        <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()} className="h-8 rounded-lg">
+                        <Button variant="outline" size="sm" onClick={() => refetch()} className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white h-8 rounded-lg">
                             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                         </Button>
                     </div>
@@ -336,9 +336,9 @@ function ExceptionTriageTab() {
                                                 <TableCell>
                                                     <Button
                                                         size="sm"
-                                                        variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
+                                                        variant="outline"
                                                         onClick={() => trip.busId?._id && navigate(`/admin/fleets/${trip.busId._id}/workstation`)}
-                                                        className="h-7 rounded-lg text-xs font-bold gap-1"
+                                                        className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white h-7 rounded-lg text-xs font-bold gap-1"
                                                     >
                                                         <ExternalLink className="w-3 h-3" />
                                                     </Button>
@@ -355,10 +355,10 @@ function ExceptionTriageTab() {
                     {pagination && pagination.totalPages > 1 && (
                         <div className="flex items-center justify-between p-4 border-t">
                             <Button
-                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm"
+                                variant="outline" size="sm"
                                 disabled={page === 1 || isLoading}
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                                className="font-bold rounded-lg"
+                                className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white font-bold rounded-lg"
                             >
                                 ← Previous
                             </Button>
@@ -366,10 +366,10 @@ function ExceptionTriageTab() {
                                 Page {pagination.page} of {pagination.totalPages} · {pagination.total} exceptions
                             </span>
                             <Button
-                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm"
+                                variant="outline" size="sm"
                                 disabled={page === pagination.totalPages || isLoading}
                                 onClick={() => setPage(p => p + 1)}
-                                className="font-bold rounded-lg"
+                                className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white font-bold rounded-lg"
                             >
                                 Next →
                             </Button>
@@ -505,9 +505,9 @@ function ScheduleHealthTab() {
                                             </div>
                                             <Button
                                                 size="sm"
-                                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
+                                                variant="outline"
                                                 onClick={() => s.busId?._id && navigate(`/admin/fleets/${s.busId._id}/workstation`)}
-                                                className="h-7 rounded-lg text-xs font-bold gap-1 shrink-0"
+                                                className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white h-7 rounded-lg text-xs font-bold gap-1 shrink-0"
                                             >
                                                 <ExternalLink className="w-3 h-3" /> Workstation
                                             </Button>
@@ -578,7 +578,12 @@ function ScheduleHealthTab() {
                         <CardTitle className="flex items-center gap-2 text-white">
                             <Activity className="h-4 w-4" /> Generation Health
                         </CardTitle>
-                        <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()} className="h-8 rounded-lg">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => refetch()}
+                            className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white h-8 rounded-lg"
+                        >
                             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                         </Button>
                     </div>
@@ -695,10 +700,10 @@ function ScheduleHealthTab() {
                                                         {h.missingCount > 0 && (
                                                             <Button
                                                                 size="sm"
-                                                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
+                                                                variant="outline"
                                                                 disabled={isGenerating}
                                                                 onClick={() => handleBurstGenerate(s._id)}
-                                                                className={`h-7 rounded-lg text-xs font-bold gap-1 ${
+                                                                className={`bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white h-7 rounded-lg text-xs font-bold gap-1 ${
                                                                     h.status === "CRITICAL"
                                                                         ? "border-white/10 text-white hover:bg-white/5"
                                                                         : "border-white/10 text-white hover:bg-white/5"
@@ -821,7 +826,6 @@ function BusGroup({ busId, trips, navigate }: {
         ? Math.round((totalSold / (totalSeats * totalTrips)) * 100)
         : 0;
     const exceptions    = trips.filter(t => t.exceptionType && t.exceptionType !== "NONE").length;
-    const cancelled     = trips.filter(t => t.status === "cancelled").length;
 
     // Today's trip (or nearest upcoming)
     const today = new Date().toISOString().slice(0, 10);
@@ -891,8 +895,8 @@ function BusGroup({ busId, trips, navigate }: {
                     </div>
                     <Button
                         size="sm"
-                        variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white"
-                        className="h-7 text-xs gap-1 rounded-lg"
+                        variant="outline"
+                        className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white h-7 text-xs gap-1 rounded-lg"
                         onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/admin/fleets/${busId}/workstation`);
@@ -903,88 +907,58 @@ function BusGroup({ busId, trips, navigate }: {
                 </div>
             </button>
 
-            {/* Expanded trip list */}
+            {/* Expanded trip details */}
             {open && (
-                <div className="bg-white/5 border-t border-white/10/30 overflow-x-auto">
-                    <table className="w-full min-w-[640px] text-sm">
-                        <thead>
-                            <tr className="border-b border-white/10/30">
-                                <th className="pl-12 pr-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Date</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Status</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Departure</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Seats</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Revenue</th>
-                                <th className="px-3 py-2 text-left text-[10px] font-black uppercase tracking-widest text-white/60">Exception</th>
-                                <th className="px-3 py-2 text-right text-[10px] font-black uppercase tracking-widest text-white/60"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {trips
-                                .slice()
-                                .sort((a, b) => a.tripDate.localeCompare(b.tripDate))
-                                .map(trip => {
-                                    const bs = trip.bookingStats;
-                                    const totalSeatsT = trip.busId?.totalSeats || 0;
-                                    const sold = bs?.seatsSold || 0;
-                                    const occPct = totalSeatsT > 0 ? Math.round((sold / totalSeatsT) * 100) : 0;
-                                    const isToday = trip.tripDate?.slice(0, 10) === today;
-                                    const hasException = trip.exceptionType && trip.exceptionType !== "NONE";
-                                    return (
-                                        <tr
-                                            key={trip._id}
-                                            className={`border-b border-white/10/20 last:border-0 hover:bg-white/5/20 transition-colors ${
-                                                isToday ? "bg-primary/5" : ""
-                                            }`}
-                                        >
-                                            <td className="pl-12 pr-3 py-2">
-                                                <span className={`font-bold text-xs ${
-                                                    isToday ? "text-primary" : ""
-                                                }`}>
-                                                    {fmtDate(trip.tripDate)}
-                                                </span>
-                                                {isToday && (
-                                                    <span className="ml-1.5 text-[9px] font-black uppercase text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                                                        Today
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-2"><StatusBadge status={trip.status} /></td>
-                                            <td className="px-3 py-2 text-xs font-bold">{trip.departureTime}</td>
-                                            <td className="px-3 py-2">
-                                                <span className={`text-xs font-bold ${
-                                                    occPct >= 80 ? "text-white" :
-                                                    occPct >= 50 ? "text-white" :
-                                                    "text-white/60"
-                                                }`}>
-                                                    {sold}/{totalSeatsT || "?"}
-                                                </span>
-                                                {totalSeatsT > 0 && (
-                                                    <span className="text-[10px] text-white/60 ml-1">({occPct}%)</span>
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-2 text-xs font-bold">{fmtCurrency(bs?.revenue || 0)}</td>
-                                            <td className="px-3 py-2">
-                                                {hasException
-                                                    ? <ExceptionBadge type={trip.exceptionType} />
-                                                    : <span className="text-xs text-white/20">—</span>
-                                                }
-                                            </td>
-                                            <td className="px-3 py-2 text-right">
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="h-6 w-6 p-0"
-                                                    onClick={() => navigate(`/admin/fleets/${busId}/workstation`)}
-                                                >
-                                                    <ExternalLink className="h-3 w-3" />
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            }
-                        </tbody>
-                    </table>
+                <div className="p-4 bg-white/5 space-y-4">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-white/5 hover:bg-transparent">
+                                <TableHead className="text-white/60 font-bold text-xs">Date</TableHead>
+                                <TableHead className="text-white/60 font-bold text-xs text-center">Status</TableHead>
+                                <TableHead className="text-white/60 font-bold text-xs text-center">Occupancy</TableHead>
+                                <TableHead className="text-white/60 font-bold text-xs text-right">Revenue</TableHead>
+                                <TableHead className="text-white/60 font-bold text-xs text-right">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {trips.map(trip => {
+                                const totalSeatsNum = trip.busId?.totalSeats || 0;
+                                const occPct = totalSeatsNum > 0 ? Math.round(((trip.bookingStats?.seatsSold || 0) / totalSeatsNum) * 100) : 0;
+                                return (
+                                    <TableRow key={trip._id} className="border-white/5 hover:bg-white/5">
+                                        <TableCell className="font-medium text-xs text-white">
+                                            {fmtDateFull(trip.tripDate)}
+                                            {trip.exceptionType && trip.exceptionType !== "NONE" && (
+                                                <Badge className="ml-2 text-[9px] bg-white/5 text-white border-0">
+                                                    {trip.exceptionType}
+                                                </Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <StatusBadge status={trip.status} />
+                                        </TableCell>
+                                        <TableCell className="text-center text-xs">
+                                            <span className="font-bold text-white">{trip.bookingStats?.seatsSold || 0}</span>
+                                            <span className="text-white/60"> / {trip.busId?.totalSeats || "?"} ({occPct}%)</span>
+                                        </TableCell>
+                                        <TableCell className="text-right text-xs font-bold text-white">
+                                            {fmtCurrency(trip.bookingStats?.revenue || 0)}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white h-7 text-xs rounded-lg"
+                                                onClick={() => navigate(`/admin/trips/${trip._id}`)}
+                                            >
+                                                Details
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
                 </div>
             )}
         </div>
@@ -1047,7 +1021,7 @@ function AllTripsTab() {
                         ))}
                     </SelectContent>
                 </Select>
-                <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()} className="h-9 rounded-lg">
+                <Button variant="outline" size="sm" onClick={() => refetch()} className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white h-9 rounded-lg">
                     <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                 </Button>
             </div>
@@ -1112,10 +1086,10 @@ function AllTripsTab() {
                     {pagination && pagination.totalPages > 1 && (
                         <div className="flex items-center justify-between p-4 border-t">
                             <Button
-                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm"
+                                variant="outline" size="sm"
                                 disabled={page === 1 || isLoading}
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                                className="font-bold rounded-lg"
+                                className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white font-bold rounded-lg"
                             >
                                 ← Previous
                             </Button>
@@ -1123,10 +1097,10 @@ function AllTripsTab() {
                                 Page {pagination.page} of {pagination.totalPages} · {pagination.total} trips
                             </span>
                             <Button
-                                variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm"
+                                variant="outline" size="sm"
                                 disabled={page === pagination.totalPages || isLoading}
                                 onClick={() => setPage(p => p + 1)}
-                                className="font-bold rounded-lg"
+                                className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white font-bold rounded-lg"
                             >
                                 Next →
                             </Button>
@@ -1271,7 +1245,7 @@ function RoutePerformanceTab() {
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <Button variant="outline" className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white" size="sm" onClick={() => refetch()} className="h-8 rounded-lg">
+                            <Button variant="outline" size="sm" onClick={() => refetch()} className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white h-8 rounded-lg">
                                 <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
                             </Button>
                         </div>

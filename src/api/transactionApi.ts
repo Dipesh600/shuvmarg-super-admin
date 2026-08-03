@@ -9,7 +9,14 @@ export interface TransactionFilters {
   search?:          string;
 }
 
-export const getAllTransactions = async (filters: TransactionFilters = {}) => {
+export interface TransactionsResponse {
+  success?: boolean;
+  data?: any[];
+  pagination?: { page: number; totalPages: number; total: number; limit?: number };
+  stats?: any;
+}
+
+export const getAllTransactions = async (filters: TransactionFilters = {}): Promise<TransactionsResponse> => {
   try {
     const params = new URLSearchParams();
     if (filters.page)            params.set("page",            String(filters.page));

@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import {
   LayoutGrid, Pencil, Trash2, RotateCcw, BedDouble, Star, Accessibility,
   DoorOpen, ChevronLeft, Check, Armchair, Plus,
-  Hash, ListPlus, Settings2
+  Hash, ListPlus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -192,7 +192,7 @@ interface SeatMapBuilderProps {
   readOnly?: boolean;
 }
 
-const SeatMapBuilder: React.FC<SeatMapBuilderProps> = ({ value, onChange, busType, readOnly }) => {
+const SeatMapBuilder: React.FC<SeatMapBuilderProps> = ({ value, onChange, busType: _busType, readOnly }) => {
   const [mode, setMode] = useState<"template" | "canvas" | "scratch_config">("template");
   const [config, setConfig] = useState<SeatConfig | null>(value);
   const [activeFloor, setActiveFloor] = useState(0);
