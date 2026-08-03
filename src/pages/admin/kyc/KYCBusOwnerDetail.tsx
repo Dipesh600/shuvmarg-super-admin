@@ -129,7 +129,7 @@ export default function KYCBusOwnerDetail() {
   }, [initialStatuses]);
 
   /* Fetch associated brands */
-  const { data: brandsData, isLoading: isLoadingBrands } = useQuery({
+  const { data: brandsData, isLoading: _isLoadingBrands } = useQuery({
     queryKey: ["ownerBrands", kyc?.busOwnerId || kyc?._id],
     queryFn: () => getBrandsByOwner(kyc?.busOwnerId || kyc?._id),
     enabled: !!(kyc?.busOwnerId || kyc?._id),
@@ -279,7 +279,7 @@ export default function KYCBusOwnerDetail() {
   const handleFinalApproval = () => {
     // Auto-elevate all uploaded-but-unreviewed sections to verified=true.
     // Per-section "Verify" is optional detail work; the final Approve is the binding decision.
-    const resolveStatus = (key: string) => ({
+    const resolveStatus = (_key: string) => ({
       verified: true,
       rejectionReason: null,
     });

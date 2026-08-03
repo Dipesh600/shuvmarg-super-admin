@@ -6,14 +6,8 @@ import { Percent, TrendingUp, Wallet, Clock, Download, RefreshCw, AlertCircle, A
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCommissionSummary, getCommissionHistory } from "@/api/commissionApi";
+import type { CommissionHistoryItem } from "@/api/commissionApi";
 import { Link } from "react-router-dom";
-
-const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  paid:       "default",
-  pending:    "outline",
-  processing: "secondary",
-  disputed:   "destructive",
-};
 
 const Commissions = () => {
   const { data: summary, isLoading: summaryLoading } = useQuery({
@@ -152,7 +146,7 @@ const Commissions = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {history.map((row) => (
+                    {history.map((row: CommissionHistoryItem) => (
                       <TableRow key={String(row.settlementId)} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                         <TableCell className="text-xs text-white/40">
                           {String(row.settlementId).slice(-8).toUpperCase()}

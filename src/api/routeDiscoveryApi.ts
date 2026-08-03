@@ -33,6 +33,8 @@ export interface DiscoveredStop {
   routeStopId: string | null;
   mergedIntoRouteStopId: string | null;
   source?: string;
+  _matchType?: string;
+  _matchedName?: string;
 }
 
 export interface DiscoverySession {

@@ -25,14 +25,14 @@ const Users = () => {
 
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ["users"],
-    queryFn: getAllUsers,
+    queryFn: () => getAllUsers(),
     enabled: !!token,
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
     queryKey: ["userDashboard"],
-    queryFn: getUserDashboardData,
+    queryFn: () => getUserDashboardData(),
     enabled: !!token,
     staleTime: 5 * 60 * 1000,
   });

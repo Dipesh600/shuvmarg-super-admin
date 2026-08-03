@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { createDriverWithFiles, updateDriverWithFiles, CreateDriverPayload, LicenseType, DriverProfile, DriverStatus } from "@/api/driverApi";
+import type { CreateDriverPayload, LicenseType, DriverProfile, DriverStatus } from "@/api/driverApi";
+import { createDriverWithFiles, updateDriverWithFiles } from "@/api/driverApi";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -18,9 +19,10 @@ const FilePicker: React.FC<{
   label: string;
   accept?: string;
   value: File | null;
+  currentUrl?: string;
   onChange: (f: File | null) => void;
   icon?: React.ReactNode;
-}> = ({ label, accept = "image/*,application/pdf", value, onChange, icon }) => {
+}> = ({ label, accept = "image/*,application/pdf", value, currentUrl: _currentUrl, onChange, icon }) => {
   const ref = React.useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-1">

@@ -1,14 +1,12 @@
 import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Clock, Users, CheckCircle2, IndianRupee, CalendarOff, ArrowRight, Phone, User,
+    Clock, Users, CalendarOff,
     LogOut, CheckCircle, XCircle, RefreshCw, Calendar, X, Loader2, AlertTriangle,
-    AlertCircle, History, List, ChevronLeft, ChevronRight, ArrowUpRight,
+    ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { useUpdateTripStatus } from "@/hooks/useFleetWorkstation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -60,10 +58,7 @@ const statusBg: Record<string, string> = {
     cancelled: "bg-white/5 hover:bg-white/5",
 };
 
-const formatDate = (d: string) => {
-    const date = new Date(d);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-};
+
 
 const getDirection = (variant: any, trip?: any) => {
     if (trip?.directionLabel) return trip.directionLabel;
@@ -180,8 +175,8 @@ const CalendarView = ({
     trips,
     totalSeats,
     onTripClick,
-    onCancel,
-    onReschedule,
+    onCancel: _onCancel,
+    onReschedule: _onReschedule,
 }: {
     trips: any[];
     totalSeats: number;
@@ -409,7 +404,7 @@ const CalendarView = ({
 
 
 // ─── MAIN OPERATIONS TAB ─────────────────────────────────────────────────────
-const OperationsTab = ({ today, upcomingTrips, completedTrips, cancelledTrips, recentTrips, fleet, fleetId, schedules }: OperationsTabProps) => {
+const OperationsTab = ({ today, upcomingTrips: _upcomingTrips, completedTrips: _completedTrips, cancelledTrips: _cancelledTrips, recentTrips, fleet, fleetId, schedules }: OperationsTabProps) => {
     const qc = useQueryClient();
     
     // Modal states
@@ -667,7 +662,7 @@ function CancelTripModal({ tripId, tripDate, onClose, onSuccess }: any) {
     );
 }
 
-function RescheduleTripModal({ tripId, tripDate, currentDep, currentArr, onClose, onSuccess }: any) {
+function RescheduleTripModal({ tripId, tripDate: _tripDate, currentDep, currentArr, onClose, onSuccess }: any) {
     const [newDep, setNewDep] = useState(currentDep);
     const [newArr, setNewArr] = useState(currentArr);
     const [reason, setReason] = useState("");

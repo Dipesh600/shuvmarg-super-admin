@@ -16,9 +16,9 @@
  */
 
 import { useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, GitBranch, AlertTriangle, Circle, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, GitBranch, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TimelineTabProps {
@@ -56,12 +56,6 @@ const TRIP_COLORS: Record<string, string> = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const today = () => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-};
-
 const dayOffset = (date: Date | string | null, origin: Date): number => {
     if (!date) return -9999;
     const d = new Date(date);
@@ -139,7 +133,7 @@ function DateHeader({ originDate }: { originDate: Date }) {
 }
 
 // ─── Schedule Row ─────────────────────────────────────────────────────────────
-function ScheduleRow({ sched, trips, originDate, todayPx }: {
+function ScheduleRow({ sched, trips, originDate, todayPx: _todayPx }: {
     sched: any;
     trips: any[];
     originDate: Date;
@@ -240,7 +234,7 @@ const LegendItem = ({ color, label }: { color: string; label: string }) => (
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const TimelineTab = ({ schedules, recentTrips, upcomingTrips, fleet }: TimelineTabProps) => {
+const TimelineTab = ({ schedules, recentTrips, upcomingTrips, fleet: _fleet }: TimelineTabProps) => {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Origin = PAST_DAYS before today

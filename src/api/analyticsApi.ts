@@ -31,6 +31,13 @@ export interface AnalyticsOverview {
   userGrowthChart: MonthlyChartPoint[];
   bookingTrendChart: MonthlyChartPoint[];
   topRoutes: TopRoute[];
+  operationalStats?: {
+    activeFleets?: number;
+    activeTrips?: number;
+    totalOperators?: number;
+    activeRoutes?: number;
+    registeredAgents?: number;
+  };
 }
 
 export const getAnalyticsOverview = async (): Promise<AnalyticsOverview> => {

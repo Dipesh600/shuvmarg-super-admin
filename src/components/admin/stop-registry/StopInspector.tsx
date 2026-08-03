@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pencil, Trash2, MapPin, Layers, Info } from "lucide-react";
-import { AdminStop } from "./stopRegistryTypes";
+import type { AdminStop } from "./stopRegistryTypes";
 import { StopInspectorOverview } from "./StopInspectorOverview";
 import { StopInspectorRelationships } from "./StopInspectorRelationships";
 

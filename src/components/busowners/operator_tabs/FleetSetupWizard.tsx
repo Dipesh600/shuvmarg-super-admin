@@ -11,7 +11,6 @@ import { useNavigate } from "react-router-dom";
 
 // Modals to support inline actions
 import UpdateOwnerFleetModal from "./UpdateOwnerFleetModal";
-import RouteConfigModal from "./RouteConfigModal";
 import DriverFormModal from "./CreateDriverModal";
 import CreateScheduleModal from "./CreateScheduleModal";
 
@@ -220,7 +219,6 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
               steps.map((step, idx) => {
                 const isCompleted = status?.steps?.[step.id];
                 const isActive = idx === activeIndex;
-                const Icon = step.icon;
                 
                 return (
                   <div 
@@ -390,23 +388,26 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
                         <div className="flex justify-center p-4"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
                       ) : availableDrivers.length > 0 ? (
                         <div className="w-full max-w-md max-h-40 overflow-y-auto space-y-2 mb-4 pr-2 text-left">
-                          {availableDrivers.map(d => (
-                            <div key={d._id} className="flex items-center justify-between p-3 rounded-xl border border-muted bg-background hover:border-primary/30 transition-all">
-                              <div>
-                                <p className="text-sm font-black">{d.fullName} {d.assignedBusId === fleetId && <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black">CURRENT</span>}</p>
-                                <p className="text-[10px] text-muted-foreground uppercase font-bold">{d.licenseType} · Exp: {new Date(d.licenseExpiry).toLocaleDateString()}</p>
+                          {availableDrivers.map(d => {
+                            const isThisFleet = (typeof d.assignedBusId === 'object' && d.assignedBusId !== null ? d.assignedBusId._id : d.assignedBusId) === fleetId;
+                            return (
+                              <div key={d._id} className="flex items-center justify-between p-3 rounded-xl border border-muted bg-background hover:border-primary/30 transition-all">
+                                <div>
+                                  <p className="text-sm font-black">{d.fullName} {isThisFleet && <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black">CURRENT</span>}</p>
+                                  <p className="text-[10px] text-muted-foreground uppercase font-bold">{d.licenseType} · Exp: {new Date(d.licenseExpiry).toLocaleDateString()}</p>
+                                </div>
+                                <Button 
+                                  size="sm" 
+                                  variant={isThisFleet ? "outline" : "default"}
+                                  className="h-8 rounded-lg font-bold text-xs" 
+                                  disabled={assignDriverMut.isPending || isThisFleet}
+                                  onClick={() => assignDriverMut.mutate(d._id)}
+                                >
+                                  {isThisFleet ? "Assigned" : "Assign"}
+                                </Button>
                               </div>
-                              <Button 
-                                size="sm" 
-                                variant={d.assignedBusId === fleetId ? "outline" : "default"}
-                                className="h-8 rounded-lg font-bold text-xs" 
-                                disabled={assignDriverMut.isPending || d.assignedBusId === fleetId}
-                                onClick={() => assignDriverMut.mutate(d._id)}
-                              >
-                                {d.assignedBusId === fleetId ? "Assigned" : "Assign"}
-                              </Button>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <div className="p-4 mb-4 rounded-xl border border-dashed border-muted-foreground/30 bg-muted/20 text-xs text-muted-foreground font-bold">

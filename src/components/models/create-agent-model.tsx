@@ -27,14 +27,11 @@ import {
   User,
   Users,
   Building2,
-  Link2,
-  CreditCard,
   CheckCircle2,
   ArrowLeft,
   Info,
   AlertTriangle,
   Phone,
-  MapPin,
   Route,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -71,10 +68,6 @@ const STEPS_OPERATOR_LINKED = [
   { num: 4, title: "Routes"   }, // only shown if SPECIFIC_ROUTES
   { num: 5, title: "Details"  },
   { num: 6, title: "Confirm"  },
-];
-
-const STEPS_DEFAULT = [
-  { num: 1, title: "Type" },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

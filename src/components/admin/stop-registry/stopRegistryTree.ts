@@ -1,4 +1,5 @@
-import { AdminStop, StopTreeNode, getStopId, getParentStopIdString } from "./stopRegistryTypes";
+import type { AdminStop, StopTreeNode } from "./stopRegistryTypes";
+import { getStopId, getParentStopIdString } from "./stopRegistryTypes";
 
 /**
  * Transforms a flat array of AdminStops into a hierarchical tree array.

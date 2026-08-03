@@ -25,7 +25,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateRefundStatus } from "@/api/refundApi";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CheckCircle, XCircle, AlertCircle, RefreshCw, FileText } from "lucide-react";
+import { CheckCircle, XCircle, RefreshCw } from "lucide-react";
 
 export function ReviewRefundDialog() {
   const { type, data, isOpen, onClose } = useModal();

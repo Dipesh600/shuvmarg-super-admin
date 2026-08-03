@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -208,14 +208,6 @@ const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusI
             });
 
             if (hasReturn && returnDepartureTime && returnArrivalTime) {
-                const selectedConfig = configs?.data?.find(
-                    (c: any) => String(c._id) === variantId
-                );
-                const actualVariantId = selectedConfig?.variantId?._id ? String(selectedConfig.variantId._id) : "";
-                const resolvedReturnVariantId = selectedConfig?.variantId?.returnVariantId
-                    ? String(selectedConfig.variantId.returnVariantId)
-                    : actualVariantId; 
-
                 const returnEffectiveFrom = (() => {
                     const base = new Date(effectiveFrom);
                     if (operationalModel === "RELAY") base.setUTCDate(base.getUTCDate() + 1);
@@ -324,7 +316,6 @@ const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusI
                         })
                         .map((c: any) => {
                                                 if (!c.variantId) return null;
-                                                const vid = String(c.variantId._id);
                                                 const corridor = c.variantId.corridorId;
                                                 const routeLabel = corridor?.originId?.name && corridor?.destinationId?.name
                                                     ? `${corridor.originId.name} → ${corridor.destinationId.name}`

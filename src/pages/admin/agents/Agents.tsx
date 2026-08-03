@@ -29,7 +29,6 @@ import {
   AlertTriangle,
   RefreshCw,
   Info,
-  Loader2,
   ContactRound,
 } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
@@ -99,7 +98,7 @@ const Agents = () => {
       profileImg: agent.profileImg,
       email: agent.email,
       location: agent.location,
-      status: agent.applicationStatus === "APPROVED",
+      status: agent.applicationStatus,
       commission: agent.commission,
       performance: "90%",
       applications: agent.totalBookings ?? 0,
@@ -425,7 +424,9 @@ const Agents = () => {
                         <div className="flex items-center gap-2 shrink-0">
                           <Badge className={`border text-[10px] px-2 ${sc.badgeClass}`}>{sc.label}</Badge>
                           {needsAction && daysAgo !== null && daysAgo >= 2 && (
-                            <AlertTriangle className="h-3.5 w-3.5 text-amber-400" title={`Waiting ${daysAgo} days`} />
+                            <span title={`Waiting ${daysAgo} days`}>
+                              <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                            </span>
                           )}
                           {agent.applicationStatus === "MORE_INFO" && (
                             <Info className="h-3.5 w-3.5 text-blue-400" />

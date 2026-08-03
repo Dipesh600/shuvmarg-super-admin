@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -315,7 +315,7 @@ const CreateBusRouteModal: React.FC<CreateBusRouteModalProps> = ({ isOpen, onClo
                     {stops
                       .slice()
                       .sort((a, b) => a.estimatedMinutes - b.estimatedMinutes)
-                      .map((stop, idx, arr) => (
+                      .map((stop, idx) => (
                         <div key={stop.id} className="flex items-center gap-2">
                           <div className="flex flex-col gap-0.5">
                             <button type="button" disabled={idx === 0} onClick={() => moveStop(idx, -1)}

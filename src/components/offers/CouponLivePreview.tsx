@@ -137,8 +137,6 @@ interface CouponLivePreviewProps {
   data: PreviewData;
 }
 
-const isEmpty = (v: unknown) => v === undefined || v === null || v === "" || v === 0;
-
 const UnifiedPreview = ({ data, scale = 1 }: { data: PreviewData; scale?: number }) => {
   const isOperator = data.category === "Operator Offer";
   const isExclusive = data.category === "Exclusive";

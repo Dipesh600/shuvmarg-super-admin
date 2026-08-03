@@ -1,12 +1,18 @@
 import { api } from "./axios";
 
+export interface UsersResponse {
+  success?: boolean;
+  data?: any[];
+  pagination?: any;
+}
+
 // Get all users with optional search, status filter, and pagination
 const getAllUsers = async (params?: {
   page?: number;
   limit?: number;
   search?: string;
   status?: string;
-}) => {
+}): Promise<UsersResponse> => {
   const { data } = await api.get("/getAllUsers", { params });
   return data;
 };

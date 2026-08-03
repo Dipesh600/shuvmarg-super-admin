@@ -387,7 +387,9 @@ export default function AgentOnboarding() {
 
                       {/* Urgency warning if waiting >2 days */}
                       {isPending && daysAgo !== null && daysAgo >= 2 && (
-                        <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" title={`Waiting ${daysAgo} days`} />
+                        <span title={`Waiting ${daysAgo} days`} className="shrink-0">
+                          <AlertTriangle className="h-4 w-4 text-amber-400" />
+                        </span>
                       )}
 
                       <Button

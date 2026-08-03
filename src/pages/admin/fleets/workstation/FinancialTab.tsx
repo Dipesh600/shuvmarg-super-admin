@@ -24,7 +24,7 @@ const getDirection = (variant: any) => {
     return variant.direction === "RETURN" ? `${d} → ${o}` : `${o} → ${d}`;
 };
 
-const FinancialTab = ({ financials, recentTrips, fleet }: FinancialTabProps) => {
+const FinancialTab = ({ financials, recentTrips, fleet: _fleet }: FinancialTabProps) => {
     if (!financials) return null;
 
     const periods = [

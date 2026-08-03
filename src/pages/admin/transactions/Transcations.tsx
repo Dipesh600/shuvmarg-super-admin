@@ -26,7 +26,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getAllTransactions } from "@/api/transactionApi";
 import { getDisputes } from "@/api/disputeApi";
 
@@ -114,7 +114,7 @@ const Transactions = () => {
         status:          status  !== "ALL" ? status  : undefined,
         transactionType: txnType !== "ALL" ? txnType : undefined,
       }),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   // Alert banner — just need the count of open disputes

@@ -13,8 +13,6 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Filter,
-  Download,
   PlusCircle,
   Loader2,
   Search,
@@ -30,23 +28,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useModal } from "@/hooks/use-model-store";
+import type { ModalType } from "@/hooks/use-model-store";
 import { useRefundPolicies } from "@/hooks/useRefundPolicy";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getRefundQueue, updateRefundStatus } from "@/api/refundApi";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { getRefundQueue } from "@/api/refundApi";
 import { format } from "date-fns";
 
 // ─── Refund Requests Tab (live data) ──────────────────────────────────────────
 
 interface RefundRequestsTabProps {
-  onOpen: (modal: string, data: any) => void;
+  onOpen: (type: ModalType, data?: unknown) => void;
 }
 
 function RefundRequestsTab({ onOpen }: RefundRequestsTabProps) {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
-  const queryClient = useQueryClient();
 
   // Debounce the search query to avoid spamming the backend
   useEffect(() => {
@@ -59,15 +56,6 @@ function RefundRequestsTab({ onOpen }: RefundRequestsTabProps) {
   const { data, isLoading } = useQuery({
     queryKey: ["refund-queue", statusFilter, debouncedSearch],
     queryFn: () => getRefundQueue(statusFilter || undefined, debouncedSearch || undefined),
-  });
-
-  const { mutate: doUpdate, isPending: isUpdating } = useMutation({
-    mutationFn: updateRefundStatus,
-    onSuccess: () => {
-      toast.success("Refund status updated");
-      queryClient.invalidateQueries({ queryKey: ["refund-queue"] });
-    },
-    onError: (err: Error) => toast.error(err.message),
   });
 
   const refunds = data?.data || [];

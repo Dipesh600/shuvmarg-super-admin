@@ -1,4 +1,5 @@
-import { AdminStop, StopFilterState, getStopId, getParentStopIdString } from "./stopRegistryTypes";
+import type { AdminStop, StopFilterState } from "./stopRegistryTypes";
+import { getStopId, getParentStopIdString } from "./stopRegistryTypes";
 
 export const DEFAULT_STOP_FILTERS: StopFilterState = {
   search: "",
