@@ -1,12 +1,12 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge, type BadgeProps } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2, TrendingUp, Users } from "lucide-react";
 import { useModal } from "@/hooks/use-model-store";
 import { useNavigate } from "react-router-dom";
-import { columns } from "@/components/data_tables/owner/columns";
+import { columns, type BusOwnerTableRow } from "@/components/data_tables/owner/columns";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { DataTable } from "@/components/DataTable";
 import { useAuth } from "@/providers/AuthProvider";
@@ -14,51 +14,12 @@ import { useQuery } from "@tanstack/react-query";
 import { getAllBusOwners, getBusOwnerDashboardData } from "@/api/busOwnerApi";
 import AgentsSkeleton from "@/components/Skeletion_Loading/AgentsSkeletion";
 
-const busOwners = [
-  {
-    id: "OWN-001",
-    company: "Nepal Express Travels",
-    owner: "Deepak Adhikari",
-    fleet: 24,
-    revenue: "Rs. 8,45,000",
-    status: "Verified",
-    type: "Large",
-  },
-  {
-    id: "OWN-002",
-    company: "Himalayan Tours",
-    owner: "Binod Thapa",
-    fleet: 8,
-    revenue: "Rs. 3,20,000",
-    status: "Verified",
-    type: "Medium",
-  },
-  {
-    id: "OWN-003",
-    company: "Kathmandu Bus Service",
-    owner: "Anita Shrestha",
-    fleet: 3,
-    revenue: "Rs. 1,45,000",
-    status: "Pending",
-    type: "Small",
-  },
-  {
-    id: "OWN-004",
-    company: "Everest Transport",
-    owner: "Rajesh Gurung",
-    fleet: 18,
-    revenue: "Rs. 6,75,000",
-    status: "Verified",
-    type: "Large",
-  },
-];
-
 const BusOwners = () => {
   const { onOpen } = useModal();
   const navigate = useNavigate();
   const { token } = useAuth();
   // useQuery to fetch users can be added here
-  const { data, isLoading, error, isError } = useQuery({
+  const { data: ownerList, isLoading, error, isError } = useQuery({
     queryKey: ["busOwners"],
     queryFn: getAllBusOwners,
     enabled: !!token,
@@ -76,22 +37,18 @@ const BusOwners = () => {
 
   const busOwnerDashboard = dashboardData?.data;
 
-  const BusOwnerTableData = data?.data.map((busOwner: any) => {
-    return {
-      id: busOwner._id,
-      busOwnerKycId: busOwner.busOwnerId,
-      name: busOwner.name,
-      phone: busOwner.phone,
-      profileImg: busOwner.profilePicture,
-      email: busOwner.email,
-      verified:busOwner.isVerified,
-      status: busOwner.status,
-      // verified: agent.verified,
-
-      // joined: agent.createdAt,
-
-    };
-  });
+  const busOwnerTableData: BusOwnerTableRow[] = (ownerList?.items ?? []).map((busOwner) => ({
+    id: busOwner.ownerId,
+    ownerCode: busOwner.ownerCode,
+    companyName: busOwner.companyName,
+    name: busOwner.name,
+    phone: busOwner.phone,
+    profileImg: busOwner.profilePicture,
+    email: busOwner.email,
+    verificationStatus: busOwner.verificationStatus,
+    fleetCount: busOwner.fleetCount,
+    status: busOwner.userStatus,
+  }));
  
   if (isError) {
     return (
@@ -179,34 +136,39 @@ const BusOwners = () => {
         <CardContent>
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-            <DataTable columns={columns} data={BusOwnerTableData} />
+            <DataTable columns={columns} data={busOwnerTableData} />
           </div>
 
           {/* Mobile Cards */}
           <div className="md:hidden flex flex-col gap-3">
-            {busOwners.map((owner) => (
+            {busOwnerTableData.map((owner) => (
               <div
                 key={owner.id}
                 className="border rounded-lg p-3 shadow-sm bg-background space-y-2"
               >
                 <div className="flex justify-between items-center">
-                  <span className="font-medium">{owner.id}</span>
-                  <Badge variant={owner.status as BadgeProps["variant"]}>
-                    {owner.status}
+                  <span className="font-medium">{owner.ownerCode || "Code pending"}</span>
+                  <Badge variant={owner.verificationStatus === "approved" ? "Verified" : owner.verificationStatus === "rejected" ? "Rejected" : "Pending"}>
+                    {owner.verificationStatus}
                   </Badge>
                 </div>
                 <div className="space-y-1 text-sm text-muted-foreground">
-                  <div>Company: {owner.company}</div>
-                  <div>Owner: {owner.owner}</div>
-                  <div>Fleet: {owner.fleet}</div>
-                  <div>Type: {owner.type}</div>
-                  <div>Revenue: {owner.revenue}</div>
+                  <div>Company: {owner.companyName}</div>
+                  <div>Owner: {owner.name}</div>
+                  <div>Fleet: {owner.fleetCount}</div>
+                  <div>{owner.email}</div>
+                  <div>{owner.phone}</div>
                 </div>
-                <Button variant="ghost" size="sm" className="w-full">
+                <Button variant="ghost" size="sm" className="w-full" onClick={() => navigate(`/admin/bus-owners/${owner.id}`)}>
                   View
                 </Button>
               </div>
             ))}
+            {busOwnerTableData.length === 0 && (
+              <div className="rounded-lg border border-white/10 p-6 text-center text-sm text-white/50">
+                No bus owners found.
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
