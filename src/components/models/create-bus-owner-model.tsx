@@ -36,7 +36,6 @@ export const AddBusOwnerDialog = () => {
     companyRegistrationCert: null,
     panCardImage: null,
     ownerCitizenship: null,
-    bankAuthorizationLetter: null,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -45,7 +44,19 @@ export const AddBusOwnerDialog = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     if (e.target.files && e.target.files[0]) {
-      setFiles({ ...files, [fieldName]: e.target.files[0] });
+      const file = e.target.files[0];
+      const allowedTypes = new Set(["application/pdf", "image/jpeg", "image/png"]);
+      if (!allowedTypes.has(file.type)) {
+        toast.error("Use a PDF, JPG or PNG document.");
+        e.target.value = "";
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Each document must be 5 MB or smaller.");
+        e.target.value = "";
+        return;
+      }
+      setFiles({ ...files, [fieldName]: file });
     }
   };
 
@@ -113,7 +124,7 @@ export const AddBusOwnerDialog = () => {
     });
     setFiles({
       companyRegistrationCert: null, panCardImage: null,
-      ownerCitizenship: null, bankAuthorizationLetter: null,
+      ownerCitizenship: null,
     });
     onClose();
   };
@@ -154,7 +165,7 @@ export const AddBusOwnerDialog = () => {
           >
              <UploadCloud className="h-6 w-6 text-muted-foreground mb-2" />
              <p className="text-sm text-muted-foreground font-medium">Click to upload doc</p>
-             <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG (Max 20MB)</p>
+             <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG (max 5 MB)</p>
              <input 
                ref={fileInputRef} 
                type="file" 
@@ -266,9 +277,8 @@ export const AddBusOwnerDialog = () => {
                     <FileUploader label="Company Registration" fieldName="companyRegistrationCert" required />
                     <FileUploader label="PAN Card" fieldName="panCardImage" required />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <FileUploader label="Owner Citizenship" fieldName="ownerCitizenship" required />
-                    <FileUploader label="Bank Auth Letter" fieldName="bankAuthorizationLetter" />
                   </div>
                   <div className="space-y-2 mt-4">
                     <Label>Internal Notes (Optional)</Label>

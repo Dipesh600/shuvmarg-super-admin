@@ -1,12 +1,21 @@
 import { api } from "./axios";
 
+const mapFleetListItems = (items: Array<Record<string, any>> = []) => items.map((fleet) => ({
+  ...fleet,
+  _id: fleet.fleetId,
+  fleetId: fleet.fleetCode || fleet.fleetId,
+  operator: fleet.brand?.brandName || fleet.owner?.companyName || "N/A",
+  route: fleet.route || "Unassigned",
+  seatCapacity: fleet.totalSeats || 0,
+}));
+
 // ── Fleet Dispatch Board ────────────────────────────────────────────────────────
 // Used by: /admin/fleets (Fleet Management page)
 // Returns: APPROVED buses with setupComplete:true — the live dispatch board only.
 export const getOperationalFleets = async () => {
   try {
     const { data } = await api.get("/fleet/getAllFleet?operational=true");
-    return data;
+    return { ...data, data: mapFleetListItems(data?.data?.items) };
   } catch (error) {
     console.error(error);
     throw error;
@@ -19,7 +28,7 @@ export const getOperationalFleets = async () => {
 export const getBrandFleets = async (brandId: string) => {
   try {
     const { data } = await api.get(`/fleet/getAllFleet?brandId=${brandId}`);
-    return data;
+    return { ...data, data: mapFleetListItems(data?.data?.items) };
   } catch (error) {
     console.error(error);
     throw error;
@@ -32,7 +41,7 @@ export const getBrandFleets = async (brandId: string) => {
 export const getPendingFleets = async () => {
   try {
     const { data } = await api.get("/fleet/getAllFleet?approvalStatus=PENDING");
-    return data;
+    return { ...data, data: mapFleetListItems(data?.data?.items) };
   } catch (error) {
     console.error(error);
     throw error;

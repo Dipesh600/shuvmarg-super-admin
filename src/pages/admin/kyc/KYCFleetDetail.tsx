@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
 import DocumentViewerModal from "@/components/DocumentViewerModal";
 import { toast } from "sonner";
 import { useFetchFleetDetail, useUpdateOwnerFleet } from "@/hooks/useOwnerFleets";
-import { resubmitFleetById } from "@/api/busOwnerFleetApi";
+import { resubmitFleetById, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
 import { MiniSeatMapPreview } from "@/components/busowners/operator_tabs/MiniSeatMapPreview";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
@@ -40,11 +40,11 @@ export default function KYCFleetDetail() {
 
   /* Brand context */
   const { data: brandsData } = useQuery({
-    queryKey: ["ownerBrands", fleet?.ownerId?._id],
-    queryFn: () => getBrandsByOwner(fleet?.ownerId?._id),
-    enabled: !!fleet?.ownerId?._id,
+    queryKey: ["ownerBrands", fleet?.owner?.ownerId],
+    queryFn: () => getBrandsByOwner(fleet?.owner?.ownerId),
+    enabled: !!fleet?.owner?.ownerId,
   });
-  const ownerBrand = brandsData?.data?.find((b: any) => b._id === fleet?.brandId) ?? brandsData?.data?.[0] ?? null;
+  const ownerBrand = brandsData?.data?.find((b: any) => b._id === fleet?.assignment?.operatorId) ?? brandsData?.data?.[0] ?? null;
 
   /* Build document sections from fleet data */
   const documentSections = useMemo(() => {
@@ -54,38 +54,48 @@ export default function KYCFleetDetail() {
         title: "Fleet Images",
         key: "fleetImages",
         icon: <ImageIcon className="h-4 w-4" />,
-        documents: fleet.fleetImages || [],
-        details: [{ label: "Count", value: `${fleet.fleetImages?.length || 0} photos` }],
+        documents: Array.from({ length: fleet.documents?.fleetImages?.count || 0 }, (_, index) => index),
+        status: fleet.documents?.fleetImages?.status,
+        reason: fleet.documents?.fleetImages?.reason,
+        details: [{ label: "Count", value: `${fleet.documents?.fleetImages?.count || 0} photos` }],
       },
       {
         title: "Fitness Certificate",
         key: "fitnessCert",
         icon: <FileText className="h-4 w-4" />,
-        documents: fleet.fleetDocuments?.fitnessCert?.url ? [fleet.fleetDocuments.fitnessCert.url] : [],
-        details: [{ label: "Valid Till", value: fmtDate(fleet.fleetDocuments?.fitnessCert?.validTill) }],
+        documents: fleet.documents?.fitnessCert?.present ? [0] : [],
+        status: fleet.documents?.fitnessCert?.status,
+        reason: fleet.documents?.fitnessCert?.reason,
+        details: [{ label: "Valid Till", value: fmtDate(fleet.documents?.fitnessCert?.validTill) }],
       },
       {
         title: "Route Permit",
         key: "routePermit",
         icon: <FileText className="h-4 w-4" />,
-        documents: fleet.fleetDocuments?.routePermit?.url ? [fleet.fleetDocuments.routePermit.url] : [],
-        details: [{ label: "Valid Till", value: fmtDate(fleet.fleetDocuments?.routePermit?.validTill) }],
+        documents: fleet.documents?.routePermit?.present ? [0] : [],
+        status: fleet.documents?.routePermit?.status,
+        reason: fleet.documents?.routePermit?.reason,
+        details: [{ label: "Valid Till", value: fmtDate(fleet.documents?.routePermit?.validTill) }],
       },
       {
         title: "Insurance Certificate",
         key: "insurance",
         icon: <FileText className="h-4 w-4" />,
-        documents: fleet.fleetDocuments?.insurance?.url ? [fleet.fleetDocuments.insurance.url] : [],
+        documents: fleet.documents?.insurance?.present ? [0] : [],
+        status: fleet.documents?.insurance?.status,
+        reason: fleet.documents?.insurance?.reason,
         details: [
-          { label: "Policy No.", value: fleet.fleetDocuments?.insurance?.policyNumber || "N/A" },
-          { label: "Valid Till", value: fmtDate(fleet.fleetDocuments?.insurance?.validTill) },
+          { label: "Policy No.", value: fleet.documents?.insurance?.policyNumber || "N/A" },
+          { label: "Valid Till", value: fmtDate(fleet.documents?.insurance?.validTill) },
         ],
       },
       {
         title: "Bluebook (Registration)",
         key: "bluebook",
         icon: <FileText className="h-4 w-4" />,
-        documents: fleet.fleetDocuments?.bluebook?.url ? [fleet.fleetDocuments.bluebook.url] : [],
+        documents: fleet.documents?.bluebook?.present ? [0] : [],
+        status: fleet.documents?.bluebook?.status,
+        reason: fleet.documents?.bluebook?.reason,
         details: [{ label: "Status", value: "Uploaded" }],
       },
     ];
@@ -95,12 +105,18 @@ export default function KYCFleetDetail() {
   const defaultStatuses = useMemo<Record<string, DocStatus>>(() => {
     const result: Record<string, DocStatus> = {};
     documentSections.forEach(s => {
-      result[s.key] = { verified: false, rejectionReason: null };
+      result[s.key] = {
+        verified: String(s.status || "").toUpperCase() === "APPROVED",
+        rejectionReason: String(s.status || "").toUpperCase() === "REJECTED" ? s.reason || null : null,
+      };
     });
     return result;
   }, [documentSections]);
 
   const [docStatuses, setDocStatuses] = useState<Record<string, DocStatus>>(defaultStatuses);
+  useEffect(() => {
+    setDocStatuses(defaultStatuses);
+  }, [defaultStatuses]);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [currentRejectKey, setCurrentRejectKey] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -110,11 +126,11 @@ export default function KYCFleetDetail() {
 
   // ── Secure document viewer state ─────────────────────────────────────────
   const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerKey, setViewerKey] = useState<string | null>(null);
+  const [viewerRequest, setViewerRequest] = useState<SecureFleetDocumentRequest | null>(null);
   const [viewerTitle, setViewerTitle] = useState<string>("Document");
 
-  const openDocumentViewer = (s3Key: string, label: string, index?: number) => {
-    setViewerKey(s3Key);
+  const openDocumentViewer = (slot: SecureFleetDocumentRequest["slot"], label: string, index?: number) => {
+    setViewerRequest({ fleetId: fleet!.fleetId, slot, imageIndex: slot === "fleetImages" ? index || 0 : undefined });
     setViewerTitle(index !== undefined && index > 0 ? `${label} (${index + 1})` : label);
     setViewerOpen(true);
   };
@@ -236,8 +252,8 @@ export default function KYCFleetDetail() {
           <div className="flex-1">
             <h1 className="text-3xl font-bold tracking-tight">Fleet KYC Review</h1>
             <p className="text-muted-foreground text-sm">
-              Reviewing documents for <span className="font-semibold text-foreground">{fleet.busName}</span>
-              <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded uppercase">{fleet.busNumber}</span>
+              Reviewing documents for <span className="font-semibold text-foreground">{fleet.vehicle.busName}</span>
+              <span className="ml-2 text-xs bg-muted px-2 py-0.5 rounded uppercase">{fleet.vehicle.busNumber}</span>
             </p>
           </div>
           <ApprovalBadge status={approvalStatus} />
@@ -273,8 +289,8 @@ export default function KYCFleetDetail() {
               </div>
               <div className="text-right">
                 <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-0.5">Operator</p>
-                <p className="font-bold text-sm">{fleet.ownerId?.name}</p>
-                <p className="text-xs text-muted-foreground">{fleet.ownerId?.phone || fleet.ownerId?.email}</p>
+                <p className="font-bold text-sm">{fleet.owner?.ownerName}</p>
+                <p className="text-xs text-muted-foreground">{fleet.owner?.phone || fleet.owner?.email}</p>
               </div>
             </CardContent>
           </Card>
@@ -287,23 +303,23 @@ export default function KYCFleetDetail() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-6 items-start flex-wrap">
-              {fleet.seatConfig && (
+              {fleet.vehicle.seatConfig && (
                 <div className="shrink-0">
                   <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1">
                     <LayoutGrid className="w-3 h-3" /> Declared Seat Layout
                   </p>
-                  <MiniSeatMapPreview config={fleet.seatConfig} size="sm" showLabels />
+                  <MiniSeatMapPreview config={fleet.vehicle.seatConfig} size="sm" showLabels />
                 </div>
               )}
               <div className="grid gap-4 md:grid-cols-3 flex-1 min-w-0">
                 {[
-                  { label: "Bus Name", value: fleet.busName },
-                  { label: "Bus Number", value: fleet.busNumber?.toUpperCase() },
-                  { label: "Class", value: fleet.busType },
-                  { label: "Capacity", value: `${fleet.totalSeats} seats` },
-                  { label: "Layout", value: fleet.seatLayout },
-                  { label: "Reg. Year", value: fleet.registrationYear || "N/A" },
-                  { label: "Fleet ID", value: fleet.fleetId },
+                  { label: "Bus Name", value: fleet.vehicle.busName },
+                  { label: "Bus Number", value: fleet.vehicle.busNumber?.toUpperCase() },
+                  { label: "Class", value: fleet.vehicle.busType },
+                  { label: "Vehicle Type", value: fleet.vehicle.vehicleType },
+                  { label: "Capacity", value: `${fleet.vehicle.totalSeats} seats` },
+                  { label: "Reg. Year", value: fleet.vehicle.registrationYear || "N/A" },
+                  { label: "Fleet ID", value: fleet.fleetCode || fleet.fleetId },
                   { label: "Submitted", value: fmtDate(fleet.createdAt) },
                 ].map(({ label, value }) => (
                   <div key={label}>
@@ -322,29 +338,29 @@ export default function KYCFleetDetail() {
             <CardTitle className="flex items-center gap-2 text-white"><Route className="h-5 w-5" /> Route Assignment</CardTitle>
           </CardHeader>
           <CardContent>
-            {fleet.corridorId ? (
+            {fleet.assignment?.corridor ? (
               <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
                 <ShieldCheck className="h-5 w-5 text-white shrink-0" />
                 <div>
                   <p className="font-black text-sm text-white">Corridor Assigned</p>
                   <div className="flex flex-col mt-0.5">
-                    <span className="text-xs font-bold text-white">{fleet.corridorId?.code}</span>
-                    {fleet.corridorId?.originId?.name && (
+                    <span className="text-xs font-bold text-white">{fleet.assignment.corridor.code}</span>
+                    {fleet.assignment.corridor.origin && (
                       <span className="text-[10px] text-white">
-                        {fleet.corridorId.originId.name} → {fleet.corridorId.destinationId?.name}
+                        {fleet.assignment.corridor.origin} → {fleet.assignment.corridor.destination}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
-            ) : fleet.routeRequestId ? (
+            ) : fleet.assignment?.routeRequest ? (
               <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
                 <Clock className="h-5 w-5 text-white shrink-0" />
                 <div>
                   <p className="font-black text-sm text-white">Route Request Pending</p>
                   <p className="text-xs text-white">
-                    {fleet.routeRequestId?.originCity && fleet.routeRequestId?.destinationCity
-                      ? `${fleet.routeRequestId.originCity} → ${fleet.routeRequestId.destinationCity}`
+                    {fleet.assignment.routeRequest.origin && fleet.assignment.routeRequest.destination
+                      ? `${fleet.assignment.routeRequest.origin} → ${fleet.assignment.routeRequest.destination}`
                       : "Request submitted — awaiting platform registry assignment"}
                   </p>
                 </div>
@@ -422,9 +438,9 @@ export default function KYCFleetDetail() {
                       <p className="text-xs text-muted-foreground italic text-center py-2">No file uploaded for this section.</p>
                     ) : (
                       <div className="space-y-1">
-                        {section.documents.map((s3Key: string, idx: number) => (
+                        {section.documents.map((_documentIndex: number, idx: number) => (
                           <Button key={idx} variant="outline" size="sm" className="w-full justify-start text-xs"
-                            onClick={() => openDocumentViewer(s3Key, section.title, idx)}>
+                            onClick={() => openDocumentViewer(section.key as SecureFleetDocumentRequest["slot"], section.title, idx)}>
                             <Eye className="h-3 w-3 mr-2" />
                             {section.key === "fleetImages" ? `View Image #${idx + 1}` : "View Document"}
                           </Button>
@@ -561,7 +577,7 @@ export default function KYCFleetDetail() {
               <DialogTitle>Approve Fleet Registration</DialogTitle>
             </div>
             <DialogDescription>
-              You are approving <strong>{fleet.busName}</strong> ({fleet.busNumber?.toUpperCase()}). The bus will be marked <span className="font-bold text-white">ACTIVE</span>.
+              You are approving <strong>{fleet.vehicle.busName}</strong> ({fleet.vehicle.busNumber?.toUpperCase()}). The bus will be marked <span className="font-bold text-white">ACTIVE</span>.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -593,7 +609,8 @@ export default function KYCFleetDetail() {
       {/* ── Secure Inline Document Viewer ───────────────────────────────────── */}
       <DocumentViewerModal
         open={viewerOpen}
-        s3Key={viewerKey}
+        s3Key={null}
+        fleetDocumentRequest={viewerRequest}
         title={viewerTitle}
         onClose={() => setViewerOpen(false)}
       />
