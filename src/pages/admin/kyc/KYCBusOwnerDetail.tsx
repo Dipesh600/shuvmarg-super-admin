@@ -582,7 +582,7 @@ export default function KYCBusOwnerDetail() {
 
       {/* Single Document Rejection Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Reject Document</DialogTitle>
           </DialogHeader>
@@ -603,7 +603,7 @@ export default function KYCBusOwnerDetail() {
 
       {/* Final Approval Dialog */}
       <Dialog open={finalApprovalDialog} onOpenChange={setFinalApprovalDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Confirm KYC Approval</DialogTitle>
           </DialogHeader>
@@ -623,7 +623,7 @@ export default function KYCBusOwnerDetail() {
 
       {/* Final Rejection Dialog */}
       <Dialog open={finalRejectionDialog} onOpenChange={setFinalRejectionDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Reject KYC Application</DialogTitle>
           </DialogHeader>

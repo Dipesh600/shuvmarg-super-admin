@@ -102,7 +102,7 @@ export default function DocumentViewerModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="max-w-4xl w-full h-[90vh] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl">
+      <DialogContent aria-describedby={undefined} className="max-w-4xl w-full h-[90vh] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl">
         {/* ── Header ── */}
         <DialogHeader className="px-6 py-4 border-b flex-shrink-0 flex flex-row items-center justify-between">
           <DialogTitle className="text-base font-bold truncate pr-4">
