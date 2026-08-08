@@ -8,11 +8,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, Download, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 import { fetchDocumentAsBlob, fetchKycDocumentAsBlob, type SecureKycDocumentRequest } from "@/api/kycApi";
+import { fetchFleetDocumentAsBlob, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
 
 interface DocumentViewerModalProps {
   /** S3 object key returned from the API (e.g. "owners/.../kyc/.../file.pdf") */
   s3Key: string | null;
   documentRequest?: SecureKycDocumentRequest | null;
+  fleetDocumentRequest?: SecureFleetDocumentRequest | null;
   /** Human-readable label shown in the dialog title */
   title?: string;
   open: boolean;
@@ -33,6 +35,7 @@ interface DocumentViewerModalProps {
 export default function DocumentViewerModal({
   s3Key,
   documentRequest = null,
+  fleetDocumentRequest = null,
   title = "Document Viewer",
   open,
   onClose,
@@ -47,7 +50,7 @@ export default function DocumentViewerModal({
 
   // Load the document whenever the modal opens with a new key
   useEffect(() => {
-    if (!open || (!s3Key && !documentRequest)) return;
+    if (!open || (!s3Key && !documentRequest && !fleetDocumentRequest)) return;
 
     setLoading(true);
     setError(null);
@@ -57,16 +60,18 @@ export default function DocumentViewerModal({
 
     const documentPromise = documentRequest
       ? fetchKycDocumentAsBlob(documentRequest)
+      : fleetDocumentRequest
+      ? fetchFleetDocumentAsBlob(fleetDocumentRequest)
       : fetchDocumentAsBlob(s3Key!);
     documentPromise.then((result) => {
       setLoading(false);
-      if (!result) {
-        setError("Failed to load document. Please try again.");
+      if (!result || result.error || !result.blobUrl) {
+        setError(result?.error || "Failed to load document. Please try again.");
         return;
       }
 
       // MIME type comes from the actual HTTP Content-Type header (set by the proxy)
-      setMimeType(result.mimeType);
+      setMimeType(result.mimeType || "application/pdf");
       prevBlobUrl.current = result.blobUrl;
       setBlobUrl(result.blobUrl);
     });
@@ -78,7 +83,7 @@ export default function DocumentViewerModal({
         prevBlobUrl.current = null;
       }
     };
-  }, [open, s3Key, documentRequest]);
+  }, [open, s3Key, documentRequest, fleetDocumentRequest]);
 
   const handleClose = () => {
     // Revoke immediately on close
@@ -92,7 +97,7 @@ export default function DocumentViewerModal({
     if (!blobUrl) return;
     const link = document.createElement("a");
     link.href = blobUrl;
-    const filename = s3Key?.split("/").pop() ?? `${documentRequest?.documentType || "document"}`;
+    const filename = s3Key?.split("/").pop() ?? `${documentRequest?.documentType || fleetDocumentRequest?.slot || "document"}`;
     link.download = filename;
     link.click();
   };

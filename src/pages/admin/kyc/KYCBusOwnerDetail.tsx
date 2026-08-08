@@ -107,10 +107,6 @@ export default function KYCBusOwnerDetail() {
         verified: kyc?.documents.taxRegistration?.verified,
         rejectionReason: kyc?.documents.taxRegistration?.rejectionReason,
       },
-      bankDetails: {
-        verified: false as boolean | undefined,
-        rejectionReason: null as string | null | undefined,
-      },
     }),
     [kyc],
   );
@@ -197,16 +193,22 @@ export default function KYCBusOwnerDetail() {
     );
   }
 
+  // Keep the page safe while a cached response from the previous API shape is replaced.
+  const settlementAccount = kyc.bank ?? {
+    bankName: null,
+    accountHolderName: null,
+    accountNumber: null,
+    branchName: null,
+    swiftCode: null,
+  };
+
   /* ── Document Sections (after kyc is confirmed non-null) ──── */
   /*
    * Industry Standard for Bus Owner KYC:
    *   1. Company Registration Certificate
    *   2. Owner Identity / Citizenship
    *   3. Tax Registration (PAN / VAT)
-   *   4. Bank Authorization Letter
-   *
-   * Transport License and Insurance are intentionally excluded here —
-   * they are vehicle-level documents collected during Fleet onboarding.
+   * Vehicle permits and insurance are collected during Fleet onboarding.
    */
   const isGlobalApproved = kyc.verificationStatus === "approved";
 
@@ -240,30 +242,17 @@ export default function KYCBusOwnerDetail() {
         { label: "Registration Number", value: kyc.documents.taxRegistration?.registrationNumber ?? "Not provided" },
       ],
     },
-    {
-      title: "Bank Authorization Letter",
-      key: "bankDetails",
-      fileCount: kyc.documents.bankDetails?.fileCount || 0,
-      available: kyc.documents.bankDetails?.available ?? false,
-      verified: isGlobalApproved || documentStatuses.bankDetails?.verified,
-      rejectionReason: isGlobalApproved ? null : documentStatuses.bankDetails?.rejectionReason,
-      details: [
-        { label: "Bank Name", value: kyc.documents.bankDetails?.bankName },
-        { label: "Account Number", value: kyc.documents.bankDetails?.accountNumber },
-        { label: "Account Holder", value: kyc.documents.bankDetails?.accountHolderName },
-        { label: "Branch", value: kyc.documents.bankDetails?.branchName },
-      ],
-    },
   ];
 
   /* Only sections that have documents need to be reviewed */
   const reviewableSections = documentSections.filter(s => s.fileCount > 0);
+  const allRequiredSubmitted = documentSections.every(s => s.fileCount > 0);
   /* allVerified = admin explicitly clicked Verify on every uploaded section (optional) */
   const allVerified = reviewableSections.length > 0 && reviewableSections.every(s => s.verified);
   /* hasRejections = admin explicitly flagged at least one section — BLOCKS approval */
   const hasRejections = reviewableSections.some(s => s.rejectionReason);
   /* canApprove = no flags, at least one document submitted */
-  const canApprove = !hasRejections && reviewableSections.length > 0;
+  const canApprove = !hasRejections && allRequiredSubmitted;
 
   /* ── Handlers ─────────────────────────────────────────────── */
   const handleVerify = (key: string) => {
@@ -380,6 +369,20 @@ export default function KYCBusOwnerDetail() {
             <Info label="Bus Owner ID" value={kyc.ownerCode || kyc.ownerId} />
             <Info label="Submitted On" value={formatDate(kyc.createdAt)} />
             <Info label="Registered Address" value={displayAddress(kyc.owner.registeredAddress)} />
+          </CardContent>
+        </Card>
+
+        <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">Settlement Account</CardTitle>
+            <CardDescription className="text-white/60">Payout details submitted with the application; no bank document is required.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            <Info label="Bank Name" value={settlementAccount.bankName} />
+            <Info label="Account Holder" value={settlementAccount.accountHolderName} />
+            <Info label="Account Number" value={settlementAccount.accountNumber} />
+            <Info label="Branch" value={settlementAccount.branchName} />
+            <Info label="SWIFT/BIC" value={settlementAccount.swiftCode} />
           </CardContent>
         </Card>
 
@@ -531,7 +534,7 @@ export default function KYCBusOwnerDetail() {
                 ? "One or more documents have been flagged — resolve flags or reject the application."
                 : canApprove
                 ? `${allVerified ? "All sections verified — " : ""}Ready to make a final decision.`
-                : "No documents have been submitted yet — cannot approve."}
+                : "All three required business documents must be submitted before approval."}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex gap-4">

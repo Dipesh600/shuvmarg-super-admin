@@ -496,7 +496,7 @@ const BusOwnerDetail = () => {
       companyRegistration: data.documents.companyRegistration,
       ownerIdentity: data.documents.ownerIdentity,
       taxRegistration: data.documents.taxRegistration,
-      bankDetails: { ...data.documents.bankDetails, ...data.bank },
+      bankDetails: data.bank,
     },
   } : null;
 
@@ -516,7 +516,6 @@ const BusOwnerDetail = () => {
     { label: "Company Registration", type: "companyRegistration", ...companyReg },
     { label: "Owner Identity", type: "ownerIdentity", ...ownerIden },
     { label: "Tax Registration", type: "taxRegistration", ...taxReg },
-    { label: "Bank Details", type: "bankDetails", ...bankDet },
   ];
 
   return (
