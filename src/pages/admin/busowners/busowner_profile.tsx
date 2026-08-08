@@ -485,6 +485,7 @@ const BusOwnerDetail = () => {
 
   const busOWnerDetail = data ? {
     ...data.profile,
+    userId: data.userId,
     address: "Not provided",
     createdAt: data.createdAt,
     recentPayments: [],
@@ -571,7 +572,7 @@ const BusOwnerDetail = () => {
             <KycDocsTab verificationStatus={verificationStatus} documentSections={documentSections} busOWnerDetail={busOWnerDetail} id={id} onOpen={onOpen} navigate={navigate} />
           </TabsContent>
           <TabsContent value="operators">
-            <OperatorsTab ownerId={id!} />
+            <OperatorsTab ownerId={busOWnerDetail.userId || id!} />
           </TabsContent>
           <TabsContent value="financial">
             <FinancialTab busOWnerDetail={busOWnerDetail} recentPayments={recentPayments} />
