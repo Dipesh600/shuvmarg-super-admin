@@ -7,11 +7,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, Download, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
-import { fetchDocumentAsBlob } from "@/api/kycApi";
+import { fetchDocumentAsBlob, fetchKycDocumentAsBlob, type SecureKycDocumentRequest } from "@/api/kycApi";
 
 interface DocumentViewerModalProps {
   /** S3 object key returned from the API (e.g. "owners/.../kyc/.../file.pdf") */
   s3Key: string | null;
+  documentRequest?: SecureKycDocumentRequest | null;
   /** Human-readable label shown in the dialog title */
   title?: string;
   open: boolean;
@@ -31,6 +32,7 @@ interface DocumentViewerModalProps {
  */
 export default function DocumentViewerModal({
   s3Key,
+  documentRequest = null,
   title = "Document Viewer",
   open,
   onClose,
@@ -45,7 +47,7 @@ export default function DocumentViewerModal({
 
   // Load the document whenever the modal opens with a new key
   useEffect(() => {
-    if (!open || !s3Key) return;
+    if (!open || (!s3Key && !documentRequest)) return;
 
     setLoading(true);
     setError(null);
@@ -53,7 +55,10 @@ export default function DocumentViewerModal({
     setImgRotation(0);
     setImgZoom(1);
 
-    fetchDocumentAsBlob(s3Key).then((result) => {
+    const documentPromise = documentRequest
+      ? fetchKycDocumentAsBlob(documentRequest)
+      : fetchDocumentAsBlob(s3Key!);
+    documentPromise.then((result) => {
       setLoading(false);
       if (!result) {
         setError("Failed to load document. Please try again.");
@@ -73,7 +78,7 @@ export default function DocumentViewerModal({
         prevBlobUrl.current = null;
       }
     };
-  }, [open, s3Key]);
+  }, [open, s3Key, documentRequest]);
 
   const handleClose = () => {
     // Revoke immediately on close
@@ -84,10 +89,10 @@ export default function DocumentViewerModal({
   };
 
   const handleDownload = () => {
-    if (!blobUrl || !s3Key) return;
+    if (!blobUrl) return;
     const link = document.createElement("a");
     link.href = blobUrl;
-    const filename = s3Key.split("/").pop() ?? "document";
+    const filename = s3Key?.split("/").pop() ?? `${documentRequest?.documentType || "document"}`;
     link.download = filename;
     link.click();
   };

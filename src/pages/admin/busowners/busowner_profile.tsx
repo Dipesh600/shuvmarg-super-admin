@@ -194,7 +194,7 @@ const KycDocsTab = ({ verificationStatus, documentSections, busOWnerDetail, id, 
             const isRejected = !!doc.rejectionReason;
             const isVerified = doc.verified === true;
             const isPending = doc.verified === false && !doc.rejectionReason;
-            const notSubmitted = !doc.documentUrls || doc.documentUrls.length === 0;
+            const notSubmitted = !doc.present;
 
             return (
               <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-muted/10 gap-4">
@@ -483,7 +483,22 @@ const BusOwnerDetail = () => {
     setSearchParams({ tab: value });
   };
 
-  const busOWnerDetail = data?.user;
+  const busOWnerDetail = data ? {
+    ...data.profile,
+    address: "Not provided",
+    createdAt: data.createdAt,
+    recentPayments: [],
+    busOwnerDoc: {
+      _id: data.ownerId,
+      busOwnerId: data.ownerCode,
+      companyName: data.business.companyName,
+      verificationStatus: data.verificationStatus,
+      companyRegistration: data.documents.companyRegistration,
+      ownerIdentity: data.documents.ownerIdentity,
+      taxRegistration: data.documents.taxRegistration,
+      bankDetails: { ...data.documents.bankDetails, ...data.bank },
+    },
+  } : null;
 
   if (isLoading) return <BusOwnerDetailSkeleton />;
   if (isError) return <div>{JSON.stringify(error)}</div>;

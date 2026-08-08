@@ -34,13 +34,15 @@ import { toast } from "sonner";
 import { useOwerKycDetails } from "@/hooks/useKycDetails";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateOwnerKycStatus } from "@/api/kycApi";
+import type { SecureKycDocumentRequest } from "@/api/kycApi";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 type DocumentSection = {
   title: string;
   key: string;
-  documents: string[];
+  fileCount: number;
+  available: boolean;
   verified: boolean | undefined;
   rejectionReason: string | null | undefined;
   details?: { label: string; value: string | null | undefined }[];
@@ -64,6 +66,14 @@ const displayEmail = (email: string | undefined | null): string => {
   return email;
 };
 
+const displayAddress = (address: Record<string, string | null> | null): string => {
+  if (!address) return "Not provided";
+  const local = [address.tole, address.wardNumber ? `Ward ${address.wardNumber}` : null, address.municipality]
+    .filter(Boolean)
+    .join(", ");
+  return [local, address.district, address.province, address.country].filter(Boolean).join(", ") || "Not provided";
+};
+
 /* ─── Badge helpers ─────────────────────────────────────────── */
 const sectionBadge = (verified: boolean | undefined, rejectionReason: string | null | undefined, hasDocuments: boolean) => {
   if (!hasDocuments) return <Badge variant="secondary" className="bg-gray-100 text-gray-600">Not Submitted</Badge>;
@@ -80,22 +90,22 @@ export default function KYCBusOwnerDetail() {
 
   /* Fetch KYC data */
   const { data, isLoading, isError, error } = useOwerKycDetails(id);
-  const kyc = data?.data;
+  const kyc = data;
 
   /* Document status state */
   const initialStatuses = useMemo(
     () => ({
       companyRegistration: {
-        verified: kyc?.companyRegistration?.verified,
-        rejectionReason: kyc?.companyRegistration?.rejectionReason,
+        verified: kyc?.documents.companyRegistration?.verified,
+        rejectionReason: kyc?.documents.companyRegistration?.rejectionReason,
       },
       ownerIdentity: {
-        verified: kyc?.ownerIdentity?.verified,
-        rejectionReason: kyc?.ownerIdentity?.rejectionReason,
+        verified: kyc?.documents.ownerIdentity?.verified,
+        rejectionReason: kyc?.documents.ownerIdentity?.rejectionReason,
       },
       taxRegistration: {
-        verified: kyc?.taxRegistration?.verified,
-        rejectionReason: kyc?.taxRegistration?.rejectionReason,
+        verified: kyc?.documents.taxRegistration?.verified,
+        rejectionReason: kyc?.documents.taxRegistration?.rejectionReason,
       },
       bankDetails: {
         verified: false as boolean | undefined,
@@ -115,11 +125,11 @@ export default function KYCBusOwnerDetail() {
 
   // ── Secure document viewer state ─────────────────────────────────────────
   const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerKey, setViewerKey] = useState<string | null>(null);
+  const [viewerRequest, setViewerRequest] = useState<SecureKycDocumentRequest | null>(null);
   const [viewerTitle, setViewerTitle] = useState<string>("Document");
 
-  const openDocumentViewer = (s3Key: string, label: string, index: number) => {
-    setViewerKey(s3Key);
+  const openDocumentViewer = (documentType: string, label: string, index: number) => {
+    setViewerRequest({ ownerId: kyc!.ownerId, documentType, fileIndex: index });
     setViewerTitle(index > 0 ? `${label} (${index + 1})` : label);
     setViewerOpen(true);
   };
@@ -130,9 +140,9 @@ export default function KYCBusOwnerDetail() {
 
   /* Fetch associated brands */
   const { data: brandsData, isLoading: _isLoadingBrands } = useQuery({
-    queryKey: ["ownerBrands", kyc?.busOwnerId || kyc?._id],
-    queryFn: () => getBrandsByOwner(kyc?.busOwnerId || kyc?._id),
-    enabled: !!(kyc?.busOwnerId || kyc?._id),
+    queryKey: ["ownerBrands", kyc?.ownerId],
+    queryFn: () => getBrandsByOwner(kyc!.ownerId),
+    enabled: !!kyc?.ownerId,
   });
   const brands = brandsData?.data || [];
 
@@ -204,46 +214,50 @@ export default function KYCBusOwnerDetail() {
     {
       title: "Company Registration",
       key: "companyRegistration",
-      documents: kyc.companyRegistration?.documentUrls || [],
+      fileCount: kyc.documents.companyRegistration?.fileCount || 0,
+      available: kyc.documents.companyRegistration?.available ?? false,
       verified: isGlobalApproved || documentStatuses.companyRegistration?.verified,
       rejectionReason: isGlobalApproved ? null : documentStatuses.companyRegistration?.rejectionReason,
     },
     {
       title: "Owner Identity / Citizenship",
       key: "ownerIdentity",
-      documents: kyc.ownerIdentity?.documentUrls || [],
+      fileCount: kyc.documents.ownerIdentity?.fileCount || 0,
+      available: kyc.documents.ownerIdentity?.available ?? false,
       verified: isGlobalApproved || documentStatuses.ownerIdentity?.verified,
       rejectionReason: isGlobalApproved ? null : documentStatuses.ownerIdentity?.rejectionReason,
     },
     {
       title: "Tax Registration",
       key: "taxRegistration",
-      documents: kyc.taxRegistration?.documentUrls || [],
+      fileCount: kyc.documents.taxRegistration?.fileCount || 0,
+      available: kyc.documents.taxRegistration?.available ?? false,
       verified: isGlobalApproved || documentStatuses.taxRegistration?.verified,
       rejectionReason: isGlobalApproved ? null : documentStatuses.taxRegistration?.rejectionReason,
       details: [
-        { label: "PAN Number", value: kyc.taxRegistration?.panNumber ?? "Not provided" },
-        { label: "VAT Number", value: kyc.taxRegistration?.vatNumber ?? "Not provided" },
-        { label: "Registration Number", value: kyc.taxRegistration?.registrationNumber ?? "Not provided" },
+        { label: "PAN Number", value: kyc.documents.taxRegistration?.panNumber ?? "Not provided" },
+        { label: "VAT Number", value: kyc.documents.taxRegistration?.vatNumber ?? "Not provided" },
+        { label: "Registration Number", value: kyc.documents.taxRegistration?.registrationNumber ?? "Not provided" },
       ],
     },
     {
       title: "Bank Authorization Letter",
       key: "bankDetails",
-      documents: kyc.bankDetails?.documentUrls || [],
+      fileCount: kyc.documents.bankDetails?.fileCount || 0,
+      available: kyc.documents.bankDetails?.available ?? false,
       verified: isGlobalApproved || documentStatuses.bankDetails?.verified,
       rejectionReason: isGlobalApproved ? null : documentStatuses.bankDetails?.rejectionReason,
       details: [
-        { label: "Bank Name", value: kyc.bankDetails?.bankName },
-        { label: "Account Number", value: kyc.bankDetails?.accountNumber },
-        { label: "Account Holder", value: kyc.bankDetails?.accountHolderName },
-        { label: "Branch", value: kyc.bankDetails?.branchName },
+        { label: "Bank Name", value: kyc.documents.bankDetails?.bankName },
+        { label: "Account Number", value: kyc.documents.bankDetails?.accountNumber },
+        { label: "Account Holder", value: kyc.documents.bankDetails?.accountHolderName },
+        { label: "Branch", value: kyc.documents.bankDetails?.branchName },
       ],
     },
   ];
 
   /* Only sections that have documents need to be reviewed */
-  const reviewableSections = documentSections.filter(s => s.documents.length > 0);
+  const reviewableSections = documentSections.filter(s => s.fileCount > 0);
   /* allVerified = admin explicitly clicked Verify on every uploaded section (optional) */
   const allVerified = reviewableSections.length > 0 && reviewableSections.every(s => s.verified);
   /* hasRejections = admin explicitly flagged at least one section — BLOCKS approval */
@@ -284,7 +298,7 @@ export default function KYCBusOwnerDetail() {
       rejectionReason: null,
     });
     submitReview({
-      id: kyc._id,
+      id: kyc.ownerId,
       verificationStatus: "approved",
       companyRegistration: resolveStatus("companyRegistration"),
       ownerIdentity: resolveStatus("ownerIdentity"),
@@ -297,7 +311,7 @@ export default function KYCBusOwnerDetail() {
     // Include all section verdicts so they are persisted in MongoDB
     // and can be displayed correctly on the "View Decision" page
     submitReview({
-      id: kyc._id,
+      id: kyc.ownerId,
       verificationStatus: "rejected",
       rejectionReason: finalRejectionReason,
       companyRegistration: {
@@ -330,10 +344,10 @@ export default function KYCBusOwnerDetail() {
             <h1 className="text-3xl font-bold tracking-tight">Bus Owner KYC Review</h1>
             <div className="flex flex-col">
               <p className="text-muted-foreground">
-                Reviewing application for <span className="font-medium text-foreground">{kyc.companyName ?? kyc.user?.name}</span>
+                Reviewing application for <span className="font-medium text-foreground">{kyc.owner.companyName || kyc.owner.name}</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                Owner ID: {kyc.busOwnerId || kyc._id}
+                Owner ID: {kyc.ownerCode || kyc.ownerId}
               </p>
             </div>
           </div>
@@ -359,12 +373,13 @@ export default function KYCBusOwnerDetail() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
-            <Info label="Owner Name" value={kyc.user?.name} />
-            <Info label="Email" value={displayEmail(kyc.user?.email)} />
-            <Info label="Phone" value={kyc.user?.phone} />
-            <Info label="Company Name" value={kyc.companyName} />
-            <Info label="Bus Owner ID" value={kyc.busOwnerId} />
+            <Info label="Owner Name" value={kyc.owner.name} />
+            <Info label="Email" value={displayEmail(kyc.owner.email)} />
+            <Info label="Phone" value={kyc.owner.phone} />
+            <Info label="Company Name" value={kyc.owner.companyName} />
+            <Info label="Bus Owner ID" value={kyc.ownerCode || kyc.ownerId} />
             <Info label="Submitted On" value={formatDate(kyc.createdAt)} />
+            <Info label="Registered Address" value={displayAddress(kyc.owner.registeredAddress)} />
           </CardContent>
         </Card>
 
@@ -424,7 +439,7 @@ export default function KYCBusOwnerDetail() {
         {/* KYC Document Sections */}
         <div className="grid gap-4 md:grid-cols-2">
           {documentSections.map((section) => {
-            const hasDocuments = section.documents.length > 0;
+            const hasDocuments = section.fileCount > 0;
             return (
               <Card
                 key={section.key}
@@ -462,13 +477,14 @@ export default function KYCBusOwnerDetail() {
 
                   {/* Document links — opens inline modal, no URL exposed */}
                   {hasDocuments ? (
-                    section.documents.map((s3Key, i) => (
+                    Array.from({ length: section.fileCount }, (_, i) => (
                       <Button
                         key={i}
                         variant="outline"
                         size="sm"
                         className="w-full justify-start"
-                        onClick={() => openDocumentViewer(s3Key, section.title, i)}
+                        disabled={!section.available}
+                        onClick={() => openDocumentViewer(section.key, section.title, i)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View Document {i + 1}
@@ -636,7 +652,8 @@ export default function KYCBusOwnerDetail() {
           The document is streamed as a blob through the backend proxy and revoked on close. */}
       <DocumentViewerModal
         open={viewerOpen}
-        s3Key={viewerKey}
+        s3Key={null}
+        documentRequest={viewerRequest}
         title={viewerTitle}
         onClose={() => setViewerOpen(false)}
       />
