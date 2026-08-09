@@ -23,7 +23,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Plus, ChevronRight, Loader2, MapPin, Route, CheckCircle2,
+  Plus, ChevronRight, Loader2, Route, CheckCircle2,
   XCircle, Clock, ArrowRight, Sparkles, Check, X,
   Navigation, Milestone, RefreshCw,
 } from "lucide-react";
@@ -33,8 +33,8 @@ import {
   publishSession, refineStopsWithLLM,
   type DiscoverySession, type AdminAction,
 } from "@/api/routeDiscoveryApi";
-import { searchStops } from "@/api/platformRegistryApi";
-import { GoogleRouteMap, type GoogleRouteInfo } from "./RouteMapPreview";
+import { getAllCorridors } from "@/api/platformRegistryApi";
+import { GoogleStoredRouteMap } from "./RouteMapPreview";
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
@@ -43,7 +43,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   ROUTE_SELECTED:   { label: "Route Selected", color: "bg-blue-500/20 text-blue-300" },
   STOPS_DISCOVERED: { label: "Stops Found",    color: "bg-yellow-500/20 text-yellow-300" },
   APPROVED:         { label: "Approved",        color: "bg-green-500/20 text-green-300" },
-  PUBLISHED:        { label: "Published",       color: "bg-[#D3D925]/20 text-[#D3D925]" },
+  PUBLISHED:        { label: "Draft Created",   color: "bg-[#D3D925]/20 text-[#D3D925]" },
   REJECTED:         { label: "Rejected",        color: "bg-red-500/20 text-red-300" },
 };
 
@@ -75,77 +75,6 @@ const ActionBadge = ({ action }: { action: AdminAction }) => {
   );
 };
 
-// ── Stop search combobox ──────────────────────────────────────────────────────
-
-const StopSearchInput = ({
-  label, value, onSelect,
-}: {
-  label: string;
-  value: { _id: string; name: string; code: string } | null;
-  onSelect: (stop: { _id: string; name: string; code: string }) => void;
-}) => {
-  const [q, setQ] = useState("");
-  const { data, isFetching } = useQuery({
-    queryKey: ["stop-search", q],
-    queryFn: () => searchStops(q),
-    enabled: q.length >= 2,
-    staleTime: 10_000,
-  });
-
-  const results: any[] = data?.data ?? [];
-
-  return (
-    <div className="space-y-2 relative">
-      <Label className="text-white/70 text-xs font-semibold uppercase tracking-widest">{label}</Label>
-      {value ? (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#D3D925]/10 border border-[#D3D925]/30">
-          <MapPin className="w-4 h-4 text-[#D3D925]" />
-          <span className="text-white font-semibold">{value.name}</span>
-          <span className="text-white/40 text-xs ml-1">{value.code}</span>
-          <button
-            onClick={() => { onSelect(null as any); setQ(""); }}
-            className="ml-auto text-white/40 hover:text-white"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      ) : (
-        <>
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search stop name..."
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-2xl"
-          />
-          {q.length >= 2 && (
-            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-              {isFetching ? (
-                <div className="px-4 py-3 text-white/40 text-sm flex items-center gap-2">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Searching…
-                </div>
-              ) : results.length === 0 ? (
-                <div className="px-4 py-3 text-white/40 text-sm">No stops found</div>
-              ) : (
-                results.map((s: any) => (
-                  <button
-                    key={s._id}
-                    onClick={() => { onSelect(s); setQ(""); }}
-                    className="w-full text-left px-4 py-3 hover:bg-white/5 flex items-center gap-3 border-b border-white/5 last:border-0"
-                  >
-                    <MapPin className="w-3.5 h-3.5 text-[#D3D925]" />
-                    <span className="text-white text-sm font-medium">{s.name}</span>
-                    <span className="text-white/30 text-xs ml-auto">{s.code}</span>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-};
-
 // ── Create Session Modal ──────────────────────────────────────────────────────
 
 const CreateSessionModal = ({
@@ -155,16 +84,23 @@ const CreateSessionModal = ({
   onClose: () => void;
   onCreated: (id: string) => void;
 }) => {
-  const [origin, setOrigin] = useState<{ _id: string; name: string; code: string } | null>(null);
-  const [destination, setDestination] = useState<{ _id: string; name: string; code: string } | null>(null);
+  const [selectedCorridorId, setSelectedCorridorId] = useState("");
+  const [direction, setDirection] = useState<"FORWARD" | "RETURN">("FORWARD");
   const qc = useQueryClient();
+  const { data: corridorData, isLoading: corridorsLoading } = useQuery({
+    queryKey: ["corridors"], queryFn: getAllCorridors, enabled: open,
+  });
+  const corridors: any[] = corridorData?.data ?? [];
+  const selectedCorridor = corridors.find((corridor) => corridor._id === selectedCorridorId);
+  const from = direction === "FORWARD" ? selectedCorridor?.originId : selectedCorridor?.destinationId;
+  const to = direction === "FORWARD" ? selectedCorridor?.destinationId : selectedCorridor?.originId;
 
   const { mutate, isPending } = useMutation({
     mutationFn: () =>
-      createDiscoverySession({ originStopId: origin!._id, destinationStopId: destination!._id }),
+      createDiscoverySession({ corridorId: selectedCorridorId, direction }),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["discovery-sessions"] });
-      toast.success("Discovery session created. Mapbox is fetching routes in the background.");
+      toast.success("Variant draft created. Google Routes is loading the available road paths.");
       onCreated(res.data._id);
       onClose();
     },
@@ -179,23 +115,51 @@ const CreateSessionModal = ({
             <div className="p-2.5 rounded-xl bg-[#D3D925]/10">
               <Navigation className="w-5 h-5 text-[#D3D925]" />
             </div>
-            New Discovery Session
+            New Variant Draft
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 mt-4">
           <p className="text-white/40 text-sm leading-relaxed">
-            Select the origin and destination stops. The system will automatically fetch
-            real road routes from Mapbox and discover bus stops along the route.
+            Select an existing corridor and one direction. Google Routes will fetch
+            road alternatives for this exact canonical endpoint pair.
           </p>
 
-          <StopSearchInput label="Origin Stop" value={origin} onSelect={setOrigin} />
-
-          <div className="flex items-center justify-center">
-            <ArrowRight className="w-5 h-5 text-white/20" />
+          <div className="space-y-2">
+            <Label className="text-white/70 text-xs font-semibold uppercase tracking-widest">Corridor</Label>
+            <select
+              value={selectedCorridorId}
+              onChange={(event) => setSelectedCorridorId(event.target.value)}
+              disabled={corridorsLoading}
+              className="w-full h-11 rounded-2xl bg-white/5 border border-white/10 px-4 text-sm text-white outline-none focus:border-[#D3D925]/50"
+            >
+              <option value="" className="bg-[#111]">{corridorsLoading ? "Loading corridors…" : "Choose a corridor"}</option>
+              {corridors.filter((corridor) => corridor.status !== "INACTIVE").map((corridor) => (
+                <option key={corridor._id} value={corridor._id} className="bg-[#111]">
+                  {corridor.code} · {corridor.originId?.name} ↔ {corridor.destinationId?.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <StopSearchInput label="Destination Stop" value={destination} onSelect={setDestination} />
+          <div className="space-y-2">
+            <Label className="text-white/70 text-xs font-semibold uppercase tracking-widest">Direction</Label>
+            <div className="grid grid-cols-2 gap-3">
+              {(["FORWARD", "RETURN"] as const).map((value) => (
+                <button key={value} type="button" onClick={() => setDirection(value)}
+                  className={`rounded-2xl border px-4 py-3 text-left transition-colors ${direction === value ? "border-[#D3D925]/60 bg-[#D3D925]/10 text-white" : "border-white/10 bg-white/5 text-white/50 hover:bg-white/10"}`}>
+                  <p className="text-xs font-bold">{value === "FORWARD" ? "Forward" : "Return"}</p>
+                  <p className="mt-1 text-[11px] leading-snug opacity-70">{from && to && value === direction ? `${from.name} → ${to.name}` : value === "FORWARD" ? "Corridor origin → destination" : "Corridor destination → origin"}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {selectedCorridor && (
+            <div className="flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm">
+              <span className="font-semibold text-white">{from?.name}</span><ArrowRight className="w-4 h-4 text-[#D3D925]" /><span className="font-semibold text-white">{to?.name}</span>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="mt-6 gap-3">
@@ -208,11 +172,11 @@ const CreateSessionModal = ({
           </Button>
           <Button
             onClick={() => mutate()}
-            disabled={!origin || !destination || isPending}
+            disabled={!selectedCorridorId || isPending}
             className="bg-[#D3D925] text-black font-bold rounded-2xl hover:bg-[#bfc920] px-8"
           >
             {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Create Session
+            Continue to Google routes
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -233,7 +197,7 @@ const SessionsList = ({
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["discovery-sessions", statusFilter],
     queryFn: () => listDiscoverySessions({ status: statusFilter as any || undefined }),
-    refetchInterval: 15_000,  // Poll every 15s — catches background Mapbox/Google completion
+    refetchInterval: 15_000,  // Poll every 15s — catches background Google completion
   });
 
   const sessions: DiscoverySession[] = data?.sessions ?? [];
@@ -242,9 +206,9 @@ const SessionsList = ({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-white font-bold text-lg">Discovery Sessions</h3>
+          <h3 className="text-white font-bold text-lg">Variant Drafts</h3>
           <p className="text-white/40 text-sm mt-0.5">
-            Map-assisted route creation workflow
+            Corridor-based, map-assisted route drafting
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -272,7 +236,7 @@ const SessionsList = ({
             onClick={onNew}
             className="bg-[#D3D925] text-black font-bold rounded-2xl hover:bg-[#bfc920] gap-2"
           >
-            <Plus className="w-4 h-4" /> New Session
+            <Plus className="w-4 h-4" /> New Variant Draft
           </Button>
         </div>
       </div>
@@ -287,16 +251,16 @@ const SessionsList = ({
             <Navigation className="w-10 h-10 text-white/20" />
           </div>
           <div>
-            <p className="text-white font-semibold">No discovery sessions yet</p>
+            <p className="text-white font-semibold">No Variant drafts yet</p>
             <p className="text-white/40 text-sm mt-1">
-              Create a session to start the map-assisted route creation flow
+              Select a corridor and direction to begin a map-assisted Variant draft
             </p>
           </div>
           <Button
             onClick={onNew}
             className="bg-[#D3D925] text-black font-bold rounded-2xl hover:bg-[#bfc920] mt-2 gap-2"
           >
-            <Plus className="w-4 h-4" /> Create First Session
+            <Plus className="w-4 h-4" /> Create First Draft
           </Button>
         </div>
       ) : (
@@ -332,6 +296,11 @@ const SessionsList = ({
                         <ArrowRight className="w-3.5 h-3.5 text-white/30" />
                         <span className="text-white font-semibold">{dest?.name ?? "—"}</span>
                       </div>
+                      {typeof s.corridorId === "object" && s.corridorId && (
+                        <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-white/35">
+                          {s.corridorId.code} · {s.direction === "RETURN" ? "Return" : "Forward"}
+                        </p>
+                      )}
                     </TableCell>
                     <TableCell><StatusBadge status={s.status} /></TableCell>
                     <TableCell className="text-white/60 text-sm">
@@ -370,6 +339,8 @@ const SessionDetail = ({
   const qc = useQueryClient();
   const [thinkingText,    setThinkingText]    = React.useState("");
   const [isRunningInBg,  setIsRunningInBg]   = React.useState(false);
+  const [selectedRouteIndex, setSelectedRouteIndex] = React.useState<number | null>(null);
+  const [variantName, setVariantName] = React.useState("");
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["discovery-session", sessionId],
@@ -408,15 +379,8 @@ const SessionDetail = ({
   // ── Mutations ──
 
   const selectRoute = useMutation({
-    mutationFn: ({ idx, info }: { idx: number; info: GoogleRouteInfo }) =>
-      selectRouteOption(sessionId, idx, {
-        summary:         info.summary,
-        distanceKm:      info.distanceKm,
-        durationMins:    info.durationMins,
-        provider:        "GOOGLE",
-        encodedPolyline: info.encodedPolyline,
-        stepPolylines:   info.stepPolylines,
-      }),
+    mutationFn: ({ idx, name }: { idx: number; name: string }) =>
+      selectRouteOption(sessionId, idx, { summary: name }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["discovery-session", sessionId] });
       toast.success("Route confirmed. Discovering towns along the route…");
@@ -456,7 +420,7 @@ const SessionDetail = ({
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["discovery-session", sessionId] });
       qc.invalidateQueries({ queryKey: ["discovery-sessions"] });
-      toast.success(`Published! Variant ${res.data.variantCode} created with ${res.data.stopsCreated} stops.`);
+      toast.success(`Draft Variant ${res.data.variantCode} created with ${res.data.stopsCreated} reviewed stops.`);
     },
     onError: (e: any) => toast.error(e.response?.data?.message || e.message),
   });
@@ -502,6 +466,7 @@ const SessionDetail = ({
 
   const origin = typeof session.originStopId === "object" ? session.originStopId : null;
   const dest = typeof session.destinationStopId === "object" ? session.destinationStopId : null;
+  const selectedRoute = selectedRouteIndex === null ? null : session.routeOptions[selectedRouteIndex];
   const isTerminal = ["PUBLISHED", "REJECTED"].includes(session.status);
   const approvedCount = session.discoveredStops?.filter(
     (s) => s.adminAction === "APPROVED" || s.adminAction === "EDITED"
@@ -559,7 +524,7 @@ const SessionDetail = ({
           { key: "ROUTE_SELECTED",   label: "Route",         icon: Route },
           { key: "STOPS_DISCOVERED", label: "Stops Found",   icon: Milestone },
           { key: "APPROVED",         label: "Approved",      icon: CheckCircle2 },
-          { key: "PUBLISHED",        label: "Published",     icon: Sparkles },
+          { key: "PUBLISHED",        label: "Draft created", icon: Sparkles },
         ].map((step, i, arr) => {
           const statuses = ["DRAFT","ROUTE_SELECTED","STOPS_DISCOVERED","APPROVED","PUBLISHED","REJECTED"];
           const currentIdx = statuses.indexOf(session.status);
@@ -592,22 +557,54 @@ const SessionDetail = ({
         })}
       </div>
 
-      {/* ── DRAFT: Google Maps route picker ── */}
+      {/* ── DRAFT: server-side Google Routes alternatives ── */}
       {session.status === "DRAFT" && origin && dest && (
         <div className="space-y-4">
           <h4 className="text-white font-bold text-base flex items-center gap-2">
             <Route className="w-4 h-4 text-[#D3D925]" /> Select a Route
           </h4>
           <p className="text-white/40 text-xs">
-            Google Maps shows all available road routes. Click a line on the map or a
-            card below, then confirm your selection.
+            These alternatives came from Google Routes for this corridor direction. Choose one
+            path; the same stored line will be used to discover and review route stops.
           </p>
-          <GoogleRouteMap
-            originName={origin.name}
-            destinationName={dest.name}
-            disabled={selectRoute.isPending}
-            onSelect={(idx, info) => selectRoute.mutate({ idx, info })}
-          />
+          {session.errorMessage ? (
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-sm text-red-200">{session.errorMessage}</div>
+          ) : session.routeOptions.length === 0 ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm text-white/50">
+              <Loader2 className="h-4 w-4 animate-spin text-[#D3D925]" /> Loading Google road alternatives…
+            </div>
+          ) : (
+            <>
+              <GoogleStoredRouteMap
+                routeOptions={session.routeOptions}
+                selectedIndex={selectedRouteIndex}
+                onSelect={setSelectedRouteIndex}
+              />
+              <div className="grid gap-3 md:grid-cols-2">
+                {session.routeOptions.map((option, index) => (
+                  <button key={`${option.providerRouteId}-${index}`} type="button" onClick={() => setSelectedRouteIndex(index)}
+                    className={`rounded-2xl border p-4 text-left transition-colors ${selectedRouteIndex === index ? "border-[#D3D925]/60 bg-[#D3D925]/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}>
+                    <p className="text-sm font-bold text-white">{option.summary || `Google route ${index + 1}`}</p>
+                    <p className="mt-1 text-xs text-white/45">{option.distanceKm?.toFixed(1)} km · about {option.durationMins} min</p>
+                  </button>
+                ))}
+              </div>
+              {selectedRoute && (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                  <Label className="text-white/60 text-xs font-semibold uppercase tracking-widest">Variant name</Label>
+                  <Input value={variantName} placeholder={selectedRoute.summary || "e.g. Via BP Highway"}
+                    onChange={(event) => setVariantName(event.target.value)}
+                    className="border-white/10 bg-white/5 text-white placeholder:text-white/30" />
+                  <div className="flex justify-end">
+                    <Button onClick={() => selectRoute.mutate({ idx: selectedRouteIndex!, name: variantName.trim() || selectedRoute.summary })}
+                      disabled={selectRoute.isPending} className="bg-[#D3D925] text-black hover:bg-[#bfc920] font-bold rounded-xl">
+                      {selectRoute.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Use this route and review stops
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -803,9 +800,9 @@ const SessionDetail = ({
       {session.status === "APPROVED" && (
         <div className="p-6 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-between">
           <div>
-            <p className="text-white font-bold">Ready to Publish</p>
+            <p className="text-white font-bold">Ready to create the Variant draft</p>
             <p className="text-white/50 text-sm mt-0.5">
-              {approvedCount} stops approved. Publishing will create the Corridor, Variant and stop sequence in the live registry.
+              {approvedCount} stops approved. This creates a DRAFT Variant and its reviewed stop sequence. It will not activate the corridor.
             </p>
           </div>
           <Button
@@ -816,7 +813,7 @@ const SessionDetail = ({
             {publishMutation.isPending
               ? <Loader2 className="w-4 h-4 animate-spin" />
               : <Sparkles className="w-4 h-4" />}
-            Publish to Registry
+            Create Draft Variant
           </Button>
         </div>
       )}
@@ -827,7 +824,7 @@ const SessionDetail = ({
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-6 h-6 text-[#D3D925]" />
             <div>
-              <p className="text-white font-bold">Published to Registry</p>
+              <p className="text-white font-bold">Draft Variant created</p>
               <p className="text-white/50 text-sm mt-0.5">
                 Variant ID: <code className="text-[#D3D925] text-xs">{session.publishedVariant.variantId}</code>
                 {" · "}

@@ -76,6 +76,13 @@ export interface GoogleRouteInfo {
   stepPolylines:   string[];  // detailed: one encoded polyline per turn-by-turn step
 }
 
+type StoredRouteOption = {
+  summary: string;
+  distanceKm: number;
+  durationMins: number;
+  geometry: { type: "LineString"; coordinates: [number, number][] } | null;
+};
+
 interface Props {
   originName:      string;
   destinationName: string;
@@ -554,4 +561,59 @@ export const GoogleRouteMap: React.FC<Props> = ({
       )}
     </div>
   );
+};
+
+/**
+ * Read-only renderer for alternatives returned by the backend Google Routes API.
+ * Selection is made against these stored paths, never against a separate browser
+ * Directions request, so the reviewed line is the line whose stops are discovered.
+ */
+export const GoogleStoredRouteMap: React.FC<{
+  routeOptions: StoredRouteOption[];
+  selectedIndex: number | null;
+  onSelect: (index: number) => void;
+}> = ({ routeOptions, selectedIndex, onSelect }) => {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "";
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const polylinesRef = useRef<google.maps.Polyline[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [mapsReady, setMapsReady] = useState(Boolean(window.google?.maps));
+
+  useEffect(() => {
+    if (!apiKey || apiKey === "your_google_maps_api_key_here") {
+      setError("Google Maps is not configured for this admin environment.");
+      return;
+    }
+    loadGoogleMaps(apiKey).then(() => setMapsReady(true)).catch((loadError) => setError(loadError.message));
+  }, [apiKey]);
+
+  useEffect(() => {
+    if (!mapsReady || !window.google?.maps || !mapContainerRef.current || routeOptions.length === 0) return;
+    const map = new google.maps.Map(mapContainerRef.current, {
+      center: { lat: 28.3949, lng: 84.124 }, zoom: 7,
+      mapTypeId: google.maps.MapTypeId.ROADMAP, streetViewControl: false,
+      mapTypeControl: false, fullscreenControl: true, styles: DARK_STYLES,
+    });
+    mapRef.current = map;
+    const bounds = new google.maps.LatLngBounds();
+    polylinesRef.current = routeOptions.map((route, index) => {
+      const path = route.geometry?.coordinates.map(([lng, lat]) => ({ lat, lng })) ?? [];
+      path.forEach((point) => bounds.extend(point));
+      const isSelected = selectedIndex === index;
+      const line = new google.maps.Polyline({
+        path, map, clickable: true, geodesic: true,
+        strokeColor: isSelected ? COLORS_ACTIVE[index % COLORS_ACTIVE.length] : COLORS[index % COLORS.length],
+        strokeOpacity: isSelected ? 1 : 0.62, strokeWeight: isSelected ? 7 : 4,
+        zIndex: isSelected ? 3 : 1,
+      });
+      line.addListener("click", () => onSelect(index));
+      return line;
+    });
+    if (!bounds.isEmpty()) map.fitBounds(bounds, 48);
+    return () => polylinesRef.current.forEach((line) => line.setMap(null));
+  }, [mapsReady, routeOptions, selectedIndex, onSelect]);
+
+  if (error) return <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">{error}</div>;
+  return <div ref={mapContainerRef} className="h-80 w-full rounded-2xl overflow-hidden border border-white/10 bg-[#101827]" />;
 };

@@ -18,7 +18,7 @@ export interface RouteOption {
   distanceKm: number;
   durationMins: number;
   geometry: { type: "LineString"; coordinates: [number, number][] } | null;
-  provider: "MAPBOX";
+  provider: "MAPBOX" | "GOOGLE" | "OSRM";
 }
 
 export interface DiscoveredStop {
@@ -39,6 +39,8 @@ export interface DiscoveredStop {
 
 export interface DiscoverySession {
   _id: string;
+  corridorId?: { _id: string; code: string; status: string } | string | null;
+  direction?: "FORWARD" | "RETURN";
   originStopId: { _id: string; name: string; code: string; coordinates?: any } | string;
   destinationStopId: { _id: string; name: string; code: string; coordinates?: any } | string;
   status: DiscoveryStatus;
@@ -49,6 +51,7 @@ export interface DiscoverySession {
   isLlmRefined?: boolean;
   llmJobStatus?: "IDLE" | "PROCESSING" | "DONE" | "FAILED";
   llmJobError?: string | null;
+  errorMessage?: string | null;
   createdBy?: { name: string; email: string };
   approvedBy?: { name: string; email: string };
   createdAt: string;
@@ -67,8 +70,10 @@ export interface ListSessionsParams {
 
 /** Create a new discovery session for an O→D pair */
 export const createDiscoverySession = async (payload: {
-  originStopId: string;
-  destinationStopId: string;
+  corridorId?: string;
+  direction?: "FORWARD" | "RETURN";
+  originStopId?: string;
+  destinationStopId?: string;
 }) => {
   const { data } = await api.post("/registry/discovery", payload);
   return data;
@@ -86,17 +91,17 @@ export const getDiscoverySession = async (id: string) => {
   return data;
 };
 
-/** Admin picks a route — from Google Maps (with metadata + step polylines for detailed stop discovery) */
+/** Admin confirms one stored Google route. Legacy browser metadata remains optional. */
 export const selectRouteOption = async (
   id: string,
   routeOptionIndex: number,
   routeMetadata?: {
-    summary:          string;
-    distanceKm:       number;
-    durationMins:     number;
-    provider:         string;
-    encodedPolyline:  string;    // overview — fallback
-    stepPolylines:    string[];  // detailed step-level polylines for stop discovery
+    summary?:         string;
+    distanceKm?:      number;
+    durationMins?:    number;
+    provider?:        string;
+    encodedPolyline?: string;    // legacy browser-route fallback only
+    stepPolylines?:   string[];  // legacy browser-route fallback only
   }
 ) => {
   const { data } = await api.patch(`/registry/discovery/${id}/select-route`, {
