@@ -85,7 +85,7 @@ export const createVariant = async (payload: {
     type?: string;
     distanceKm?: number;
     durationMinutes?: number;
-    autoGenerateReturn?: boolean;
+    direction?: "FORWARD" | "RETURN";
 }) => {
     const { data } = await api.post("/registry/variants", payload);
     return data;

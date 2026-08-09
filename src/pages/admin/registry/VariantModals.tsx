@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   Loader2, Route, ArrowRight, Plus, X, Check, Search,
-  ArrowRightLeft, GripVertical, Clock, Star
+  GripVertical, Clock, Star
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { toast } from "sonner";
@@ -43,17 +43,16 @@ interface CreateVariantModalProps {
 export const CreateVariantModal = ({ corridor, open, onClose }: CreateVariantModalProps) => {
   const qc = useQueryClient();
   const [form, setForm] = useState({
-    name: "", type: "STANDARD", distanceKm: "", durationMinutes: "", autoGenerateReturn: true,
+    name: "", type: "STANDARD", distanceKm: "", durationMinutes: "", direction: "FORWARD",
   });
 
   const mutation = useMutation({
     mutationFn: (payload: any) => createVariant({ corridorId: corridor._id, ...payload }),
-    onSuccess: (data) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["variants", corridor._id] });
-      const isDouble = data?.data?.forward;
-      toast.success(isDouble ? `2 variants created: Forward + Return` : `Variant "${form.name}" created`);
+      toast.success(`Draft ${form.direction.toLowerCase()} Variant "${form.name}" created`);
       onClose();
-      setForm({ name: "", type: "STANDARD", distanceKm: "", durationMinutes: "", autoGenerateReturn: true });
+      setForm({ name: "", type: "STANDARD", distanceKm: "", durationMinutes: "", direction: "FORWARD" });
     },
     onError: (e: any) => toast.error(e.response?.data?.message || e.message),
   });
@@ -64,7 +63,7 @@ export const CreateVariantModal = ({ corridor, open, onClose }: CreateVariantMod
       name: form.name, type: form.type,
       distanceKm: form.distanceKm ? parseInt(form.distanceKm) : undefined,
       durationMinutes: form.durationMinutes ? parseInt(form.durationMinutes) : undefined,
-      autoGenerateReturn: form.autoGenerateReturn,
+      direction: form.direction as "FORWARD" | "RETURN",
     });
   };
 
@@ -114,15 +113,16 @@ export const CreateVariantModal = ({ corridor, open, onClose }: CreateVariantMod
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
-            <div className="flex items-center gap-3">
-              <ArrowRightLeft className="w-4 h-4 text-white/60" />
-              <div>
-                <p className="text-sm font-bold">Auto-Build Return Variant</p>
-                <p className="text-[10px] text-white/50 font-medium">Creates the reverse path automatically.</p>
-              </div>
-            </div>
-            <Switch checked={form.autoGenerateReturn} onCheckedChange={v => setForm({ ...form, autoGenerateReturn: v })} />
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-white/50">Direction</Label>
+            <Select value={form.direction} onValueChange={direction => setForm({ ...form, direction })}>
+              <SelectTrigger className="h-11 rounded-xl font-bold"><SelectValue /></SelectTrigger>
+              <SelectContent className="rounded-xl">
+                <SelectItem value="FORWARD">Forward · {corridor?.originId?.name} → {corridor?.destinationId?.name}</SelectItem>
+                <SelectItem value="RETURN">Return · {corridor?.destinationId?.name} → {corridor?.originId?.name}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-white/50 font-medium">Create and review the reverse road path separately; it may differ.</p>
           </div>
         </div>
 
@@ -131,7 +131,7 @@ export const CreateVariantModal = ({ corridor, open, onClose }: CreateVariantMod
           <Button disabled={mutation.isPending || !form.name} onClick={handleSubmit}
             className="font-bold rounded-xl h-11 px-8 bg-[#121212] hover:bg-white/10 text-white">
             {mutation.isPending && <Loader2 className="mr-2 w-4 h-4 animate-spin" />}
-            {form.autoGenerateReturn ? "Create Both Directions" : "Create Variant"}
+            Create Draft Variant
           </Button>
         </DialogFooter>
       </DialogContent>
