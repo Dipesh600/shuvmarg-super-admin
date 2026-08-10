@@ -194,7 +194,7 @@ const KycDocsTab = ({ verificationStatus, documentSections, busOWnerDetail, id, 
             const isRejected = !!doc.rejectionReason;
             const isVerified = doc.verified === true;
             const isPending = doc.verified === false && !doc.rejectionReason;
-            const notSubmitted = !doc.documentUrls || doc.documentUrls.length === 0;
+            const notSubmitted = !doc.present;
 
             return (
               <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-muted/10 gap-4">
@@ -483,7 +483,23 @@ const BusOwnerDetail = () => {
     setSearchParams({ tab: value });
   };
 
-  const busOWnerDetail = data?.user;
+  const busOWnerDetail = data ? {
+    ...data.profile,
+    userId: data.userId,
+    address: "Not provided",
+    createdAt: data.createdAt,
+    recentPayments: [],
+    busOwnerDoc: {
+      _id: data.ownerId,
+      busOwnerId: data.ownerCode,
+      companyName: data.business.companyName,
+      verificationStatus: data.verificationStatus,
+      companyRegistration: data.documents.companyRegistration,
+      ownerIdentity: data.documents.ownerIdentity,
+      taxRegistration: data.documents.taxRegistration,
+      bankDetails: data.bank,
+    },
+  } : null;
 
   if (isLoading) return <BusOwnerDetailSkeleton />;
   if (isError) return <div>{JSON.stringify(error)}</div>;
@@ -501,7 +517,6 @@ const BusOwnerDetail = () => {
     { label: "Company Registration", type: "companyRegistration", ...companyReg },
     { label: "Owner Identity", type: "ownerIdentity", ...ownerIden },
     { label: "Tax Registration", type: "taxRegistration", ...taxReg },
-    { label: "Bank Details", type: "bankDetails", ...bankDet },
   ];
 
   return (
@@ -557,7 +572,7 @@ const BusOwnerDetail = () => {
             <KycDocsTab verificationStatus={verificationStatus} documentSections={documentSections} busOWnerDetail={busOWnerDetail} id={id} onOpen={onOpen} navigate={navigate} />
           </TabsContent>
           <TabsContent value="operators">
-            <OperatorsTab ownerId={id!} />
+            <OperatorsTab ownerId={busOWnerDetail.userId || id!} />
           </TabsContent>
           <TabsContent value="financial">
             <FinancialTab busOWnerDetail={busOWnerDetail} recentPayments={recentPayments} />

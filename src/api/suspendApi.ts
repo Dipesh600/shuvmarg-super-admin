@@ -22,6 +22,10 @@ export async function getUserBookings(id: string) {
     const { data } = await api.post("/booking/getBookingsByUser", { userId: id });
     return data;
   } catch (error) {
+    const err = error as AxiosError<{ message?: string }>;
+    if (err.response?.status === 404) {
+      return { success: true, results: 0, data: [] };
+    }
     throw new Error("Failed to fetch bookings");
   }
 }

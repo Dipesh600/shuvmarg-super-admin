@@ -1,4 +1,36 @@
 import { api } from "./axios";
+import type { DocumentBlobResult } from "./kycApi";
+
+export type SecureFleetDocumentRequest = {
+    fleetId: string;
+    slot: "fleetImages" | "fitnessCert" | "insurance" | "bluebook" | "routePermit";
+    imageIndex?: number;
+};
+
+export const fetchFleetDocumentAsBlob = async (
+    request: SecureFleetDocumentRequest,
+): Promise<DocumentBlobResult> => {
+    try {
+        const token = sessionStorage.getItem("sumarg_admin_token");
+        const baseUrl = import.meta.env.VITE_API_URL;
+        const params = new URLSearchParams();
+        if (request.imageIndex !== undefined) params.set("imageIndex", String(request.imageIndex));
+        const suffix = params.size > 0 ? `?${params}` : "";
+        const response = await fetch(
+            `${baseUrl}/api/admin/fleet/${encodeURIComponent(request.fleetId)}/documents/${encodeURIComponent(request.slot)}/view${suffix}`,
+            { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!response.ok) {
+            const errorBody = await response.json().catch(() => null);
+            return { error: errorBody?.message || `Failed to load fleet document (HTTP ${response.status})` };
+        }
+        const mimeType = response.headers.get("Content-Type") ?? "application/octet-stream";
+        const blob = await response.blob();
+        return { blobUrl: URL.createObjectURL(blob), mimeType };
+    } catch (error: any) {
+        return { error: error?.message || "Failed to load fleet document." };
+    }
+};
 
 export const createFleetForOwner = async (payload: FormData) => {
     try {
