@@ -25,7 +25,7 @@ api.interceptors.response.use(
       sessionStorage.removeItem("sumarg_admin_token");
       sessionStorage.removeItem("sumarg_admin_data");
       // Only redirect if not already on the login page (prevents redirect loops)
-      if (!window.location.pathname.includes("/auth/login")) {
+      if (!window.location.pathname.startsWith("/auth/")) {
         window.location.href = "/auth/login";
       }
     }

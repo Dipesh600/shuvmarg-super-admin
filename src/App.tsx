@@ -17,6 +17,7 @@ import Settings from "./pages/admin/Settings";
 import Financial from "./pages/admin/Financial";
 import ModelProvider from "./providers/ModelProvider";
 import SuperAdminLogin from "./pages/auth/login";
+import AdminEnrollment from "./pages/auth/AdminEnrollment";
 import { DashboardLayout } from "./components/layouts/DashboardLayout";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute";
@@ -64,6 +65,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth/login" element={<SuperAdminLogin />} />
+            <Route path="/auth/enroll" element={<AdminEnrollment />} />
             <Route element={<ProtectedRoute allowedRoles={["SUPER_ADMIN", "ADMIN", "SUB_ADMIN"]} />}>
               <Route path="/" element={<Navigate to={"/admin"} />} />
               <Route
