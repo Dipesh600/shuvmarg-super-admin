@@ -220,16 +220,18 @@ test("helper tree functions return accurate relationships and descendants", () =
   assert.ok(descendants.has("3"));
 });
 
-test("Regression boundary: PlatformRegistry mounts StopRegistryWorkspace and preserves other tabs", async () => {
+test("Regression boundary: PlatformRegistry mounts StopRegistryWorkspace and CorridorWorkspace without legacy Discovery", async () => {
   const content = await readFile(
     new URL("../../../../pages/admin/registry/PlatformRegistry.tsx", import.meta.url),
     "utf-8"
   );
 
   assert.match(content, /StopRegistryWorkspace/);
+  assert.match(content, /CorridorWorkspace/);
   assert.match(content, /TabsContent value="stops"/);
   assert.match(content, /TabsContent value="corridors"/);
   assert.match(content, /TabsContent value="hubs"/);
   assert.match(content, /TabsContent value="route-requests"/);
-  assert.match(content, /TabsContent value="discovery"/);
+  assert.doesNotMatch(content, /DiscoveryTab/);
+  assert.doesNotMatch(content, /TabsContent value="discovery"/);
 });
