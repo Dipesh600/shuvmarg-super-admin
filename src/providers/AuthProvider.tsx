@@ -135,7 +135,8 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (!loading && !token) {
+    const isPublicAuthPage = window.location.pathname.startsWith("/auth/");
+    if (!loading && !token && !isPublicAuthPage) {
       navigate("/auth/login", { replace: true });
     }
   }, [loading, token]);
