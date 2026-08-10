@@ -5,6 +5,7 @@ export type Admin = {
   // name: string;
   email: string;
   role: string;
+  isRootAdmin?: boolean;
 };
 type LoginType = {
   email: string;

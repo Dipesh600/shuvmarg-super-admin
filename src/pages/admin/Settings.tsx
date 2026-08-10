@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Settings as SettingsIcon, Bell, Lock, Database, Mail } from "lucide-react";
+import AdministratorAccessPanel from "@/components/admin/security/AdministratorAccessPanel";
 
 const Settings = () => {
   return (
@@ -79,23 +80,19 @@ const Settings = () => {
             <CardContent className="space-y-4 pt-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
                 <div>
-                  <Label htmlFor="two-factor" className="text-white/80">Two-Factor Authentication</Label>
-                  <p className="text-sm text-white/50">Require 2FA for all admins</p>
+                  <Label className="text-white/80">Two-factor authentication</Label>
+                  <p className="text-sm text-white/50">Enforced for every administrator during activation</p>
                 </div>
-                <Switch id="two-factor" defaultChecked className="data-[state=checked]:bg-[#D3D925]" />
+                <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">ENFORCED</span>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
                 <div>
-                  <Label htmlFor="session-timeout" className="text-white/80">Auto Session Timeout</Label>
-                  <p className="text-sm text-white/50">Logout after inactivity</p>
+                  <Label className="text-white/80">Session security</Label>
+                  <p className="text-sm text-white/50">30-minute token · 15-minute inactivity logout · no silent refresh</p>
                 </div>
-                <Switch id="session-timeout" defaultChecked className="data-[state=checked]:bg-[#D3D925]" />
+                <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">ENFORCED</span>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="session-duration" className="text-white/80">Session Duration (minutes)</Label>
-                <Input id="session-duration" type="number" defaultValue="60" className="w-full bg-white/5 border-white/10 text-white focus-visible:ring-[#D3D925]" />
-              </div>
-              <Button className="w-full sm:w-auto bg-[#D3D925] hover:bg-[#b5bc1b] text-black font-semibold border-0">Update Security</Button>
+              <p className="text-sm text-white/50">These controls are security policy, not user-editable display settings.</p>
             </CardContent>
           </Card>
 
@@ -149,6 +146,7 @@ const Settings = () => {
             </CardContent>
           </Card>
         </div>
+        <div className="mt-6"><AdministratorAccessPanel /></div>
     </>
   );
 };

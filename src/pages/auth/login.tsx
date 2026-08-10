@@ -8,7 +8,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Fingerprint, Lock } from "lucide-react";
+import { ShieldCheck, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/providers/AuthProvider";
@@ -23,6 +23,11 @@ import {
   type SuperAdminLoginForm,
 } from "@/validators/adminlogin.schema";
 import DotsLoader from "@/components/ui/dotsLoader";
+
+const loginErrorMessage = (error: unknown) => {
+  const typed = error as { response?: { data?: { message?: string } } };
+  return typed.response?.data?.message || "Login failed";
+};
 
 const SuperAdminLogin = () => {
   const { login } = useAuth();
@@ -45,9 +50,8 @@ const SuperAdminLogin = () => {
       toast.success("Login successful");
       navigate("/admin");
     },
-    onError: (error: any) => {
-      // console.log(error)
-      toast.error(error?.response?.data?.message || "Login failed");
+    onError: (error: unknown) => {
+      toast.error(loginErrorMessage(error));
     },
   });
 
@@ -83,7 +87,7 @@ const SuperAdminLogin = () => {
                 <Label className="text-slate-300">Admin ID</Label>
                 <Input
                   {...register("adminId")}
-                  placeholder="SUMA-ADM-001"
+                  placeholder="SM-ADM-DIPESH"
                   className="bg-slate-900 border-slate-700 text-white"
                 />
                 {errors.adminId && (
@@ -128,22 +132,21 @@ const SuperAdminLogin = () => {
               {/* OTP — always required */}
               <div className="space-y-2">
                 <Label className="text-slate-300">
-                  Google Authenticator Code{" "}
+                  Authenticator or recovery code{" "}
                   <span className="text-red-400 text-xs font-semibold">*required</span>
                 </Label>
                 <Input
                   {...register("otp")}
-                  placeholder="6-digit code from Google Authenticator"
+                  placeholder="6-digit code or recovery code"
                   className="bg-slate-900 border-slate-700 text-white tracking-widest text-center text-lg"
-                  maxLength={6}
-                  inputMode="numeric"
+                  maxLength={16}
                   autoComplete="one-time-code"
                 />
                 {errors.otp ? (
                   <p className="text-xs text-red-500">{errors.otp.message}</p>
                 ) : (
                   <p className="text-xs text-slate-500">
-                    Open Google Authenticator and enter your 6-digit code
+                    Enter the current 6-digit code, or one unused recovery code
                   </p>
                 )}
               </div>
@@ -158,14 +161,6 @@ const SuperAdminLogin = () => {
                   {isPending ? <DotsLoader /> : "Secure Login"}
                 </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full rounded-xl border-slate-700 text-slate-300 hover:bg-slate-800"
-                >
-                  <Fingerprint className="mr-2 h-4 w-4" />
-                  Biometric Login
-                </Button>
               </div>
             </form>
           </CardContent>

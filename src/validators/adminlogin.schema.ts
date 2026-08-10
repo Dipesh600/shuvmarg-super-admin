@@ -4,7 +4,7 @@ export const adminLoginSchema = z.object({
   adminId: z
     .string()
     .min(5, "Admin Code is required")
-    .regex(/^SUMA-ADM-\d+$/, "Invalid Admin ID format (e.g. SUMA-ADM-001)"),
+    .regex(/^(?:SM-ADM-[A-Z0-9]{3,24}|SUMA-ADM-\d{3})$/, "Invalid Admin ID format (e.g. SM-ADM-DIPESH)"),
 
   email: z
     .string()
@@ -18,11 +18,10 @@ export const adminLoginSchema = z.object({
     .regex(/[0-9]/, "Must contain a number")
     .regex(/[^A-Za-z0-9]/, "Must contain a special character"),
 
-  // OTP is MANDATORY — Google Authenticator code is always required
   otp: z
     .string()
-    .min(1, "Google Authenticator OTP is required")
-    .regex(/^\d{6}$/, "OTP must be exactly 6 numeric digits"),
+    .min(1, "Authenticator or recovery code is required")
+    .regex(/^(\d{6}|[a-fA-F0-9]{16})$/, "Enter a 6-digit code or 16-character recovery code"),
 });
 
 export type SuperAdminLoginForm = z.infer<
