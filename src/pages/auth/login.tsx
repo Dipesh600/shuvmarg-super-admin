@@ -87,7 +87,7 @@ const SuperAdminLogin = () => {
                 <Label className="text-slate-300">Admin ID</Label>
                 <Input
                   {...register("adminId")}
-                  placeholder="SUMA-ADM-001"
+                  placeholder="SM-ADM-DIPESH"
                   className="bg-slate-900 border-slate-700 text-white"
                 />
                 {errors.adminId && (

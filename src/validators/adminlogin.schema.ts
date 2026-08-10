@@ -4,7 +4,7 @@ export const adminLoginSchema = z.object({
   adminId: z
     .string()
     .min(5, "Admin Code is required")
-    .regex(/^SUMA-ADM-\d+$/, "Invalid Admin ID format (e.g. SUMA-ADM-001)"),
+    .regex(/^(?:SM-ADM-[A-Z0-9]{3,24}|SUMA-ADM-\d{3})$/, "Invalid Admin ID format (e.g. SM-ADM-DIPESH)"),
 
   email: z
     .string()

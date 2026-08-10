@@ -55,7 +55,7 @@ export default function AdministratorAccessPanel() {
         <h3 className="font-semibold">Invite an administrator</h3>
         <div className="grid gap-3 md:grid-cols-3">
           <div className="space-y-1"><Label>Email</Label><Input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="admin@shuvmarg.com" /></div>
-          <div className="space-y-1"><Label>Admin ID</Label><Input value={adminId} onChange={(event) => setAdminId(event.target.value.toUpperCase())} placeholder="SUMA-ADM-002" /></div>
+          <div className="space-y-1"><Label>Admin ID</Label><Input value={adminId} onChange={(event) => setAdminId(event.target.value.toUpperCase())} placeholder="SM-ADM-NAME" /></div>
           <div className="space-y-1"><Label>Role</Label><select className="h-9 w-full rounded-md border border-white/10 bg-black px-3" value={role} onChange={(event) => setRole(event.target.value as Administrator["role"])}><option value="SUPER_ADMIN">Super admin</option><option value="ADMIN">Admin</option><option value="SUB_ADMIN">Sub admin</option></select></div>
         </div>
         <Button disabled={invite.isPending || !email || !adminId} onClick={() => invite.mutate({ email, adminId, role })} className="bg-[#D3D925] text-black hover:bg-[#bbc11f]"><UserPlus className="mr-2 h-4 w-4" />Create one-time invitation</Button>
