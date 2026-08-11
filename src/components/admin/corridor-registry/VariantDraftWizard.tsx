@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   commitVariantDraft,
+  addExistingVariantDraftStop,
   createVariantDraft,
   discoverVariantDraftStopCandidates,
   getVariantDraft,
@@ -27,6 +28,7 @@ import { RouteStopReviewMap } from "./RouteStopReviewMap";
 import { SelectedRoutePathway } from "./SelectedRoutePathway";
 import { RouteGuidanceControl } from "./RouteGuidanceControl";
 import { VariantStopCandidateReview } from "./VariantStopCandidateReview";
+import { ManualRouteStopAdder } from "./ManualRouteStopAdder";
 
 type WizardStep = "route" | "details" | "stops";
 
@@ -103,6 +105,7 @@ export function VariantDraftWizard({ corridor, stops, open, initialDirection, in
   const [isLoadingDraft, setIsLoadingDraft] = useState(false);
   const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
   const [isLoadingRouteOverview, setIsLoadingRouteOverview] = useState(false);
+  const [isAddingManualStop, setIsAddingManualStop] = useState(false);
 
   const sourceEndpoint = direction === "FORWARD" ? corridor?.originId : corridor?.destinationId;
   const targetEndpoint = direction === "FORWARD" ? corridor?.destinationId : corridor?.originId;
@@ -147,10 +150,11 @@ export function VariantDraftWizard({ corridor, stops, open, initialDirection, in
     if (!corridor) return;
     setIsLoadingRoutes(true);
     try {
-      const response = await createVariantDraft(corridor._id, { direction });
+      const response = await createVariantDraft(corridor._id, { direction, createCompanion: true });
       setDraft(response.data);
       setStep("route");
       onDraftCreated();
+      if (response.data.companionVariantId) toast.success("Forward and return setup drafts were created as one route family.");
       try {
         const routeResponse = await refreshVariantDraftRoutes(response.data._id);
         setDraft(routeResponse.data);
@@ -217,6 +221,19 @@ export function VariantDraftWizard({ corridor, stops, open, initialDirection, in
       toast.error(error instanceof Error ? error.message : "Unable to select the existing Stop matches.");
     } finally {
       setIsUsingAllExisting(false);
+    }
+  };
+  const addManualStop = async (stopId: string) => {
+    if (!draft) return;
+    setIsAddingManualStop(true);
+    try {
+      const response = await addExistingVariantDraftStop(draft._id, stopId);
+      setDraft(response.data);
+      toast.success("Stop added at its calculated position on the route.");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Unable to add this Stop to the route.");
+    } finally {
+      setIsAddingManualStop(false);
     }
   };
   const finalizeDraft = async () => {
@@ -405,6 +422,7 @@ export function VariantDraftWizard({ corridor, stops, open, initialDirection, in
                 {stopCandidates.length > 0 && <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${unresolvedCandidateCount ? "bg-amber-400/10 text-amber-300" : "bg-emerald-400/10 text-emerald-300"}`}>{unresolvedCandidateCount ? `${unresolvedCandidateCount} need review` : "All candidates reviewed"}</span>}
               </div>
               <RouteStopReviewMap selectedRoute={selectedOption} candidates={stopCandidates} />
+              <ManualRouteStopAdder stops={stops} candidates={stopCandidates} busy={isAddingManualStop} onAdd={addManualStop} />
               <VariantStopCandidateReview
                 candidates={stopCandidates}
                 pendingCandidateId={pendingCandidateId}
