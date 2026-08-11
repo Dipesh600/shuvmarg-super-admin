@@ -22,7 +22,6 @@ interface CorridorDetailPanelProps {
   onDeleteCorridor: () => void;
   onDeleteVariant: (variant: RouteVariant) => void;
   onResumeVariant: (variant: RouteVariant) => void;
-  onActivateVariant: (variant: RouteVariant) => void;
   onViewVariant: (variant: RouteVariant) => void;
 }
 
@@ -47,13 +46,11 @@ function VariantCard({
   variant,
   onDelete,
   onResume,
-  onActivate,
   onView,
 }: {
   variant: RouteVariant;
   onDelete: () => void;
   onResume: () => void;
-  onActivate: () => void;
   onView: () => void;
 }) {
   const isDraft = variant.status === "DRAFT";
@@ -85,13 +82,6 @@ function VariantCard({
               >
                 Resume setup
               </button>
-              <button
-                type="button"
-                onClick={onActivate}
-                className="rounded-md bg-[#D3D925] px-2.5 py-1.5 text-[10px] font-bold text-black transition hover:bg-[#D9CD25]"
-              >
-                Activate route
-              </button>
           </>)}
           </div>
         </div>
@@ -118,7 +108,6 @@ function DirectionLane({
   loading,
   onDelete,
   onResume,
-  onActivate,
   onView,
 }: {
   direction: VariantDirection;
@@ -127,7 +116,6 @@ function DirectionLane({
   loading: boolean;
   onDelete: (variant: RouteVariant) => void;
   onResume: (variant: RouteVariant) => void;
-  onActivate: (variant: RouteVariant) => void;
   onView: (variant: RouteVariant) => void;
 }) {
   const origin = direction === "FORWARD" ? corridor.originId : corridor.destinationId;
@@ -161,7 +149,6 @@ function DirectionLane({
               variant={variant}
               onDelete={() => onDelete(variant)}
               onResume={() => onResume(variant)}
-              onActivate={() => onActivate(variant)}
               onView={() => onView(variant)}
             />
           ))
@@ -187,7 +174,6 @@ export function CorridorDetailPanel({
   onDeleteCorridor,
   onDeleteVariant,
   onResumeVariant,
-  onActivateVariant,
   onViewVariant,
 }: CorridorDetailPanelProps) {
   if (!corridor) {
@@ -281,7 +267,6 @@ export function CorridorDetailPanel({
             loading={variantsLoading}
             onDelete={onDeleteVariant}
             onResume={onResumeVariant}
-            onActivate={onActivateVariant}
             onView={onViewVariant}
           />
           <DirectionLane
@@ -291,7 +276,6 @@ export function CorridorDetailPanel({
             loading={variantsLoading}
             onDelete={onDeleteVariant}
             onResume={onResumeVariant}
-            onActivate={onActivateVariant}
             onView={onViewVariant}
           />
         </div>
