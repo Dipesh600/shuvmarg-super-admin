@@ -18,6 +18,7 @@ export const createSchedule = async (payload: {
     effectiveFrom: string;          // ISO date string
     effectiveUntil?: string;        // ISO date string, optional
     fareOverride?: number;
+    seatFareOverrides?: Array<{ seatLabel: string; fare: number }>;
     notes?: string;
     // ── Booking window ──────────────────────────────────────────────────────
     advanceBookingDays?: number;    // how many days ahead passengers can book (default 60)

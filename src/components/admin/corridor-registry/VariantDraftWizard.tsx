@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, Compass, Loader2, MapPinned } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, Compass, Loader2, MapPinned, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -419,7 +419,12 @@ export function VariantDraftWizard({ corridor, stops, open, initialDirection, in
                     The main sequence contains passenger-recognized Shuvmarg route stops. Google bus stands and bus parks are kept separately as optional boarding-location evidence.
                   </p>
                 </div>
-                {stopCandidates.length > 0 && <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${unresolvedCandidateCount ? "bg-amber-400/10 text-amber-300" : "bg-emerald-400/10 text-emerald-300"}`}>{unresolvedCandidateCount ? `${unresolvedCandidateCount} need review` : "All candidates reviewed"}</span>}
+                <div className="flex items-center gap-2">
+                  {stopCandidates.length > 0 && <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${unresolvedCandidateCount ? "bg-amber-400/10 text-amber-300" : "bg-emerald-400/10 text-emerald-300"}`}>{unresolvedCandidateCount ? `${unresolvedCandidateCount} need review` : "All candidates reviewed"}</span>}
+                  <Button type="button" variant="outline" size="sm" disabled={isPreparingCandidates} onClick={() => void prepareStopReview()} className="border-white/15 bg-transparent text-white/65 hover:bg-white/10 hover:text-white">
+                    {isPreparingCandidates ? <Loader2 className="mr-2 size-3.5 animate-spin" /> : <RefreshCw className="mr-2 size-3.5" />}Rescan suggestions
+                  </Button>
+                </div>
               </div>
               <RouteStopReviewMap selectedRoute={selectedOption} candidates={stopCandidates} />
               <ManualRouteStopAdder stops={stops} candidates={stopCandidates} busy={isAddingManualStop} onAdd={addManualStop} />

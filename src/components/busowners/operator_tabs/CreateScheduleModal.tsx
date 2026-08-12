@@ -9,7 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar, Loader2, ChevronRight, ChevronLeft, Info } from "lucide-react";
 import { toast } from "sonner";
 import { createSchedule, updateSchedule } from "@/api/scheduleApi";
-import { getFleetsByOwner } from "@/api/busOwnerFleetApi";
+import { getFleetDetailById, getFleetsByOwner } from "@/api/busOwnerFleetApi";
+import SeatFareEditor from "@/components/admin/fleet/SeatFareEditor";
 import { getBrandRouteServices } from "@/api/operatorBrandApi";
 import { getDriversByBrand } from "@/api/driverApi";
 
@@ -94,6 +95,7 @@ const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusI
     const [step, setStep] = useState<Step>("service");
 
     const [busId, setBusId]                     = useState(prefillBusId || "");
+    const { data: selectedFleetResponse } = useQuery({ queryKey: ["fleetDetail", busId], queryFn: () => getFleetDetailById(busId), enabled: open && Boolean(busId) });
     const [variantId, setVariantId]             = useState("");
     const [startLocation, setStartLocation]     = useState<"ORIGIN" | "DESTINATION">("ORIGIN");
     const [routeName, setRouteName]             = useState("");
@@ -107,6 +109,7 @@ const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusI
     const [recurrence, setRecurrence]           = useState<"DAILY" | "WEEKLY">("DAILY");
     const [effectiveFrom, setEffectiveFrom]     = useState("");
     const [fareOverride, setFareOverride]       = useState("");
+    const [seatFareOverrides, setSeatFareOverrides] = useState<Record<string, number>>({});
 
     const [advanceBookingDays, setAdvanceBookingDays]   = useState(60);
     const [bookingCutoffHours, setBookingCutoffHours]   = useState(2);
@@ -121,7 +124,7 @@ const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusI
         setStep("service");
         setBusId(prefillBusId || "");
         setVariantId(""); setRouteName(""); setOriginName(""); setDestName(""); setDriverId(""); setStartLocation("ORIGIN");
-        setDepartureTime(""); setArrivalTime(""); setShift("day"); setRecurrence("DAILY"); setEffectiveFrom(""); setFareOverride("");
+        setDepartureTime(""); setArrivalTime(""); setShift("day"); setRecurrence("DAILY"); setEffectiveFrom(""); setFareOverride(""); setSeatFareOverrides({});
         setAdvanceBookingDays(60); setBookingCutoffHours(2);
         setHasReturn(false); setOperationalModel("TURNAROUND"); setLayoverMinutes(60);
         setReturnDepartureTime(""); setReturnArrivalTime("");
@@ -202,6 +205,7 @@ const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusI
                 departureTime, arrivalTime, shift,
                 recurrence, effectiveFrom: new Date(effectiveFrom).toISOString(),
                 fareOverride: fareOverride ? Number(fareOverride) : undefined,
+                seatFareOverrides: Object.entries(seatFareOverrides).map(([seatLabel, fare]) => ({ seatLabel, fare })),
                 advanceBookingDays, bookingCutoffHours,
                 operationalModel: hasReturn ? operationalModel : undefined,
                 layoverMinutes: hasReturn ? layoverMinutes : undefined,
@@ -228,6 +232,7 @@ const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusI
                     recurrence,
                     effectiveFrom: returnEffectiveFrom,
                     fareOverride:  fareOverride ? Number(fareOverride) : undefined,
+                    seatFareOverrides: Object.entries(seatFareOverrides).map(([seatLabel, fare]) => ({ seatLabel, fare })),
                     advanceBookingDays, bookingCutoffHours,
                     operationalModel,
                     layoverMinutes,
@@ -339,7 +344,6 @@ const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusI
                                     </Select>
                                 </div>
                             </div>
-                            
                             {variantId && (
                                 <div className="space-y-2 mt-4 animate-in fade-in slide-in-from-top-2">
                                     <FieldLabel>Where does this bus start its journey?</FieldLabel>
@@ -485,6 +489,12 @@ const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusI
                                     <Input type="number" min={0} className="h-10 rounded-xl" value={fareOverride} placeholder="e.g. 850" onChange={e => setFareOverride(e.target.value)} />
                                 </div>
                             </div>
+                            <SeatFareEditor
+                                config={selectedFleetResponse?.data?.vehicle?.seatConfig || null}
+                                baseFare={Number(fareOverride) || 0}
+                                overrides={seatFareOverrides}
+                                onChange={setSeatFareOverrides}
+                            />
                         </>
                     )}
 

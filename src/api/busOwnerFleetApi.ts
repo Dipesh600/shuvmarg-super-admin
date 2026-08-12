@@ -27,8 +27,8 @@ export const fetchFleetDocumentAsBlob = async (
         const mimeType = response.headers.get("Content-Type") ?? "application/octet-stream";
         const blob = await response.blob();
         return { blobUrl: URL.createObjectURL(blob), mimeType };
-    } catch (error: any) {
-        return { error: error?.message || "Failed to load fleet document." };
+    } catch (error: unknown) {
+        return { error: error instanceof Error ? error.message : "Failed to load fleet document." };
     }
 };
 
@@ -112,7 +112,51 @@ export const reuploadFleetDocument = async (id: string, docSlot: string, file: F
     }
 };
 
+export type FleetDocumentReviewPayload = Record<
+    "fleetImages" | "fitnessCert" | "insurance" | "bluebook" | "routePermit",
+    { status: "approved" | "rejected" | "pending"; reason: string | null }
+>;
+
+export const updateFleetApprovalStatus = async (payload: {
+    fleetId: string;
+    status: "APPROVED" | "REJECTED";
+    rejectionReason?: string;
+    documentReviews?: Partial<FleetDocumentReviewPayload>;
+}) => {
+    const { data } = await api.patch("/fleet/update-status", payload);
+    return data;
+};
+
 export const getFleetSetupStatus = async (id: string) => {
     const { data } = await api.get(`/fleet/${id}/setup-status`);
+    return data;
+};
+
+export type SeatLayoutRevisionRecord = {
+    _id: string;
+    fleetId: string | { _id: string; busName: string; busNumber: string };
+    status: string;
+    classification: string;
+    proposedSeatConfig: Record<string, unknown>;
+    addedSeatLabels: string[];
+    removedSeatLabels: string[];
+    effectiveAt: string | null;
+    reason?: string | null;
+    createdAt: string;
+};
+
+export const getPendingSeatLayoutRevisions = async () => {
+    const { data } = await api.get("/fleet/seat-layout-revisions");
+    return (data?.data?.revisions || []) as SeatLayoutRevisionRecord[];
+};
+
+export const decideSeatLayoutRevision = async (payload: {
+    revisionId: string;
+    decision: "APPROVE" | "REJECT";
+    effectiveAt?: string;
+    rejectionReason?: string;
+}) => {
+    const { revisionId, ...body } = payload;
+    const { data } = await api.patch(`/fleet/seat-layout-revisions/${revisionId}`, body);
     return data;
 };

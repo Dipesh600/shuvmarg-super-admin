@@ -11,14 +11,27 @@ import {
 } from "lucide-react";
 import DocumentViewerModal from "@/components/DocumentViewerModal";
 import { toast } from "sonner";
-import { useFetchFleetDetail, useUpdateOwnerFleet } from "@/hooks/useOwnerFleets";
-import { resubmitFleetById, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
+import { useFetchFleetDetail } from "@/hooks/useOwnerFleets";
+import { resubmitFleetById, updateFleetApprovalStatus, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
 import { MiniSeatMapPreview } from "@/components/busowners/operator_tabs/MiniSeatMapPreview";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
+import SeatLayoutRevisionReview from "@/components/admin/fleet/SeatLayoutRevisionReview";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 type DocStatus = { verified: boolean; rejectionReason: string | null };
+type OperatorBrandSummary = {
+  _id: string;
+  brandName?: string;
+  brandCode?: string;
+  logo?: string;
+  baseCity?: string;
+  fleetCount?: number;
+  status?: string;
+};
+type ApiErrorWithResponse = {
+  response?: { data?: { message?: string } };
+};
 
 const fmtDate = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "N/A";
@@ -44,7 +57,8 @@ export default function KYCFleetDetail() {
     queryFn: () => getBrandsByOwner(fleet?.owner?.ownerId),
     enabled: !!fleet?.owner?.ownerId,
   });
-  const ownerBrand = brandsData?.data?.find((b: any) => b._id === fleet?.assignment?.operatorId) ?? brandsData?.data?.[0] ?? null;
+  const ownerBrands = (brandsData?.data || []) as OperatorBrandSummary[];
+  const ownerBrand = ownerBrands.find((brand) => brand._id === fleet?.assignment?.operatorId) ?? ownerBrands[0] ?? null;
 
   /* Build document sections from fleet data */
   const documentSections = useMemo(() => {
@@ -136,17 +150,19 @@ export default function KYCFleetDetail() {
   };
 
   /* Approval mutation — invalidates both fleet detail and roster caches */
-  const updateMutation = useUpdateOwnerFleet(id!);
-  const { mutate: approve, isPending: isApproving } = useMutation({
-    mutationFn: async (formData: FormData) => {
-      await updateMutation.mutateAsync(formData);
-    },
-    onSuccess: () => {
+  const { mutate: decideFleet, isPending: isApproving } = useMutation({
+    mutationFn: updateFleetApprovalStatus,
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["ownerFleets"] });
       queryClient.invalidateQueries({ queryKey: ["unified_kyc"] });
       queryClient.invalidateQueries({ queryKey: ["getAllKyc"] });
-      toast.success("Fleet KYC approved! Bus is ready for operations.");
+      toast.success(
+        variables.status === "APPROVED"
+          ? "Fleet KYC approved! Bus is ready for operations."
+          : "Fleet registration rejected with review notes."
+      );
       setFinalApprovalDialog(false);
+      setFinalRejectionDialog(false);
       navigate("/admin/kyc");
     },
     onError: () => toast.error("Failed to update fleet status."),
@@ -162,7 +178,7 @@ export default function KYCFleetDetail() {
       queryClient.invalidateQueries({ queryKey: ["getAllKyc"] });
       toast.success("Fleet resubmitted — it is now PENDING review.");
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Failed to resubmit fleet."),
+    onError: (err: ApiErrorWithResponse) => toast.error(err?.response?.data?.message || "Failed to resubmit fleet."),
   });
 
   /* Sections that have at least one uploaded file */
@@ -173,6 +189,29 @@ export default function KYCFleetDetail() {
   const hasRejections = Object.values(docStatuses).some(s => s.rejectionReason);
   /* canApprove = no explicit flags and there is at least one document on record */
   const canApprove = !hasRejections && reviewableSections.length > 0;
+
+  const buildApprovalDocumentReviews = () => {
+    const reviews: Record<string, { status: "approved" | "rejected" | "pending"; reason: string | null }> = {};
+    documentSections.forEach((section) => {
+      reviews[section.key] = {
+        status: section.documents.length > 0 ? "approved" : "pending",
+        reason: null,
+      };
+    });
+    return reviews;
+  };
+
+  const buildRejectionDocumentReviews = () => {
+    const reviews: Record<string, { status: "approved" | "rejected" | "pending"; reason: string | null }> = {};
+    documentSections.forEach((section) => {
+      const status = docStatuses[section.key];
+      reviews[section.key] = {
+        status: status?.verified ? "approved" : status?.rejectionReason ? "rejected" : "pending",
+        reason: status?.rejectionReason || null,
+      };
+    });
+    return reviews;
+  };
 
   const handleVerify = (key: string) => {
     setDocStatuses(prev => ({ ...prev, [key]: { verified: true, rejectionReason: null } }));
@@ -194,33 +233,20 @@ export default function KYCFleetDetail() {
   };
 
   const handleFinalApproval = () => {
-    const fd = new FormData();
-    fd.append("approvalStatus", "APPROVED");
-    fd.append("status", "ACTIVE");
-    approve(fd);
+    decideFleet({
+      fleetId: id!,
+      status: "APPROVED",
+      documentReviews: buildApprovalDocumentReviews(),
+    });
   };
 
   const handleFinalRejection = async () => {
-    const fd = new FormData();
-    fd.append("approvalStatus", "REJECTED");
-    fd.append("rejectionReason", finalRejectionReason);
-    fd.append("status", "INACTIVE");
-
-    // ── Persist per-document review decisions ─────────────────────────────────
-    // Convert local docStatuses to documentReviews format so the bus owner
-    // can see exactly which document failed and why, instead of a single string.
-    const documentReviews: Record<string, { status: string; reason: string | null }> = {};
-    Object.entries(docStatuses).forEach(([key, val]) => {
-      documentReviews[key] = {
-        status: val.verified ? "approved" : val.rejectionReason ? "rejected" : "pending",
-        reason: val.rejectionReason || null,
-      };
+    decideFleet({
+      fleetId: id!,
+      status: "REJECTED",
+      rejectionReason: finalRejectionReason,
+      documentReviews: buildRejectionDocumentReviews(),
     });
-    fd.append("documentReviews", JSON.stringify(documentReviews));
-
-    approve(fd);
-    setFinalRejectionDialog(false);
-    navigate("/admin/kyc");
   };
 
   /* ── Loading / Error ────────────────────────────────────────────── */
@@ -297,6 +323,7 @@ export default function KYCFleetDetail() {
         )}
 
         {/* Vehicle Info + Seat Map */}
+        <SeatLayoutRevisionReview fleetId={fleet.fleetId} />
         <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white"><Bus className="h-5 w-5" /> Vehicle Information</CardTitle>

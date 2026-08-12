@@ -21,6 +21,7 @@ export type LabelScheme = "KA_KHA" | "ALPHA_NUM" | "NUMERIC";
 export interface SeatCell {
   colIndex: number; cellType: CellType; seatId: string | null;
   seatLabel: string | null; labelScheme?: LabelScheme; seatType: SeatType; isActive: boolean;
+  rowSpan?: number; colSpan?: number;
   zone?: "LEFT" | "RIGHT" | "BACK" | "DOOR_ADJACENT" | null;
 }
 export interface BusRow { 
@@ -44,7 +45,7 @@ const META: Record<SeatType, { label: string; bg: string; border: string; text: 
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 let _sc = 0;
-const mkSeat   = (col: number, type: SeatType, label: string): SeatCell => ({ colIndex: col, cellType: "SEAT", seatId: `S${++_sc}`, seatLabel: label, seatType: type, isActive: true });
+const mkSeat   = (col: number, type: SeatType, label: string): SeatCell => ({ colIndex: col, cellType: "SEAT", seatId: `S${++_sc}`, seatLabel: label, seatType: type, isActive: true, rowSpan: type.startsWith("SLEEPER") ? 2 : 1, colSpan: 1 });
 const mkAisle  = (col: number): SeatCell => ({ colIndex: col, cellType: "AISLE", seatId: null, seatLabel: null, seatType: "STANDARD", isActive: true });
 const mkEmpty  = (col: number): SeatCell => ({ colIndex: col, cellType: "EMPTY", seatId: null, seatLabel: null, seatType: "STANDARD", isActive: true });
 const mkDriver = (col: number): SeatCell => ({ colIndex: col, cellType: "DRIVER", seatId: null, seatLabel: "DRV", seatType: "STANDARD", isActive: true });
@@ -93,20 +94,66 @@ function buildConfig(
     for (let ri = 0; ri < right; ri++)
       cells.push(mkSeat(left + 1 + ri, type, scheme === "NUMERIC" ? `${numCtr++}` : `B${rightCtr++}`));
     rows.push({ rowIndex: rows.length, rowType: "SEAT_ROW", cells });
+    if (type.startsWith("SLEEPER")) {
+      rows.push({ rowIndex: rows.length, rowType: "SPACER", cells: Array.from({ length: totalCols }, (_, col) => mkEmpty(col)) });
+    }
   }
 
-  const backCells: SeatCell[] = Array.from({ length: totalCols }, (_, b) =>
-    mkSeat(b, type, `Z${b + 1}`)
-  );
-  rows.push({ rowIndex: rows.length, rowType: "BACK_ROW", cells: backCells });
+  if (!type.startsWith("SLEEPER")) {
+    const backCells: SeatCell[] = Array.from({ length: totalCols }, (_, b) => mkSeat(b, type, `Z${b + 1}`));
+    rows.push({ rowIndex: rows.length, rowType: "BACK_ROW", cells: backCells });
+  }
 
   return { busShape: shape, layoutVariant: layout, hasKaKha, totalColumns: totalCols, floors: [{ floorIndex: 0, rows }] };
+}
+
+function buildDoubleDeckerConfig(): SeatConfig {
+  const lower = buildConfig("DOUBLE_DECKER", "2x2", false, 7, 2, 2);
+  const upper = buildConfig("DOUBLE_DECKER", "2x2", false, 7, 2, 2);
+  upper.floors[0].floorIndex = 1;
+  upper.floors[0].rows[0].cells = upper.floors[0].rows[0].cells.map((cell) =>
+    cell.cellType === "DRIVER" || cell.cellType === "DOOR" ? mkEmpty(cell.colIndex) : cell
+  );
+  // A practical upper deck is mixed: six berths near the front plus regular
+  // seats behind them. Operators can adjust this starter layout per vehicle.
+  for (const rowIndex of [1, 3]) {
+    for (const colIndex of [0, 1, 3]) {
+      const anchor = upper.floors[0].rows[rowIndex]?.cells.find((cell) => cell.colIndex === colIndex);
+      const covered = upper.floors[0].rows[rowIndex + 1]?.cells.find((cell) => cell.colIndex === colIndex);
+      if (anchor) Object.assign(anchor, { seatType: "SLEEPER_UPPER", rowSpan: 2, colSpan: 1 });
+      if (covered) Object.assign(covered, mkEmpty(colIndex));
+    }
+  }
+  for (const [prefix, floor] of [["L", lower.floors[0]], ["U", upper.floors[0]]] as const) {
+    for (const row of floor.rows) {
+      for (const cell of row.cells) {
+        if (cell.cellType !== "SEAT" || !cell.seatId) continue;
+        cell.seatId = `${prefix}-${cell.seatId}`;
+        cell.seatLabel = `${prefix}${cell.seatLabel}`;
+      }
+    }
+  }
+  return { ...lower, floors: [lower.floors[0], upper.floors[0]] };
+}
+
+function buildSleeperConfig(): SeatConfig {
+  const lower = buildConfig("SLEEPER_COACH", "SLEEPER", false, 6, 2, 1, "SLEEPER_LOWER");
+  const upper = buildConfig("SLEEPER_COACH", "SLEEPER", false, 6, 2, 1, "SLEEPER_UPPER");
+  upper.floors[0].floorIndex = 1;
+  for (const [prefix, floor] of [["L", lower.floors[0]], ["U", upper.floors[0]]] as const) {
+    for (const row of floor.rows) for (const cell of row.cells) if (cell.cellType === "SEAT" && cell.seatId) {
+      cell.seatId = `${prefix}-${cell.seatId}`;
+      cell.seatLabel = `${prefix}${cell.seatLabel}`;
+    }
+  }
+  return { ...lower, floors: [lower.floors[0], upper.floors[0]] };
 }
 
 const TEMPLATES = [
   { id: "std-2x2", name: "Standard 2×2", sub: "37 seats · Ka/Kha", shape: "SINGLE_DECKER" as BusShape, layout: "2x2", hasKaKha: true, badge: "Popular", gen: () => buildConfig("SINGLE_DECKER", "2x2", true, 8, 2, 2) },
   { id: "std-2x1", name: "Standard 2×1", sub: "27 seats", shape: "SINGLE_DECKER" as BusShape, layout: "2x1", hasKaKha: false, badge: "", gen: () => buildConfig("SINGLE_DECKER", "2x1", false, 8, 2, 1) },
-  { id: "sleeper", name: "Sleeper Coach", sub: "36 berths", shape: "SLEEPER_COACH" as BusShape, layout: "SLEEPER", hasKaKha: false, badge: "Premium", gen: () => buildConfig("SLEEPER_COACH", "2x2", false, 8, 2, 2, "SLEEPER_LOWER") },
+  { id: "double-decker", name: "Double decker", sub: "Independent lower and upper decks", shape: "DOUBLE_DECKER" as BusShape, layout: "2x2", hasKaKha: false, badge: "Two floors", gen: buildDoubleDeckerConfig },
+  { id: "sleeper", name: "Sleeper Coach", sub: "Lower and upper berth levels", shape: "SLEEPER_COACH" as BusShape, layout: "SLEEPER", hasKaKha: false, badge: "Premium", gen: buildSleeperConfig },
   { id: "vip", name: "VIP / Sofa", sub: "20 luxury sofa seats", shape: "SINGLE_DECKER" as BusShape, layout: "1x1", hasKaKha: false, badge: "Luxury", gen: () => buildConfig("SINGLE_DECKER", "1x1", false, 9, 1, 1, "SOFA") },
   { id: "hiace", name: "Hiace / Microbus", sub: "15 seats", shape: "MINI" as BusShape, layout: "2x1", hasKaKha: false, badge: "", gen: () => buildConfig("MINI", "2x1", false, 4, 2, 1) },
 ];
@@ -164,7 +211,7 @@ const Cell: React.FC<{ cell: SeatCell; selected: boolean; onClick: () => void; i
           type="button"
           onClick={onClick}
           className={cn(
-            "w-10 h-12 flex-shrink-0 rounded-xl border-2 flex flex-col items-center justify-center gap-0.5 relative overflow-hidden",
+            `w-10 ${cell.rowSpan && cell.rowSpan > 1 ? "h-24" : "h-12"} flex-shrink-0 rounded-xl border-2 flex flex-col items-center justify-center gap-0.5 relative overflow-hidden`,
             "transition-all duration-150 cursor-pointer select-none",
             "hover:scale-110 hover:brightness-125 hover:z-10",
             "active:scale-95",
@@ -182,6 +229,29 @@ const Cell: React.FC<{ cell: SeatCell; selected: boolean; onClick: () => void; i
       <TooltipContent side="top" className="font-bold text-xs">{cell.seatLabel} · {m.label}</TooltipContent>
     </Tooltip></TooltipProvider>
   );
+};
+
+const DeckOverview: React.FC<{
+  config: SeatConfig;
+  floor: BusFloor;
+  selected: { fi: number; ri: number; ci: number } | null;
+  onSelect: (rowIndex: number, colIndex: number) => void;
+}> = ({ config, floor, selected, onSelect }) => {
+  const covered = new Set<string>();
+  floor.rows.forEach((row) => row.cells.forEach((cell) => {
+    if (cell.cellType !== "SEAT") return;
+    for (let r = row.rowIndex; r < row.rowIndex + (cell.rowSpan || 1); r += 1) for (let c = cell.colIndex; c < cell.colIndex + (cell.colSpan || 1); c += 1) {
+      if (r !== row.rowIndex || c !== cell.colIndex) covered.add(`${r}:${c}`);
+    }
+  }));
+  return <div className="rounded-2xl border bg-slate-950 p-4"><div className="mb-3 flex items-center justify-between"><strong className="text-xs text-white">{config.busShape === "SLEEPER_COACH" ? (floor.floorIndex ? "Upper berths" : "Lower berths") : (floor.floorIndex ? "Upper deck" : "Lower deck")}</strong><span className="text-[9px] uppercase tracking-widest text-slate-500">Front</span></div><div className="grid auto-rows-[34px] gap-1.5" style={{ gridTemplateColumns: `repeat(${config.totalColumns || 5}, minmax(24px, 1fr))` }}>{floor.rows.flatMap((row) => row.cells.map((cell) => {
+    if (covered.has(`${row.rowIndex}:${cell.colIndex}`)) return null;
+    const style = { gridRow: `${row.rowIndex + 1} / span ${cell.rowSpan || 1}`, gridColumn: `${cell.colIndex + 1} / span ${cell.colSpan || 1}` };
+    if (cell.cellType !== "SEAT") return <div key={`${row.rowIndex}:${cell.colIndex}`} style={style} className={cell.cellType === "AISLE" ? "bg-slate-900" : "rounded border border-dashed border-slate-800"} />;
+    const meta = META[cell.seatType || "STANDARD"];
+    const active = selected?.fi === floor.floorIndex && selected.ri === row.rowIndex && selected.ci === cell.colIndex;
+    return <button key={`${row.rowIndex}:${cell.colIndex}`} type="button" style={style} onClick={() => onSelect(row.rowIndex, cell.colIndex)} className={cn("rounded-md border text-[8px] font-black", meta.bg, meta.border, meta.text, active && "ring-2 ring-white")}>{cell.seatLabel}</button>;
+  }))}</div></div>;
 };
 
 /* ─── Main Component ─────────────────────────────────────────────────────── */
@@ -254,6 +324,16 @@ const SeatMapBuilder: React.FC<SeatMapBuilderProps> = ({ value, onChange, busTyp
         if (!prev) return prev;
         const next: SeatConfig = JSON.parse(JSON.stringify(prev));
         const cell = next.floors[fi].rows[ri].cells[ci];
+        if (update.seatType) {
+          const sleeper = update.seatType === "SLEEPER_LOWER" || update.seatType === "SLEEPER_UPPER";
+          const blocking = sleeper && next.floors[fi].rows[ri + 1]?.cells.some((candidate) => candidate.colIndex === cell.colIndex && candidate.cellType === "SEAT");
+          if (sleeper && (!next.floors[fi].rows[ri + 1] || blocking)) {
+            toast.error("A sleeper berth needs two clear grid rows.");
+            return prev;
+          }
+          update.rowSpan = sleeper ? 2 : 1;
+          update.colSpan = 1;
+        }
         Object.assign(cell, update);
         return next;
     });
@@ -501,6 +581,10 @@ const SeatMapBuilder: React.FC<SeatMapBuilderProps> = ({ value, onChange, busTyp
             )}
         </div>
       </div>
+
+      {config && config.floors.length > 1 && (
+        <div><div className="mb-2 flex items-center justify-between"><div><p className="text-sm font-black">Full vehicle overview</p><p className="text-xs text-muted-foreground">Both levels stay visible. Select a seat here to open it in the detailed editor below.</p></div></div><div className="grid gap-4 xl:grid-cols-2">{config.floors.map((item) => <DeckOverview key={item.floorIndex} config={config} floor={item} selected={sel} onSelect={(ri, ci) => { setActiveFloor(item.floorIndex); setSel({ fi: item.floorIndex, ri, ci }); }} />)}</div><div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border bg-muted/20 p-1">{config.floors.map((item, index) => <Button key={item.floorIndex} type="button" variant={activeFloor === index ? "default" : "ghost"} onClick={() => { setActiveFloor(index); setSel(null); }} className="font-black">Edit {config.busShape === "SLEEPER_COACH" ? (index ? "upper berths" : "lower berths") : (index ? "upper deck" : "lower deck")}</Button>)}</div></div>
+      )}
 
       {/* Main layout: canvas + sidebar */}
       <div className="flex gap-5 items-start">
