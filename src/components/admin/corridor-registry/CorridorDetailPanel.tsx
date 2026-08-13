@@ -22,7 +22,7 @@ interface CorridorDetailPanelProps {
   onDeleteCorridor: () => void;
   onDeleteVariant: (variant: RouteVariant) => void;
   onResumeVariant: (variant: RouteVariant) => void;
-  onActivateVariant: (variant: RouteVariant) => void;
+  onViewVariant: (variant: RouteVariant) => void;
 }
 
 const statusClassName: Record<string, string> = {
@@ -46,12 +46,12 @@ function VariantCard({
   variant,
   onDelete,
   onResume,
-  onActivate,
+  onView,
 }: {
   variant: RouteVariant;
   onDelete: () => void;
   onResume: () => void;
-  onActivate: () => void;
+  onView: () => void;
 }) {
   const isDraft = variant.status === "DRAFT";
 
@@ -65,14 +65,16 @@ function VariantCard({
               <p className="truncate text-sm font-bold text-white">{routeLabel(variant)}</p>
               <p className="mt-1 text-xs text-white/40">{routeMeta(variant)}</p>
               <p className="mt-1 text-[11px] text-white/25">System code: {variant.code}</p>
+              {variant.returnVariantId && <p className="mt-1 text-[10px] font-semibold text-[#D3D925]/55">Paired forward + return route family</p>}
             </div>
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${statusClassName[variant.status] || statusClassName.INACTIVE}`}>
               {variant.status === "DRAFT" ? "In setup" : variant.status}
             </span>
           </div>
 
-          {isDraft && (
-            <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={onView} className="rounded-md border border-white/15 px-2.5 py-1.5 text-[10px] font-semibold text-white/70 transition hover:bg-white/10 hover:text-white">View route</button>
+          {isDraft && (<>
               <button
                 type="button"
                 onClick={onResume}
@@ -80,15 +82,8 @@ function VariantCard({
               >
                 Resume setup
               </button>
-              <button
-                type="button"
-                onClick={onActivate}
-                className="rounded-md bg-[#D3D925] px-2.5 py-1.5 text-[10px] font-bold text-black transition hover:bg-[#D9CD25]"
-              >
-                Activate route
-              </button>
-            </div>
-          )}
+          </>)}
+          </div>
         </div>
 
         {isDraft && (
@@ -111,19 +106,17 @@ function DirectionLane({
   corridor,
   variants,
   loading,
-  onStart,
   onDelete,
   onResume,
-  onActivate,
+  onView,
 }: {
   direction: VariantDirection;
   corridor: RouteCorridor;
   variants: RouteVariant[];
   loading: boolean;
-  onStart: () => void;
   onDelete: (variant: RouteVariant) => void;
   onResume: (variant: RouteVariant) => void;
-  onActivate: (variant: RouteVariant) => void;
+  onView: (variant: RouteVariant) => void;
 }) {
   const origin = direction === "FORWARD" ? corridor.originId : corridor.destinationId;
   const destination = direction === "FORWARD" ? corridor.destinationId : corridor.originId;
@@ -142,16 +135,6 @@ function DirectionLane({
             {activeCount ? `${activeCount} active route path${activeCount === 1 ? "" : "s"}` : "No active route path yet"}
           </p>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={onStart}
-          className="h-8 border-white/15 bg-transparent px-3 text-xs font-semibold text-white hover:bg-white/10 hover:text-white"
-        >
-          <GitBranchPlus className="mr-1 size-3.5" />
-          Build route
-        </Button>
       </div>
 
       <div className="space-y-2">
@@ -166,20 +149,16 @@ function DirectionLane({
               variant={variant}
               onDelete={() => onDelete(variant)}
               onResume={() => onResume(variant)}
-              onActivate={() => onActivate(variant)}
+              onView={() => onView(variant)}
             />
           ))
         ) : (
-          <button
-            type="button"
-            onClick={onStart}
-            className="w-full rounded-xl border border-dashed border-white/15 px-3 py-7 text-center transition hover:border-[#D3D925]/30 hover:bg-[#D3D925]/5"
-          >
+          <div className="w-full rounded-xl border border-dashed border-white/15 px-3 py-7 text-center">
             <p className="text-sm font-semibold text-white/65">Build the first route path</p>
             <p className="mt-1 text-xs text-white/35">
-              Choose terminals, select a Google road suggestion, then review route stops.
+              Use Build route family above to choose a Google road suggestion and review its route stops.
             </p>
-          </button>
+          </div>
         )}
       </div>
     </section>
@@ -195,7 +174,7 @@ export function CorridorDetailPanel({
   onDeleteCorridor,
   onDeleteVariant,
   onResumeVariant,
-  onActivateVariant,
+  onViewVariant,
 }: CorridorDetailPanelProps) {
   if (!corridor) {
     return (
@@ -266,14 +245,17 @@ export function CorridorDetailPanel({
 
       <div className="space-y-5 p-5 sm:p-6">
         <div className="rounded-xl border border-[#D3D925]/15 bg-[#D3D925]/5 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <GitBranchPlus className="mt-0.5 size-4 shrink-0 text-[#D3D925]" />
             <div>
               <p className="text-sm font-semibold text-white">Route path workflow</p>
               <p className="mt-1 text-xs leading-5 text-white/45">
-                Pick a direction, choose real terminal stops, select a Google road suggestion, name it in transport language, then approve canonical route stops.
+                Build the road path once. Shuvmarg prepares linked forward and return drafts; each direction stays independently reviewable and publishable.
               </p>
             </div>
+          </div>
+          <Button type="button" onClick={() => onStartVariant("FORWARD")} className="bg-[#D3D925] font-bold text-black hover:bg-[#D9CD25]"><GitBranchPlus className="mr-2 size-4" />Build route family</Button>
           </div>
         </div>
 
@@ -283,20 +265,18 @@ export function CorridorDetailPanel({
             corridor={corridor}
             variants={forwardVariants}
             loading={variantsLoading}
-            onStart={() => onStartVariant("FORWARD")}
             onDelete={onDeleteVariant}
             onResume={onResumeVariant}
-            onActivate={onActivateVariant}
+            onView={onViewVariant}
           />
           <DirectionLane
             direction="RETURN"
             corridor={corridor}
             variants={returnVariants}
             loading={variantsLoading}
-            onStart={() => onStartVariant("RETURN")}
             onDelete={onDeleteVariant}
             onResume={onResumeVariant}
-            onActivate={onActivateVariant}
+            onView={onViewVariant}
           />
         </div>
       </div>

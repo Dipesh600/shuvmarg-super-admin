@@ -18,8 +18,8 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SeatMapBuilder, { type SeatConfig } from "./SeatMapBuilder";
 import { cn } from "@/lib/utils";
+import { getFleetSeatLayoutAssignment } from "@/api/seatLayoutV3Api";
 
 interface UpdateOwnerFleetModalProps {
   id: string | null;
@@ -56,11 +56,15 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
   const [vehicleType, setVehicleType] = useState("bus");
   const [registrationYear, setRegistrationYear] = useState("");
   const [selectedAmenityIds, setSelectedAmenityIds] = useState<string[]>([]);
-  const [seatConfig, setSeatConfig] = useState<SeatConfig | null>(null);
   const [totalSeats, setTotalSeats] = useState(0);
   const [selectedCorridorId, setSelectedCorridorId] = useState<string>("");
   const [fleetImages, setFleetImages] = useState<FileList | null>(null);
   const [status, setStatus] = useState(true);
+  const { data: seatAssignment, isLoading: isSeatAssignmentLoading } = useQuery({
+    queryKey: ["seat-layout-v3", "fleet-assignment", id],
+    queryFn: () => getFleetSeatLayoutAssignment(id!),
+    enabled: isOpen && !!id,
+  });
 
   useEffect(() => {
     if (isOpen && id) {
@@ -77,14 +81,6 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
       setBusType(data.busType || "DELUXE");
       setVehicleType(data.vehicleType || "bus");
       setRegistrationYear(data.registrationYear?.toString() || "");
-      // Defensively parse JSON in case legacy data was saved as a string
-      let parsedSeatConfig = null;
-      if (data.seatConfig) {
-        try {
-          parsedSeatConfig = typeof data.seatConfig === "string" ? JSON.parse(data.seatConfig) : data.seatConfig;
-        } catch (e) { console.error("Failed to parse seatConfig", e); }
-      }
-
       let parsedAmenities: any[] = [];
       if (data.amenityIds) {
         try {
@@ -98,7 +94,6 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
         : [];
 
       setSelectedAmenityIds(normalizedAmenities);
-      setSeatConfig(parsedSeatConfig || null);
       setTotalSeats(data.totalSeats || 0);
       setSelectedCorridorId(data.corridorId?._id || data.corridorId || "");
       setStatus(data.status === "ACTIVE");
@@ -119,11 +114,6 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
     formData.append("vehicleType", vehicleType);
     formData.append("registrationYear", registrationYear);
     formData.append("status", status ? "ACTIVE" : "INACTIVE");
-    
-    formData.append("totalSeats", String(totalSeats));
-    if (seatConfig) {
-      formData.append("seatConfig", JSON.stringify(seatConfig));
-    }
     
     if (selectedAmenityIds.length > 0) {
       formData.append("amenityIds", JSON.stringify(selectedAmenityIds));
@@ -257,28 +247,20 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
                   {/* SEATS TAB */}
                   <TabsContent value="seats" className="mt-0 space-y-4 animate-in fade-in slide-in-from-right-4 duration-300 outline-none">
                     <div className="bg-primary/5 border border-primary/20 p-4 rounded-xl">
-                      <h4 className="text-sm font-bold text-primary flex items-center gap-2 mb-1">
-                        <LayoutGrid className="w-4 h-4" /> Visual Seat Layout Designer
-                      </h4>
-                      {isApproved ? (
-                        <p className="text-xs text-rose-600 font-bold">Layout modification is locked because this fleet is already APPROVED.</p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">Update the visual seat map. Changing the layout will recalculate the total capacity.</p>
-                      )}
-                      {totalSeats > 0 && (
+                      <h4 className="text-sm font-bold text-primary flex items-center gap-2 mb-1"><LayoutGrid className="w-4 h-4" /> Canonical seat layout</h4>
+                      <p className="text-xs text-muted-foreground">Seat geometry is versioned separately from fleet details. Live layouts are never overwritten from this form.</p>
+                      {(seatAssignment?.assignment?.activeRevision?.totalPlaces || totalSeats) > 0 && (
                         <div className="mt-2 flex items-center gap-2">
                           <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                            <span className="text-xs font-black text-primary">{totalSeats} Seats Configured</span>
+                            <span className="text-xs font-black text-primary">{seatAssignment?.assignment?.activeRevision?.totalPlaces || totalSeats} passenger places</span>
                           </div>
                         </div>
                       )}
                     </div>
-                    <SeatMapBuilder
-                      value={seatConfig}
-                      onChange={(cfg, total) => { setSeatConfig(cfg); setTotalSeats(total); }}
-                      busType={busType}
-                      readOnly={isApproved}
-                    />
+                    <div className="rounded-xl border-2 border-dashed p-8 text-center">
+                      <p className="font-bold">{isSeatAssignmentLoading ? "Loading seat layout…" : seatAssignment?.assignment ? "V3 layout assigned" : "No V3 layout assigned"}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Layout changes use a reviewed revision so existing trips keep their original seat map.</p>
+                    </div>
                   </TabsContent>
 
                   {/* AMENITIES TAB */}

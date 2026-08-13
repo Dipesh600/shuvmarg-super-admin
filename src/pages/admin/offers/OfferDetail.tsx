@@ -223,7 +223,7 @@ export default function OfferDetail() {
                 No usage data yet
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={240}>
+              <ResponsiveContainer width="100%" height={240} minWidth={0}>
                 <LineChart data={dailyUsage}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis
@@ -264,7 +264,7 @@ export default function OfferDetail() {
                 No usage data yet
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={240}>
+              <ResponsiveContainer width="100%" height={240} minWidth={0}>
                 <BarChart data={dailyUsage} barSize={12}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis

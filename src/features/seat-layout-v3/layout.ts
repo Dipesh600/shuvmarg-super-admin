@@ -56,6 +56,19 @@ export function updateElement(layout: SeatLayoutV3, elementId: string, update: P
   return next;
 }
 
+export function moveElement(layout: SeatLayoutV3, sectionId: string, elementId: string, x: number, y: number) {
+  const next = cloneLayout(layout);
+  const section = next.sections.find((item) => item.sectionId === sectionId);
+  const element = section?.elements.find((item) => item.elementId === elementId);
+  if (!section || !element) return layout;
+  if (x < 0 || y < 0 || x + element.size.width > section.widthUnits
+    || y + element.size.height > section.heightUnits) return layout;
+  const candidate = { ...element, position: { x, y } };
+  if (section.elements.some((item) => item.elementId !== elementId && overlaps(item, candidate))) return layout;
+  element.position = { x, y };
+  return next;
+}
+
 export function resizeSection(layout: SeatLayoutV3, sectionId: string, heightUnits: number) {
   const next = cloneLayout(layout);
   const section = next.sections.find((item) => item.sectionId === sectionId);

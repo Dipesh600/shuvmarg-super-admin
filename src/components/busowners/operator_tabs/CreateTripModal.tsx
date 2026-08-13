@@ -15,7 +15,7 @@ import { Calendar, Clock, Bus, MapPin, LayoutGrid, Info, CreditCard, Repeat } fr
 import { useCreateTrip } from "@/hooks/useTrips";
 import { useFetchOwnerFleets } from "@/hooks/useOwnerFleets";
 import { useFetchBusRoutesByOwner } from "@/hooks/useBusRoutes";
-import { useFetchSeatTemplatesByUser } from "@/hooks/useSeatTemplates";
+import { getFleetSeatLayoutAssignment } from "@/api/seatLayoutV3Api";
 import { Card } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
@@ -36,17 +36,15 @@ const CreateTripModal: React.FC<CreateTripModalProps> = ({
   // Fetch data for dropdowns
   const { data: fleetsData } = useFetchOwnerFleets(ownerId);
   const { data: routesData } = useFetchBusRoutesByOwner(ownerId);
-  const { data: templatesData } = useFetchSeatTemplatesByUser(ownerId);
 
   // Filter active fleets
   const activeFleets = fleetsData?.data?.filter((f: any) => f.status === "ACTIVE") || [];
   const routesRows = routesData?.data || [];
-  const templatesRows = templatesData?.data || [];
 
   // Form states
   const [busId, setBusId] = useState("");
   const [routeId, setRouteId] = useState("");
-  const [seatTemplateId, setSeatTemplateId] = useState("");
+  const [layoutAssignment, setLayoutAssignment] = useState<{ ready: boolean; label: string; places?: number }>({ ready: false, label: "Select a fleet first" });
   const [tripDate, setTripDate] = useState<Date | undefined>(undefined);
   const [departureTime, setDepartureTime] = useState("");
   const [arrivalTime, setArrivalTime] = useState("");
@@ -55,13 +53,25 @@ const CreateTripModal: React.FC<CreateTripModalProps> = ({
   const [recurrence, setRecurrence] = useState("daily");
   const [autoGenerateUntil, setAutoGenerateUntil] = useState<Date | undefined>(undefined);
 
+  React.useEffect(() => {
+    let active = true;
+    if (!busId) { setLayoutAssignment({ ready: false, label: "Select a fleet first" }); return () => { active = false; }; }
+    setLayoutAssignment({ ready: false, label: "Checking fleet layout…" });
+    void getFleetSeatLayoutAssignment(busId).then((value) => {
+      if (!active) return;
+      setLayoutAssignment(value.assignment
+        ? { ready: true, label: value.assignment.template.name || "Published V3 fleet layout", places: value.assignment.activeRevision.totalPlaces }
+        : { ready: false, label: "This fleet has no published V3 layout" });
+    }).catch(() => { if (active) setLayoutAssignment({ ready: false, label: "Unable to verify the fleet layout" }); });
+    return () => { active = false; };
+  }, [busId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await createMutation.mutateAsync({
         busId,
         routeId,
-        seatTemplateId,
         tripDate: tripDate ? format(tripDate, "yyyy-MM-dd") : "",
         departureTime,
         arrivalTime,
@@ -75,7 +85,6 @@ const CreateTripModal: React.FC<CreateTripModalProps> = ({
       // Reset form
       setBusId("");
       setRouteId("");
-      setSeatTemplateId("");
       setTripDate(undefined);
       setDepartureTime("");
       setArrivalTime("");
@@ -200,19 +209,11 @@ const CreateTripModal: React.FC<CreateTripModalProps> = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="seatTemplateId" className="text-[10px] font-black uppercase tracking-widest ml-1 text-primary flex items-center gap-1"><LayoutGrid className="h-3 w-3" /> Seating Template</Label>
-                  <select
-                    id="seatTemplateId"
-                    className="flex h-11 w-full rounded-md border-2 border-muted bg-muted/30 px-3 py-2 text-sm font-bold ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={seatTemplateId}
-                    onChange={(e) => setSeatTemplateId(e.target.value)}
-                    required
-                  >
-                    <option value="">Select Template</option>
-                    {templatesRows.map((tpl: any) => (
-                      <option key={tpl._id} value={tpl._id}>{tpl.templateName} ({tpl.totalSeats} Seats)</option>
-                    ))}
-                  </select>
+                  <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-primary flex items-center gap-1"><LayoutGrid className="h-3 w-3" /> Fleet seat layout</Label>
+                  <div className={`flex min-h-11 items-center rounded-md border-2 px-3 text-sm font-bold ${layoutAssignment.ready ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+                    {layoutAssignment.label}{layoutAssignment.places ? ` · ${layoutAssignment.places} places` : ""}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Trips inherit the selected fleet’s published V3 layout. A separate legacy template cannot be attached.</p>
                 </div>
               </div>
 
@@ -257,7 +258,7 @@ const CreateTripModal: React.FC<CreateTripModalProps> = ({
             <Button
               type="submit"
               className="font-black uppercase tracking-widest text-xs h-12 flex-[2] shadow-lg shadow-primary/20 transition-all hover:tracking-[0.1em]"
-              disabled={createMutation.isPending}
+              disabled={createMutation.isPending || !layoutAssignment.ready}
             >
               {createMutation.isPending ? "Generating Trips..." : "Finalize Schedule"}
             </Button>

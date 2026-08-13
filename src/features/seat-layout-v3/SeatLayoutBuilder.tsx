@@ -3,7 +3,7 @@ import { Armchair, BedDouble, CircleGauge, DoorOpen, Eraser, MousePointer2, Rows
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { passengerPlaces, resizeSection, updateElement } from "./layout";
+import { moveElement, passengerPlaces, resizeSection, updateElement } from "./layout";
 import { layoutPresets } from "./presets";
 import SeatLayoutCanvas from "./SeatLayoutCanvas";
 import type { BuilderTool, Comfort, LayoutElement, SeatLayoutV3 } from "./types";
@@ -27,7 +27,7 @@ export default function SeatLayoutBuilder({ layout, onChange, onSave, busy = fal
   </button>)}</div>;
   return <div className="grid gap-5 2xl:grid-cols-[180px_minmax(0,1fr)_290px]">
     <aside className="rounded-3xl border border-white/10 bg-white/[0.025] p-3"><p className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/35">Build tools</p><div className="grid grid-cols-2 gap-2 2xl:grid-cols-1">{tools.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setTool(id)} className={cn("flex items-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold", tool === id ? "border-[#D3D925]/70 bg-[#D3D925]/10 text-[#D3D925]" : "border-white/5 text-white/55 hover:bg-white/5")}><Icon className="size-4" />{label}</button>)}</div></aside>
-    <main className="min-w-0"><SeatLayoutCanvas layout={layout} tool={tool} selectedId={selectedId} onSelect={setSelectedId} onChange={onChange} /></main>
+    <main className="min-w-0"><SeatLayoutCanvas layout={layout} tool={tool} selectedId={selectedId} onSelect={setSelectedId} onChange={onChange} onMove={(sectionId, elementId, x, y) => onChange(moveElement(layout, sectionId, elementId, x, y))} /></main>
     <aside className="space-y-4 rounded-3xl border border-white/10 bg-white/[0.025] p-5"><div><p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/35">Layout summary</p><p className="mt-2 text-3xl font-black text-white">{passengerPlaces(layout).length}</p><p className="text-xs text-white/40">reservable passenger places</p></div>
       {selected && (selected.kind === "SEAT" || selected.kind === "BERTH") ? <ElementEditor element={selected} onChange={(update) => onChange(updateElement(layout, selected.elementId, update))} /> : <div className="rounded-2xl border border-dashed border-white/10 p-4 text-xs leading-5 text-white/35">Choose Select, then click a seat or berth to edit its passenger label and class.</div>}
       <div className="space-y-2 border-t border-white/10 pt-4">{layout.sections.map((section) => <label key={section.sectionId} className="flex items-center justify-between gap-3 text-xs text-white/55"><span>{section.name} rows</span><Input type="number" min={2} max={40} value={section.heightUnits} onChange={(event) => onChange(resizeSection(layout, section.sectionId, Number(event.target.value)))} className="h-8 w-20 border-white/10 bg-black/20" /></label>)}</div>

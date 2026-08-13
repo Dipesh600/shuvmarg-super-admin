@@ -15,7 +15,6 @@ import { Calendar, Clock, Bus, MapPin, LayoutGrid, Info, CreditCard, Repeat, Edi
 import { useFetchTripById, useUpdateTrip } from "@/hooks/useTrips";
 import { useFetchOwnerFleets } from "@/hooks/useOwnerFleets";
 import { useFetchBusRoutesByOwner } from "@/hooks/useBusRoutes";
-import { useFetchSeatTemplatesByUser } from "@/hooks/useSeatTemplates";
 import { Card } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO } from "date-fns";
@@ -39,16 +38,13 @@ const UpdateTripModal: React.FC<UpdateTripModalProps> = ({
   // Fetch data for dropdowns
   const { data: fleetsData } = useFetchOwnerFleets(ownerId);
   const { data: routesData } = useFetchBusRoutesByOwner(ownerId);
-  const { data: templatesData } = useFetchSeatTemplatesByUser(ownerId);
 
   const activeFleets = fleetsData?.data?.filter((f: any) => f.status === "ACTIVE") || [];
   const routesRows = routesData?.data || [];
-  const templatesRows = templatesData?.data || [];
 
   // Form states
   const [busId, setBusId] = useState("");
   const [routeId, setRouteId] = useState("");
-  const [seatTemplateId, setSeatTemplateId] = useState("");
   const [tripDate, setTripDate] = useState<Date | undefined>(undefined);
   const [departureTime, setDepartureTime] = useState("");
   const [arrivalTime, setArrivalTime] = useState("");
@@ -68,7 +64,6 @@ const UpdateTripModal: React.FC<UpdateTripModalProps> = ({
       const d = tripResponse.data;
       setBusId(d.busId?._id || d.busId || "");
       setRouteId(d.routeId?._id || d.routeId || "");
-      setSeatTemplateId(d.seatTemplateId || "");
       setTripDate(d.tripDate ? parseISO(d.tripDate) : undefined);
       setDepartureTime(d.departureTime || "");
       setArrivalTime(d.arrivalTime || "");
@@ -86,7 +81,6 @@ const UpdateTripModal: React.FC<UpdateTripModalProps> = ({
       await updateMutation.mutateAsync({
         busId,
         routeId,
-        seatTemplateId,
         tripDate: tripDate ? format(tripDate, "yyyy-MM-dd") : "",
         departureTime,
         arrivalTime,
@@ -221,19 +215,9 @@ const UpdateTripModal: React.FC<UpdateTripModalProps> = ({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="seatTemplateIdUp" className="text-[10px] font-black uppercase tracking-widest ml-1 text-primary flex items-center gap-1"><LayoutGrid className="h-3 w-3" /> Seating Template</Label>
-                    <select 
-                      id="seatTemplateIdUp"
-                      className="flex h-11 w-full rounded-md border-2 border-muted bg-muted/30 px-3 py-2 text-sm font-bold" 
-                      value={seatTemplateId}
-                      onChange={(e) => setSeatTemplateId(e.target.value)}
-                      required
-                    >
-                      <option value="">Select Template</option>
-                      {templatesRows.map((tpl: any) => (
-                        <option key={tpl._id} value={tpl._id}>{tpl.templateName} ({tpl.totalSeats} Seats)</option>
-                      ))}
-                    </select>
+                    <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-primary flex items-center gap-1"><LayoutGrid className="h-3 w-3" /> Trip seat layout</Label>
+                    <div className="flex min-h-11 items-center rounded-md border-2 border-emerald-200 bg-emerald-50 px-3 text-sm font-bold text-emerald-800">Captured from the fleet when this trip was created</div>
+                    <p className="text-[10px] text-muted-foreground">The physical map is an immutable trip snapshot. Changing the fleet later does not rewrite this trip.</p>
                   </div>
                 </div>
 
