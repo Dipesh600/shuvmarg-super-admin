@@ -141,6 +141,7 @@ export interface VariantStopCandidate {
     suggestedParentStop?: CorridorStop | null;
     coverageZone?: "ORIGIN_40KM" | "MIDDLE" | "DESTINATION_40KM";
     distanceToRouteMeters?: number | null;
+    evidenceScore?: number | null;
   };
   displayName: string;
   formattedAddress?: string | null;
