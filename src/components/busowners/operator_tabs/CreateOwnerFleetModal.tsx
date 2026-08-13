@@ -17,8 +17,11 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import SeatMapBuilder, { type SeatConfig } from "./SeatMapBuilder";
 import { cn } from "@/lib/utils";
+import SeatLayoutBuilder from "@/features/seat-layout-v3/SeatLayoutBuilder";
+import { passengerPlaces } from "@/features/seat-layout-v3/layout";
+import type { SeatLayoutV3 } from "@/features/seat-layout-v3/types";
+import { createInitialFleetSeatLayout } from "@/api/seatLayoutV3Api";
 
 interface CreateOwnerFleetModalProps {
   isOpen: boolean;
@@ -55,8 +58,9 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   const [selectedAmenityIds, setSelectedAmenityIds] = useState<string[]>([]);
 
   // Step 2: Seat Map
-  const [seatConfig, setSeatConfig] = useState<SeatConfig | null>(null);
-  const [totalSeats, setTotalSeats] = useState(0);
+  const [seatLayout, setSeatLayout] = useState<SeatLayoutV3 | null>(null);
+  const totalSeats = seatLayout ? passengerPlaces(seatLayout).length : 0;
+  const [createdFleetId, setCreatedFleetId] = useState<string | null>(null);
 
   // Step 3: Images
   const [imageFront, setImageFront] = useState<File | null>(null);
@@ -84,7 +88,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   const resetForm = () => {
     setStep(1);
     setBusName(""); setBusNumber(""); setBusType("DELUXE"); setVehicleType("bus"); setRegistrationYear(""); setSelectedAmenityIds([]);
-    setSeatConfig(null); setTotalSeats(0);
+    setSeatLayout(null); setCreatedFleetId(null);
     setImageFront(null); setImageBack(null); setImageSide(null); setImageInside(null);
     setFitnessCert(null); setFitnessCertValidTill("");
     setInsurance(null); setInsurancePolicyNumber(""); setInsuranceValidTill("");
@@ -104,7 +108,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
       }
     }
     if (step === 2) {
-      if (!seatConfig || totalSeats === 0) {
+      if (!seatLayout || totalSeats === 0) {
         toast.error("Please configure the seat map before continuing.");
         return;
       }
@@ -136,7 +140,6 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
     formData.append("busNumber", busNumber);
     formData.append("busType", busType);
     formData.append("totalSeats", String(totalSeats));
-    formData.append("seatConfig", JSON.stringify(seatConfig));
     formData.append("vehicleType", vehicleType);
     formData.append("registrationYear", registrationYear);
     formData.append("ownerId", ownerId);
@@ -169,10 +172,23 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
     if (routePermit) formData.append("routePermit", routePermit);
 
     try {
-      await createMutation.mutateAsync(formData);
+      let fleetId = createdFleetId;
+      if (!fleetId) {
+        const created = await createMutation.mutateAsync(formData);
+        fleetId = created?.data?._id || created?.data?.id || null;
+        if (!fleetId) throw new Error("Fleet was created but its identifier was not returned.");
+        setCreatedFleetId(fleetId);
+      }
+      if (!seatLayout) throw new Error("A seat layout is required.");
+      await createInitialFleetSeatLayout(fleetId, {
+        name: `${busName.trim()} seat layout`,
+        layout: seatLayout,
+      });
       resetForm();
       onClose();
-    } catch (error) { /* handled by mutation */ }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || "Fleet seat layout could not be saved.");
+    }
   };
 
   const handleClose = () => { resetForm(); onClose(); };
@@ -315,15 +331,15 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                           <span className="text-xs font-black text-primary">{totalSeats} Seats Configured</span>
                         </div>
                         <div className="px-3 py-1 rounded-full bg-muted border">
-                          <span className="text-xs font-black text-muted-foreground">{seatConfig?.busShape?.replace("_", " ")}</span>
+                          <span className="text-xs font-black text-muted-foreground">V3 canonical layout</span>
                         </div>
                       </div>
                     )}
                   </div>
-                  <SeatMapBuilder
-                    value={seatConfig}
-                    onChange={(cfg, total) => { setSeatConfig(cfg); setTotalSeats(total); }}
-                    busType={busType}
+                  <SeatLayoutBuilder
+                    layout={seatLayout}
+                    onChange={setSeatLayout}
+                    onSave={setSeatLayout}
                   />
                 </div>
               )}

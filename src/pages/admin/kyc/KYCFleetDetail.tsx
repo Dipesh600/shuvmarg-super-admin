@@ -13,9 +13,9 @@ import DocumentViewerModal from "@/components/DocumentViewerModal";
 import { toast } from "sonner";
 import { useFetchFleetDetail, useUpdateOwnerFleet } from "@/hooks/useOwnerFleets";
 import { resubmitFleetById, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
-import { MiniSeatMapPreview } from "@/components/busowners/operator_tabs/MiniSeatMapPreview";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
+import { getFleetSeatLayoutAssignment } from "@/api/seatLayoutV3Api";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 type DocStatus = { verified: boolean; rejectionReason: string | null };
@@ -37,6 +37,11 @@ export default function KYCFleetDetail() {
 
   const { data: fleetResponse, isLoading, isError } = useFetchFleetDetail(id!);
   const fleet = fleetResponse?.data;
+  const { data: seatAssignment } = useQuery({
+    queryKey: ["seat-layout-v3", "fleet-assignment", id],
+    queryFn: () => getFleetSeatLayoutAssignment(id!),
+    enabled: !!id,
+  });
 
   /* Brand context */
   const { data: brandsData } = useQuery({
@@ -303,14 +308,11 @@ export default function KYCFleetDetail() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-6 items-start flex-wrap">
-              {fleet.vehicle.seatConfig && (
-                <div className="shrink-0">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1">
-                    <LayoutGrid className="w-3 h-3" /> Declared Seat Layout
-                  </p>
-                  <MiniSeatMapPreview config={fleet.vehicle.seatConfig} size="sm" showLabels />
-                </div>
-              )}
+              <div className="min-w-48 shrink-0 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1"><LayoutGrid className="w-3 h-3" /> Canonical seat layout</p>
+                <p className="font-bold">{seatAssignment?.assignment ? "V3 layout assigned" : "Not assigned"}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{seatAssignment?.assignment?.activeRevision?.totalPlaces ?? fleet.vehicle.totalSeats ?? 0} passenger places</p>
+              </div>
               <div className="grid gap-4 md:grid-cols-3 flex-1 min-w-0">
                 {[
                   { label: "Bus Name", value: fleet.vehicle.busName },
