@@ -53,6 +53,7 @@ import CreateOffer from "./pages/admin/offers/CreateOffer";
 import OfferDetail from "./pages/admin/offers/OfferDetail";
 import WalletManagement from "./pages/admin/wallet/WalletManagement";
 import GatewayFees from "./pages/admin/gateway-fees/GatewayFees";
+import SeatLayoutRegistry from "./pages/admin/SeatLayoutRegistry";
 
 const queryClient = new QueryClient();
 
@@ -121,6 +122,7 @@ const App = () => (
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="registry" element={<PlatformRegistry />} />
+                <Route path="seat-layouts" element={<SeatLayoutRegistry />} />
                 <Route path="amenities" element={<PlatformAmenities />} />
                 <Route path="gateway-fees" element={<GatewayFees />} />
                 <Route path="offers" element={<OffersHub />} />
