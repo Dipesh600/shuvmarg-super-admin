@@ -169,7 +169,7 @@ const Analytics = () => {
               </div>
             ) : (
               <div className="h-[320px] w-full mt-4">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <BarChart data={bookingTrendChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.08)" />
                     <XAxis 
@@ -215,7 +215,7 @@ const Analytics = () => {
               </div>
             ) : (
               <div className="h-[320px] w-full mt-4">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <AreaChart data={userGrowthChart} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
@@ -288,7 +288,7 @@ const Analytics = () => {
               </div>
             ) : (
               <div className="h-[300px] w-full mt-2">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <BarChart data={topRoutes} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(255,255,255,0.08)" />
                     <XAxis 
