@@ -55,7 +55,18 @@ import WalletManagement from "./pages/admin/wallet/WalletManagement";
 import GatewayFees from "./pages/admin/gateway-fees/GatewayFees";
 import SeatLayoutRegistry from "./pages/admin/SeatLayoutRegistry";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 15_000,
+      refetchInterval: 60_000,
+      refetchIntervalInBackground: false,
+      refetchOnWindowFocus: "always",
+      refetchOnReconnect: "always",
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
