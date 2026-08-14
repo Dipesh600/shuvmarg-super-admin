@@ -7,6 +7,16 @@ import SeatLayoutBuilder from "@/features/seat-layout-v3/SeatLayoutBuilder";
 import type { SeatLayoutRevision, SeatLayoutTemplate, SeatLayoutV3, TemplateDetail, VehicleCategory } from "@/features/seat-layout-v3/types";
 import { createSeatLayoutRevision, createSeatLayoutTemplate, getSeatLayoutTemplate, listSeatLayoutChangeRequests, listSeatLayoutTemplates, publishSeatLayoutRevision, reviewSeatLayoutChange } from "@/api/seatLayoutV3Api";
 
+const TEMPLATE_CODE_PATTERN = /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
+
+function requestMessage(error: unknown, fallback: string) {
+  if (typeof error === "object" && error !== null && "response" in error) {
+    const response = (error as { response?: { data?: { message?: unknown } } }).response;
+    if (typeof response?.data?.message === "string") return response.data.message;
+  }
+  return error instanceof Error ? error.message : fallback;
+}
+
 export default function SeatLayoutRegistry() {
   const [templates, setTemplates] = useState<SeatLayoutTemplate[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -44,19 +54,29 @@ export default function SeatLayoutRegistry() {
   }, []);
   async function select(id: string) { setSelectedId(id); const value = await getSeatLayoutTemplate(id); setDetail(value); setName(value.template.name); setCode(value.template.templateCode); setCategory(value.template.vehicleCategory); setLayout(value.revisions.find((revision) => revision.layout)?.layout || null); }
   async function saveDraft(value: SeatLayoutV3) {
-    if (!name.trim()) return toast.error("Give this reusable layout a clear name.");
+    const normalizedName = name.trim();
+    const normalizedCode = code.trim().toUpperCase();
+    if (normalizedName.length < 2) return toast.error("Give this reusable layout a clear name.");
+    if (!selectedId && !TEMPLATE_CODE_PATTERN.test(normalizedCode)) {
+      return toast.error("Use a registry code such as BUS-DLX-21 (letters, numbers and hyphens only).");
+    }
+    if (!value.sections.some((section) => section.elements.some((element) => element.kind === "SEAT" || element.kind === "BERTH"))) {
+      return toast.error("Add at least one passenger seat or sleeper before saving.");
+    }
     setBusy(true);
     try {
       let templateId = selectedId;
       if (!templateId) {
-        const created = await createSeatLayoutTemplate({ templateCode: code.trim().toUpperCase(), name: name.trim(), vehicleCategory: category });
+        const created = await createSeatLayoutTemplate({ templateCode: normalizedCode, name: normalizedName, vehicleCategory: category });
         templateId = created.id;
+        setSelectedId(created.id);
+        setDetail({ template: created, revisions: [] });
       }
-      await createSeatLayoutRevision(templateId, value, summary.trim());
+      await createSeatLayoutRevision(templateId, { ...value, vehicleCategory: detail?.template.vehicleCategory || category }, summary.trim());
       await reload(templateId); toast.success("Immutable layout draft created.");
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to save draft."); } finally { setBusy(false); }
+    } catch (error) { toast.error(requestMessage(error, "Unable to save draft.")); } finally { setBusy(false); }
   }
-  async function publish(revision: SeatLayoutRevision) { if (!detail) return; setBusy(true); try { await publishSeatLayoutRevision(detail.template.id, revision.id); await reload(detail.template.id); toast.success("Layout revision published."); } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to publish."); } finally { setBusy(false); } }
+  async function publish(revision: SeatLayoutRevision) { if (!detail) return; setBusy(true); try { await publishSeatLayoutRevision(detail.template.id, revision.id); await reload(detail.template.id); toast.success("Layout revision published."); } catch (error) { toast.error(requestMessage(error, "Unable to publish.")); } finally { setBusy(false); } }
   return <div className="space-y-6 pb-12">
     <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.24em] text-[#D3D925]">Fleet infrastructure</p><h1 className="mt-2 text-4xl font-black tracking-tight">Seat layout registry</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">Create reusable physical templates. Published revisions are immutable; operator fleet changes remain reviewable.</p></div><Button onClick={() => { setSelectedId(null); setDetail(null); setLayout(null); setName(""); setCode(""); }} className="bg-[#D3D925] font-black text-black hover:bg-[#dce331]"><Plus className="mr-2 size-4" />New platform layout</Button></header>
     <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]"><aside className="rounded-3xl border border-white/10 bg-white/[0.025] p-3"><div className="flex items-center justify-between px-3 py-3"><span className="text-xs font-black uppercase tracking-widest text-white/40">Library</span><Library className="size-4 text-[#D3D925]" /></div>{templates.map((template) => <button key={template.id} onClick={() => void select(template.id)} className={`mb-2 w-full rounded-2xl border p-4 text-left ${selectedId === template.id ? "border-[#D3D925]/60 bg-[#D3D925]/10" : "border-white/5 hover:bg-white/5"}`}><div className="flex items-start justify-between gap-2"><strong className="text-sm text-white">{template.name}</strong><ChevronRight className="size-4 text-white/30" /></div><p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-white/35">{template.templateCode} · {template.currentPublishedRevisionId ? "Published" : "Draft only"}</p></button>)}</aside>
