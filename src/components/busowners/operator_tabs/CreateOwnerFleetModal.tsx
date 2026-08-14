@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,19 +15,55 @@ import { useCreateOwnerFleet } from "@/hooks/useOwnerFleets";
 import { useFetchAllCorridors } from "@/hooks/usePlatformRegistry";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/axios";
+import { getBrandsByOwner } from "@/api/operatorBrandApi";
+import { uploadFleetDocumentByAdmin } from "@/api/busOwnerFleetApi";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import SeatLayoutBuilder from "@/features/seat-layout-v3/SeatLayoutBuilder";
-import { passengerPlaces } from "@/features/seat-layout-v3/layout";
-import type { SeatLayoutV3 } from "@/features/seat-layout-v3/types";
-import { createInitialFleetSeatLayout } from "@/api/seatLayoutV3Api";
+import AdminFleetSeatLayoutStep from "@/features/admin-fleet-seat-layout/AdminFleetSeatLayoutStep";
+import { persistFleetLayoutChoice } from "@/features/admin-fleet-seat-layout/persistFleetLayoutChoice";
+import type { AdminFleetLayoutChoice } from "@/features/admin-fleet-seat-layout/types";
+import {
+  deleteAdminFleetDraft,
+  hasMeaningfulAdminFleetDraft,
+  loadAdminFleetDraft,
+  saveAdminFleetDraft,
+  type AdminFleetDraft,
+} from "@/features/admin-fleet-drafts/adminFleetDraftStorage";
 
 interface CreateOwnerFleetModalProps {
   isOpen: boolean;
   onClose: () => void;
   ownerId: string;
   brandId?: string;
+}
+
+interface AmenityOption {
+  _id: string;
+  name: string;
+}
+
+interface CorridorOption {
+  _id: string;
+  code: string;
+  originId?: { name?: string };
+  destinationId?: { name?: string };
+}
+
+interface OperatorBrandOption {
+  _id: string;
+  brandName: string;
+  brandCode?: string;
+  isDefault?: boolean;
+  status: string;
+}
+
+function getFleetErrorMessage(error: unknown): string {
+  if (typeof error === "object" && error !== null && "response" in error) {
+    const response = (error as { response?: { data?: { message?: unknown } } }).response;
+    if (typeof response?.data?.message === "string") return response.data.message;
+  }
+  return error instanceof Error ? error.message : "Fleet seat layout could not be saved.";
 }
 
 const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
@@ -44,12 +80,29 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
     staleTime: 60_000,
   });
 
-  const globalAmenities: any[] = globalAmenitiesData?.data || [];
-  const corridorsList: any[] = corridorsData?.data || [];
+  const {
+    data: brandsData,
+    isLoading: isLoadingBrands,
+    isError: isBrandsError,
+    refetch: refetchBrands,
+  } = useQuery({
+    queryKey: ["ownerBrands", ownerId],
+    queryFn: async () => {
+      const res = await getBrandsByOwner(ownerId);
+      return (Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : [])) as OperatorBrandOption[];
+    },
+    enabled: Boolean(isOpen && ownerId),
+    staleTime: 30_000,
+  });
+
+  const globalAmenities = (Array.isArray(globalAmenitiesData?.data) ? globalAmenitiesData.data : []) as AmenityOption[];
+  const corridorsList = (Array.isArray(corridorsData?.data) ? corridorsData.data : []) as CorridorOption[];
+  const ownerBrands = brandsData || [];
 
   const [step, setStep] = useState(1);
 
   // Step 1: Core Details
+  const [selectedBrandId, setSelectedBrandId] = useState<string>(brandId || "");
   const [busName, setBusName] = useState("");
   const [busNumber, setBusNumber] = useState("");
   const [busType, setBusType] = useState("DELUXE");
@@ -58,8 +111,8 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   const [selectedAmenityIds, setSelectedAmenityIds] = useState<string[]>([]);
 
   // Step 2: Seat Map
-  const [seatLayout, setSeatLayout] = useState<SeatLayoutV3 | null>(null);
-  const totalSeats = seatLayout ? passengerPlaces(seatLayout).length : 0;
+  const [seatLayoutChoice, setSeatLayoutChoice] = useState<AdminFleetLayoutChoice | null>(null);
+  const totalSeats = seatLayoutChoice?.totalPlaces || 0;
   const [createdFleetId, setCreatedFleetId] = useState<string | null>(null);
 
   // Step 3: Images
@@ -84,11 +137,81 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   const [requestOriginCity, setRequestOriginCity] = useState("");
   const [requestDestinationCity, setRequestDestinationCity] = useState("");
   const [requestViaStops, setRequestViaStops] = useState("");
+  const [draftHydrated, setDraftHydrated] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setDraftHydrated(false);
+      return;
+    }
+    let active = true;
+    void loadAdminFleetDraft(ownerId, brandId).then((saved) => {
+      if (!active) return;
+      if (saved) {
+        setStep(saved.step);
+        setSelectedBrandId(saved.brandId || brandId || "");
+        setBusName(saved.busName); setBusNumber(saved.busNumber);
+        setBusType(saved.busType); setVehicleType(saved.vehicleType); setRegistrationYear(saved.registrationYear);
+        setSelectedAmenityIds(saved.selectedAmenityIds); setSeatLayoutChoice(saved.seatLayoutChoice);
+        setCreatedFleetId(saved.createdFleetId); setImageFront(saved.files.imageFront); setImageBack(saved.files.imageBack);
+        setImageSide(saved.files.imageSide); setImageInside(saved.files.imageInside);
+        setFitnessCert(saved.files.fitnessCert); setFitnessCertValidTill(saved.fitnessCertValidTill);
+        setInsurance(saved.files.insurance); setInsurancePolicyNumber(saved.insurancePolicyNumber);
+        setInsuranceValidTill(saved.insuranceValidTill); setBluebook(saved.files.bluebook);
+        setRoutePermit(saved.files.routePermit); setRoutePermitValidTill(saved.routePermitValidTill);
+        setSelectedCorridorId(saved.selectedCorridorId); setIsRequestingRoute(saved.isRequestingRoute);
+        setRequestOriginCity(saved.requestOriginCity); setRequestDestinationCity(saved.requestDestinationCity);
+        setRequestViaStops(saved.requestViaStops); setDraftSaved(true);
+      }
+      setDraftHydrated(true);
+    }).catch(() => {
+      if (active) setDraftHydrated(true);
+    });
+    return () => { active = false; };
+  }, [isOpen, ownerId, brandId]);
+
+  useEffect(() => {
+    if (!selectedBrandId && ownerBrands.length > 0) {
+      const defaultActive = ownerBrands.find((b) => b.isDefault && b.status === "ACTIVE");
+      const firstActive = ownerBrands.find((b) => b.status === "ACTIVE");
+      const target = defaultActive || firstActive;
+      if (target) {
+        setSelectedBrandId(target._id);
+      }
+    }
+  }, [selectedBrandId, ownerBrands]);
+
+  useEffect(() => {
+    if (!isOpen || !draftHydrated) return;
+    const value: AdminFleetDraft = {
+      step, brandId: selectedBrandId, busName, busNumber, busType, vehicleType, registrationYear, selectedAmenityIds,
+      seatLayoutChoice, createdFleetId, fitnessCertValidTill, insurancePolicyNumber,
+      insuranceValidTill, routePermitValidTill, selectedCorridorId, isRequestingRoute,
+      requestOriginCity, requestDestinationCity, requestViaStops,
+      files: { imageFront, imageBack, imageSide, imageInside, fitnessCert, insurance, bluebook, routePermit },
+    };
+    const timer = window.setTimeout(() => {
+      if (hasMeaningfulAdminFleetDraft(value)) {
+        void saveAdminFleetDraft(ownerId, brandId, value).then(() => setDraftSaved(true));
+      } else {
+        void deleteAdminFleetDraft(ownerId, brandId).then(() => setDraftSaved(false));
+      }
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [isOpen, draftHydrated, ownerId, brandId, step, selectedBrandId, busName, busNumber, busType,
+    vehicleType, registrationYear, selectedAmenityIds, seatLayoutChoice, createdFleetId,
+    imageFront, imageBack, imageSide, imageInside, fitnessCert, fitnessCertValidTill,
+    insurance, insurancePolicyNumber, insuranceValidTill, bluebook, routePermit,
+    routePermitValidTill, selectedCorridorId, isRequestingRoute, requestOriginCity,
+    requestDestinationCity, requestViaStops]);
 
   const resetForm = () => {
+    setDraftSaved(false);
     setStep(1);
+    setSelectedBrandId(brandId || "");
     setBusName(""); setBusNumber(""); setBusType("DELUXE"); setVehicleType("bus"); setRegistrationYear(""); setSelectedAmenityIds([]);
-    setSeatLayout(null); setCreatedFleetId(null);
+    setSeatLayoutChoice(null); setCreatedFleetId(null);
     setImageFront(null); setImageBack(null); setImageSide(null); setImageInside(null);
     setFitnessCert(null); setFitnessCertValidTill("");
     setInsurance(null); setInsurancePolicyNumber(""); setInsuranceValidTill("");
@@ -102,13 +225,27 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
 
   const handleNext = () => {
     if (step === 1) {
+      if (!selectedBrandId) {
+        toast.error("Select an active operator brand.");
+        return;
+      }
+      const chosenBrand = ownerBrands.find((b) => b._id === selectedBrandId);
+      if (!chosenBrand || chosenBrand.status !== "ACTIVE") {
+        toast.error("Select a valid, active operator brand.");
+        return;
+      }
       if (!busName || !busNumber || !registrationYear) {
         toast.error("Please fill all required fields in Step 1.");
         return;
       }
+      const year = Number(registrationYear);
+      if (!Number.isInteger(year) || year < 1980 || year > new Date().getFullYear() + 1) {
+        toast.error("Enter a valid registration year.");
+        return;
+      }
     }
     if (step === 2) {
-      if (!seatLayout || totalSeats === 0) {
+      if (!seatLayoutChoice || totalSeats === 0) {
         toast.error("Please configure the seat map before continuing.");
         return;
       }
@@ -125,17 +262,26 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
         return;
       }
     }
-    setStep(s => s + 1);
+    setStep((prev) => Math.min(prev + 1, 5));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!selectedBrandId) {
+      toast.error("Select an active operator brand.");
+      return;
+    }
+    const chosenBrand = ownerBrands.find((b) => b._id === selectedBrandId);
+    if (!chosenBrand || chosenBrand.status !== "ACTIVE") {
+      toast.error("Select a valid, active operator brand.");
+      return;
+    }
     if (!fitnessCert || !insurance || !bluebook || !routePermit) {
       toast.error("Please upload all 4 required legal documents.");
       return;
     }
 
     const formData = new FormData();
+    formData.append("brandId", selectedBrandId);
     formData.append("busName", busName);
     formData.append("busNumber", busNumber);
     formData.append("busType", busType);
@@ -143,9 +289,6 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
     formData.append("vehicleType", vehicleType);
     formData.append("registrationYear", registrationYear);
     formData.append("ownerId", ownerId);
-    if (brandId) {
-      formData.append("brandId", brandId);
-    }
     if (selectedAmenityIds.length > 0) {
       formData.append("amenityIds", JSON.stringify(selectedAmenityIds));
     }
@@ -158,19 +301,6 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
       formData.append("corridorId", selectedCorridorId);
     }
 
-    if (fitnessCertValidTill) formData.append("fitnessCertValidTill", fitnessCertValidTill);
-    if (insurancePolicyNumber) formData.append("insurancePolicyNumber", insurancePolicyNumber);
-    if (insuranceValidTill) formData.append("insuranceValidTill", insuranceValidTill);
-    if (routePermitValidTill) formData.append("routePermitValidTill", routePermitValidTill);
-    if (imageFront) formData.append("imageFront", imageFront);
-    if (imageBack) formData.append("imageBack", imageBack);
-    if (imageSide) formData.append("imageSide", imageSide);
-    if (imageInside) formData.append("imageInside", imageInside);
-    if (fitnessCert) formData.append("fitnessCert", fitnessCert);
-    if (insurance) formData.append("insurance", insurance);
-    if (bluebook) formData.append("bluebook", bluebook);
-    if (routePermit) formData.append("routePermit", routePermit);
-
     try {
       let fleetId = createdFleetId;
       if (!fleetId) {
@@ -179,19 +309,34 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
         if (!fleetId) throw new Error("Fleet was created but its identifier was not returned.");
         setCreatedFleetId(fleetId);
       }
-      if (!seatLayout) throw new Error("A seat layout is required.");
-      await createInitialFleetSeatLayout(fleetId, {
-        name: `${busName.trim()} seat layout`,
-        layout: seatLayout,
+      if (!imageFront || !imageSide || !imageBack || !imageInside) {
+        throw new Error("Front, side, back and inside photos are required.");
+      }
+      await uploadFleetDocumentByAdmin(fleetId, "fleetImages", {
+        imageFront, imageSide, imageBack, imageInside,
       });
+      await uploadFleetDocumentByAdmin(fleetId, "fitnessCert", { fitnessCert }, {
+        validTill: fitnessCertValidTill,
+      });
+      await uploadFleetDocumentByAdmin(fleetId, "insurance", { insurance }, {
+        policyNumber: insurancePolicyNumber,
+        validTill: insuranceValidTill,
+      });
+      await uploadFleetDocumentByAdmin(fleetId, "bluebook", { bluebook });
+      await uploadFleetDocumentByAdmin(fleetId, "routePermit", { routePermit }, {
+        validTill: routePermitValidTill,
+      });
+      if (!seatLayoutChoice) throw new Error("A seat layout is required.");
+      await persistFleetLayoutChoice({ fleetId, ownerId, busName, choice: seatLayoutChoice });
+      await deleteAdminFleetDraft(ownerId, brandId);
       resetForm();
       onClose();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || "Fleet seat layout could not be saved.");
+    } catch (error: unknown) {
+      toast.error(getFleetErrorMessage(error));
     }
   };
 
-  const handleClose = () => { resetForm(); onClose(); };
+  const handleClose = () => { onClose(); };
 
   const STEPS = [
     { id: 1, label: "Details",   icon: Bus },
@@ -230,20 +375,69 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
             </div>
             <div>
               <DialogTitle className="text-2xl font-black tracking-tighter text-primary">Register New Fleet</DialogTitle>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-60">Complete the 5-step onboarding process</p>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-60">{draftSaved ? "Draft saved on this device" : "Complete the 5-step onboarding process"}</p>
             </div>
           </div>
         </DialogHeader>
 
         {renderStepIndicator()}
 
-        <form onSubmit={step === 5 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (step === 5) {
+              void handleSubmit();
+            } else {
+              handleNext();
+            }
+          }}
+          className="flex-1 flex flex-col min-h-0 overflow-hidden"
+        >
           <ScrollArea className="flex-1 min-h-0 px-6 pt-4 pb-2">
             <div className="pr-2 space-y-6 pb-6">
 
               {/* STEP 1: Core Bus Details */}
               {step === 1 && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  {/* Operator Brand Dropdown */}
+                  <div className="space-y-2">
+                    <Label htmlFor="brandId" className="text-[10px] font-black uppercase tracking-widest ml-1 text-primary">
+                      Operator Brand *
+                    </Label>
+                    <p className="text-xs text-muted-foreground -mt-1 ml-1">This is the travel brand passengers will see.</p>
+                    {isLoadingBrands ? (
+                      <div className="flex h-11 items-center rounded-md border-2 border-muted bg-muted/20 px-3 text-xs text-muted-foreground font-bold">
+                        Loading operator brands...
+                      </div>
+                    ) : isBrandsError ? (
+                      <div className="flex items-center justify-between rounded-md border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive font-bold">
+                        <span>Failed to load operator brands.</span>
+                        <Button type="button" variant="outline" size="sm" onClick={() => refetchBrands()} className="h-7 text-xs">
+                          Retry
+                        </Button>
+                      </div>
+                    ) : ownerBrands.filter((b) => b.status === "ACTIVE").length === 0 ? (
+                      <div className="rounded-md border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-600 font-bold">
+                        No active operator brand is available for this owner. Approve a brand first.
+                      </div>
+                    ) : (
+                      <select
+                        id="brandId"
+                        className="flex h-11 w-full rounded-md border-2 border-muted bg-background px-3 py-2 text-sm font-bold focus-visible:outline-none"
+                        value={selectedBrandId}
+                        onChange={(e) => setSelectedBrandId(e.target.value)}
+                        required
+                      >
+                        <option value="">Select an active operator brand...</option>
+                        {ownerBrands.map((b) => (
+                          <option key={b._id} value={b._id} disabled={b.status !== "ACTIVE"}>
+                            {b.brandName} {b.isDefault ? "(Default)" : ""} {b.status !== "ACTIVE" ? `(${b.status})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="busName" className="text-[10px] font-black uppercase tracking-widest ml-1 text-primary">Bus Name</Label>
@@ -270,7 +464,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                     </div>
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">Reg. Year</Label>
-                      <Input type="number" placeholder="2022" className="h-11 font-bold bg-background border-2" value={registrationYear} onChange={(e) => setRegistrationYear(e.target.value)} required />
+                      <Input type="number" min="1980" max={new Date().getFullYear() + 1} placeholder="2022" className="h-11 font-bold bg-background border-2" value={registrationYear} onChange={(e) => setRegistrationYear(e.target.value)} required />
                     </div>
                   </div>
 
@@ -288,7 +482,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                       </p>
                     ) : (
                       <div className="flex flex-wrap gap-2 p-3 border-2 border-muted rounded-xl bg-muted/20 max-h-36 overflow-y-auto">
-                        {globalAmenities.map((a: any) => {
+                        {globalAmenities.map((a) => {
                           const isSelected = selectedAmenityIds.includes(a._id);
                           return (
                             <button
@@ -336,10 +530,11 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                       </div>
                     )}
                   </div>
-                  <SeatLayoutBuilder
-                    layout={seatLayout}
-                    onChange={setSeatLayout}
-                    onSave={setSeatLayout}
+                  <AdminFleetSeatLayoutStep
+                    value={seatLayoutChoice}
+                    onChange={setSeatLayoutChoice}
+                    busName={busName}
+                    vehicleCategory={vehicleType.toUpperCase() as "BUS" | "MINIBUS" | "HIACE"}
                   />
                 </div>
               )}
@@ -492,7 +687,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                         </button>
 
                         <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
-                          {corridorsList.map((corridor: any) => {
+                          {corridorsList.map((corridor) => {
                             const isSelected = selectedCorridorId === corridor._id;
                             return (
                               <button key={corridor._id} type="button" onClick={() => setSelectedCorridorId(corridor._id)}

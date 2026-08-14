@@ -88,7 +88,7 @@ const Settings = () => {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
                 <div>
                   <Label className="text-white/80">Session security</Label>
-                  <p className="text-sm text-white/50">30-minute token · 15-minute inactivity logout · no silent refresh</p>
+                  <p className="text-sm text-white/50">1-hour token · 1-hour inactivity logout · no silent refresh</p>
                 </div>
                 <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">ENFORCED</span>
               </div>

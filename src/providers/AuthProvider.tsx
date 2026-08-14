@@ -15,8 +15,8 @@ import { useNavigate } from "react-router-dom";
 const SESSION_TOKEN_KEY = "sumarg_admin_token";
 const SESSION_USER_KEY = "sumarg_admin_data";
 
-/** Inactivity logout threshold: 15 minutes */
-const INACTIVITY_MS = 15 * 60 * 1000;
+/** Inactivity logout threshold: one hour, aligned with the backend access token. */
+const INACTIVITY_MS = 60 * 60 * 1000;
 
 /** Events that count as "activity" */
 const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [

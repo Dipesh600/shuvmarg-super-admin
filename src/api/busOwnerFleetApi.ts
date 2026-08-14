@@ -27,8 +27,8 @@ export const fetchFleetDocumentAsBlob = async (
         const mimeType = response.headers.get("Content-Type") ?? "application/octet-stream";
         const blob = await response.blob();
         return { blobUrl: URL.createObjectURL(blob), mimeType };
-    } catch (error: any) {
-        return { error: error?.message || "Failed to load fleet document." };
+    } catch (error: unknown) {
+        return { error: error instanceof Error ? error.message : "Failed to load fleet document." };
     }
 };
 
@@ -42,6 +42,23 @@ export const createFleetForOwner = async (payload: FormData) => {
         console.error("Error creating fleet processing multipart data:", error);
         throw error;
     }
+};
+
+export const uploadFleetDocumentByAdmin = async (
+    fleetId: string,
+    slot: SecureFleetDocumentRequest["slot"],
+    files: Record<string, File>,
+    metadata: Record<string, string> = {},
+) => {
+    const payload = new FormData();
+    Object.entries(files).forEach(([field, file]) => payload.append(field, file));
+    Object.entries(metadata).forEach(([field, value]) => {
+        if (value) payload.append(field, value);
+    });
+    const { data } = await api.put(`/fleet/${fleetId}/documents/${slot}`, payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
 };
 
 export const getFleetsByOwner = async (ownerId: string, brandId?: string) => {
@@ -97,15 +114,18 @@ export const resubmitFleetById = async (id: string) => {
     }
 };
 
-export const reuploadFleetDocument = async (id: string, docSlot: string, file: File) => {
+export const reuploadFleetDocument = async (id: string, docSlot: string, files: File[]) => {
     try {
-        const fd = new FormData();
-        fd.append("docSlot", docSlot);
-        fd.append(docSlot, file);
-        const { data } = await api.patch(`/fleet/reupload-doc/${id}`, fd, {
-            headers: { "Content-Type": "multipart/form-data" },
+        const slot = docSlot as SecureFleetDocumentRequest["slot"];
+        if (slot === "fleetImages") {
+            if (files.length !== 4) throw new Error("Select four photos in this order: front, side, back, inside.");
+            return uploadFleetDocumentByAdmin(id, slot, {
+                imageFront: files[0], imageSide: files[1], imageBack: files[2], imageInside: files[3],
+            }, { changeReason: "Replacing rejected fleet photos" });
+        }
+        return uploadFleetDocumentByAdmin(id, slot, { [slot]: files[0] }, {
+            changeReason: "Replacing rejected fleet document",
         });
-        return data;
     } catch (error) {
         console.error("Error reuploading fleet document:", error);
         throw error;
