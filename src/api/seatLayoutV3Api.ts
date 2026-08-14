@@ -17,7 +17,13 @@ export const getFleetSeatLayoutAssignment = async (fleetId: string) => data<{
   fleet: { id: string; name: string; number: string };
   assignment: null | { activeRevision: { id: string; totalPlaces?: number }; template: { id: string; name?: string } };
 }>(await api.get(`/seat-layout-v3/fleets/${fleetId}/assignment`));
-export const createInitialFleetSeatLayout = async (fleetId: string, input: { name: string; layout: SeatLayoutV3 }) =>
+export const createInitialFleetSeatLayout = async (fleetId: string, input: { name: string; layout: SeatLayoutV3; sourceTemplateId?: string | null }) =>
   data<{ assignment: unknown; template: SeatLayoutTemplate; revision: SeatLayoutRevision }>(
     await api.post(`/seat-layout-v3/fleets/${fleetId}/initial-custom-layout`, input)
   );
+export const adoptSeatLayoutForOperator = async (templateId: string, input: { ownerId: string; name: string; templateCode: string }) =>
+  data<{ template: SeatLayoutTemplate; revision: SeatLayoutRevision }>(
+    await api.post(`/seat-layout-v3/templates/${templateId}/adopt`, input)
+  );
+export const assignInitialFleetSeatLayout = async (fleetId: string, revisionId: string) =>
+  data<unknown>(await api.post(`/seat-layout-v3/fleets/${fleetId}/assignment`, { revisionId }));

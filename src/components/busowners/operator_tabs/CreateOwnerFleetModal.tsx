@@ -18,10 +18,9 @@ import { api } from "@/api/axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import SeatLayoutBuilder from "@/features/seat-layout-v3/SeatLayoutBuilder";
-import { passengerPlaces } from "@/features/seat-layout-v3/layout";
-import type { SeatLayoutV3 } from "@/features/seat-layout-v3/types";
-import { createInitialFleetSeatLayout } from "@/api/seatLayoutV3Api";
+import AdminFleetSeatLayoutStep from "@/features/admin-fleet-seat-layout/AdminFleetSeatLayoutStep";
+import { persistFleetLayoutChoice } from "@/features/admin-fleet-seat-layout/persistFleetLayoutChoice";
+import type { AdminFleetLayoutChoice } from "@/features/admin-fleet-seat-layout/types";
 
 interface CreateOwnerFleetModalProps {
   isOpen: boolean;
@@ -58,8 +57,8 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   const [selectedAmenityIds, setSelectedAmenityIds] = useState<string[]>([]);
 
   // Step 2: Seat Map
-  const [seatLayout, setSeatLayout] = useState<SeatLayoutV3 | null>(null);
-  const totalSeats = seatLayout ? passengerPlaces(seatLayout).length : 0;
+  const [seatLayoutChoice, setSeatLayoutChoice] = useState<AdminFleetLayoutChoice | null>(null);
+  const totalSeats = seatLayoutChoice?.totalPlaces || 0;
   const [createdFleetId, setCreatedFleetId] = useState<string | null>(null);
 
   // Step 3: Images
@@ -88,7 +87,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   const resetForm = () => {
     setStep(1);
     setBusName(""); setBusNumber(""); setBusType("DELUXE"); setVehicleType("bus"); setRegistrationYear(""); setSelectedAmenityIds([]);
-    setSeatLayout(null); setCreatedFleetId(null);
+    setSeatLayoutChoice(null); setCreatedFleetId(null);
     setImageFront(null); setImageBack(null); setImageSide(null); setImageInside(null);
     setFitnessCert(null); setFitnessCertValidTill("");
     setInsurance(null); setInsurancePolicyNumber(""); setInsuranceValidTill("");
@@ -108,7 +107,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
       }
     }
     if (step === 2) {
-      if (!seatLayout || totalSeats === 0) {
+      if (!seatLayoutChoice || totalSeats === 0) {
         toast.error("Please configure the seat map before continuing.");
         return;
       }
@@ -179,11 +178,8 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
         if (!fleetId) throw new Error("Fleet was created but its identifier was not returned.");
         setCreatedFleetId(fleetId);
       }
-      if (!seatLayout) throw new Error("A seat layout is required.");
-      await createInitialFleetSeatLayout(fleetId, {
-        name: `${busName.trim()} seat layout`,
-        layout: seatLayout,
-      });
+      if (!seatLayoutChoice) throw new Error("A seat layout is required.");
+      await persistFleetLayoutChoice({ fleetId, ownerId, busName, choice: seatLayoutChoice });
       resetForm();
       onClose();
     } catch (error: any) {
@@ -336,10 +332,11 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                       </div>
                     )}
                   </div>
-                  <SeatLayoutBuilder
-                    layout={seatLayout}
-                    onChange={setSeatLayout}
-                    onSave={setSeatLayout}
+                  <AdminFleetSeatLayoutStep
+                    value={seatLayoutChoice}
+                    onChange={setSeatLayoutChoice}
+                    busName={busName}
+                    vehicleCategory={vehicleType.toUpperCase() as "BUS" | "MINIBUS" | "HIACE"}
                   />
                 </div>
               )}
