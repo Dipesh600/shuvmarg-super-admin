@@ -17,6 +17,7 @@ export interface AdminFleetDraftFiles {
 
 export interface AdminFleetDraft {
   step: number;
+  brandId: string;
   busName: string;
   busNumber: string;
   busType: string;
@@ -79,7 +80,8 @@ async function readFiles(key: string): Promise<AdminFleetDraftFiles | null> {
 
 export function hasMeaningfulAdminFleetDraft(draft: AdminFleetDraft) {
   return Boolean(
-    draft.busName.trim()
+    draft.brandId.trim()
+    || draft.busName.trim()
     || draft.busNumber.trim()
     || draft.registrationYear.trim()
     || draft.selectedAmenityIds.length
@@ -115,6 +117,7 @@ export async function loadAdminFleetDraft(ownerId: string, brandId?: string): Pr
   const files = await readFiles(key);
   return {
     ...parsed.draft,
+    brandId: parsed.draft.brandId || "",
     files: files || {
       imageFront: null, imageBack: null, imageSide: null, imageInside: null,
       fitnessCert: null, insurance: null, bluebook: null, routePermit: null,

@@ -75,8 +75,8 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
 
   // Re-upload mutation for a single document slot
   const reuploadMutation = useMutation({
-    mutationFn: ({ slot, file }: { slot: string; file: File }) =>
-      reuploadFleetDocument(id!, slot, file),
+    mutationFn: ({ slot, files }: { slot: string; files: File[] }) =>
+      reuploadFleetDocument(id!, slot, files),
     onSuccess: (_, { slot }) => {
       toast.success(`${slot} replaced successfully.`);
       qc.invalidateQueries({ queryKey: ["fleetDetail", id] });
@@ -85,8 +85,8 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
     onError: (err: any) => toast.error(err?.response?.data?.message || "Upload failed."),
   });
 
-  const handleFileSelect = (slot: string, file: File) => {
-    reuploadMutation.mutate({ slot, file });
+  const handleFileSelect = (slot: string, files: File[]) => {
+    reuploadMutation.mutate({ slot, files });
   };
 
   // Check if all rejected docs have been fixed
@@ -227,12 +227,13 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                             <>
                               <input
                                 type="file"
+                                multiple={slot.key === "fleetImages"}
                                 accept="image/*,application/pdf"
                                 className="hidden"
                                 ref={(el) => { fileInputRefs.current[slot.key] = el; }}
                                 onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleFileSelect(slot.key, file);
+                                  const files = Array.from(e.target.files || []);
+                                  if (files.length) handleFileSelect(slot.key, files);
                                   e.target.value = "";
                                 }}
                               />
