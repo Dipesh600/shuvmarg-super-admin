@@ -101,23 +101,23 @@ export default function AdminFleetSeatLayoutStep({ value, onChange, busName, veh
     onCancel={() => setEditorLayout(undefined)}
   />;
 
-  if (busy && !templates.length) return <div className="flex min-h-52 items-center justify-center text-sm text-[#746E69]"><Loader2 className="mr-2 size-4 animate-spin" />Loading platform layouts…</div>;
+  if (busy && !templates.length) return <div className="flex min-h-52 items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-4 animate-spin" />Loading platform layouts…</div>;
   if (error && !templates.length) return <LoadError error={error} reload={load} />;
 
   return <div className="space-y-5">
     {error && <div className="rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">{error}</div>}
-    {value?.customized && <div className="flex flex-col gap-3 rounded-2xl border border-[#F0CACA] bg-[#FFF8F7] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-3"><div className="flex size-9 items-center justify-center rounded-xl border border-[#F8C9C7] bg-[#FFF1EE] text-[#7A1D1B]"><BusFront className="size-4" /></div><div><p className="text-xs font-bold text-[#191512]">{value.templateName} in progress</p><p className="text-[11px] text-[#746E69]">{value.totalPlaces} places · changes are retained in this registration</p></div></div>
-      <button type="button" onClick={customize} className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[#7A1D1B] px-3.5 text-xs font-bold text-white">Continue editing<ArrowRight className="size-3.5" /></button>
+    {value?.customized && <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3"><div className="flex size-9 items-center justify-center rounded-xl border border-border bg-accent text-[#D3D925]"><BusFront className="size-4" /></div><div><p className="text-xs font-bold text-foreground">{value.templateName} in progress</p><p className="text-[11px] text-muted-foreground">{value.totalPlaces} places · changes are retained in this registration</p></div></div>
+      <button type="button" onClick={customize} className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[#D3D925] px-3.5 text-xs font-bold text-black">Continue editing<ArrowRight className="size-3.5" /></button>
     </div>}
     <SeatTemplatePicker templates={templates} selectedId={value?.templateId} busy={busy} onChoose={(template) => void choose(template)} onScratch={() => { setSourceTemplateId(null); setGuidedScratch(true); }} />
-    {value && <div className="rounded-[24px] border border-[#E8E1DB] bg-[#FAF8F5] p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><p className="font-black text-[#191512]">{value.templateName}</p><p className="mt-1 text-xs text-[#746E69]">{value.totalPlaces} places{value.customized ? " · custom for this bus" : " · published platform layout"}</p></div><button type="button" onClick={customize} className="inline-flex h-9 items-center rounded-xl border border-[#7A1D1B] px-3 text-xs font-black text-[#7A1D1B]"><Pencil className="mr-2 size-3.5" />Customize layout</button></div>
+    {value && <div className="rounded-[24px] border border-border bg-muted p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><p className="font-black text-foreground">{value.templateName}</p><p className="mt-1 text-xs text-muted-foreground">{value.totalPlaces} places{value.customized ? " · custom for this bus" : " · published platform layout"}</p></div><button type="button" onClick={customize} className="inline-flex h-9 items-center rounded-xl border border-[#D3D925] px-3 text-xs font-black text-[#D3D925]"><Pencil className="mr-2 size-3.5" />Customize layout</button></div>
       <SeatLayoutCanvas layout={value.layout} tool="SELECT" selectedId={null} onSelect={() => undefined} onChange={() => undefined} />
     </div>}
   </div>;
 }
 
 function LoadError({ error, reload }: { error: string; reload: () => Promise<void> }) {
-  return <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-[#DCCFC8] bg-[#FFFCFA] p-8 text-center"><Rows3 className="size-7 text-[#7A1D1B]" /><p className="mt-3 text-sm font-black text-[#211D1A]">Seat layouts couldn’t load</p><p className="mt-1 max-w-sm text-xs leading-5 text-[#746E69]">{error}</p><button type="button" onClick={() => void reload()} className="mt-4 inline-flex h-10 items-center rounded-xl border border-[#DCCFC8] px-4 text-xs font-black text-[#7A1D1B]"><RefreshCw className="mr-2 size-3.5" />Try again</button></div>;
+  return <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-8 text-center"><Rows3 className="size-7 text-[#D3D925]" /><p className="mt-3 text-sm font-black text-foreground">Seat layouts couldn’t load</p><p className="mt-1 max-w-sm text-xs leading-5 text-muted-foreground">{error}</p><button type="button" onClick={() => void reload()} className="mt-4 inline-flex h-10 items-center rounded-xl border border-border px-4 text-xs font-black text-[#D3D925]"><RefreshCw className="mr-2 size-3.5" />Try again</button></div>;
 }

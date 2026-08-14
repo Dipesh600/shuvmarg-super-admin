@@ -52,7 +52,7 @@ function PlaceContent({ element, isSelected }: { element: LayoutElement; isSelec
         <div
           className={cn(
             "h-1.5 w-7 rounded-full transition-colors",
-            isSelected ? "bg-white/40" : "bg-[#D6CEC5]"
+            isSelected ? "bg-black/40" : "bg-border"
           )}
         />
         {/* Berth Label */}
@@ -61,7 +61,7 @@ function PlaceContent({ element, isSelected }: { element: LayoutElement; isSelec
         <div
           className={cn(
             "h-1 w-4 rounded-full transition-colors",
-            isSelected ? "bg-white/20" : "bg-[#EAE4DC]"
+            isSelected ? "bg-black/20" : "bg-border"
           )}
         />
       </div>
@@ -70,8 +70,8 @@ function PlaceContent({ element, isSelected }: { element: LayoutElement; isSelec
 
   if (element.kind === "DOOR") {
     return (
-      <div className="flex flex-col items-center gap-1 text-[#78716C]">
-        <EntryDoorIcon className="size-4 text-[#7A1D1B]" />
+      <div className="flex flex-col items-center gap-1 text-muted-foreground">
+        <EntryDoorIcon className="size-4 text-[#D3D925]" />
         <span className="text-[10px] font-bold uppercase tracking-wider">Entry</span>
       </div>
     );
@@ -79,8 +79,8 @@ function PlaceContent({ element, isSelected }: { element: LayoutElement; isSelec
 
   if (element.kind === "DRIVER") {
     return (
-      <div className="flex flex-col items-center gap-1 text-[#78716C]">
-        <SteeringWheelIcon className="size-4 text-[#7A1D1B]" />
+      <div className="flex flex-col items-center gap-1 text-muted-foreground">
+        <SteeringWheelIcon className="size-4 text-[#D3D925]" />
         <span className="text-[10px] font-bold uppercase tracking-wider">Driver</span>
       </div>
     );
@@ -94,7 +94,7 @@ function PlaceContent({ element, isSelected }: { element: LayoutElement; isSelec
       <div
         className={cn(
           "h-1 w-5 rounded-full transition-colors",
-          isSelected ? "bg-white/40" : "bg-[#D6CEC5]"
+          isSelected ? "bg-black/40" : "bg-border"
         )}
       />
     </div>
@@ -104,26 +104,26 @@ function PlaceContent({ element, isSelected }: { element: LayoutElement; isSelec
 function FrontCabin({ section }: { section: LayoutSection }) {
   const upper = section.role.startsWith("UPPER");
   return (
-    <div className="flex items-center justify-between rounded-t-[24px] border-b border-[#EAE4DC] bg-[#FAF8F5] px-4 sm:px-5 py-3.5">
+    <div className="flex items-center justify-between rounded-t-[24px] border-b border-border bg-muted px-4 sm:px-5 py-3.5">
       {!upper ? (
         <>
-          <div className="flex items-center gap-2 text-xs font-bold text-[#292524]">
-            <div className="flex size-7 items-center justify-center rounded-lg border border-[#E5DFD9] bg-white shadow-xs">
-              <EntryDoorIcon className="size-4 text-[#7A1D1B]" />
+          <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+            <div className="flex size-7 items-center justify-center rounded-lg border border-border bg-card shadow-xs">
+              <EntryDoorIcon className="size-4 text-[#D3D925]" />
             </div>
             <span>Entry</span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-bold text-[#292524]">
+          <div className="flex items-center gap-2 text-xs font-bold text-foreground">
             <span>Driver</span>
-            <div className="flex size-7 items-center justify-center rounded-lg border border-[#E5DFD9] bg-white shadow-xs">
-              <SteeringWheelIcon className="size-4 text-[#7A1D1B]" />
+            <div className="flex size-7 items-center justify-center rounded-lg border border-border bg-card shadow-xs">
+              <SteeringWheelIcon className="size-4 text-[#D3D925]" />
             </div>
           </div>
         </>
       ) : (
         <div className="flex w-full items-center justify-center py-0.5">
-          <span className="text-xs font-bold tracking-wide text-[#78716C]">Upper Deck</span>
+          <span className="text-xs font-bold tracking-wide text-muted-foreground">Upper Deck</span>
         </div>
       )}
     </div>
@@ -282,16 +282,16 @@ function Deck({
     <div className="flex flex-col items-center">
       {/* Deck Title and Counter */}
       <div className="mb-2.5 flex w-full max-w-[340px] sm:max-w-[380px] items-center justify-between px-1">
-        <span className="text-xs font-semibold text-[#44403C]">{section.name}</span>
-        <span className="text-xs text-[#78716C]">{places.length} places</span>
+        <span className="text-xs font-semibold text-foreground">{section.name}</span>
+        <span className="text-xs text-muted-foreground">{places.length} places</span>
       </div>
 
       {/* Bus Shell Container */}
-      <div className="w-full max-w-[340px] sm:max-w-[380px] rounded-[26px] border border-[#E5DFD9] bg-white shadow-sm overflow-hidden select-none">
+      <div className="w-full max-w-[340px] sm:max-w-[380px] rounded-[26px] border border-border bg-card shadow-sm overflow-hidden select-none">
         <FrontCabin section={section} />
 
         {/* Interior Floor */}
-        <div className="p-3.5 sm:p-5 bg-[#FAF8F5]">
+        <div className="p-3.5 sm:p-5 bg-muted">
           <div
             ref={gridRef}
             onPointerMove={(event) => {
@@ -357,7 +357,7 @@ function Deck({
                   isEditable &&
                     tool !== "SELECT" &&
                     tool !== "ERASE" &&
-                    "hover:border-dashed hover:border-[#D6CEC5] hover:bg-[#F2EDE5]/50 cursor-pointer",
+                    "hover:border-dashed hover:border-border hover:bg-muted/50 cursor-pointer",
                   !isEditable && "pointer-events-none"
                 )}
                 style={{
@@ -374,7 +374,7 @@ function Deck({
               canPlacePassenger(layout, section.sectionId, hoverCell.x, hoverCell.y, tool) && (
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none z-20 rounded-xl border-2 border-dashed border-[#7A1D1B] bg-[#7A1D1B]/5 text-[#7A1D1B] flex items-center justify-center text-xs font-bold transition-all"
+                  className="pointer-events-none z-20 rounded-xl border-2 border-dashed border-[#D3D925] bg-[#D3D925]/5 text-[#D3D925] flex items-center justify-center text-xs font-bold transition-all"
                   style={{
                     gridColumn: `${hoverCell.x + 1} / span 1`,
                     gridRow: `${hoverCell.y + 1} / span ${tool === "BERTH" ? 2 : 1}`,
@@ -391,7 +391,7 @@ function Deck({
                 className={cn(
                   "pointer-events-none z-30 flex items-center justify-center rounded-xl border-2 border-dashed text-xs font-bold transition-all",
                   activeDrag.isValid
-                    ? "border-[#7A1D1B] bg-[#7A1D1B]/10 text-[#7A1D1B]"
+                    ? "border-[#D3D925] bg-[#D3D925]/10 text-[#D3D925]"
                     : "border-[#DC2626] bg-[#DC2626]/10 text-[#DC2626]"
                 )}
                 style={{
@@ -413,7 +413,7 @@ function Deck({
                 return (
                   <div
                     key={element.elementId}
-                    className="z-0 rounded-xl border-2 border-dashed border-[#D6CEC5] bg-transparent opacity-30 pointer-events-none"
+                    className="z-0 rounded-xl border-2 border-dashed border-border bg-transparent opacity-30 pointer-events-none"
                     style={{
                       gridColumn: `${element.position.x + 1} / span ${element.size.width}`,
                       gridRow: `${element.position.y + 1} / span ${element.size.height}`,
@@ -441,12 +441,12 @@ function Deck({
                     "z-10 flex min-h-0 select-none items-center justify-center rounded-xl border transition-all duration-100",
                     !isSelected &&
                       !isCurrentlyDragging &&
-                      "bg-white border-[#E5DFD9] text-[#1C1917] hover:border-[#C4B9AD] shadow-[0_1px_2px_rgba(0,0,0,0.04)]",
+                      "bg-card border-border text-foreground hover:border-border shadow-[0_1px_2px_rgba(0,0,0,0.04)]",
                     isSelected &&
                       !isCurrentlyDragging &&
-                      "bg-[#7A1D1B] border-[#7A1D1B] text-white shadow-sm ring-2 ring-[#7A1D1B] ring-offset-2",
+                      "bg-[#D3D925] border-[#D3D925] text-black shadow-sm ring-2 ring-[#D3D925] ring-offset-2 ring-offset-background",
                     isCurrentlyDragging &&
-                      "opacity-25 border-2 border-dashed border-[#D6CEC5] bg-transparent text-transparent",
+                      "opacity-25 border-2 border-dashed border-border bg-transparent text-transparent",
                     isEditable &&
                       tool === "SELECT" &&
                       (element.kind === "SEAT" || element.kind === "BERTH") &&
@@ -466,8 +466,8 @@ function Deck({
         </div>
 
         {/* Subtle Bus Rear Bumper */}
-        <div className="h-2.5 bg-[#FAF8F5] border-t border-[#EAE4DC] flex items-center justify-center">
-          <div className="h-0.5 w-10 rounded-full bg-[#E5DFD9]" />
+        <div className="h-2.5 bg-muted border-t border-border flex items-center justify-center">
+          <div className="h-0.5 w-10 rounded-full bg-border" />
         </div>
       </div>
 
@@ -476,7 +476,7 @@ function Deck({
         <div
           className={cn(
             "pointer-events-none fixed z-50 flex select-none items-center justify-center rounded-xl border text-xs font-bold shadow-2xl transition-transform",
-            "bg-[#7A1D1B] border-[#7A1D1B] text-white",
+            "bg-[#D3D925] border-[#D3D925] text-black",
             activeDrag.isValid ? "scale-105" : "scale-95 opacity-80 bg-stone-800 border-stone-800"
           )}
           style={{
