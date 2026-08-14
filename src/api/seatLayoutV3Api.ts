@@ -4,7 +4,7 @@ import type { SeatLayoutRevision, SeatLayoutTemplate, SeatLayoutV3, TemplateDeta
 const data = <T>(response: { data: { data: T } }) => response.data.data;
 export const listSeatLayoutTemplates = async () => data<SeatLayoutTemplate[]>(await api.get("/seat-layout-v3/templates"));
 export const getSeatLayoutTemplate = async (id: string) => data<TemplateDetail>(await api.get(`/seat-layout-v3/templates/${id}`));
-export const createSeatLayoutTemplate = async (input: { templateCode: string; name: string; vehicleCategory: VehicleCategory }) =>
+export const createSeatLayoutTemplate = async (input: { name: string; vehicleCategory: VehicleCategory }) =>
   data<SeatLayoutTemplate>(await api.post("/seat-layout-v3/templates", input));
 export const createSeatLayoutRevision = async (templateId: string, layout: SeatLayoutV3, changeSummary: string) =>
   data<SeatLayoutRevision>(await api.post(`/seat-layout-v3/templates/${templateId}/revisions`, { layout, changeSummary }));
