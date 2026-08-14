@@ -411,7 +411,7 @@ export default function Financial() {
           {chart.length === 0 ? (
             <div className="flex items-center justify-center h-[240px] text-sm text-white/60">No data</div>
           ) : (
-            <ResponsiveContainer width="100%" height={240}>
+            <ResponsiveContainer width="100%" height={240} minWidth={0}>
               <ComposedChart data={chart} margin={{ top: 0, right: 12, bottom: 0, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }} axisLine={false} tickLine={false} />

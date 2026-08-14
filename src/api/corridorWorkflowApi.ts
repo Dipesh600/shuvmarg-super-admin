@@ -54,9 +54,28 @@ export interface RouteVariant {
   status: VariantStatus;
   distanceKm?: number | null;
   durationMinutes?: number | null;
+  routeFamilyId?: string | null;
+  returnVariantId?: string | { _id: string; code: string; name?: string | null; status: VariantStatus } | null;
+  revisionOfVariantId?: string | null;
+  revisionNumber?: number;
   routeStopCount?: number;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface VariantRouteStop {
+  _id: string;
+  sequence: number;
+  isMajor: boolean;
+  distanceFromOriginKm?: number | null;
+  durationFromOriginMins?: number | null;
+  stopId: CorridorStop;
+}
+
+export interface VariantDetails {
+  variant: RouteVariant;
+  stops: VariantRouteStop[];
+  references: Record<string, number>;
 }
 
 export interface RouteOption {
@@ -122,6 +141,7 @@ export interface VariantStopCandidate {
     suggestedParentStop?: CorridorStop | null;
     coverageZone?: "ORIGIN_40KM" | "MIDDLE" | "DESTINATION_40KM";
     distanceToRouteMeters?: number | null;
+    evidenceScore?: number | null;
   };
   displayName: string;
   formattedAddress?: string | null;
@@ -148,6 +168,10 @@ export interface VariantDraft {
   corridorId: string;
   code: string;
   direction: VariantDirection;
+  routeFamilyId?: string | null;
+  companionVariantId?: string | null;
+  revisionOfVariantId?: string | null;
+  revisionNumber?: number;
   status: "DRAFT" | "ROUTE_SELECTED" | "STOP_CANDIDATES_READY" | "READY_TO_COMMIT" | "COMMITTED";
   originTerminal?: VariantDraftTerminal;
   destinationTerminal?: VariantDraftTerminal;
@@ -177,6 +201,7 @@ export interface CreateCorridorInput {
 
 export interface CreateVariantDraftInput {
   direction: VariantDirection;
+  createCompanion?: boolean;
   originTerminalStopId?: string;
   destinationTerminalStopId?: string;
 }
@@ -229,6 +254,16 @@ export async function removeRouteCorridor(corridorId: string): Promise<RegistryR
 
 export async function listCorridorVariants(corridorId: string): Promise<RegistryResponse<RouteVariant[]>> {
   const { data } = await api.get(`/registry/corridors/${corridorId}/variants`);
+  return data;
+}
+
+export async function getRouteVariantDetails(variantId: string): Promise<RegistryResponse<VariantDetails>> {
+  const { data } = await api.get(`/registry/variants/${variantId}`);
+  return data;
+}
+
+export async function createRouteVariantRevision(variantId: string): Promise<RegistryResponse<VariantDetails>> {
+  const { data } = await api.post(`/registry/variants/${variantId}/revisions`, { includeCompanion: true });
   return data;
 }
 
@@ -302,6 +337,11 @@ export async function updateVariantDraftDetails(
 
 export async function discoverVariantDraftStopCandidates(draftId: string): Promise<RegistryResponse<VariantDraft>> {
   const { data } = await api.post(`/registry/variant-drafts/${draftId}/stop-candidates`);
+  return data;
+}
+
+export async function addExistingVariantDraftStop(draftId: string, stopId: string): Promise<RegistryResponse<VariantDraft>> {
+  const { data } = await api.post(`/registry/variant-drafts/${draftId}/stop-candidates/manual`, { stopId });
   return data;
 }
 

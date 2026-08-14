@@ -39,6 +39,7 @@ import {
   Shield,
   Sliders,
   Settings,
+  Armchair,
   LogOut,
 } from "lucide-react";
 
@@ -92,6 +93,7 @@ const GROUPS = [
     items: [
       { title: "Analytics",         url: "/admin/analytics",     icon: BarChart3 },
       { title: "Platform Registry", url: "/admin/registry",      icon: Database },
+      { title: "Seat Layouts",      url: "/admin/seat-layouts",  icon: Armchair },
       { title: "Amenities Catalog", url: "/admin/amenities",     icon: Sparkles },
       { title: "Reports",           url: "/admin/reports",       icon: FileText },
       { title: "Security",          url: "/admin/security",      icon: Shield },

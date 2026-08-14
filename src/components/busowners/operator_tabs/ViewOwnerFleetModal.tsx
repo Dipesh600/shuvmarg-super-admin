@@ -11,12 +11,12 @@ import {
 } from "lucide-react";
 import { useFetchFleetDetail } from "@/hooks/useOwnerFleets";
 import { Separator } from "@/components/ui/separator";
-import { MiniSeatMapPreview } from "./MiniSeatMapPreview";
 import { resubmitFleetById, reuploadFleetDocument } from "@/api/busOwnerFleetApi";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import DocumentViewerModal from "@/components/DocumentViewerModal";
+import { getFleetSeatLayoutAssignment } from "@/api/seatLayoutV3Api";
 
 interface ViewOwnerFleetModalProps {
   id: string | null;
@@ -41,6 +41,11 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
   const { data: response, isLoading, isError, refetch } = useFetchFleetDetail(id || "");
   const data = response?.data;
   const approvalStatus = data?.approvalStatus ?? "PENDING";
+  const { data: seatAssignment } = useQuery({
+    queryKey: ["seat-layout-v3", "fleet-assignment", id],
+    queryFn: () => getFleetSeatLayoutAssignment(id!),
+    enabled: isOpen && !!id,
+  });
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // ── Secure document viewer state ─────────────────────────────────────────
@@ -284,15 +289,13 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                 </div>
               </div>
 
-              {/* Seat Map Visual */}
-              {data.seatConfig && (
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1 flex items-center gap-1"><LayoutGrid className="h-3 w-3" /> Seat Configuration</p>
-                  <div className="border rounded-xl p-4 bg-muted/10">
-                    <MiniSeatMapPreview config={data.seatConfig} size="sm" showLabels />
-                  </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1 flex items-center gap-1"><LayoutGrid className="h-3 w-3" /> Seat Configuration</p>
+                <div className="rounded-xl border bg-muted/10 p-4">
+                  <p className="font-bold">{seatAssignment?.assignment ? "V3 canonical layout assigned" : "No V3 layout assigned"}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{seatAssignment?.assignment?.activeRevision?.totalPlaces ?? data.totalSeats ?? 0} passenger places</p>
                 </div>
-              )}
+              </div>
 
               {/* Specifications */}
               <div className="space-y-3">

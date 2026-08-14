@@ -111,7 +111,6 @@ export interface TripListResponse {
 export const createTripForOwner = async (payload: {
     busId: string;
     routeId: string;
-    seatTemplateId: string;
     tripDate: string;
     departureTime: string;
     arrivalTime: string;
@@ -361,4 +360,3 @@ export const getRoutePerformance = async (params?: {
     const { data } = await api.get("/trips/route-performance", { params });
     return data.data;
 };
-
