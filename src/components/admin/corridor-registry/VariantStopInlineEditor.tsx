@@ -3,10 +3,13 @@ import {
   ArrowDown,
   ArrowUp,
   CheckCircle2,
+  Clock,
   GripVertical,
   Loader2,
   MapPin,
+  Pencil,
   Plus,
+  Route,
   Search,
   Trash2,
   X,
@@ -21,8 +24,8 @@ interface EditableStop {
   district?: string | null;
   province?: string | null;
   isTerminal: boolean;
-  distanceFromOriginKm: number | null;
-  durationFromOriginMins: number | null;
+  distanceFromOriginKm: number;
+  durationFromOriginMins: number;
   isMajor: boolean;
   isInserted?: boolean;
 }
@@ -35,6 +38,80 @@ interface VariantStopInlineEditorProps {
   onDiscard: () => void;
 }
 
+/**
+ * Ensures distances and durations are strictly non-decreasing along the stop sequence.
+ * Linearly interpolates values for newly inserted or reordered stops between known anchor points.
+ */
+function recalculateMonotonicTimings(rawStops: EditableStop[]): EditableStop[] {
+  if (rawStops.length === 0) return rawStops;
+  const stops = rawStops.map((s) => ({ ...s }));
+  const n = stops.length;
+
+  // Origin is always 0 km and 0 mins
+  stops[0].distanceFromOriginKm = 0;
+  stops[0].durationFromOriginMins = 0;
+
+  if (n === 1) return stops;
+
+  // Ensure destination terminal has reasonable anchor values
+  const last = stops[n - 1];
+  if (!last.durationFromOriginMins || last.durationFromOriginMins <= 0) {
+    const maxDur = stops.reduce((max, s) => Math.max(max, s.durationFromOriginMins || 0), 0);
+    last.durationFromOriginMins = maxDur > 0 ? maxDur + 15 : (n - 1) * 35;
+  }
+  if (!last.distanceFromOriginKm || last.distanceFromOriginKm <= 0) {
+    const maxDist = stops.reduce((max, s) => Math.max(max, s.distanceFromOriginKm || 0), 0);
+    last.distanceFromOriginKm = maxDist > 0 ? Math.round((maxDist + 10) * 10) / 10 : (n - 1) * 25;
+  }
+
+  // 1. Interpolate Durations (strictly non-decreasing)
+  let anchorIdx = 0;
+  while (anchorIdx < n - 1) {
+    let nextAnchorIdx = n - 1;
+    for (let j = anchorIdx + 1; j < n - 1; j++) {
+      const val = stops[j].durationFromOriginMins;
+      const targetVal = stops[n - 1].durationFromOriginMins;
+      // An anchor must be strictly greater than previous anchor and less than or equal to terminal
+      if (val > stops[anchorIdx].durationFromOriginMins && val <= targetVal && !stops[j].isInserted) {
+        nextAnchorIdx = j;
+        break;
+      }
+    }
+    const startDur = stops[anchorIdx].durationFromOriginMins;
+    const endDur = stops[nextAnchorIdx].durationFromOriginMins;
+    const gap = nextAnchorIdx - anchorIdx;
+    for (let k = anchorIdx + 1; k < nextAnchorIdx; k++) {
+      const fraction = (k - anchorIdx) / gap;
+      stops[k].durationFromOriginMins = Math.round(startDur + fraction * (endDur - startDur));
+    }
+    anchorIdx = nextAnchorIdx;
+  }
+
+  // 2. Interpolate Distances (strictly non-decreasing)
+  anchorIdx = 0;
+  while (anchorIdx < n - 1) {
+    let nextAnchorIdx = n - 1;
+    for (let j = anchorIdx + 1; j < n - 1; j++) {
+      const val = stops[j].distanceFromOriginKm;
+      const targetVal = stops[n - 1].distanceFromOriginKm;
+      if (val > stops[anchorIdx].distanceFromOriginKm && val <= targetVal && !stops[j].isInserted) {
+        nextAnchorIdx = j;
+        break;
+      }
+    }
+    const startDist = stops[anchorIdx].distanceFromOriginKm;
+    const endDist = stops[nextAnchorIdx].distanceFromOriginKm;
+    const gap = nextAnchorIdx - anchorIdx;
+    for (let k = anchorIdx + 1; k < nextAnchorIdx; k++) {
+      const fraction = (k - anchorIdx) / gap;
+      stops[k].distanceFromOriginKm = Math.round((startDist + fraction * (endDist - startDist)) * 10) / 10;
+    }
+    anchorIdx = nextAnchorIdx;
+  }
+
+  return stops;
+}
+
 function stopToEditable(row: VariantRouteStop, isTerminal: boolean): EditableStop {
   return {
     stopId: row.stopId._id,
@@ -43,8 +120,8 @@ function stopToEditable(row: VariantRouteStop, isTerminal: boolean): EditableSto
     district: row.stopId.district,
     province: row.stopId.province,
     isTerminal,
-    distanceFromOriginKm: row.distanceFromOriginKm ?? null,
-    durationFromOriginMins: row.durationFromOriginMins ?? null,
+    distanceFromOriginKm: row.distanceFromOriginKm ?? 0,
+    durationFromOriginMins: row.durationFromOriginMins ?? 0,
     isMajor: row.isMajor,
     isInserted: false,
   };
@@ -72,13 +149,19 @@ export function VariantStopInlineEditor({
   const originId = initialStops[0]?.stopId._id;
   const destinationId = initialStops.at(-1)?.stopId._id;
 
-  const [stops, setStops] = useState<EditableStop[]>(() =>
-    initialStops.map((row) =>
+  const [stops, setStops] = useState<EditableStop[]>(() => {
+    const base = initialStops.map((row) =>
       stopToEditable(row, row.stopId._id === originId || row.stopId._id === destinationId)
-    )
-  );
+    );
+    return recalculateMonotonicTimings(base);
+  });
 
-  // insertAtIndex = the index AFTER which we're inserting. null = closed.
+  // editingTimingIdx = index of stop currently editing km/mins manually
+  const [editingTimingIdx, setEditingTimingIdx] = useState<number | null>(null);
+  const [manualDist, setManualDist] = useState("");
+  const [manualDur, setManualDur] = useState("");
+
+  // insertAtIndex = index AFTER which we're inserting. null = closed.
   const [insertAtIndex, setInsertAtIndex] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -97,7 +180,7 @@ export function VariantStopInlineEditor({
             s.code.toLowerCase().includes(q) ||
             (s.district || "").toLowerCase().includes(q))
       )
-      .slice(0, 12);
+      .slice(0, 15);
   }, [allRegistryStops, existingStopIds, searchQuery]);
 
   const changes = useMemo(() => diff(initialStops, stops), [initialStops, stops]);
@@ -109,12 +192,13 @@ export function VariantStopInlineEditor({
     if (target < 0 || target >= next.length) return;
     if (next[target].isTerminal || next[index].isTerminal) return;
     [next[index], next[target]] = [next[target], next[index]];
-    setStops(next);
+    setStops(recalculateMonotonicTimings(next));
   }
 
   function remove(index: number) {
     if (stops[index].isTerminal) return;
-    setStops(stops.filter((_, i) => i !== index));
+    const remaining = stops.filter((_, i) => i !== index);
+    setStops(recalculateMonotonicTimings(remaining));
   }
 
   function openInsert(afterIndex: number) {
@@ -137,19 +221,42 @@ export function VariantStopInlineEditor({
       district: registryStop.district,
       province: registryStop.province,
       isTerminal: false,
-      distanceFromOriginKm: null,
-      durationFromOriginMins: null,
+      distanceFromOriginKm: 0,
+      durationFromOriginMins: 0,
       isMajor: true,
       isInserted: true,
     };
     const next = [...stops];
     next.splice(insertAtIndex + 1, 0, newStop);
-    setStops(next);
+    setStops(recalculateMonotonicTimings(next));
     closeInsert();
   }
 
+  function startEditTiming(index: number) {
+    setEditingTimingIdx(index);
+    setManualDist(String(stops[index].distanceFromOriginKm));
+    setManualDur(String(stops[index].durationFromOriginMins));
+  }
+
+  function saveManualTiming(index: number) {
+    const distNum = parseFloat(manualDist);
+    const durNum = parseInt(manualDur, 10);
+    if (!isNaN(distNum) && !isNaN(durNum) && distNum >= 0 && durNum >= 0) {
+      const next = [...stops];
+      next[index] = {
+        ...next[index],
+        distanceFromOriginKm: Math.round(distNum * 10) / 10,
+        durationFromOriginMins: durNum,
+        isInserted: false, // treat as user-confirmed anchor
+      };
+      setStops(next);
+    }
+    setEditingTimingIdx(null);
+  }
+
   function buildPayload(): StopSequenceEntry[] {
-    return stops.map((s, i) => ({
+    const normalized = recalculateMonotonicTimings(stops);
+    return normalized.map((s, i) => ({
       stopCode: s.stopCode,
       sequence: i + 1,
       isMajor: s.isMajor,
@@ -173,19 +280,20 @@ export function VariantStopInlineEditor({
               .filter(Boolean)
               .join(" · ")}
           </span>
-          <span className="ml-auto text-amber-200/40">unsaved</span>
+          <span className="ml-auto text-amber-200/50 font-mono text-[11px]">Timings auto-adjusted</span>
         </div>
       )}
 
       {/* Stop list */}
-      <div>
+      <div className="space-y-0">
         {stops.map((stop, index) => {
+          const isFirst = index === 0;
           const isLast = index === stops.length - 1;
           const canMoveUp = !stop.isTerminal && index > 1;
           const canMoveDown = !stop.isTerminal && index < stops.length - 2;
-          // Show insert zone between every pair of stops
           const showInsertZone = !isLast;
           const isInsertOpen = insertAtIndex === index;
+          const isEditingTiming = editingTimingIdx === index;
 
           return (
             <div key={`${stop.stopId}-${index}`}>
@@ -195,13 +303,13 @@ export function VariantStopInlineEditor({
                   stop.isTerminal
                     ? "border border-[#D3D925]/20 bg-[#D3D925]/[0.04]"
                     : stop.isInserted
-                    ? "border border-sky-400/20 bg-sky-400/[0.04]"
+                    ? "border border-sky-400/25 bg-sky-400/[0.05]"
                     : "border border-transparent hover:border-white/8 hover:bg-white/[0.015]"
                 } ${index > 0 ? "mt-1" : ""}`}
               >
                 {/* Sequence bubble */}
                 <div className="flex flex-col items-center gap-0.5 pt-0.5">
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-[9px] font-bold text-white/60">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-[9px] font-bold text-white/70">
                     {index + 1}
                   </span>
                 </div>
@@ -212,24 +320,86 @@ export function VariantStopInlineEditor({
                     {stop.name}
                     {stop.isTerminal && (
                       <span className="rounded-full bg-[#D3D925]/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#D3D925]">
-                        {index === 0 ? "Origin" : "Destination"}
+                        {isFirst ? "Origin" : "Destination"}
                       </span>
                     )}
                     {stop.isInserted && (
                       <span className="rounded-full bg-sky-400/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-sky-300">
-                        New
+                        Added
                       </span>
                     )}
                   </p>
                   <p className="mt-0.5 text-xs text-white/40">
                     {[stop.district, stop.province].filter(Boolean).join(" · ") || stop.stopCode}
-                    {stop.distanceFromOriginKm != null && (
-                      <span className="ml-2 text-white/25">{stop.distanceFromOriginKm} km</span>
-                    )}
-                    {stop.isInserted && stop.distanceFromOriginKm == null && (
-                      <span className="ml-2 italic text-amber-300/60">timing pending</span>
-                    )}
                   </p>
+
+                  {/* Distance & Duration Display / Inline Editing */}
+                  {isEditingTiming ? (
+                    <div className="mt-2 flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 p-2">
+                      <div className="flex items-center gap-1">
+                        <Route className="size-3 text-white/40" />
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          value={manualDist}
+                          onChange={(e) => setManualDist(e.target.value)}
+                          className="w-16 rounded bg-white/10 px-1.5 py-0.5 text-xs font-mono text-white outline-none focus:ring-1 focus:ring-[#D3D925]"
+                          placeholder="km"
+                        />
+                        <span className="text-[10px] text-white/40">km</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="size-3 text-white/40" />
+                        <input
+                          type="number"
+                          step="1"
+                          min="0"
+                          value={manualDur}
+                          onChange={(e) => setManualDur(e.target.value)}
+                          className="w-16 rounded bg-white/10 px-1.5 py-0.5 text-xs font-mono text-white outline-none focus:ring-1 focus:ring-[#D3D925]"
+                          placeholder="min"
+                        />
+                        <span className="text-[10px] text-white/40">min</span>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => saveManualTiming(index)}
+                        className="h-6 bg-[#D3D925] px-2 text-[10px] font-bold text-black hover:bg-[#D9CD25]"
+                      >
+                        Set
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingTimingIdx(null)}
+                        className="rounded p-1 text-white/40 hover:text-white"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 rounded bg-white/[0.04] px-1.5 py-0.5 text-[11px] font-mono text-white/60">
+                        <Route className="size-2.5 text-white/30" />
+                        {stop.distanceFromOriginKm} km
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded bg-white/[0.04] px-1.5 py-0.5 text-[11px] font-mono text-white/60">
+                        <Clock className="size-2.5 text-white/30" />
+                        {stop.durationFromOriginMins} min
+                      </span>
+                      {!isFirst && (
+                        <button
+                          type="button"
+                          onClick={() => startEditTiming(index)}
+                          className="text-[10px] text-white/25 hover:text-[#D3D925]"
+                          title="Edit timing manually"
+                        >
+                          <Pencil className="size-2.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Controls */}
@@ -272,7 +442,7 @@ export function VariantStopInlineEditor({
 
               {/* ─── Insert zone between stops ─── */}
               {showInsertZone && (
-                <div className="my-1 px-3">
+                <div className="my-1 px-2">
                   {isInsertOpen ? (
                     /* Search panel */
                     <div className="rounded-xl border border-sky-400/30 bg-[#0c1620] p-3 shadow-xl">
@@ -312,7 +482,7 @@ export function VariantStopInlineEditor({
                         </p>
                       ) : filteredRegistry.length === 0 ? (
                         <p className="mt-2 text-center text-xs text-white/30">
-                          No matching stops found. Try a different name.
+                          No matching stops found in registry.
                         </p>
                       ) : (
                         <div className="mt-2 max-h-44 space-y-0.5 overflow-y-auto">
@@ -336,12 +506,12 @@ export function VariantStopInlineEditor({
                       )}
                     </div>
                   ) : (
-                    /* Always-visible insert button (not hidden by opacity) */
+                    /* Always-visible insert button */
                     <button
                       type="button"
                       disabled={isSaving}
                       onClick={() => openInsert(index)}
-                      className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/10 py-1.5 text-[11px] text-white/25 transition hover:border-sky-400/30 hover:bg-sky-400/[0.04] hover:text-sky-300/70 disabled:cursor-not-allowed"
+                      className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/10 py-1 text-[11px] text-white/25 transition hover:border-sky-400/30 hover:bg-sky-400/[0.04] hover:text-sky-300/70 disabled:cursor-not-allowed"
                       aria-label={`Insert stop after ${stop.name}`}
                     >
                       <Plus className="size-3" />
@@ -354,13 +524,6 @@ export function VariantStopInlineEditor({
           );
         })}
       </div>
-
-      {/* Timing notice for inserted stops */}
-      {stops.some((s) => s.isInserted) && (
-        <div className="rounded-lg border border-amber-300/15 bg-amber-300/[0.04] px-3 py-2 text-xs leading-5 text-amber-200/70">
-          <strong className="text-amber-200">Timing note:</strong> Newly inserted stops have no distance or duration yet. Update those figures operationally after the route is reviewed.
-        </div>
-      )}
 
       {/* Action row */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
