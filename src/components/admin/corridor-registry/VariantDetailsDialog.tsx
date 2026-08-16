@@ -36,6 +36,7 @@ export function VariantDetailsDialog({
   const [editMode, setEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveErrorIsInfo, setSaveErrorIsInfo] = useState(false);
   // Confirmation step for ACTIVE variant — shows before auto-revision + activate
   const [confirmingActive, setConfirmingActive] = useState<StopSequenceEntry[] | null>(null);
 
@@ -50,6 +51,7 @@ export function VariantDetailsDialog({
   function closeEdit() {
     setEditMode(false);
     setSaveError(null);
+    setSaveErrorIsInfo(false);
     setConfirmingActive(null);
   }
 
@@ -62,6 +64,7 @@ export function VariantDetailsDialog({
     if (!details) return;
     setIsSaving(true);
     setSaveError(null);
+    setSaveErrorIsInfo(false);
     try {
       await putVariantStops(details.variant._id, stops);
       await query.refetch();
@@ -83,14 +86,42 @@ export function VariantDetailsDialog({
     if (!details || !confirmingActive) return;
     setIsSaving(true);
     setSaveError(null);
+    setSaveErrorIsInfo(false);
     try {
       // 1. Create a revision DRAFT (clones stops from current active)
       const revisionResponse = await createRouteVariantRevision(details.variant._id);
       const revisionId = revisionResponse.data.variant._id;
       // 2. Replace the revision's stop sequence with what admin edited
       await putVariantStops(revisionId, confirmingActive);
-      // 3. Activate the revision (supersedes the current ACTIVE variant)
-      await activateVariantDraft(revisionId);
+      // 3. Attempt to activate the revision — may be blocked if the live variant
+      //    has active fleet configs, schedules, or agent assignments that must be
+      //    migrated first. In that case, treat as a partial success: the revision
+      //    draft is saved and ready; it just needs manual activation later.
+      try {
+        await activateVariantDraft(revisionId);
+      } catch (activationError: unknown) {
+        const msg = activationError instanceof Error ? activationError.message : "";
+        const isMigrationBlock =
+          msg.includes("migration") ||
+          msg.includes("fleet route") ||
+          msg.includes("VARIANT_REVISION_MIGRATION_REQUIRED");
+        if (isMigrationBlock) {
+          // Partial success — revision is saved, activation is blocked by live refs
+          setSaveError(
+            "Revision draft saved with your stop changes. " +
+            "This variant still has active fleet configurations or schedules referencing it. " +
+            "Migrate those to the new revision draft, then activate it manually."
+          );
+          setSaveErrorIsInfo(true);
+          await query.refetch();
+          onStopsUpdated();
+          setConfirmingActive(null);
+          setEditMode(false);
+          setIsSaving(false);
+          return;
+        }
+        throw activationError;
+      }
       await query.refetch();
       onStopsUpdated();
       closeEdit();
@@ -164,7 +195,11 @@ export function VariantDetailsDialog({
               </div>
 
               {saveError && (
-                <div className="mt-3 rounded-lg border border-red-400/20 bg-red-400/[0.06] px-3 py-2 text-xs text-red-200">
+                <div className={`mt-3 rounded-lg border px-3 py-2 text-xs ${
+                  saveErrorIsInfo
+                    ? "border-sky-400/20 bg-sky-400/[0.06] text-sky-200"
+                    : "border-red-400/20 bg-red-400/[0.06] text-red-200"
+                }`}>
                   {saveError}
                 </div>
               )}
