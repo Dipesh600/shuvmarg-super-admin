@@ -31,19 +31,21 @@ export function VariantDetailsDialog({
   onRevise: (variant: RouteVariant) => void;
   onResume: (variant: RouteVariant) => void;
   onActivate: (variant: RouteVariant) => void;
-  onStopsUpdated: () => void;
+  onStopsUpdated: (updatedVariant?: RouteVariant) => void;
 }) {
   const [editMode, setEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveErrorIsInfo, setSaveErrorIsInfo] = useState(false);
-  // Confirmation step for ACTIVE variant — shows before auto-revision + activate
   const [confirmingActive, setConfirmingActive] = useState<StopSequenceEntry[] | null>(null);
 
+  // Track the actual variant ID being displayed (switches to revisionId after active edit)
+  const currentVariantId = variant?._id;
+
   const query = useQuery({
-    queryKey: ["route-variant-details", variant?._id],
-    queryFn: () => getRouteVariantDetails(variant?._id || ""),
-    enabled: open && Boolean(variant?._id),
+    queryKey: ["route-variant-details", currentVariantId],
+    queryFn: () => getRouteVariantDetails(currentVariantId || ""),
+    enabled: open && Boolean(currentVariantId),
   });
   const details = query.data?.data;
   const current = details?.variant || variant;
@@ -68,7 +70,7 @@ export function VariantDetailsDialog({
     try {
       await putVariantStops(details.variant._id, stops);
       await query.refetch();
-      onStopsUpdated();
+      onStopsUpdated(details.variant);
       closeEdit();
     } catch (error: unknown) {
       setSaveError(error instanceof Error ? error.message : "Unable to save the updated stop sequence.");
@@ -78,7 +80,6 @@ export function VariantDetailsDialog({
   }
 
   async function applyEditOnActive(stops: StopSequenceEntry[]) {
-    // Show confirmation before touching the live route
     setConfirmingActive(stops);
   }
 
@@ -88,17 +89,19 @@ export function VariantDetailsDialog({
     setSaveError(null);
     setSaveErrorIsInfo(false);
     try {
-      // 1. Create a revision DRAFT (clones stops from current active)
+      // 1. Create a revision DRAFT
       const revisionResponse = await createRouteVariantRevision(details.variant._id);
-      const revisionId = revisionResponse.data.variant._id;
-      // 2. Replace the revision's stop sequence with what admin edited
+      const revision = revisionResponse.data.variant;
+      const revisionId = revision._id;
+
+      // 2. Replace the revision's stop sequence with edited stops
       await putVariantStops(revisionId, confirmingActive);
-      // 3. Attempt to activate the revision — may be blocked if the live variant
-      //    has active fleet configs, schedules, or agent assignments that must be
-      //    migrated first. In that case, treat as a partial success: the revision
-      //    draft is saved and ready; it just needs manual activation later.
+
+      // 3. Activate the revision
+      let activatedVariant = revision;
       try {
-        await activateVariantDraft(revisionId);
+        const activateRes = await activateVariantDraft(revisionId);
+        if (activateRes?.data) activatedVariant = activateRes.data;
       } catch (activationError: unknown) {
         const msg = activationError instanceof Error ? activationError.message : "";
         const isMigrationBlock =
@@ -106,15 +109,13 @@ export function VariantDetailsDialog({
           msg.includes("fleet route") ||
           msg.includes("VARIANT_REVISION_MIGRATION_REQUIRED");
         if (isMigrationBlock) {
-          // Partial success — revision is saved, activation is blocked by live refs
           setSaveError(
             "Revision draft saved with your stop changes. " +
             "This variant still has active fleet configurations or schedules referencing it. " +
             "Migrate those to the new revision draft, then activate it manually."
           );
           setSaveErrorIsInfo(true);
-          await query.refetch();
-          onStopsUpdated();
+          onStopsUpdated(revision);
           setConfirmingActive(null);
           setEditMode(false);
           setIsSaving(false);
@@ -122,8 +123,8 @@ export function VariantDetailsDialog({
         }
         throw activationError;
       }
-      await query.refetch();
-      onStopsUpdated();
+
+      onStopsUpdated(activatedVariant);
       closeEdit();
     } catch (error: unknown) {
       setSaveError(error instanceof Error ? error.message : "Unable to apply the route change.");
