@@ -388,3 +388,23 @@ export async function activateVariantDraft(draftId: string): Promise<RegistryRes
   const { data } = await api.post(`/registry/variant-drafts/${draftId}/activate`);
   return data;
 }
+
+export interface StopSequenceEntry {
+  stopCode: string;
+  sequence: number;
+  isMajor: boolean;
+  distanceFromOriginKm: number | null;
+  durationFromOriginMins: number | null;
+}
+
+export async function putVariantStops(
+  variantId: string,
+  stops: StopSequenceEntry[],
+): Promise<RegistryResponse<VariantRouteStop[]>> {
+  try {
+    const { data } = await api.put(`/registry/variants/${variantId}/stops`, { stops });
+    return data;
+  } catch (error: unknown) {
+    workflowError(error, "Unable to save the updated stop sequence.");
+  }
+}
