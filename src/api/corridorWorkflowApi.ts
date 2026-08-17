@@ -72,10 +72,46 @@ export interface VariantRouteStop {
   stopId: CorridorStop;
 }
 
+export interface ReferencingBus {
+  _id: string;
+  busNumber: string;
+  name?: string;
+  status: string;
+}
+
+export interface ReferencingBrand {
+  _id: string;
+  brandName: string;
+  brandCode: string;
+  logo?: string | null;
+  contactPhone?: string | null;
+  buses: ReferencingBus[];
+}
+
+export interface HistoricalRevision {
+  _id: string;
+  code: string;
+  name: string | null;
+  type: VariantType | null;
+  direction?: VariantDirection;
+  status: VariantStatus;
+  distanceKm?: number | null;
+  durationMinutes?: number | null;
+  revisionNumber?: number;
+  stopCount: number;
+  supersededByVariantId?: { _id: string; code: string; name?: string; revisionNumber?: number } | null;
+  createdBy?: { _id: string; name?: string; email?: string } | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface VariantDetails {
   variant: RouteVariant;
   stops: VariantRouteStop[];
   references: Record<string, number>;
+  referencingBrands?: ReferencingBrand[];
+  activeScheduleCount?: number;
+  revisionHistory?: HistoricalRevision[];
 }
 
 export interface RouteOption {
@@ -406,5 +442,27 @@ export async function putVariantStops(
     return data;
   } catch (error: unknown) {
     workflowError(error, "Unable to save the updated stop sequence.");
+  }
+}
+
+export async function rollbackVariantRevision(
+  variantId: string,
+): Promise<RegistryResponse<VariantDetails>> {
+  try {
+    const { data } = await api.post(`/registry/variants/${variantId}/rollback`);
+    return data;
+  } catch (error: unknown) {
+    workflowError(error, "Unable to rollback route revision.");
+  }
+}
+
+export async function deleteHistoricalRevision(
+  variantId: string,
+): Promise<RegistryResponse<{ message: string; deleted?: boolean; archived?: boolean }>> {
+  try {
+    const { data } = await api.delete(`/registry/variants/${variantId}/history`);
+    return data;
+  } catch (error: unknown) {
+    workflowError(error, "Unable to delete route revision.");
   }
 }

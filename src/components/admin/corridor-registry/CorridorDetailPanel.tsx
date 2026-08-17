@@ -62,7 +62,14 @@ function VariantCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-white">{routeLabel(variant)}</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-bold text-white">{routeLabel(variant)}</p>
+                {variant.revisionNumber && variant.revisionNumber > 1 && (
+                  <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold text-white/70">
+                    v{variant.revisionNumber}
+                  </span>
+                )}
+              </div>
               <p className="mt-1 text-xs text-white/40">{routeMeta(variant)}</p>
               <p className="mt-1 text-[11px] text-white/25">System code: {variant.code}</p>
               {variant.returnVariantId && <p className="mt-1 text-[10px] font-semibold text-[#D3D925]/55">Paired forward + return route family</p>}
@@ -73,7 +80,7 @@ function VariantCard({
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" onClick={onView} className="rounded-md border border-white/15 px-2.5 py-1.5 text-[10px] font-semibold text-white/70 transition hover:bg-white/10 hover:text-white">View route</button>
+              <button type="button" onClick={onView} className="rounded-md border border-white/15 px-2.5 py-1.5 text-[10px] font-semibold text-white/70 transition hover:bg-white/10 hover:text-white">View route details</button>
           {isDraft && (<>
               <button
                 type="button"
@@ -120,7 +127,8 @@ function DirectionLane({
 }) {
   const origin = direction === "FORWARD" ? corridor.originId : corridor.destinationId;
   const destination = direction === "FORWARD" ? corridor.destinationId : corridor.originId;
-  const activeCount = variants.filter((variant) => variant.status === "ACTIVE").length;
+  const visibleVariants = variants.filter((variant) => variant.status === "ACTIVE" || variant.status === "DRAFT");
+  const activeCount = visibleVariants.filter((variant) => variant.status === "ACTIVE").length;
 
   return (
     <section className="rounded-2xl border border-white/10 bg-black/15 p-4">
@@ -142,8 +150,8 @@ function DirectionLane({
           <div className="rounded-xl border border-dashed border-white/10 px-3 py-7 text-center text-xs text-white/35">
             Loading route paths…
           </div>
-        ) : variants.length ? (
-          variants.map((variant) => (
+        ) : visibleVariants.length ? (
+          visibleVariants.map((variant) => (
             <VariantCard
               key={variant._id}
               variant={variant}
