@@ -133,7 +133,44 @@ export const reuploadFleetDocument = async (id: string, docSlot: string, files: 
     }
 };
 
-export const getFleetSetupStatus = async (id: string) => {
+export type FleetSetupStepKey =
+    | "routeAssigned"
+    | "routeConfigured"
+    | "driverAssigned"
+    | "scheduleCreated"
+    | "activated";
+
+export interface FleetSetupStatus {
+    steps: Record<FleetSetupStepKey, boolean>;
+    scheduleId?: string | null;
+    isFullyOperational?: boolean;
+    assignedCorridor?: {
+        _id?: string;
+        code?: string;
+        originId?: { name?: string };
+        destinationId?: { name?: string };
+    } | null;
+    assignedRouteConfigs?: Array<{
+        _id: string;
+        variantId?: { direction?: "FORWARD" | "RETURN" };
+        activeStops?: unknown[];
+    }>;
+    assignedDriver?: { fullName?: string; licenseType?: string } | null;
+    fleetData?: { busNumber?: string } | null;
+    outboundScheduleData?: {
+        variantId?: { direction?: "FORWARD" | "RETURN" };
+        status?: string;
+        departureTime?: string;
+        arrivalTime?: string;
+        operationalModel?: string;
+    } | null;
+    returnScheduleData?: {
+        departureTime?: string;
+        arrivalTime?: string;
+    } | null;
+}
+
+export const getFleetSetupStatus = async (id: string): Promise<{ success: boolean; data: FleetSetupStatus }> => {
     const { data } = await api.get(`/fleet/${id}/setup-status`);
     return data;
 };
