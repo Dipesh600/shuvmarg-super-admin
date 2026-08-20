@@ -60,7 +60,7 @@ export default function KYCVerification() {
         brandName: k.companyname,   // companyname maps to the brand name for fleet KYC
         owner: k.owner,
         submitdate: k.submitdate,
-        documents: [
+        documents: k.data?.documentSummary?.present ?? [
           k.data?.fleetDocuments?.fitnessCert?.url,
           k.data?.fleetDocuments?.insurance?.url,
           k.data?.fleetDocuments?.bluebook?.url,

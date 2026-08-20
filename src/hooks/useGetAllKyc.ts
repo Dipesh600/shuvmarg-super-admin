@@ -7,8 +7,9 @@ export const useGetAllKyc = () => {
   return useQuery({
     queryKey: ["getAllKyc"],
     queryFn: getAllKyc,
-    refetchOnMount: false,
+    refetchOnMount: "always",
+    refetchInterval: 60 * 1000,
     enabled: !!token,
-    staleTime:5 * 60 * 1000
+    staleTime: 30 * 1000,
   });
 };

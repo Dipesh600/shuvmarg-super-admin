@@ -283,7 +283,7 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
         mutationFn: () => resumeSchedule(sched._id),
         onSuccess: (data: any) => {
             toast.success(data.message || "Schedule resumed! Trips are being regenerated.");
-            qc.invalidateQueries({ queryKey: ["fleet-workstation"] });
+            qc.invalidateQueries({ queryKey: ["fleetWorkstation"] });
             onAction();
         },
         onError: (err: any) => {
@@ -445,7 +445,7 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
                     scheduleId={sched._id}
                     onClose={() => setShowSuspendModal(false)}
                     onSuccess={() => {
-                        qc.invalidateQueries({ queryKey: ["fleet-workstation"] });
+                        qc.invalidateQueries({ queryKey: ["fleetWorkstation"] });
                         onAction();
                     }}
                 />
@@ -455,7 +455,7 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
                     sched={sched}
                     onClose={() => setShowVersionModal(false)}
                     onSuccess={() => {
-                        qc.invalidateQueries({ queryKey: ["fleet-workstation"] });
+                        qc.invalidateQueries({ queryKey: ["fleetWorkstation"] });
                         onAction();
                     }}
                 />
@@ -467,7 +467,7 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
 // ─── Main ScheduleTab ─────────────────────────────────────────────────────────
 const ScheduleTab = ({ schedules, fleet: _fleet }: ScheduleTabProps) => {
     const qc = useQueryClient();
-    const refresh = () => qc.invalidateQueries({ queryKey: ["fleet-workstation"] });
+    const refresh = () => qc.invalidateQueries({ queryKey: ["fleetWorkstation"] });
 
     if (!schedules || schedules.length === 0) {
         return (

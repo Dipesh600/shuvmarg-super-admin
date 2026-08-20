@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bus, Plus, Eye, Edit, Trash2, Loader2, Search, ShieldCheck, Clock, XCircle, Lock, ExternalLink, RotateCcw } from "lucide-react";
+import { Bus, Plus, Eye, Edit, Trash2, Loader2, Search, ShieldCheck, Clock, XCircle, Lock, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +24,6 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { useFetchOwnerFleets, useDeleteOwnerFleet } from "@/hooks/useOwnerFleets";
-import { resubmitFleetById } from "@/api/busOwnerFleetApi";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Modals
 import CreateOwnerFleetModal from "./CreateOwnerFleetModal";
@@ -37,20 +35,6 @@ const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) =
   const navigate = useNavigate();
   const { data: response, isLoading, isError, refetch } = useFetchOwnerFleets(ownerId, brandId);
   const deleteMutation = useDeleteOwnerFleet();
-  const qc = useQueryClient();
-
-  // Resubmit rejected fleet for re-review
-  const resubmitMutation = useMutation({
-    mutationFn: (fleetId: string) => resubmitFleetById(fleetId),
-    onSuccess: () => {
-      toast.success("Fleet resubmitted for review. It is now PENDING approval.");
-      qc.invalidateQueries({ queryKey: ["owner-fleets"] });
-      refetch();
-    },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to resubmit fleet");
-    }
-  });
 
   const fleets = response?.data || [];
 
@@ -239,24 +223,6 @@ const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) =
                             </Button>
                           )}
 
-                          {/* Resubmit rejected fleet for re-review */}
-                          {fleet.approvalStatus === "REJECTED" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 gap-1.5 text-[10px] font-black uppercase tracking-widest border-blue-300 text-blue-700 hover:bg-blue-50"
-                              onClick={() => {
-                                if (confirm(`Resubmit "${fleet.busName}" for review? This will move it back to PENDING status.`)) {
-                                  resubmitMutation.mutate(fleet._id);
-                                }
-                              }}
-                              disabled={resubmitMutation.isPending}
-                              title="Resubmit for KYC Review"
-                            >
-                              <RotateCcw className={`h-3 w-3 ${resubmitMutation.isPending ? 'animate-spin' : ''}`} /> Resubmit
-                            </Button>
-                          )}
-                          
                           {fleet.approvalStatus === "APPROVED" && !fleet.setupComplete && (
                             <Button
                               variant="outline"
@@ -291,21 +257,23 @@ const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) =
                             variant="ghost"
                             size="icon"
                             className={`h-8 w-8 transition-colors ${
-                              fleet.approvalStatus === "PENDING"
+                              fleet.approvalStatus === "PENDING" || fleet.approvalStatus === "REJECTED"
                                 ? "opacity-40 cursor-not-allowed"
                                 : "hover:bg-primary/10 hover:text-primary"
                             }`}
                             onClick={() => {
-                              if (fleet.approvalStatus === "PENDING") {
-                                toast.info("Cannot edit a fleet that is under KYC review.");
+                              if (fleet.approvalStatus === "PENDING" || fleet.approvalStatus === "REJECTED") {
+                                toast.info(fleet.approvalStatus === "REJECTED"
+                                  ? "The bus owner controls corrections and resubmission for rejected fleets."
+                                  : "Cannot edit a fleet that is under KYC review.");
                                 return;
                               }
                               setActiveFleetId(fleet._id);
                               setModalType("edit");
                             }}
-                            title={fleet.approvalStatus === "PENDING" ? "Locked during KYC review" : "Edit Fleet"}
+                            title={fleet.approvalStatus === "REJECTED" ? "Owner must correct and resubmit" : fleet.approvalStatus === "PENDING" ? "Locked during KYC review" : "Edit Fleet"}
                           >
-                            {fleet.approvalStatus === "PENDING" ? <Lock className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
+                            {fleet.approvalStatus === "PENDING" || fleet.approvalStatus === "REJECTED" ? <Lock className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
                           </Button>
                           <Button
                             variant="ghost"

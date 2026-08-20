@@ -1,45 +1,376 @@
-import React from "react";
-import { Armchair, BedDouble, CircleGauge, DoorOpen, Eraser, MousePointer2, Rows3, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import {
+  Armchair,
+  BedDouble,
+  ChevronDown,
+  Eraser,
+  ListOrdered,
+  Minus,
+  MousePointer2,
+  Plus,
+  RotateCcw,
+  RotateCw,
+  Save,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { moveElement, passengerPlaces, resizeSection, updateElement } from "./layout";
+import {
+  cloneLayout,
+  hasPassengerLabel,
+  insertPassengerSeatRow,
+  insertPassengerSleeperRow,
+  moveElement,
+  passengerPlaces,
+  popPassengerRow,
+  removeElements,
+  renumberPassengerPlaces,
+  updateElement,
+  type NumberingScheme,
+} from "./layout";
 import { layoutPresets } from "./presets";
 import SeatLayoutCanvas from "./SeatLayoutCanvas";
-import type { BuilderTool, Comfort, LayoutElement, SeatLayoutV3 } from "./types";
+import SeatLayoutElementEditor from "./SeatLayoutElementEditor";
+import type { BuilderTool, SeatLayoutV3 } from "./types";
 
 const tools: { id: BuilderTool; label: string; icon: typeof MousePointer2 }[] = [
-  { id: "SELECT", label: "Select", icon: MousePointer2 }, { id: "SEAT", label: "Seat", icon: Armchair },
-  { id: "BERTH", label: "Sleeper", icon: BedDouble }, { id: "AISLE", label: "Aisle", icon: Rows3 },
-  { id: "DOOR", label: "Door", icon: DoorOpen }, { id: "DRIVER", label: "Driver", icon: CircleGauge },
-  { id: "ERASE", label: "Remove", icon: Eraser },
+  { id: "SELECT", label: "Select", icon: MousePointer2 },
+  { id: "SEAT", label: "Add seats", icon: Armchair },
+  { id: "BERTH", label: "Add sleeper seat", icon: BedDouble },
+  { id: "ERASE", label: "Remove seats", icon: Eraser },
 ];
 
-export default function SeatLayoutBuilder({ layout, onChange, onSave, busy = false }: {
-  layout: SeatLayoutV3 | null; onChange: (layout: SeatLayoutV3) => void;
-  onSave: (layout: SeatLayoutV3) => void; busy?: boolean;
-}) {
-  const [tool, setTool] = React.useState<BuilderTool>("SELECT");
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
-  const selected = layout?.sections.flatMap((section) => section.elements).find((element) => element.elementId === selectedId) || null;
-  if (!layout) return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{layoutPresets.map((preset) => <button key={preset.id} type="button" onClick={() => onChange(preset.create())} className="group rounded-3xl border border-white/10 bg-white/[0.025] p-6 text-left transition hover:border-[#D3D925]/60 hover:bg-[#D3D925]/[0.04]">
-    <div className="mb-8 flex size-11 items-center justify-center rounded-2xl bg-white/5 text-[#D3D925]"><Armchair className="size-5" /></div><p className="font-bold text-white">{preset.name}</p><p className="mt-1 text-sm text-white/40">{preset.detail}</p><p className="mt-5 text-[10px] font-black uppercase tracking-widest text-[#D3D925]">Use this starting point</p>
-  </button>)}</div>;
-  return <div className="grid gap-5 2xl:grid-cols-[180px_minmax(0,1fr)_290px]">
-    <aside className="rounded-3xl border border-white/10 bg-white/[0.025] p-3"><p className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/35">Build tools</p><div className="grid grid-cols-2 gap-2 2xl:grid-cols-1">{tools.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setTool(id)} className={cn("flex items-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold", tool === id ? "border-[#D3D925]/70 bg-[#D3D925]/10 text-[#D3D925]" : "border-white/5 text-white/55 hover:bg-white/5")}><Icon className="size-4" />{label}</button>)}</div></aside>
-    <main className="min-w-0"><SeatLayoutCanvas layout={layout} tool={tool} selectedId={selectedId} onSelect={setSelectedId} onChange={onChange} onMove={(sectionId, elementId, x, y) => onChange(moveElement(layout, sectionId, elementId, x, y))} /></main>
-    <aside className="space-y-4 rounded-3xl border border-white/10 bg-white/[0.025] p-5"><div><p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/35">Layout summary</p><p className="mt-2 text-3xl font-black text-white">{passengerPlaces(layout).length}</p><p className="text-xs text-white/40">reservable passenger places</p></div>
-      {selected && (selected.kind === "SEAT" || selected.kind === "BERTH") ? <ElementEditor element={selected} onChange={(update) => onChange(updateElement(layout, selected.elementId, update))} /> : <div className="rounded-2xl border border-dashed border-white/10 p-4 text-xs leading-5 text-white/35">Choose Select, then click a seat or berth to edit its passenger label and class.</div>}
-      <div className="space-y-2 border-t border-white/10 pt-4">{layout.sections.map((section) => <label key={section.sectionId} className="flex items-center justify-between gap-3 text-xs text-white/55"><span>{section.name} rows</span><Input type="number" min={2} max={40} value={section.heightUnits} onChange={(event) => onChange(resizeSection(layout, section.sectionId, Number(event.target.value)))} className="h-8 w-20 border-white/10 bg-black/20" /></label>)}</div>
-      <Button disabled={busy} onClick={() => onSave(layout)} className="w-full bg-[#D3D925] font-black text-black hover:bg-[#dce331]"><Save className="mr-2 size-4" />{busy ? "Saving…" : "Save draft"}</Button>
-    </aside>
-  </div>;
-}
+const numberingOptions: { scheme: NumberingScheme; label: string; detail: string }[] = [
+  { scheme: "SIDE_AB", label: "Side A & Side B", detail: "Left: A1, A2… / Right: B1, B2…" },
+  { scheme: "SIDE_KHA", label: "Side Ka & Side Kha", detail: "Left: Ka1, Ka2… / Right: Kha1, Kha2…" },
+  { scheme: "ROW_LETTERS", label: "Row Letters", detail: "Row 1: A1, A2… / Row 2: B1, B2…" },
+  { scheme: "PREFIX_SEQUENTIAL", label: "Standard Prefix", detail: "Seats: S1, S2… / Sleepers: L1, L2… / U1, U2…" },
+  { scheme: "NUMERIC_ONLY", label: "Numbers Only", detail: "1, 2, 3, 4…" },
+];
 
-function ElementEditor({ element, onChange }: { element: LayoutElement; onChange: (update: Partial<LayoutElement>) => void }) {
-  return <div className="space-y-3 border-t border-white/10 pt-4"><p className="text-xs font-bold text-white">Selected {element.kind.toLowerCase()}</p><label className="block text-[10px] font-bold uppercase tracking-wider text-white/35">Passenger label<Input value={element.label || ""} onChange={(event) => onChange({ label: event.target.value })} className="mt-1 border-white/10 bg-black/20" /></label>
-    <label className="block text-[10px] font-bold uppercase tracking-wider text-white/35">Comfort<select value={element.attributes?.comfort} onChange={(event) => onChange({ attributes: { ...element.attributes!, comfort: event.target.value as Comfort } })} className="mt-1 h-10 w-full rounded-md border border-white/10 bg-[#111] px-3 text-xs text-white"><option>STANDARD</option><option>RECLINING</option><option>SEMI_SLEEPER</option></select></label>
-    <label className="block text-[10px] font-bold uppercase tracking-wider text-white/35">Commercial class<select value={element.attributes?.commercialClass} onChange={(event) => onChange({ attributes: { ...element.attributes!, commercialClass: event.target.value as "STANDARD" | "PREMIUM" | "PRIORITY" } })} className="mt-1 h-10 w-full rounded-md border border-white/10 bg-[#111] px-3 text-xs text-white"><option>STANDARD</option><option>PREMIUM</option><option>PRIORITY</option></select></label>
-    <label className="flex items-center gap-2 text-xs text-white/60"><input type="checkbox" checked={element.attributes?.accessible === true} onChange={(event) => onChange({ attributes: { ...element.attributes!, accessible: event.target.checked } })} />Accessible place</label>
-  </div>;
+export default function SeatLayoutBuilder({
+  layout,
+  onChange,
+  onSave,
+  busy = false,
+  saveLabel = "Save revision",
+  simple = false,
+}: {
+  layout: SeatLayoutV3 | null;
+  onChange: (layout: SeatLayoutV3) => void;
+  onSave: (layout: SeatLayoutV3) => void;
+  busy?: boolean;
+  saveLabel?: string;
+  simple?: boolean;
+}) {
+  const [tool, setTool] = useState<BuilderTool>("SELECT");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [labelDraft, setLabelDraft] = useState("");
+  const [history, setHistory] = useState<SeatLayoutV3[]>([]);
+  const [future, setFuture] = useState<SeatLayoutV3[]>([]);
+  const [labelError, setLabelError] = useState<string | null>(null);
+  const [showNumberMenu, setShowNumberMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowNumberMenu(false);
+      }
+    }
+    if (showNumberMenu) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [showNumberMenu]);
+
+  const selected =
+    layout?.sections.flatMap((section) => section.elements).find((element) => element.elementId === selectedId) || null;
+
+  if (!layout) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {layoutPresets.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            onClick={() => onChange(preset.create())}
+            className="rounded-[24px] border border-border bg-card p-5 text-left shadow-sm transition hover:border-[#D3D925] hover:shadow-md"
+          >
+            <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-accent text-[#D3D925]">
+              <Armchair className="size-5" />
+            </div>
+            <p className="font-bold text-foreground">{preset.name}</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{preset.detail}</p>
+            <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-[#D3D925]">Use starting point</p>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  const applyChange = (next: SeatLayoutV3) => {
+    if (next === layout) return;
+    setHistory((items) => [...items, cloneLayout(layout)].slice(-30));
+    setFuture([]);
+    onChange(next);
+  };
+
+  const clearSelection = () => {
+    setSelectedId(null);
+    setLabelError(null);
+  };
+
+  const undo = () => {
+    const previous = history.at(-1);
+    if (!previous) return;
+    setHistory((items) => items.slice(0, -1));
+    setFuture((items) => [cloneLayout(layout), ...items].slice(0, 30));
+    clearSelection();
+    onChange(previous);
+  };
+
+  const redo = () => {
+    const next = future[0];
+    if (!next) return;
+    setFuture((items) => items.slice(1));
+    setHistory((items) => [...items, cloneLayout(layout)].slice(-30));
+    clearSelection();
+    onChange(next);
+  };
+
+  const visibleTools = simple
+    ? tools.filter(({ id }) => ["SELECT", "SEAT", "BERTH", "ERASE"].includes(id))
+    : tools;
+
+  const selectPlace = (id: string | null) => {
+    if (!id) return clearSelection();
+    setSelectedId(id);
+    setLabelDraft(passengerPlaces(layout).find((element) => element.elementId === id)?.label || "");
+    setLabelError(null);
+  };
+
+  const applyAutoNumber = (scheme: NumberingScheme) => {
+    applyChange(renumberPassengerPlaces(layout, scheme));
+    clearSelection();
+    setShowNumberMenu(false);
+  };
+
+  const addSeatRow = (sectionId: string) => {
+    applyChange(insertPassengerSeatRow(layout, sectionId));
+  };
+
+  const addSleeperRow = (sectionId: string) => {
+    applyChange(insertPassengerSleeperRow(layout, sectionId));
+  };
+
+  const removeRow = (sectionId: string) => {
+    applyChange(popPassengerRow(layout, sectionId));
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Top Toolbar Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card p-2.5 shadow-sm">
+        {/* Tool Segmented Switch */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {visibleTools.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                setTool(id);
+                if (id !== "SELECT") clearSelection();
+              }}
+              className={cn(
+                "flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition",
+                tool === id
+                  ? "bg-[#D3D925] text-black shadow-sm"
+                  : "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <Icon className="size-3.5 shrink-0" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Action Controls: Undo, Redo, Auto-renumber */}
+        <div className="flex flex-wrap items-center gap-2">
+
+          {/* Undo / Redo */}
+          <div className="flex items-center rounded-xl border border-border bg-muted p-0.5">
+            <button
+              type="button"
+              disabled={!history.length}
+              onClick={undo}
+              title="Undo"
+              className="flex size-8 items-center justify-center rounded-lg text-xs font-bold text-muted-foreground transition hover:bg-card disabled:opacity-30"
+            >
+              <RotateCcw className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={!future.length}
+              onClick={redo}
+              title="Redo"
+              className="flex size-8 items-center justify-center rounded-lg text-xs font-bold text-muted-foreground transition hover:bg-card disabled:opacity-30"
+            >
+              <RotateCw className="size-3.5" />
+            </button>
+          </div>
+
+          {/* Auto-Number with Scheme Dropdown */}
+          <div ref={menuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setShowNumberMenu((prev) => !prev)}
+              className="inline-flex h-8 items-center rounded-xl border border-border bg-card px-2.5 text-[11px] font-bold text-muted-foreground hover:border-[#D3D925] transition shadow-sm"
+            >
+              <ListOrdered className="mr-1.5 size-3.5 text-[#D3D925]" />
+              Auto-number
+              <ChevronDown className="ml-1 size-3 text-muted-foreground" />
+            </button>
+
+            {showNumberMenu && (
+              <div className="absolute right-0 top-10 z-50 w-64 rounded-2xl border border-border bg-card p-2 shadow-xl animate-in fade-in zoom-in-95 duration-100">
+                <p className="px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                  Choose Numbering Pattern
+                </p>
+                <div className="space-y-1">
+                  {numberingOptions.map((opt) => (
+                    <button
+                      key={opt.scheme}
+                      type="button"
+                      onClick={() => applyAutoNumber(opt.scheme)}
+                      className="w-full rounded-xl px-2.5 py-2 text-left transition hover:bg-muted hover:text-[#D3D925]"
+                    >
+                      <p className="text-xs font-bold text-foreground">{opt.label}</p>
+                      <p className="text-[10px] text-muted-foreground">{opt.detail}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Builder Grid */}
+      <div className="grid gap-5 md:grid-cols-[1fr_260px] items-start">
+        {/* Center: Canvas Area with ample breathing room */}
+        <div className="min-w-0 rounded-[26px] border border-border bg-card p-4 sm:p-6 shadow-sm">
+          <SeatLayoutCanvas
+            layout={layout}
+            tool={tool}
+            selectedId={selectedId}
+            onSelect={selectPlace}
+            onMove={(sectionId, elementId, x, y) => applyChange(moveElement(layout, sectionId, elementId, x, y))}
+            onChange={applyChange}
+          />
+        </div>
+
+        {/* Right Sidebar: Selected Place & Action */}
+        <aside className="space-y-4 rounded-[26px] border border-border bg-card p-5 shadow-sm">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Summary</p>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-2xl font-black text-foreground">{passengerPlaces(layout).length}</span>
+              <span className="text-xs font-bold text-muted-foreground">places</span>
+            </div>
+          </div>
+
+          {selected && (selected.kind === "SEAT" || selected.kind === "BERTH") ? (
+            <div className="space-y-3 border-t border-border pt-3">
+              <SeatLayoutElementEditor
+                element={selected}
+                labelValue={labelDraft}
+                labelError={labelError}
+                onLabelInput={(label) => {
+                  setLabelDraft(label);
+                  setLabelError(null);
+                }}
+                onLabelCommit={() => {
+                  if (!labelDraft.trim()) return setLabelError("Passenger label is required.");
+                  if (hasPassengerLabel(layout, labelDraft, selected.elementId))
+                    return setLabelError("That label is already used.");
+                  setLabelError(null);
+                  applyChange(updateElement(layout, selected.elementId, { label: labelDraft.trim() }));
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  applyChange(removeElements(layout, [selected.elementId]));
+                  clearSelection();
+                }}
+                className="flex w-full items-center justify-center rounded-xl border border-red-200 bg-red-50/40 py-2 text-xs font-bold text-red-700 hover:bg-red-100/50 transition"
+              >
+                <Trash2 className="mr-1.5 size-3.5" />
+                Remove this place
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border bg-muted p-3 text-xs leading-5 text-muted-foreground">
+              Select a seat or sleeper to rename or reposition. Drag or click an empty space to move.
+            </div>
+          )}
+
+          {/* Deck Dimensions / Row Controls for all decks */}
+          <div className="space-y-3 border-t border-border pt-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">Add & Remove Rows</p>
+            {layout.sections.map((section) => (
+              <div key={section.sectionId} className="space-y-2 rounded-xl bg-muted p-2.5 border border-border">
+                <div className="flex items-center justify-between text-xs font-bold text-foreground">
+                  <span>{section.name}</span>
+                  <span className="text-[11px] text-muted-foreground">{section.heightUnits} rows</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  {!section.role.endsWith("BERTH_LEVEL") && (
+                    <button
+                      type="button"
+                      onClick={() => addSeatRow(section.sectionId)}
+                      disabled={section.heightUnits >= 40}
+                      className="flex h-8 items-center justify-center gap-1 rounded-lg border border-border bg-card text-[11px] font-bold text-foreground transition hover:border-[#D3D925] hover:text-[#D3D925] disabled:opacity-40 shadow-2xs"
+                    >
+                      <Plus className="size-3 text-[#D3D925]" />
+                      Seat row
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => addSleeperRow(section.sectionId)}
+                    disabled={section.heightUnits + 2 > 40}
+                    className={cn("flex h-8 items-center justify-center gap-1 rounded-lg border border-border bg-card text-[11px] font-bold text-foreground transition hover:border-[#D3D925] hover:text-[#D3D925] disabled:opacity-40 shadow-2xs", section.role.endsWith("BERTH_LEVEL") && "col-span-2")}
+                  >
+                    <Plus className="size-3 text-[#D3D925]" />
+                    Sleeper (1×2)
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeRow(section.sectionId)}
+                  disabled={section.heightUnits <= 2}
+                  className="flex h-7 w-full items-center justify-center gap-1 rounded-lg border border-transparent bg-stone-200/50 text-[11px] font-bold text-muted-foreground transition hover:bg-red-50 hover:text-red-700 disabled:opacity-30"
+                >
+                  <Minus className="size-3" />
+                  Remove back row
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button
+            disabled={busy || passengerPlaces(layout).length === 0 || Boolean(labelError)}
+            onClick={() => onSave(layout)}
+            className="flex h-11 w-full items-center justify-center rounded-xl bg-[#D3D925] text-xs font-bold text-black shadow-sm transition hover:bg-[#D3D925] disabled:opacity-50"
+          >
+            <Save className="mr-2 size-4" />
+            {busy ? "Saving…" : saveLabel}
+          </button>
+        </aside>
+      </div>
+    </div>
+  );
 }

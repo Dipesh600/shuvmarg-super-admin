@@ -7,11 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import {
   Bus, MapPin, Users, Settings, Activity, Calendar, Eye, ShieldCheck,
   Map, Wifi, FileText, AlertTriangle, Route, Clock,
-  XCircle, LayoutGrid, RotateCcw, Loader2, CheckCircle2, Upload
+  XCircle, LayoutGrid, Loader2, CheckCircle2, Upload
 } from "lucide-react";
 import { useFetchFleetDetail } from "@/hooks/useOwnerFleets";
 import { Separator } from "@/components/ui/separator";
-import { resubmitFleetById, reuploadFleetDocument } from "@/api/busOwnerFleetApi";
+import { reuploadFleetDocument } from "@/api/busOwnerFleetApi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -59,24 +59,10 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
     setViewerOpen(true);
   };
 
-  // Resubmit mutation
-  const { mutate: resubmit, isPending: isResubmitting } = useMutation({
-    mutationFn: () => resubmitFleetById(id!),
-    onSuccess: () => {
-      toast.success("Fleet resubmitted — it is now PENDING review.");
-      qc.invalidateQueries({ queryKey: ["fleetDetail", id] });
-      qc.invalidateQueries({ queryKey: ["owner-fleets"] });
-      qc.invalidateQueries({ queryKey: ["ownerFleets"] });
-      refetch();
-      onClose();
-    },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Failed to resubmit."),
-  });
-
   // Re-upload mutation for a single document slot
   const reuploadMutation = useMutation({
-    mutationFn: ({ slot, file }: { slot: string; file: File }) =>
-      reuploadFleetDocument(id!, slot, file),
+    mutationFn: ({ slot, files }: { slot: string; files: File[] }) =>
+      reuploadFleetDocument(id!, slot, files),
     onSuccess: (_, { slot }) => {
       toast.success(`${slot} replaced successfully.`);
       qc.invalidateQueries({ queryKey: ["fleetDetail", id] });
@@ -85,15 +71,11 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
     onError: (err: any) => toast.error(err?.response?.data?.message || "Upload failed."),
   });
 
-  const handleFileSelect = (slot: string, file: File) => {
-    reuploadMutation.mutate({ slot, file });
+  const handleFileSelect = (slot: string, files: File[]) => {
+    reuploadMutation.mutate({ slot, files });
   };
 
-  // Check if all rejected docs have been fixed
   const reviews: Record<string, { status: string; reason: string | null }> = data?.documentReviews || {};
-  const rejectedSlots = DOC_SLOTS.filter(s => reviews[s.key]?.status === "rejected");
-  const fixedCount = DOC_SLOTS.filter(s => reviews[s.key]?.status === "fixed").length;
-  const canResubmit = rejectedSlots.length === 0 || fixedCount >= rejectedSlots.length;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -171,7 +153,7 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                       )}
                       <p className={cn("text-[11px] mt-1", approvalStatus === "REJECTED" ? "text-rose-600" : "text-blue-600")}>
                         {approvalStatus === "REJECTED" 
-                          ? <span>Re-upload each failed document below, then click <strong>Resubmit for Review</strong>.</span>
+                          ? <span>Review the failed documents below. The bus owner must correct and resubmit them from their dashboard.</span>
                           : "You can renew expiring documents here without taking your fleet offline."}
                       </p>
                     </div>
@@ -227,12 +209,13 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                             <>
                               <input
                                 type="file"
+                                multiple={slot.key === "fleetImages"}
                                 accept="image/*,application/pdf"
                                 className="hidden"
                                 ref={(el) => { fileInputRefs.current[slot.key] = el; }}
                                 onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleFileSelect(slot.key, file);
+                                  const files = Array.from(e.target.files || []);
+                                  if (files.length) handleFileSelect(slot.key, files);
                                   e.target.value = "";
                                 }}
                               />
@@ -453,29 +436,13 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
             <DialogFooter className="p-6 bg-muted/20 border-t flex-shrink-0 mt-auto">
               {approvalStatus === "REJECTED" ? (
                 <div className="flex items-center justify-between gap-4 w-full">
-                  <div className="flex-1">
-                    {!canResubmit ? (
-                      <p className="text-xs text-rose-600 font-medium">
-                        Re-upload all failed documents to unlock resubmission.
-                      </p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        All failed documents replaced. You can now resubmit for review.
-                      </p>
-                    )}
-                  </div>
+                  <p className="flex-1 text-xs text-muted-foreground">
+                    The bus owner controls corrections and resubmission from their dashboard.
+                  </p>
                   <div className="flex items-center gap-3 shrink-0">
                     <DialogClose asChild>
                       <Button variant="ghost" size="sm" className="font-bold text-xs h-10">Close</Button>
                     </DialogClose>
-                    <Button
-                      onClick={() => resubmit()}
-                      disabled={isResubmitting || !canResubmit}
-                      className="h-10 gap-2 font-black uppercase tracking-widest text-xs bg-blue-600 hover:bg-blue-700 text-white shadow-md disabled:opacity-40"
-                    >
-                      {isResubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
-                      Resubmit for Review
-                    </Button>
                   </div>
                 </div>
               ) : (
