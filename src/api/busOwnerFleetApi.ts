@@ -94,22 +94,23 @@ export const updateFleetByAdmin = async (id: string, payload: FormData) => {
     }
 };
 
+export type FleetApprovalDecision = {
+    fleetId: string;
+    status: "APPROVED" | "REJECTED";
+    rejectionReason?: string;
+};
+
+export const decideFleetApproval = async (decision: FleetApprovalDecision) => {
+    const { data } = await api.patch("/fleet/update-status", decision);
+    return data;
+};
+
 export const deleteFleetByAdmin = async (id: string) => {
     try {
         const { data } = await api.delete(`/fleet/delete/${id}`);
         return data;
     } catch (error) {
         console.error("Error deleting fleet:", error);
-        throw error;
-    }
-};
-
-export const resubmitFleetById = async (id: string) => {
-    try {
-        const { data } = await api.patch(`/fleet/resubmit/${id}`);
-        return data;
-    } catch (error) {
-        console.error("Error resubmitting fleet:", error);
         throw error;
     }
 };

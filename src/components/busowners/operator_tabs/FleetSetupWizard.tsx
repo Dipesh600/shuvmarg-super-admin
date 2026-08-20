@@ -61,18 +61,17 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
   const activateMutation = useMutation({
     mutationFn: async () => {
       if (!status?.scheduleId) throw new Error("No primary schedule ID found");
-      // Phase 1: Activate both outbound + return schedules
+      // Activating the primary schedule also activates its linked return.
       await activateSchedule(status.scheduleId);
-      if (status.returnScheduleId) {
-        await activateSchedule(status.returnScheduleId);
-      }
       // Phase 2: Trigger trip burst generation
       await goLiveSchedule(status.scheduleId);
     },
     onSuccess: () => {
       toast.success("Fleet is now LIVE! Trips are being generated — passengers can start booking.");
       qc.invalidateQueries({ queryKey: ["fleet-setup-status", fleetId] });
-      qc.invalidateQueries({ queryKey: ["owner-fleets"] });
+      qc.invalidateQueries({ queryKey: ["ownerFleets"] });
+      qc.invalidateQueries({ queryKey: ["fleets"] });
+      qc.invalidateQueries({ queryKey: ["fleetWorkstation", fleetId] });
       onClose();
     },
     onError: (err: any) => {

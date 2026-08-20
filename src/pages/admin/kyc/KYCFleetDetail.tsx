@@ -7,15 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   ArrowLeft, FileText, CheckCircle2, XCircle, Eye, Bus, Building2,
-  ImageIcon, Loader2, LayoutGrid, Route, AlertTriangle, ShieldCheck, Clock
+  ImageIcon, Loader2, LayoutGrid, Route, AlertTriangle, ShieldCheck, Clock, ChevronDown, ChevronUp
 } from "lucide-react";
 import DocumentViewerModal from "@/components/DocumentViewerModal";
 import { toast } from "sonner";
-import { useFetchFleetDetail, useUpdateOwnerFleet } from "@/hooks/useOwnerFleets";
-import { resubmitFleetById, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
+import { useFetchFleetDetail } from "@/hooks/useOwnerFleets";
+import { decideFleetApproval, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
-import { getFleetSeatLayoutAssignment } from "@/api/seatLayoutV3Api";
+import SeatLayoutCanvas from "@/features/seat-layout-v3/SeatLayoutCanvas";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 type DocStatus = { verified: boolean; rejectionReason: string | null };
@@ -37,12 +37,6 @@ export default function KYCFleetDetail() {
 
   const { data: fleetResponse, isLoading, isError } = useFetchFleetDetail(id!);
   const fleet = fleetResponse?.data;
-  const { data: seatAssignment } = useQuery({
-    queryKey: ["seat-layout-v3", "fleet-assignment", id],
-    queryFn: () => getFleetSeatLayoutAssignment(id!),
-    enabled: !!id,
-  });
-
   /* Brand context */
   const { data: brandsData } = useQuery({
     queryKey: ["ownerBrands", fleet?.owner?.ownerId],
@@ -54,53 +48,54 @@ export default function KYCFleetDetail() {
   /* Build document sections from fleet data */
   const documentSections = useMemo(() => {
     if (!fleet) return [];
+    const descriptor = (slot: string) => fleet.documents?.[slot] || {};
     return [
       {
         title: "Fleet Images",
         key: "fleetImages",
         icon: <ImageIcon className="h-4 w-4" />,
-        documents: Array.from({ length: fleet.documents?.fleetImages?.count || 0 }, (_, index) => index),
-        status: fleet.documents?.fleetImages?.status,
-        reason: fleet.documents?.fleetImages?.reason,
-        details: [{ label: "Count", value: `${fleet.documents?.fleetImages?.count || 0} photos` }],
+        documents: Array.from({ length: descriptor("fleetImages").count || 0 }, (_, index) => index),
+        status: descriptor("fleetImages").status,
+        reason: descriptor("fleetImages").reason,
+        details: [{ label: "Count", value: `${descriptor("fleetImages").count || 0} photos` }],
       },
       {
         title: "Fitness Certificate",
         key: "fitnessCert",
         icon: <FileText className="h-4 w-4" />,
-        documents: fleet.documents?.fitnessCert?.present ? [0] : [],
-        status: fleet.documents?.fitnessCert?.status,
-        reason: fleet.documents?.fitnessCert?.reason,
-        details: [{ label: "Valid Till", value: fmtDate(fleet.documents?.fitnessCert?.validTill) }],
+        documents: descriptor("fitnessCert").present ? [0] : [],
+        status: descriptor("fitnessCert").status,
+        reason: descriptor("fitnessCert").reason,
+        details: [{ label: "Valid Till", value: fmtDate(descriptor("fitnessCert").validTill) }],
       },
       {
         title: "Route Permit",
         key: "routePermit",
         icon: <FileText className="h-4 w-4" />,
-        documents: fleet.documents?.routePermit?.present ? [0] : [],
-        status: fleet.documents?.routePermit?.status,
-        reason: fleet.documents?.routePermit?.reason,
-        details: [{ label: "Valid Till", value: fmtDate(fleet.documents?.routePermit?.validTill) }],
+        documents: descriptor("routePermit").present ? [0] : [],
+        status: descriptor("routePermit").status,
+        reason: descriptor("routePermit").reason,
+        details: [{ label: "Valid Till", value: fmtDate(descriptor("routePermit").validTill) }],
       },
       {
         title: "Insurance Certificate",
         key: "insurance",
         icon: <FileText className="h-4 w-4" />,
-        documents: fleet.documents?.insurance?.present ? [0] : [],
-        status: fleet.documents?.insurance?.status,
-        reason: fleet.documents?.insurance?.reason,
+        documents: descriptor("insurance").present ? [0] : [],
+        status: descriptor("insurance").status,
+        reason: descriptor("insurance").reason,
         details: [
-          { label: "Policy No.", value: fleet.documents?.insurance?.policyNumber || "N/A" },
-          { label: "Valid Till", value: fmtDate(fleet.documents?.insurance?.validTill) },
+          { label: "Policy No.", value: descriptor("insurance").policyNumber || "N/A" },
+          { label: "Valid Till", value: fmtDate(descriptor("insurance").validTill) },
         ],
       },
       {
         title: "Bluebook (Registration)",
         key: "bluebook",
         icon: <FileText className="h-4 w-4" />,
-        documents: fleet.documents?.bluebook?.present ? [0] : [],
-        status: fleet.documents?.bluebook?.status,
-        reason: fleet.documents?.bluebook?.reason,
+        documents: descriptor("bluebook").present ? [0] : [],
+        status: descriptor("bluebook").status,
+        reason: descriptor("bluebook").reason,
         details: [{ label: "Status", value: "Uploaded" }],
       },
     ];
@@ -134,6 +129,9 @@ export default function KYCFleetDetail() {
   const [viewerRequest, setViewerRequest] = useState<SecureFleetDocumentRequest | null>(null);
   const [viewerTitle, setViewerTitle] = useState<string>("Document");
 
+  // ── UI States ────────────────────────────────────────────────────────────
+  const [layoutExpanded, setLayoutExpanded] = useState(true);
+
   const openDocumentViewer = (slot: SecureFleetDocumentRequest["slot"], label: string, index?: number) => {
     setViewerRequest({ fleetId: fleet!.fleetId, slot, imageIndex: slot === "fleetImages" ? index || 0 : undefined });
     setViewerTitle(index !== undefined && index > 0 ? `${label} (${index + 1})` : label);
@@ -141,33 +139,22 @@ export default function KYCFleetDetail() {
   };
 
   /* Approval mutation — invalidates both fleet detail and roster caches */
-  const updateMutation = useUpdateOwnerFleet(id!);
   const { mutate: approve, isPending: isApproving } = useMutation({
-    mutationFn: async (formData: FormData) => {
-      await updateMutation.mutateAsync(formData);
-    },
-    onSuccess: () => {
+    mutationFn: decideFleetApproval,
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["ownerFleets"] });
       queryClient.invalidateQueries({ queryKey: ["unified_kyc"] });
       queryClient.invalidateQueries({ queryKey: ["getAllKyc"] });
-      toast.success("Fleet KYC approved! Bus is ready for operations.");
+
+      if (variables.status === "REJECTED") {
+        toast.success("Fleet KYC rejected successfully.");
+      } else {
+        toast.success("Fleet KYC approved! Bus is ready for operations.");
+      }
       setFinalApprovalDialog(false);
       navigate("/admin/kyc");
     },
-    onError: () => toast.error("Failed to update fleet status."),
-  });
-
-  /* Resubmit mutation — moves REJECTED fleet back to PENDING */
-  const { mutate: resubmit, isPending: isResubmitting } = useMutation({
-    mutationFn: () => resubmitFleetById(id!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["fleetDetail", id] });
-      queryClient.invalidateQueries({ queryKey: ["ownerFleets"] });
-      queryClient.invalidateQueries({ queryKey: ["unified_kyc"] });
-      queryClient.invalidateQueries({ queryKey: ["getAllKyc"] });
-      toast.success("Fleet resubmitted — it is now PENDING review.");
-    },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Failed to resubmit fleet."),
+    onError: (error: any) => toast.error(error?.response?.data?.message || "Failed to update fleet status."),
   });
 
   /* Sections that have at least one uploaded file */
@@ -199,33 +186,22 @@ export default function KYCFleetDetail() {
   };
 
   const handleFinalApproval = () => {
-    const fd = new FormData();
-    fd.append("approvalStatus", "APPROVED");
-    fd.append("status", "ACTIVE");
-    approve(fd);
+    approve({ fleetId: id!, status: "APPROVED" });
   };
 
   const handleFinalRejection = async () => {
-    const fd = new FormData();
-    fd.append("approvalStatus", "REJECTED");
-    fd.append("rejectionReason", finalRejectionReason);
-    fd.append("status", "INACTIVE");
-
-    // ── Persist per-document review decisions ─────────────────────────────────
-    // Convert local docStatuses to documentReviews format so the bus owner
-    // can see exactly which document failed and why, instead of a single string.
-    const documentReviews: Record<string, { status: string; reason: string | null }> = {};
-    Object.entries(docStatuses).forEach(([key, val]) => {
-      documentReviews[key] = {
-        status: val.verified ? "approved" : val.rejectionReason ? "rejected" : "pending",
-        reason: val.rejectionReason || null,
-      };
+    const requestedChanges = documentSections
+      .filter((section) => docStatuses[section.key]?.rejectionReason)
+      .map((section) => `${section.title}: ${docStatuses[section.key].rejectionReason}`);
+    const combinedReason = [
+      finalRejectionReason.trim(),
+      requestedChanges.length ? `Requested changes: ${requestedChanges.join("; ")}` : "",
+    ].filter(Boolean).join("\n\n").slice(0, 500);
+    approve({
+      fleetId: id!,
+      status: "REJECTED",
+      rejectionReason: combinedReason,
     });
-    fd.append("documentReviews", JSON.stringify(documentReviews));
-
-    approve(fd);
-    setFinalRejectionDialog(false);
-    navigate("/admin/kyc");
   };
 
   /* ── Loading / Error ────────────────────────────────────────────── */
@@ -310,8 +286,8 @@ export default function KYCFleetDetail() {
             <div className="flex gap-6 items-start flex-wrap">
               <div className="min-w-48 shrink-0 rounded-xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1"><LayoutGrid className="w-3 h-3" /> Canonical seat layout</p>
-                <p className="font-bold">{seatAssignment?.assignment ? "V3 layout assigned" : "Not assigned"}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{seatAssignment?.assignment?.activeRevision?.totalPlaces ?? fleet.vehicle.totalSeats ?? 0} passenger places</p>
+                <p className="font-bold">{fleet.seatLayout?.assigned ? "V3 layout assigned" : "Not assigned"}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{fleet.seatLayout?.totalPlaces ?? fleet.vehicle.totalSeats ?? 0} passenger places</p>
               </div>
               <div className="grid gap-4 md:grid-cols-3 flex-1 min-w-0">
                 {[
@@ -340,7 +316,58 @@ export default function KYCFleetDetail() {
             <CardTitle className="flex items-center gap-2 text-white"><Route className="h-5 w-5" /> Route Assignment</CardTitle>
           </CardHeader>
           <CardContent>
-            {fleet.assignment?.corridor ? (
+            {fleet.route?.origin && fleet.route?.destination ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                  <ShieldCheck className="h-5 w-5 text-white shrink-0" />
+                  <div>
+                    <p className="font-black text-sm text-white">Route Configured</p>
+                    <span className="text-[10px] text-white">
+                      {fleet.route.origin} → {fleet.route.destination}
+                      {fleet.route.returnEnabled && " (Return enabled)"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Served stops */}
+                {(fleet.route.servedStops?.length > 0 || fleet.route.addedPlaces?.length > 0) && (
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
+                      Served Stops &amp; Places ({(fleet.route.servedStops?.length || 0) + (fleet.route.addedPlaces?.length || 0)} total)
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {(fleet.route.servedStops || []).map((stop: any, idx: number) => (
+                        <div key={stop.stopId || idx} className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs">
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <span className="font-bold text-white truncate">{stop.name}</span>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                              stop.usage === "PICKUP" ? "bg-blue-900/40 text-blue-300" :
+                              stop.usage === "DROP" ? "bg-amber-900/40 text-amber-300" :
+                              "bg-emerald-900/40 text-emerald-300"
+                            }`}>{stop.usage}</span>
+                          </div>
+                          {stop.meetingDetails?.counterNumber && (
+                            <p className="text-[10px] text-muted-foreground">Counter #{stop.meetingDetails.counterNumber}</p>
+                          )}
+                          {stop.meetingDetails?.contactPhone && (
+                            <p className="text-[10px] text-muted-foreground">{stop.meetingDetails.contactPhone}</p>
+                          )}
+                        </div>
+                      ))}
+                      {(fleet.route.addedPlaces || []).map((place: any, idx: number) => (
+                        <div key={place.clientKey || idx} className="rounded-xl border border-dashed border-amber-500/30 bg-amber-900/10 p-2.5 text-xs">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <span className="font-bold text-amber-300 truncate">{place.name}</span>
+                            <span className="px-1 py-0.5 rounded bg-amber-900/40 text-amber-400 text-[9px] font-bold">Custom</span>
+                          </div>
+                          {place.address && <p className="text-[10px] text-muted-foreground">{place.address}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : fleet.assignment?.corridor ? (
               <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
                 <ShieldCheck className="h-5 w-5 text-white shrink-0" />
                 <div>
@@ -376,6 +403,42 @@ export default function KYCFleetDetail() {
           </CardContent>
         </Card>
 
+        {/* Seat Map Display */}
+        {(fleet?.seatLayout?.layout || fleet?.vehicle?.seatConfig) && (
+          <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white">
+            <CardHeader
+              className="cursor-pointer select-none transition-colors hover:bg-white/5"
+              onClick={() => setLayoutExpanded(!layoutExpanded)}
+            >
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <LayoutGrid className="h-5 w-5" /> Seat Layout
+                </CardTitle>
+                <div className="flex items-center text-muted-foreground">
+                  <span className="text-xs mr-2 font-medium tracking-wide">
+                    {layoutExpanded ? "Hide Layout" : "View Layout"}
+                  </span>
+                  {layoutExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </div>
+              </div>
+            </CardHeader>
+            {layoutExpanded && (
+              <CardContent className="border-t border-white/5 p-6">
+                <div className="flex justify-center bg-black/20 p-8 rounded-xl border border-white/5 overflow-auto min-h-[300px] items-center">
+                  <SeatLayoutCanvas
+                    layout={fleet?.seatLayout?.layout || fleet?.vehicle?.seatConfig}
+                    tool="SELECT"
+                    selectedId={null}
+                    editable={false}
+                    onChange={() => {}}
+                    onSelect={() => {}}
+                  />
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        )}
+
         {/* Document Sections */}
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1">
@@ -399,7 +462,7 @@ export default function KYCFleetDetail() {
                     (isPending && st.rejectionReason) || approvalStatus === "REJECTED" ? "border-white/10 bg-white/5" : ""
                   }`}
                 >
-                  <CardHeader className="border-b border-white/5 bg-white/5 pb-4">
+                  <CardHeader className="border-b border-white/5 bg-white/5 pb-4 p-5">
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2 text-white">
                         {section.icon} {section.title}
@@ -425,7 +488,7 @@ export default function KYCFleetDetail() {
                       </CardDescription>
                     )}
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-4 pt-5 p-5">
                     {section.details && (
                       <div className="grid gap-1">
                         {section.details.map((d, i) => (
@@ -439,11 +502,11 @@ export default function KYCFleetDetail() {
                     {!hasDocuments ? (
                       <p className="text-xs text-muted-foreground italic text-center py-2">No file uploaded for this section.</p>
                     ) : (
-                      <div className="space-y-1">
+                      <div className="space-y-2 mt-2">
                         {section.documents.map((_documentIndex: number, idx: number) => (
-                          <Button key={idx} variant="outline" size="sm" className="w-full justify-start text-xs"
+                          <Button key={idx} variant="outline" size="sm" className="w-full justify-start text-xs py-4"
                             onClick={() => openDocumentViewer(section.key as SecureFleetDocumentRequest["slot"], section.title, idx)}>
-                            <Eye className="h-3 w-3 mr-2" />
+                            <Eye className="h-4 w-4 mr-2 text-primary-400" />
                             {section.key === "fleetImages" ? `View Image #${idx + 1}` : "View Document"}
                           </Button>
                         ))}
@@ -451,12 +514,12 @@ export default function KYCFleetDetail() {
                     )}
                     {/* Verify / Flag buttons — ONLY in PENDING mode */}
                     {isPending && hasDocuments && !st.verified && !st.rejectionReason && (
-                      <div className="flex gap-2 pt-1">
-                        <Button size="sm" className="flex-1 text-xs" onClick={() => handleVerify(section.key)}>
-                          <CheckCircle2 className="h-3 w-3 mr-1" /> Verify
+                      <div className="flex gap-3 pt-3 mt-2 border-t border-white/5">
+                        <Button size="sm" className="flex-1 text-xs py-4 font-semibold" onClick={() => handleVerify(section.key)}>
+                          <CheckCircle2 className="h-4 w-4 mr-1.5" /> Verify
                         </Button>
-                        <Button size="sm" variant="destructive" className="flex-1 text-xs" onClick={() => openRejectDialog(section.key)}>
-                          <XCircle className="h-3 w-3 mr-1" /> Flag Issue
+                        <Button size="sm" variant="destructive" className="flex-1 text-xs py-4 font-semibold bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 text-red-200" onClick={() => openRejectDialog(section.key)}>
+                          <XCircle className="h-4 w-4 mr-1.5" /> Flag Issue
                         </Button>
                       </div>
                     )}
@@ -476,7 +539,7 @@ export default function KYCFleetDetail() {
             <CardTitle className="flex items-center gap-2 text-white">KYC Decision Record</CardTitle>
             <CardDescription className="text-white/60">
               {approvalStatus === "APPROVED"
-                ? "This fleet has been approved and is cleared for operations."
+                ? "Compliance is approved. Complete operational setup before passenger service begins."
                 : approvalStatus === "REJECTED"
                 ? "This application was rejected. The bus owner must resubmit with corrected documentation."
                 : hasRejections
@@ -494,12 +557,20 @@ export default function KYCFleetDetail() {
                 <div>
                   <p className="font-black text-sm">Fleet Approved</p>
                   <p className="text-xs font-normal text-white mt-0.5">
-                    Approved on {fmtDate(fleet.approvedAt)} · Bus is ACTIVE and operational.
+                    Approved on {fmtDate(fleet.review?.approvedAt)} · Eligible for driver and schedule setup.
                   </p>
                 </div>
+                {!fleet.setupComplete && ownerBrand?._id && (
+                  <Button
+                    className="ml-auto bg-white text-black hover:bg-white/90"
+                    onClick={() => navigate(`/admin/bus-owners/operator/${ownerBrand._id}`)}
+                  >
+                    Continue Operational Setup
+                  </Button>
+                )}
               </div>
             ) : approvalStatus === "REJECTED" ? (
-              /* ── REJECTED state: show reason + allow resubmission ── */
+              /* ── REJECTED state: owner controls correction and resubmission ── */
               <div className="flex flex-col gap-3 w-full">
                 <div className="flex items-start gap-3 text-white bg-white/5 px-5 py-4 rounded-xl border border-white/10">
                   <XCircle className="h-6 w-6 shrink-0 mt-0.5" />
@@ -512,20 +583,9 @@ export default function KYCFleetDetail() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 pt-1">
-                  <Button
-                    variant="outline"
-                    disabled={isResubmitting}
-                    onClick={() => resubmit()}
-                    className="border-white/10 text-white hover:bg-white/5"
-                  >
-                    {isResubmitting
-                      ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      : <AlertTriangle className="h-4 w-4 mr-2" />}
-                    Resubmit for Review
-                  </Button>
-                  <p className="text-xs text-muted-foreground">Reset to PENDING so a new review cycle can begin.</p>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  The bus owner must correct the requested items and resubmit the fleet from their dashboard.
+                </p>
               </div>
             ) : (
               /* ── PENDING state: active decision controls ── */
@@ -579,7 +639,7 @@ export default function KYCFleetDetail() {
               <DialogTitle>Approve Fleet Registration</DialogTitle>
             </div>
             <DialogDescription>
-              You are approving <strong>{fleet.vehicle.busName}</strong> ({fleet.vehicle.busNumber?.toUpperCase()}). The bus will be marked <span className="font-bold text-white">ACTIVE</span>.
+              You are approving <strong>{fleet.vehicle.busName}</strong> ({fleet.vehicle.busNumber?.toUpperCase()}). It will become eligible for operational setup; passenger service begins only after schedule activation.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

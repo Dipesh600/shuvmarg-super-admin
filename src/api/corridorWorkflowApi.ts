@@ -123,6 +123,9 @@ export interface RouteOption {
   isRecommended?: boolean;
   description?: string | null;
   roadLabels?: string[];
+  /** Index into the Google Routes API response. Used by the wizard to match
+   *  a stateless preview option to a stored draft route option. */
+  providerRouteIndex?: number;
 }
 
 export interface RouteGuidancePlace {
@@ -240,6 +243,8 @@ export interface CreateVariantDraftInput {
   createCompanion?: boolean;
   originTerminalStopId?: string;
   destinationTerminalStopId?: string;
+  routeOptions?: RouteOption[];
+  selectedProviderRouteIndex?: number;
 }
 
 export interface UpdateVariantDetailsInput {
@@ -318,6 +323,38 @@ export async function removeRouteVariant(variantId: string): Promise<RegistryRes
 
 // Variant-draft endpoints are intentionally isolated here. The wizard owns this
 // workflow; it does not reuse the retired discovery API or browser routing.
+
+export interface CorridorRoutePreview {
+  corridorId: string;
+  direction: VariantDirection;
+  originStopId: string;
+  destinationStopId: string;
+  routeOptions: RouteOption[];
+}
+
+export interface PreviewCorridorRoutePathsInput {
+  direction: VariantDirection;
+  originTerminalStopId?: string;
+  destinationTerminalStopId?: string;
+}
+
+/**
+ * Stateless — returns Google road-path suggestions without creating a draft.
+ * Step-1 of the wizard uses this so the draft is only created once the operator
+ * proceeds past path selection to stop discovery.
+ */
+export async function previewCorridorRoutePaths(
+  corridorId: string,
+  input: PreviewCorridorRoutePathsInput,
+): Promise<RegistryResponse<CorridorRoutePreview>> {
+  try {
+    const { data } = await api.post(`/registry/corridors/${corridorId}/route-preview`, input);
+    return data;
+  } catch (error: unknown) {
+    workflowError(error, "Road-path suggestions could not be loaded. Check endpoint map positions and try again.");
+  }
+}
+
 export async function createVariantDraft(
   corridorId: string,
   input: CreateVariantDraftInput,
