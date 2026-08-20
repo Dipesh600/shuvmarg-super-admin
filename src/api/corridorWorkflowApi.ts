@@ -72,10 +72,46 @@ export interface VariantRouteStop {
   stopId: CorridorStop;
 }
 
+export interface ReferencingBus {
+  _id: string;
+  busNumber: string;
+  name?: string;
+  status: string;
+}
+
+export interface ReferencingBrand {
+  _id: string;
+  brandName: string;
+  brandCode: string;
+  logo?: string | null;
+  contactPhone?: string | null;
+  buses: ReferencingBus[];
+}
+
+export interface HistoricalRevision {
+  _id: string;
+  code: string;
+  name: string | null;
+  type: VariantType | null;
+  direction?: VariantDirection;
+  status: VariantStatus;
+  distanceKm?: number | null;
+  durationMinutes?: number | null;
+  revisionNumber?: number;
+  stopCount: number;
+  supersededByVariantId?: { _id: string; code: string; name?: string; revisionNumber?: number } | null;
+  createdBy?: { _id: string; name?: string; email?: string } | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface VariantDetails {
   variant: RouteVariant;
   stops: VariantRouteStop[];
   references: Record<string, number>;
+  referencingBrands?: ReferencingBrand[];
+  activeScheduleCount?: number;
+  revisionHistory?: HistoricalRevision[];
 }
 
 export interface RouteOption {
@@ -87,6 +123,9 @@ export interface RouteOption {
   isRecommended?: boolean;
   description?: string | null;
   roadLabels?: string[];
+  /** Index into the Google Routes API response. Used by the wizard to match
+   *  a stateless preview option to a stored draft route option. */
+  providerRouteIndex?: number;
 }
 
 export interface RouteGuidancePlace {
@@ -204,6 +243,8 @@ export interface CreateVariantDraftInput {
   createCompanion?: boolean;
   originTerminalStopId?: string;
   destinationTerminalStopId?: string;
+  routeOptions?: RouteOption[];
+  selectedProviderRouteIndex?: number;
 }
 
 export interface UpdateVariantDetailsInput {
@@ -282,6 +323,38 @@ export async function removeRouteVariant(variantId: string): Promise<RegistryRes
 
 // Variant-draft endpoints are intentionally isolated here. The wizard owns this
 // workflow; it does not reuse the retired discovery API or browser routing.
+
+export interface CorridorRoutePreview {
+  corridorId: string;
+  direction: VariantDirection;
+  originStopId: string;
+  destinationStopId: string;
+  routeOptions: RouteOption[];
+}
+
+export interface PreviewCorridorRoutePathsInput {
+  direction: VariantDirection;
+  originTerminalStopId?: string;
+  destinationTerminalStopId?: string;
+}
+
+/**
+ * Stateless — returns Google road-path suggestions without creating a draft.
+ * Step-1 of the wizard uses this so the draft is only created once the operator
+ * proceeds past path selection to stop discovery.
+ */
+export async function previewCorridorRoutePaths(
+  corridorId: string,
+  input: PreviewCorridorRoutePathsInput,
+): Promise<RegistryResponse<CorridorRoutePreview>> {
+  try {
+    const { data } = await api.post(`/registry/corridors/${corridorId}/route-preview`, input);
+    return data;
+  } catch (error: unknown) {
+    workflowError(error, "Road-path suggestions could not be loaded. Check endpoint map positions and try again.");
+  }
+}
+
 export async function createVariantDraft(
   corridorId: string,
   input: CreateVariantDraftInput,
@@ -387,4 +460,46 @@ export async function commitVariantDraft(draftId: string): Promise<RegistryRespo
 export async function activateVariantDraft(draftId: string): Promise<RegistryResponse<RouteVariant>> {
   const { data } = await api.post(`/registry/variant-drafts/${draftId}/activate`);
   return data;
+}
+
+export interface StopSequenceEntry {
+  stopCode: string;
+  sequence: number;
+  isMajor: boolean;
+  distanceFromOriginKm: number | null;
+  durationFromOriginMins: number | null;
+}
+
+export async function putVariantStops(
+  variantId: string,
+  stops: StopSequenceEntry[],
+): Promise<RegistryResponse<VariantRouteStop[]>> {
+  try {
+    const { data } = await api.put(`/registry/variants/${variantId}/stops`, { stops });
+    return data;
+  } catch (error: unknown) {
+    workflowError(error, "Unable to save the updated stop sequence.");
+  }
+}
+
+export async function rollbackVariantRevision(
+  variantId: string,
+): Promise<RegistryResponse<VariantDetails>> {
+  try {
+    const { data } = await api.post(`/registry/variants/${variantId}/rollback`);
+    return data;
+  } catch (error: unknown) {
+    workflowError(error, "Unable to rollback route revision.");
+  }
+}
+
+export async function deleteHistoricalRevision(
+  variantId: string,
+): Promise<RegistryResponse<{ message: string; deleted?: boolean; archived?: boolean }>> {
+  try {
+    const { data } = await api.delete(`/registry/variants/${variantId}/history`);
+    return data;
+  } catch (error: unknown) {
+    workflowError(error, "Unable to delete route revision.");
+  }
 }

@@ -83,8 +83,16 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 export function RouteStopReviewMap({ selectedRoute, candidates }: RouteStopReviewMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const hasFittedBoundsRef = useRef<boolean>(false);
+  const prevRouteKeyRef = useRef<string>("");
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
+
+  const routeKey = selectedRoute?.id || "";
+  if (prevRouteKeyRef.current !== routeKey) {
+    prevRouteKeyRef.current = routeKey;
+    hasFittedBoundsRef.current = false;
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -121,32 +129,44 @@ export function RouteStopReviewMap({ selectedRoute, candidates }: RouteStopRevie
           }));
         }
 
+        const MAP_PIN_PATH =
+          "M 12 0 C 5.37 0 0 5.37 0 12 C 0 20.5 12 34 12 34 C 12 34 24 20.5 24 12 C 24 5.37 18.63 0 12 0 Z";
+
         candidates.forEach((candidate) => {
           const position = candidatePosition(candidate);
           if (!position) return;
           bounds.extend(position);
-          overlays.push(new google.maps.Marker({
-            map,
-            position,
-            title: markerTitle(candidate),
-            label: {
-              text: String(candidate.sequence),
-              color: candidate.reviewStatus === "EXCLUDE" ? "#111111" : "#000000",
-              fontWeight: "800",
-              fontSize: "10px",
-            },
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: candidate.isTerminal ? 10 : 8,
-              fillColor: markerColor(candidate),
-              fillOpacity: candidate.reviewStatus === "EXCLUDE" ? 0.55 : 1,
-              strokeColor: "#111111",
-              strokeWeight: 2,
-            },
-          }));
+          overlays.push(
+            new google.maps.Marker({
+              map,
+              position,
+              title: markerTitle(candidate),
+              label: {
+                text: String(candidate.sequence),
+                color: candidate.reviewStatus === "EXCLUDE" ? "#555555" : "#000000",
+                fontWeight: "800",
+                fontSize: String(candidate.sequence).length > 2 ? "8.5px" : "10px",
+                fontFamily: "Inter, system-ui, sans-serif",
+              },
+              icon: {
+                path: MAP_PIN_PATH,
+                scale: candidate.isTerminal ? 1.2 : 1.0,
+                fillColor: markerColor(candidate),
+                fillOpacity: candidate.reviewStatus === "EXCLUDE" ? 0.6 : 1,
+                strokeColor: "#111111",
+                strokeWeight: 1.5,
+                anchor: new google.maps.Point(12, 34),
+                labelOrigin: new google.maps.Point(12, 12),
+              },
+              zIndex: candidate.isTerminal ? 10 : 5,
+            })
+          );
         });
 
-        if (!bounds.isEmpty()) map.fitBounds(bounds, 44);
+        if (!bounds.isEmpty() && !hasFittedBoundsRef.current) {
+          map.fitBounds(bounds, 44);
+          hasFittedBoundsRef.current = true;
+        }
         setState("ready");
         cleanup = () => overlays.forEach((overlay) => overlay.setMap(null));
       } catch (caught) {

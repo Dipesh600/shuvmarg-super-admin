@@ -8,6 +8,8 @@ import { activateSchedule, goLiveSchedule } from "@/api/scheduleApi";
 import { getDriversByBrand, assignBusToDriver } from "@/api/driverApi";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import type { AxiosError } from "axios";
+import type { FleetSetupStepKey } from "@/api/busOwnerFleetApi";
 
 // Modals to support inline actions
 import UpdateOwnerFleetModal from "./UpdateOwnerFleetModal";
@@ -22,11 +24,24 @@ interface FleetSetupWizardProps {
   ownerId?: string;
 }
 
+const SETUP_STEPS = [
+  { id: "routeAssigned", label: "Route Assignment", icon: Route, description: "Fleet mapped to a platform corridor" },
+  { id: "routeConfigured", label: "Route Validation", icon: Route, description: "Verify brand-specific stops exist" },
+  { id: "driverAssigned", label: "Crew Assignment", icon: Users, description: "Assign primary driver & crew" },
+  { id: "scheduleCreated", label: "Service Scheduling", icon: Calendar, description: "Create operational timeline" },
+  { id: "activated", label: "Dispatch Overview", icon: Power, description: "Final review & activation" },
+] as const satisfies ReadonlyArray<{ id: FleetSetupStepKey; label: string; icon: typeof Route; description: string }>;
+
+function apiErrorMessage(error: unknown, fallback: string) {
+  const typed = error as AxiosError<{ message?: string }>;
+  return typed.response?.data?.message || typed.message || fallback;
+}
+
 export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ownerId }: FleetSetupWizardProps) {
   const qc = useQueryClient();
   const [actionState, setActionState] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState<number>(0);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const [initializedFleetId, setInitializedFleetId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["fleet-setup-status", fleetId],
@@ -53,50 +68,46 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
       qc.invalidateQueries({ queryKey: ["fleet-setup-status", fleetId] });
       qc.invalidateQueries({ queryKey: ["brand-drivers", brandId] });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to assign driver");
+    onError: (err: unknown) => {
+      toast.error(apiErrorMessage(err, "Failed to assign driver"));
     }
   });
 
   const activateMutation = useMutation({
     mutationFn: async () => {
       if (!status?.scheduleId) throw new Error("No primary schedule ID found");
-      // Phase 1: Activate both outbound + return schedules
+      // Activating the primary schedule also activates its linked return.
       await activateSchedule(status.scheduleId);
-      if (status.returnScheduleId) {
-        await activateSchedule(status.returnScheduleId);
-      }
       // Phase 2: Trigger trip burst generation
       await goLiveSchedule(status.scheduleId);
     },
     onSuccess: () => {
       toast.success("Fleet is now LIVE! Trips are being generated — passengers can start booking.");
       qc.invalidateQueries({ queryKey: ["fleet-setup-status", fleetId] });
-      qc.invalidateQueries({ queryKey: ["owner-fleets"] });
+      qc.invalidateQueries({ queryKey: ["ownerFleets"] });
+      qc.invalidateQueries({ queryKey: ["fleets"] });
+      qc.invalidateQueries({ queryKey: ["fleetWorkstation", fleetId] });
       onClose();
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to activate fleet");
+    onError: (err: unknown) => {
+      toast.error(apiErrorMessage(err, "Failed to activate fleet"));
     }
   });
 
   const navigate = useNavigate();
 
-  const steps = [
-    { id: "routeAssigned", label: "Route Assignment", icon: Route, description: "Fleet mapped to a platform corridor" },
-    { id: "routeConfigured", label: "Route Validation", icon: Route, description: "Verify brand-specific stops exist" },
-    { id: "driverAssigned", label: "Crew Assignment", icon: Users, description: "Assign primary driver & crew" },
-    { id: "scheduleCreated", label: "Service Scheduling", icon: Calendar, description: "Create operational timeline" },
-    { id: "activated", label: "Dispatch Overview", icon: Power, description: "Final review & activation" },
-  ];
+  const steps = SETUP_STEPS;
 
   useEffect(() => {
-    if (status && !hasInitialized) {
+    if (status && initializedFleetId !== fleetId) {
       const firstIncomplete = steps.findIndex(s => !status?.steps?.[s.id]);
-      setActiveIndex(firstIncomplete === -1 ? steps.length : firstIncomplete);
-      setHasInitialized(true);
+      const timer = window.setTimeout(() => {
+        setActiveIndex(firstIncomplete === -1 ? steps.length - 1 : firstIncomplete);
+        setInitializedFleetId(fleetId);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
-  }, [status, hasInitialized]);
+  }, [status, initializedFleetId, fleetId, steps]);
 
   // ── GATE: Wizard is for first-time setup only ──────────────────────────────
   // If a schedule exists (ACTIVE, SUSPENDED, or INACTIVE), do NOT show the wizard.
@@ -334,9 +345,9 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
                       <h4 className="text-lg font-bold mb-2">
                         {status?.steps?.routeConfigured ? "Route Validated" : "Route Not Configured"}
                       </h4>
-                      {status?.steps?.routeConfigured && status?.assignedRouteConfigs?.length > 0 ? (
+                      {status?.steps?.routeConfigured && (status?.assignedRouteConfigs?.length ?? 0) > 0 ? (
                         <div className="mb-6 w-full max-w-md text-left space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                          {status.assignedRouteConfigs.map((cfg: any) => {
+                          {(status.assignedRouteConfigs ?? []).map((cfg) => {
                             const isReturn = cfg.variantId?.direction === "RETURN";
                             const origin = isReturn ? status.assignedCorridor?.destinationId?.name : status.assignedCorridor?.originId?.name;
                             const dest = isReturn ? status.assignedCorridor?.originId?.name : status.assignedCorridor?.destinationId?.name;

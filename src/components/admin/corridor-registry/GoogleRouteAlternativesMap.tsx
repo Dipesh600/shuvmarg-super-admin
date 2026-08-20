@@ -79,6 +79,9 @@ export function GoogleRouteAlternativesMap({ options, selectedOptionId, originTe
           listeners.push(polyline.addListener("click", () => onSelect(option.id)));
           renderables.push(polyline);
         });
+        const MAP_PIN_PATH =
+          "M 12 0 C 5.37 0 0 5.37 0 12 C 0 20.5 12 34 12 34 C 12 34 24 20.5 24 12 C 24 5.37 18.63 0 12 0 Z";
+
         [
           [originTerminal, "A"],
           [destinationTerminal, "B"],
@@ -86,7 +89,30 @@ export function GoogleRouteAlternativesMap({ options, selectedOptionId, originTe
           const point = terminal as CorridorStop | undefined;
           if (!point || !isCoordinate(point.coordinates)) return;
           bounds.extend(point.coordinates);
-          renderables.push(new google.maps.Marker({ map, position: point.coordinates, title: point.name, label: { text: label as string, color: "#111111", fontWeight: "700" }, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 11, fillColor: "#D3D925", fillOpacity: 1, strokeColor: "#111111", strokeWeight: 2 } }));
+          renderables.push(
+            new google.maps.Marker({
+              map,
+              position: point.coordinates,
+              title: point.name,
+              label: {
+                text: label as string,
+                color: "#111111",
+                fontWeight: "900",
+                fontSize: "12px",
+              },
+              icon: {
+                path: MAP_PIN_PATH,
+                scale: 1.25,
+                fillColor: "#D3D925",
+                fillOpacity: 1,
+                strokeColor: "#111111",
+                strokeWeight: 2,
+                anchor: new google.maps.Point(12, 34),
+                labelOrigin: new google.maps.Point(12, 12),
+              },
+              zIndex: 10,
+            })
+          );
         });
         if (!bounds.isEmpty()) map.fitBounds(bounds, 48);
         setState("ready");
