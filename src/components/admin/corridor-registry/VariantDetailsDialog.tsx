@@ -48,6 +48,8 @@ export function VariantDetailsDialog({
   onRevise,
   onResume,
   onActivate,
+  onRepair,
+  onRetire,
   onStopsUpdated,
 }: {
   variant: RouteVariant | null;
@@ -57,6 +59,8 @@ export function VariantDetailsDialog({
   onRevise: (variant: RouteVariant) => void;
   onResume: (variant: RouteVariant) => void;
   onActivate: (variant: RouteVariant) => void;
+  onRepair: (variant: RouteVariant) => void;
+  onRetire: (variant: RouteVariant) => void;
   onStopsUpdated: (updatedVariant?: RouteVariant) => void;
 }) {
   const [activeTab, setActiveTab] = useState("stops");
@@ -529,9 +533,17 @@ export function VariantDetailsDialog({
                       )}
                     </div>
                   ) : isActive ? (
-                    <Button onClick={() => onRevise(details.variant)} className="bg-[#D3D925] font-bold text-black hover:bg-[#D9CD25]">
-                      <Pencil className="mr-2 size-4" />Revise route
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" onClick={() => onRepair(details.variant)} className="border-white/15 text-white">
+                        <GitBranch className="mr-2 size-4" />Repair pair
+                      </Button>
+                      <Button variant="outline" onClick={() => onRetire(details.variant)} className="border-red-400/25 text-red-200 hover:bg-red-500/10">
+                        <Trash2 className="mr-2 size-4" />Retire path
+                      </Button>
+                      <Button onClick={() => onRevise(details.variant)} className="bg-[#D3D925] font-bold text-black hover:bg-[#D9CD25]">
+                        <Pencil className="mr-2 size-4" />Revise route
+                      </Button>
+                    </div>
                   ) : (
                     <p className="text-xs text-white/45">Historical versions are restored from Revision History; only the current active route can be revised.</p>
                   )}

@@ -15,6 +15,8 @@ import {
   listRegistryStops,
   removeRouteCorridor,
   removeRouteVariant,
+  repairRouteVariantPair,
+  retireRouteVariantPair,
   updateRouteCorridor,
   type RouteCorridor,
   type RouteVariant,
@@ -50,6 +52,8 @@ export function CorridorWorkspace() {
   const [deletingCorridor, setDeletingCorridor] = useState<RouteCorridor | null>(null);
   const [deletingVariant, setDeletingVariant] = useState<RouteVariant | null>(null);
   const [viewingVariant, setViewingVariant] = useState<RouteVariant | null>(null);
+  const [repairingVariant, setRepairingVariant] = useState<RouteVariant | null>(null);
+  const [retiringVariant, setRetiringVariant] = useState<RouteVariant | null>(null);
   const [wizard, setWizard] = useState<{ open: boolean; corridor: RouteCorridor | null; direction: VariantDirection; draftId: string | null }>({ open: false, corridor: null, direction: "FORWARD", draftId: null });
   const [notes, setNotes] = useState("");
 
@@ -120,6 +124,28 @@ export function CorridorWorkspace() {
     },
     onError: (error) => toast.error(messageFor(error, "Unable to create a route revision.")),
   });
+  const repairPairMutation = useMutation({
+    mutationFn: repairRouteVariantPair,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["corridor-variants", selectedCorridorId] });
+      void queryClient.invalidateQueries({ queryKey: ["route-variant-details"] });
+      setRepairingVariant(null);
+      setViewingVariant(null);
+      toast.success("Forward and return directions are repaired and active.");
+    },
+    onError: (error) => toast.error(messageFor(error, "Unable to repair this route pair.")),
+  });
+  const retirePairMutation = useMutation({
+    mutationFn: retireRouteVariantPair,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["corridor-variants", selectedCorridorId] });
+      void queryClient.invalidateQueries({ queryKey: ["corridors"] });
+      setRetiringVariant(null);
+      setViewingVariant(null);
+      toast.success("Route path retired. Its history remains preserved.");
+    },
+    onError: (error) => toast.error(messageFor(error, "Unable to retire this route path.")),
+  });
 
   const openEditCorridor = () => {
     if (!selectedCorridor) return;
@@ -155,6 +181,8 @@ export function CorridorWorkspace() {
         onRevise={(variant) => reviseVariantMutation.mutate(variant._id)}
         onResume={(variant) => { setViewingVariant(null); resumeVariantDraft(variant); }}
         onActivate={(variant) => activateVariantMutation.mutate(variant._id)}
+        onRepair={(variant) => setRepairingVariant(variant)}
+        onRetire={(variant) => setRetiringVariant(variant)}
         onStopsUpdated={(updatedVariant) => {
           if (updatedVariant) setViewingVariant(updatedVariant);
           void queryClient.invalidateQueries({ queryKey: ["corridor-variants", selectedCorridorId] });
@@ -165,6 +193,8 @@ export function CorridorWorkspace() {
       <Dialog open={Boolean(editingCorridor)} onOpenChange={(open) => !open && setEditingCorridor(null)}><DialogContent className="border-white/10 bg-[#111] text-white"><DialogHeader><DialogTitle>Edit corridor note</DialogTitle><DialogDescription className="text-white/45">Endpoints stay immutable. Variants supply the actual roads and stop sequence.</DialogDescription></DialogHeader><div className="space-y-2"><Label className="text-xs font-semibold text-white/65">Operating note</Label><Textarea value={notes} onChange={(event) => setNotes(event.target.value)} className="border-white/10 bg-white/[0.04] text-white" /></div><DialogFooter><Button type="button" variant="outline" onClick={() => setEditingCorridor(null)} className="border-white/15 text-white">Cancel</Button><Button type="button" disabled={!editingCorridor || updateMutation.isPending} onClick={() => editingCorridor && updateMutation.mutate({ id: editingCorridor._id, value: notes })} className="bg-[#D3D925] font-bold text-black hover:bg-[#D9CD25]">{updateMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}Save</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={Boolean(deletingCorridor)} onOpenChange={(open) => !open && setDeletingCorridor(null)}><DialogContent className="border-white/10 bg-[#111] text-white"><DialogHeader><DialogTitle>Delete corridor?</DialogTitle><DialogDescription className="text-white/45">A truly empty corridor can be deleted even if its status is stale. Existing drafts, operational variants, or fleet references must be handled first.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setDeletingCorridor(null)} className="border-white/15 text-white">Cancel</Button><Button type="button" variant="destructive" disabled={!deletingCorridor || deleteCorridorMutation.isPending} onClick={() => deletingCorridor && deleteCorridorMutation.mutate(deletingCorridor._id)}>{deleteCorridorMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}Delete corridor</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={Boolean(deletingVariant)} onOpenChange={(open) => !open && setDeletingVariant(null)}><DialogContent className="border-white/10 bg-[#111] text-white"><DialogHeader><DialogTitle>Delete route draft?</DialogTitle><DialogDescription className="text-white/45">Only an unused draft can be permanently deleted. Operational variants remain preserved for route and booking history.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setDeletingVariant(null)} className="border-white/15 text-white">Cancel</Button><Button type="button" variant="destructive" disabled={!deletingVariant || deletingVariant.status !== "DRAFT" || deleteVariantMutation.isPending} onClick={() => deletingVariant?.status === "DRAFT" && deleteVariantMutation.mutate(deletingVariant._id)}>{deleteVariantMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}Delete draft</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={Boolean(repairingVariant)} onOpenChange={(open) => !open && setRepairingVariant(null)}><DialogContent className="border-white/10 bg-[#111] text-white"><DialogHeader><DialogTitle>Repair forward and return pair?</DialogTitle><DialogDescription className="text-white/45">This links the live direction to the single reviewed opposite direction and activates the missing side. If multiple candidates exist, the repair stops instead of guessing.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setRepairingVariant(null)} className="border-white/15 text-white">Cancel</Button><Button type="button" disabled={!repairingVariant || repairPairMutation.isPending} onClick={() => repairingVariant && repairPairMutation.mutate(repairingVariant._id)} className="bg-[#D3D925] font-bold text-black hover:bg-[#D9CD25]">{repairPairMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}Repair pair</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={Boolean(retiringVariant)} onOpenChange={(open) => !open && setRetiringVariant(null)}><DialogContent className="border-white/10 bg-[#111] text-white"><DialogHeader><DialogTitle>Retire this entire route path?</DialogTitle><DialogDescription className="text-white/45">Both directions will leave the live network and disappear from the normal corridor view. Historical bookings remain preserved. Active schedules, future trips, route patterns, or agent access must be moved first.</DialogDescription></DialogHeader><DialogFooter><Button type="button" variant="outline" onClick={() => setRetiringVariant(null)} className="border-white/15 text-white">Cancel</Button><Button type="button" variant="destructive" disabled={!retiringVariant || retirePairMutation.isPending} onClick={() => retiringVariant && retirePairMutation.mutate(retiringVariant._id)}>{retirePairMutation.isPending && <Loader2 className="mr-2 size-4 animate-spin" />}Retire path</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
 }
