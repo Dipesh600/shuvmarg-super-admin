@@ -59,6 +59,7 @@ export interface RouteVariant {
   revisionOfVariantId?: string | null;
   revisionNumber?: number;
   routeStopCount?: number;
+  companionVariant?: RouteVariant | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -461,8 +462,12 @@ export async function commitVariantDraft(draftId: string): Promise<RegistryRespo
 }
 
 export async function activateVariantDraft(draftId: string): Promise<RegistryResponse<RouteVariant>> {
-  const { data } = await api.post(`/registry/variant-drafts/${draftId}/activate`);
-  return data;
+  try {
+    const { data } = await api.post(`/registry/variant-drafts/${draftId}/activate`);
+    return data;
+  } catch (error: unknown) {
+    workflowError(error, "This route family is not ready to activate yet.");
+  }
 }
 
 export interface StopSequenceEntry {
