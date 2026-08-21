@@ -449,7 +449,10 @@ export async function commitVariantDraft(draftId: string): Promise<RegistryRespo
     const { data } = await api.post(
       `/registry/variant-drafts/${draftId}/commit`,
       undefined,
-      { timeout: 30_000 },
+      // A route commit can write both directions and resolve several canonical
+      // stops. Leave enough time for the backend's transient-transaction
+      // recovery path before Axios aborts the request.
+      { timeout: 90_000 },
     );
     return data;
   } catch (error: unknown) {
