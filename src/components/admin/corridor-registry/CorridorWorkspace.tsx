@@ -114,10 +114,9 @@ export function CorridorWorkspace() {
     mutationFn: createRouteVariantRevision,
     onSuccess: (response) => {
       const revision = response.data.variant;
-      setViewingVariant(null);
       void queryClient.invalidateQueries({ queryKey: ["corridor-variants", selectedCorridorId] });
-      if (selectedCorridor) setWizard({ open: true, corridor: selectedCorridor, direction: revision.direction || "FORWARD", draftId: revision._id });
-      toast.success("Safe revision draft created. The live route remains unchanged.");
+      setViewingVariant(revision);
+      toast.success("Revision workspace ready. The live route remains unchanged until activation.");
     },
     onError: (error) => toast.error(messageFor(error, "Unable to create a route revision.")),
   });

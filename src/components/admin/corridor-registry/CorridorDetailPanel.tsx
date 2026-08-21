@@ -108,6 +108,34 @@ function VariantCard({
   );
 }
 
+function PendingRevisionCard({
+  revision,
+  onDelete,
+  onContinue,
+}: {
+  revision: RouteVariant;
+  onDelete: () => void;
+  onContinue: () => void;
+}) {
+  return (
+    <article className="rounded-xl border border-[#D3D925]/20 bg-[#D3D925]/[0.04] p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-[#D3D925]/70">Pending paired revision</p>
+          <p className="mt-1 text-sm font-bold text-white">{routeLabel(revision)} · v{revision.revisionNumber || 2}</p>
+          <p className="mt-1 text-xs leading-5 text-white/40">One revision workspace controls both forward and return directions. The live route is unchanged.</p>
+        </div>
+        <button type="button" aria-label={`Discard revision for ${routeLabel(revision)}`} onClick={onDelete} className="rounded-lg p-1.5 text-white/30 hover:bg-red-500/10 hover:text-red-300">
+          <Trash2 className="size-3.5" />
+        </button>
+      </div>
+      <Button type="button" size="sm" onClick={onContinue} className="mt-3 bg-[#D3D925] font-bold text-black hover:bg-[#D9CD25]">
+        <Pencil className="mr-2 size-3.5" />Continue revision
+      </Button>
+    </article>
+  );
+}
+
 function DirectionLane({
   direction,
   corridor,
@@ -116,6 +144,7 @@ function DirectionLane({
   onDelete,
   onResume,
   onView,
+  pendingRevisions,
 }: {
   direction: VariantDirection;
   corridor: RouteCorridor;
@@ -124,6 +153,7 @@ function DirectionLane({
   onDelete: (variant: RouteVariant) => void;
   onResume: (variant: RouteVariant) => void;
   onView: (variant: RouteVariant) => void;
+  pendingRevisions: RouteVariant[];
 }) {
   const origin = direction === "FORWARD" ? corridor.originId : corridor.destinationId;
   const destination = direction === "FORWARD" ? corridor.destinationId : corridor.originId;
@@ -146,6 +176,14 @@ function DirectionLane({
       </div>
 
       <div className="space-y-2">
+        {pendingRevisions.map((pendingRevision) => (
+          <PendingRevisionCard
+            key={pendingRevision._id}
+            revision={pendingRevision}
+            onDelete={() => onDelete(pendingRevision)}
+            onContinue={() => onView(pendingRevision)}
+          />
+        ))}
         {loading ? (
           <div className="rounded-xl border border-dashed border-white/10 px-3 py-7 text-center text-xs text-white/35">
             Loading route paths…
@@ -196,8 +234,19 @@ export function CorridorDetailPanel({
     );
   }
 
-  const forwardVariants = variants.filter((variant) => variant.direction !== "RETURN");
-  const returnVariants = variants.filter((variant) => variant.direction === "RETURN");
+  const revisionDrafts = variants.filter((variant) => variant.status === "DRAFT" && variant.revisionOfVariantId);
+  const routeVariants = variants.filter((variant) => !(variant.status === "DRAFT" && variant.revisionOfVariantId));
+  const pendingByFamily = new Map<string, RouteVariant>();
+  revisionDrafts.forEach((revision) => {
+    const key = revision.routeFamilyId || revision._id;
+    const current = pendingByFamily.get(key);
+    if (!current || revision.direction === "FORWARD") pendingByFamily.set(key, revision);
+  });
+  const pendingRevisions = [...pendingByFamily.values()];
+  const forwardVariants = routeVariants.filter((variant) => variant.direction !== "RETURN");
+  const returnVariants = routeVariants.filter((variant) => variant.direction === "RETURN");
+  const forwardPending = pendingRevisions.filter((variant) => variant.direction !== "RETURN");
+  const returnPending = pendingRevisions.filter((variant) => variant.direction === "RETURN");
 
   return (
     <section className="min-h-[540px] overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a]/65 lg:min-h-[620px]">
@@ -272,6 +321,7 @@ export function CorridorDetailPanel({
             direction="FORWARD"
             corridor={corridor}
             variants={forwardVariants}
+            pendingRevisions={forwardPending}
             loading={variantsLoading}
             onDelete={onDeleteVariant}
             onResume={onResumeVariant}
@@ -281,6 +331,7 @@ export function CorridorDetailPanel({
             direction="RETURN"
             corridor={corridor}
             variants={returnVariants}
+            pendingRevisions={returnPending}
             loading={variantsLoading}
             onDelete={onDeleteVariant}
             onResume={onResumeVariant}
