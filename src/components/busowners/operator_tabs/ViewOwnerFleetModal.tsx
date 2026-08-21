@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import DocumentViewerModal from "@/components/DocumentViewerModal";
 import { getFleetSeatLayoutAssignment } from "@/api/seatLayoutV3Api";
+import type { SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
 
 interface ViewOwnerFleetModalProps {
   id: string | null;
@@ -50,11 +51,12 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
 
   // ── Secure document viewer state ─────────────────────────────────────────
   const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerKey, setViewerKey] = useState<string | null>(null);
   const [viewerTitle, setViewerTitle] = useState<string>("Document");
+  const [fleetDocumentRequest, setFleetDocumentRequest] = useState<SecureFleetDocumentRequest | null>(null);
 
-  const openDocumentViewer = (s3Key: string, label: string) => {
-    setViewerKey(s3Key);
+  const openSubmittedFleetDocument = (slot: SecureFleetDocumentRequest["slot"], label: string) => {
+    if (!id) return;
+    setFleetDocumentRequest({ fleetId: id, slot });
     setViewerTitle(label);
     setViewerOpen(true);
   };
@@ -75,7 +77,7 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
     reuploadMutation.mutate({ slot, files });
   };
 
-  const reviews: Record<string, { status: string; reason: string | null }> = data?.documentReviews || {};
+  const reviews: Record<string, { status: string; reason: string | null }> = data?.reviewRequirements || data?.documentReviews || {};
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -339,27 +341,27 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
               </div>
 
               {/* Fleet Documents */}
-              {data.fleetDocuments && (
+              {data.documents && (
                 <div className="space-y-3">
                   <p className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1 flex items-center gap-1"><FileText className="h-3 w-3" /> Fleet Documents</p>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { key: "fitnessCert", label: "Fitness Certificate", validTill: data.fleetDocuments.fitnessCert?.validTill, url: data.fleetDocuments.fitnessCert?.url },
-                      { key: "insurance", label: "Insurance", validTill: data.fleetDocuments.insurance?.validTill, url: data.fleetDocuments.insurance?.url, extra: data.fleetDocuments.insurance?.policyNumber },
-                      { key: "bluebook", label: "Bluebook (Reg.)", url: data.fleetDocuments.bluebook?.url },
-                      { key: "routePermit", label: "Route Permit", validTill: data.fleetDocuments.routePermit?.validTill, url: data.fleetDocuments.routePermit?.url },
-                    ].map(({ key, label, validTill, url, extra }) => (
+                      { key: "fitnessCert", label: "Fitness Certificate", validTill: data.documents.fitnessCert?.validTill, present: data.documents.fitnessCert?.present },
+                      { key: "insurance", label: "Insurance", validTill: data.documents.insurance?.validTill, present: data.documents.insurance?.present, extra: data.documents.insurance?.policyNumber },
+                      { key: "bluebook", label: "Bluebook (Reg.)", present: data.documents.bluebook?.present },
+                      { key: "routePermit", label: "Route Permit", validTill: data.documents.routePermit?.validTill, present: data.documents.routePermit?.present },
+                    ].map(({ key, label, validTill, present, extra }) => (
                       <div key={key} className="p-3 bg-muted/10 border rounded-xl">
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</p>
-                          {url
+                          {present
                             ? <div className="h-2 w-2 bg-emerald-400 rounded-full" />
                             : <div className="h-2 w-2 bg-muted-foreground/30 rounded-full" />}
                         </div>
                         {extra && <p className="text-[10px] text-muted-foreground mb-1">Policy: {extra}</p>}
                         {validTill && <p className="text-[10px] text-muted-foreground mb-1">Valid till: {fmtDate(validTill)}</p>}
-                        {url ? (
-                          <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1.5" onClick={() => openDocumentViewer(url, label)}>
+                        {present ? (
+                          <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1.5" onClick={() => openSubmittedFleetDocument(key as SecureFleetDocumentRequest["slot"], label)}>
                             <Eye className="h-3 w-3" /> View Document
                           </Button>
                         ) : (
@@ -458,7 +460,8 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
       </DialogContent>
       <DocumentViewerModal
         open={viewerOpen}
-        s3Key={viewerKey}
+        s3Key={null}
+        fleetDocumentRequest={fleetDocumentRequest}
         title={viewerTitle}
         onClose={() => setViewerOpen(false)}
       />

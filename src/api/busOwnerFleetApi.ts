@@ -98,10 +98,20 @@ export type FleetApprovalDecision = {
     fleetId: string;
     status: "APPROVED" | "REJECTED";
     rejectionReason?: string;
+    reviews: Record<string, { status: "APPROVED" | "REJECTED"; reason?: string | null }>;
 };
 
 export const decideFleetApproval = async (decision: FleetApprovalDecision) => {
     const { data } = await api.patch("/fleet/update-status", decision);
+    return data;
+};
+
+export const saveFleetReviewItem = async (
+    fleetId: string,
+    key: string,
+    review: { status: "APPROVED" | "REJECTED"; reason?: string | null },
+) => {
+    const { data } = await api.patch(`/fleet/${fleetId}/reviews/${key}`, review);
     return data;
 };
 

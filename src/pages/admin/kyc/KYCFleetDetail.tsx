@@ -12,13 +12,19 @@ import {
 import DocumentViewerModal from "@/components/DocumentViewerModal";
 import { toast } from "sonner";
 import { useFetchFleetDetail } from "@/hooks/useOwnerFleets";
-import { decideFleetApproval, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
+import { decideFleetApproval, saveFleetReviewItem, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
 import SeatLayoutCanvas from "@/features/seat-layout-v3/SeatLayoutCanvas";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 type DocStatus = { verified: boolean; rejectionReason: string | null };
+type ReviewDecision = { status: "APPROVED" | "REJECTED"; reason: string | null };
+const SECTION_REVIEW_KEYS = [
+  { key: "vehicleDetails", title: "Vehicle details", description: "Identity, registration, type and amenities" },
+  { key: "seatLayout", title: "Seat layout", description: "Physical layout and passenger place count" },
+  { key: "routeSetup", title: "Route and stops", description: "Journey, road path, stops and meeting places" },
+] as const;
 
 const fmtDate = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "N/A";
@@ -101,7 +107,7 @@ export default function KYCFleetDetail() {
     ];
   }, [fleet]);
 
-  /* Per-doc verification state — fresh each review session, no localStorage */
+  /* Review state is initialized from the backend-authoritative review contract. */
   const defaultStatuses = useMemo<Record<string, DocStatus>>(() => {
     const result: Record<string, DocStatus> = {};
     documentSections.forEach(s => {
@@ -110,8 +116,15 @@ export default function KYCFleetDetail() {
         rejectionReason: String(s.status || "").toUpperCase() === "REJECTED" ? s.reason || null : null,
       };
     });
+    SECTION_REVIEW_KEYS.forEach(({ key }) => {
+      const review = fleet?.reviewRequirements?.[key] || {};
+      result[key] = {
+        verified: String(review.status || "").toUpperCase() === "APPROVED",
+        rejectionReason: String(review.status || "").toUpperCase() === "REJECTED" ? review.reason || null : null,
+      };
+    });
     return result;
-  }, [documentSections]);
+  }, [documentSections, fleet]);
 
   const [docStatuses, setDocStatuses] = useState<Record<string, DocStatus>>(defaultStatuses);
   useEffect(() => {
@@ -156,19 +169,34 @@ export default function KYCFleetDetail() {
     },
     onError: (error: any) => toast.error(error?.response?.data?.message || "Failed to update fleet status."),
   });
+  const reviewItem = useMutation({
+    mutationFn: ({ key, status, reason }: { key: string; status: "APPROVED" | "REJECTED"; reason?: string }) =>
+      saveFleetReviewItem(id!, key, { status, reason }),
+    onError: (error: any) => toast.error(error?.response?.data?.message || "Unable to save this review decision."),
+  });
 
   /* Sections that have at least one uploaded file */
   const reviewableSections = documentSections.filter(s => s.documents.length > 0);
-  /* allVerified = admin has explicitly verified every uploaded section (optional, for display) */
-  const allVerified = reviewableSections.length > 0 && reviewableSections.every(s => docStatuses[s.key]?.verified);
+  const allReviewKeys = [...documentSections.map((section) => section.key), ...SECTION_REVIEW_KEYS.map((section) => section.key)];
+  const allVerified = allReviewKeys.length > 0 && allReviewKeys.every((key) => docStatuses[key]?.verified);
   /* hasRejections = admin explicitly flagged at least one section — this BLOCKS final approval */
   const hasRejections = Object.values(docStatuses).some(s => s.rejectionReason);
+  const reviewComplete = allReviewKeys.every((key) => docStatuses[key]?.verified || docStatuses[key]?.rejectionReason);
   /* canApprove = no explicit flags and there is at least one document on record */
-  const canApprove = !hasRejections && reviewableSections.length > 0;
+  const canApprove = !hasRejections && allVerified && reviewableSections.length === documentSections.length;
+
+  const buildReviews = (): Record<string, ReviewDecision> => Object.fromEntries(allReviewKeys.map((key) => [key, {
+    status: docStatuses[key]?.verified ? "APPROVED" : "REJECTED",
+    reason: docStatuses[key]?.rejectionReason || null,
+  } as ReviewDecision]));
 
   const handleVerify = (key: string) => {
-    setDocStatuses(prev => ({ ...prev, [key]: { verified: true, rejectionReason: null } }));
-    toast.success("Document section verified ✓");
+    reviewItem.mutate({ key, status: "APPROVED" }, {
+      onSuccess: () => {
+        setDocStatuses(prev => ({ ...prev, [key]: { verified: true, rejectionReason: null } }));
+        toast.success("Review decision saved.");
+      },
+    });
   };
 
   const openRejectDialog = (key: string) => {
@@ -179,20 +207,31 @@ export default function KYCFleetDetail() {
 
   const handleReject = () => {
     if (currentRejectKey && rejectionReason.trim()) {
-      setDocStatuses(prev => ({ ...prev, [currentRejectKey]: { verified: false, rejectionReason: rejectionReason.trim() } }));
-      setRejectDialogOpen(false);
-      toast.warning("Section flagged for rejection.");
+      const key = currentRejectKey;
+      const reason = rejectionReason.trim();
+      reviewItem.mutate({ key, status: "REJECTED", reason }, {
+        onSuccess: () => {
+          setDocStatuses(prev => ({ ...prev, [key]: { verified: false, rejectionReason: reason } }));
+          setRejectDialogOpen(false);
+          toast.warning("Requested change saved.");
+        },
+      });
     }
   };
 
   const handleFinalApproval = () => {
-    approve({ fleetId: id!, status: "APPROVED" });
+    approve({ fleetId: id!, status: "APPROVED", reviews: buildReviews() });
   };
 
   const handleFinalRejection = async () => {
-    const requestedChanges = documentSections
-      .filter((section) => docStatuses[section.key]?.rejectionReason)
-      .map((section) => `${section.title}: ${docStatuses[section.key].rejectionReason}`);
+    const requestedChanges = allReviewKeys
+      .filter((key) => docStatuses[key]?.rejectionReason)
+      .map((key) => {
+        const title = documentSections.find((section) => section.key === key)?.title
+          || SECTION_REVIEW_KEYS.find((section) => section.key === key)?.title
+          || key;
+        return `${title}: ${docStatuses[key].rejectionReason}`;
+      });
     const combinedReason = [
       finalRejectionReason.trim(),
       requestedChanges.length ? `Requested changes: ${requestedChanges.join("; ")}` : "",
@@ -201,6 +240,7 @@ export default function KYCFleetDetail() {
       fleetId: id!,
       status: "REJECTED",
       rejectionReason: combinedReason,
+      reviews: buildReviews(),
     });
   };
 
@@ -305,6 +345,20 @@ export default function KYCFleetDetail() {
                     <p className="font-semibold text-sm">{value}</p>
                   </div>
                 ))}
+                <div className="md:col-span-3">
+                  <p className="text-xs text-muted-foreground">Passenger amenities</p>
+                  {fleet.vehicle.features?.length ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {fleet.vehicle.features.map((amenity: { id?: string; name?: string }) => (
+                        <span key={amenity.id || amenity.name} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-white">
+                          {amenity.name || "Amenity"}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm font-semibold text-white/60">None selected</p>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -439,6 +493,42 @@ export default function KYCFleetDetail() {
           </Card>
         )}
 
+        {/* Reviewable non-document sections */}
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1">
+            Application section review
+          </p>
+          <div className="grid gap-4 md:grid-cols-3">
+            {SECTION_REVIEW_KEYS.map((section) => {
+              const state = docStatuses[section.key] ?? { verified: false, rejectionReason: null };
+              return (
+                <Card key={section.key} className="border-white/5 bg-[#121212]/30 text-white">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <CardTitle className="text-sm text-white">{section.title}</CardTitle>
+                        <CardDescription className="mt-1 text-xs text-white/50">{section.description}</CardDescription>
+                      </div>
+                      <Badge className="bg-white/5 text-white border-white/10 text-[10px] uppercase">
+                        {state.verified ? "Accepted" : state.rejectionReason ? "Needs changes" : "Pending"}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {state.rejectionReason && <p className="mb-3 text-xs text-red-200">{state.rejectionReason}</p>}
+                    {approvalStatus === "PENDING" && (
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1" onClick={() => handleVerify(section.key)}>Accept</Button>
+                        <Button size="sm" variant="destructive" className="flex-1" onClick={() => openRejectDialog(section.key)}>Request change</Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Document Sections */}
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 ml-1">
@@ -513,13 +603,13 @@ export default function KYCFleetDetail() {
                       </div>
                     )}
                     {/* Verify / Flag buttons — ONLY in PENDING mode */}
-                    {isPending && hasDocuments && !st.verified && !st.rejectionReason && (
+                    {isPending && hasDocuments && (
                       <div className="flex gap-3 pt-3 mt-2 border-t border-white/5">
                         <Button size="sm" className="flex-1 text-xs py-4 font-semibold" onClick={() => handleVerify(section.key)}>
-                          <CheckCircle2 className="h-4 w-4 mr-1.5" /> Verify
+                          <CheckCircle2 className="h-4 w-4 mr-1.5" /> Accept
                         </Button>
                         <Button size="sm" variant="destructive" className="flex-1 text-xs py-4 font-semibold bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 text-red-200" onClick={() => openRejectDialog(section.key)}>
-                          <XCircle className="h-4 w-4 mr-1.5" /> Flag Issue
+                          <XCircle className="h-4 w-4 mr-1.5" /> Request change
                         </Button>
                       </div>
                     )}
@@ -602,10 +692,10 @@ export default function KYCFleetDetail() {
                 <Button
                   size="lg"
                   variant="destructive"
-                  disabled={isApproving}
+                  disabled={isApproving || !reviewComplete || !hasRejections}
                   onClick={() => setFinalRejectionDialog(true)}
                 >
-                  <XCircle className="h-4 w-4 mr-2" /> Reject Fleet Registration
+                  <XCircle className="h-4 w-4 mr-2" /> Request Changes
                 </Button>
               </>
             )}
@@ -617,8 +707,8 @@ export default function KYCFleetDetail() {
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Document Section</DialogTitle>
-            <DialogDescription>Provide a clear reason — it will be visible to the bus owner.</DialogDescription>
+            <DialogTitle>Request a change</DialogTitle>
+            <DialogDescription>Provide a clear reason for the bus owner.</DialogDescription>
           </DialogHeader>
           <Textarea placeholder="Enter rejection reason..." value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} rows={3} />
           <DialogFooter>
