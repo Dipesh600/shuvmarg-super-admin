@@ -102,9 +102,13 @@ export function CorridorWorkspace() {
       void queryClient.invalidateQueries({ queryKey: ["corridor-variants", selectedCorridorId] });
       void queryClient.invalidateQueries({ queryKey: ["corridors"] });
       setViewingVariant(null);
-      toast.success("Route variant activated.");
+      toast.success("Forward and return route variants activated together.");
     },
-    onError: (error) => toast.error(messageFor(error, "This draft is not ready to activate yet.")),
+    onError: (error) => {
+      void queryClient.invalidateQueries({ queryKey: ["corridor-variants", selectedCorridorId] });
+      void queryClient.invalidateQueries({ queryKey: ["corridors"] });
+      toast.error(messageFor(error, "This route family is not ready to activate yet."));
+    },
   });
   const reviseVariantMutation = useMutation({
     mutationFn: createRouteVariantRevision,

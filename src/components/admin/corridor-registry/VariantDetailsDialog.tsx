@@ -163,24 +163,16 @@ export function VariantDetailsDialog({
         if (activateRes?.data) activatedVariant = activateRes.data;
       } catch (activationError: unknown) {
         const msg = activationError instanceof Error ? activationError.message : "";
-        const isMigrationBlock =
-          msg.includes("migration") ||
-          msg.includes("fleet route") ||
-          msg.includes("VARIANT_REVISION_MIGRATION_REQUIRED");
-        if (isMigrationBlock) {
-          setSaveError(
-            "Revision draft saved with your stop changes. " +
-            "This variant still has active fleet configurations or schedules referencing it. " +
-            "Migrate those to the new revision draft, then activate it manually."
-          );
-          setSaveErrorIsInfo(true);
-          onStopsUpdated(revision);
-          setConfirmingActive(null);
-          setEditMode(false);
-          setIsSaving(false);
-          return;
-        }
-        throw activationError;
+        setSaveError(
+          "Your stop changes were saved in a revision draft, but the route family was not activated. " +
+          (msg || "Open the saved draft, resolve its activation requirements, and try again.")
+        );
+        setSaveErrorIsInfo(true);
+        await query.refetch();
+        onStopsUpdated(revision);
+        setConfirmingActive(null);
+        setEditMode(false);
+        return;
       }
 
       onStopsUpdated(activatedVariant);
@@ -258,7 +250,7 @@ export function VariantDetailsDialog({
                       <h4 className="font-bold text-white">Canonical route stops</h4>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-white/40">{details.stops.length} stops</span>
-                        {details.stops.length >= 2 && !editMode && (
+                        {isActive && details.stops.length >= 2 && !editMode && (
                           <button
                             type="button"
                             onClick={() => setEditMode(true)}
