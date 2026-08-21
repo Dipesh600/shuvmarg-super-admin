@@ -56,8 +56,9 @@ export interface RouteVariant {
   durationMinutes?: number | null;
   routeFamilyId?: string | null;
   returnVariantId?: string | { _id: string; code: string; name?: string | null; status: VariantStatus } | null;
-  revisionOfVariantId?: string | null;
+  revisionOfVariantId?: string | { _id: string; code: string; name?: string | null; status: VariantStatus; revisionNumber?: number } | null;
   revisionNumber?: number;
+  definitionSource?: "ADMIN" | "GOOGLE_ROUTE_REVIEW" | "DERIVED_REVERSE" | "REVISION";
   routeStopCount?: number;
   companionVariant?: RouteVariant | null;
   createdAt?: string;
