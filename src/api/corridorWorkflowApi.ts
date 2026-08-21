@@ -323,6 +323,14 @@ export async function removeRouteVariant(variantId: string): Promise<RegistryRes
   return data;
 }
 
+export async function repairRouteVariantPair(variantId: string): Promise<RegistryResponse<VariantDetails>> {
+  return api.post(`/registry/variants/${variantId}/repair-pair`).then(({ data }) => data);
+}
+
+export async function retireRouteVariantPair(variantId: string): Promise<RegistryResponse<{ retired: boolean; variantIds: string[] }>> {
+  return api.post(`/registry/variants/${variantId}/retire-pair`).then(({ data }) => data);
+}
+
 // Variant-draft endpoints are intentionally isolated here. The wizard owns this
 // workflow; it does not reuse the retired discovery API or browser routing.
 
