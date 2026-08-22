@@ -7,8 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useModal } from "@/hooks/use-model-store";
 import { Check, UploadCloud, X, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createBusOwner } from "@/api/busOwnerApi";
+import { createBusOwner, resendBusOwnerAccess } from "@/api/busOwnerApi";
 import { toast } from "sonner";
+
+const getRequestMessage = (error: unknown, fallback: string) => {
+  if (!error || typeof error !== "object" || !("response" in error)) return fallback;
+  const response = (error as { response?: { data?: { message?: unknown } } }).response;
+  return typeof response?.data?.message === "string" ? response.data.message : fallback;
+};
 
 export const AddBusOwnerDialog = () => {
   const { isOpen, type, onClose } = useModal();
@@ -80,16 +86,44 @@ export const AddBusOwnerDialog = () => {
 
   const handleBack = () => setStep(step - 1);
 
+  const resendAccess = useMutation({
+    mutationFn: resendBusOwnerAccess,
+    onSuccess: (result) => {
+      if (result.notification.status === "DELIVERED") {
+        toast.success("Operator login SMS sent.");
+      } else {
+        toast.error("The operator login SMS still could not be delivered.");
+      }
+    },
+    onError: (error: unknown) => {
+      toast.error(getRequestMessage(error, "Could not resend operator access."));
+    },
+  });
+
   const { mutate: addOwner, isPending } = useMutation({
     mutationFn: createBusOwner,
-    onSuccess: () => {
-      toast.success("Bus Owner registered successfully with PENDING KYC status.");
+    onSuccess: (result) => {
+      if (result.notification?.status === "DELIVERED") {
+        toast.success(
+          result.credentialMode === "TEMPORARY_PASSWORD"
+            ? "Bus owner registered. One-time login credentials were sent by SMS."
+            : "Bus owner access enabled. The operator login link was sent by SMS."
+        );
+      } else {
+        toast.warning("Bus owner registered, but the operator login SMS was not delivered.", {
+          duration: 12_000,
+          action: result.userId ? {
+            label: "Resend",
+            onClick: () => resendAccess.mutate(result.userId),
+          } : undefined,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["busOwners"] });
       queryClient.invalidateQueries({ queryKey: ["busOwnerDashboard"] });
       handleClose();
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to create bus owner.");
+    onError: (error: unknown) => {
+      toast.error(getRequestMessage(error, "Failed to create bus owner."));
     },
   });
 
