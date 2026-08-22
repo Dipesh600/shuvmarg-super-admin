@@ -61,6 +61,14 @@ export const uploadFleetDocumentByAdmin = async (
     return data;
 };
 
+export const notifyAdminCreatedFleet = async (fleetId: string) => {
+    const { data } = await api.post<{
+        success: true;
+        notification: { status: "DELIVERED" | "FAILED" | "PROCESSING"; alreadyDelivered: boolean };
+    }>(`/fleet/${fleetId}/notify-created`);
+    return data;
+};
+
 export const getFleetsByOwner = async (ownerId: string, brandId?: string) => {
     try {
         const url = brandId ? `/fleet/owner/${ownerId}?brandId=${brandId}` : `/fleet/owner/${ownerId}`;

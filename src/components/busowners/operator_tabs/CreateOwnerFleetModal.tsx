@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import { useFetchAllCorridors } from "@/hooks/usePlatformRegistry";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/axios";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
-import { uploadFleetDocumentByAdmin } from "@/api/busOwnerFleetApi";
+import { notifyAdminCreatedFleet, uploadFleetDocumentByAdmin } from "@/api/busOwnerFleetApi";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -98,7 +98,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
 
   const globalAmenities = (Array.isArray(globalAmenitiesData?.data) ? globalAmenitiesData.data : []) as AmenityOption[];
   const corridorsList = (Array.isArray(corridorsData?.data) ? corridorsData.data : []) as CorridorOption[];
-  const ownerBrands = brandsData || [];
+  const ownerBrands = useMemo(() => brandsData || [], [brandsData]);
 
   const [step, setStep] = useState(1);
 
@@ -329,6 +329,16 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
       });
       if (!seatLayoutChoice) throw new Error("A seat layout is required.");
       await persistFleetLayoutChoice({ fleetId, ownerId, busName, choice: seatLayoutChoice });
+      try {
+        const result = await notifyAdminCreatedFleet(fleetId);
+        if (result.notification.status === "DELIVERED") {
+          toast.success("Fleet created. The bus owner was informed by SMS.");
+        } else {
+          toast.warning("Fleet created, but the owner SMS was not delivered.");
+        }
+      } catch {
+        toast.warning("Fleet created, but the owner notification could not be confirmed.");
+      }
       await deleteAdminFleetDraft(ownerId, brandId);
       resetForm();
       onClose();

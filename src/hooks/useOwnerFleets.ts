@@ -8,6 +8,12 @@ import {
 } from "@/api/busOwnerFleetApi";
 import { toast } from "sonner";
 
+const requestErrorMessage = (error: unknown, fallback: string) => {
+    if (!error || typeof error !== "object" || !("response" in error)) return fallback;
+    const response = (error as { response?: { data?: { message?: unknown } } }).response;
+    return typeof response?.data?.message === "string" ? response.data.message : fallback;
+};
+
 export const useFetchOwnerFleets = (ownerId: string, brandId?: string) => {
     return useQuery({
         queryKey: ["ownerFleets", "owner", ownerId, brandId],
@@ -30,10 +36,10 @@ export const useCreateOwnerFleet = () => {
         mutationFn: createFleetForOwner,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["ownerFleets"] });
-            toast.success("Fleet registered successfully");
+            toast.info("Fleet draft created. Finishing documents and seat layout…");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to register fleet");
+        onError: (error: unknown) => {
+            toast.error(requestErrorMessage(error, "Failed to register fleet"));
         },
     });
 };
@@ -46,8 +52,8 @@ export const useUpdateOwnerFleet = (id: string) => {
             queryClient.invalidateQueries({ queryKey: ["ownerFleets"] });
             toast.success("Fleet updated successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to update fleet");
+        onError: (error: unknown) => {
+            toast.error(requestErrorMessage(error, "Failed to update fleet"));
         },
     });
 };
@@ -60,8 +66,8 @@ export const useDeleteOwnerFleet = () => {
             queryClient.invalidateQueries({ queryKey: ["ownerFleets"] });
             toast.success("Fleet deleted successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to delete fleet");
+        onError: (error: unknown) => {
+            toast.error(requestErrorMessage(error, "Failed to delete fleet"));
         },
     });
 };

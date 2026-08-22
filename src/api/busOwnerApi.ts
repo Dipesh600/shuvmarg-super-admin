@@ -31,6 +31,21 @@ type ApiEnvelope<T> = {
   data: T;
 };
 
+export type OwnerAccessNotification = {
+  status: "DELIVERED" | "FAILED" | "NOT_REQUIRED";
+  channel: "SMS";
+  canRetry: boolean;
+};
+
+export type CreateBusOwnerResult = {
+  success: true;
+  message: string;
+  busOwnerId: string;
+  userId: string;
+  credentialMode: "TEMPORARY_PASSWORD" | "EXISTING_PASSWORD";
+  notification: OwnerAccessNotification;
+};
+
 // get all busowners
 const getAllBusOwners = async (): Promise<AdminBusOwnerListData> => {
   const { data } = await api.get<ApiEnvelope<AdminBusOwnerListData>>("/bus-owners");
@@ -55,8 +70,17 @@ const getBusOwnerDashboardData = async () => {
 };
 
 // create new bus owner (FormData with files)
-const createBusOwner = async (formData: FormData) => {
-  const { data } = await api.post("/busOwner/create", formData);
+const createBusOwner = async (formData: FormData): Promise<CreateBusOwnerResult> => {
+  const { data } = await api.post<CreateBusOwnerResult>("/busOwner/create", formData);
+  return data;
+};
+
+const resendBusOwnerAccess = async (userId: string) => {
+  const { data } = await api.post<{
+    success: true;
+    credentialMode: CreateBusOwnerResult["credentialMode"];
+    notification: OwnerAccessNotification;
+  }>(`/busOwner/${userId}/access-notification/resend`);
   return data;
 };
 
@@ -72,4 +96,7 @@ const updateBusOwner = async (payload: Record<string, unknown>) => {
   return data;
 };
 
-export { getAllBusOwners, getBusOwnerById, getBusOwnerDashboardData, createBusOwner, reuploadKycDocument, updateBusOwner };
+export {
+  getAllBusOwners, getBusOwnerById, getBusOwnerDashboardData, createBusOwner,
+  resendBusOwnerAccess, reuploadKycDocument, updateBusOwner,
+};
