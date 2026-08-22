@@ -75,8 +75,9 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   const createMutation = useCreateOwnerFleet();
   const { data: corridorsData } = useFetchAllCorridors();
   const { data: globalAmenitiesData } = useQuery({
-    queryKey: ["globalAmenities"],
-    queryFn: async () => { const { data } = await api.get("/amenities/global"); return data; },
+    queryKey: ["availableAmenities", ownerId],
+    queryFn: async () => { const { data } = await api.get(`/amenities/owner/${ownerId}`); return data; },
+    enabled: Boolean(isOpen && ownerId),
     staleTime: 60_000,
   });
 
