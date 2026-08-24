@@ -13,13 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Bus, Image as ImageIcon, FileText, ChevronRight, ChevronLeft, ShieldCheck, CheckCircle2, Route } from "lucide-react";
 import { useCreateOwnerFleet } from "@/hooks/useOwnerFleets";
 import { useFetchAllCorridors } from "@/hooks/usePlatformRegistry";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/axios";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
-import { notifyAdminCreatedFleet, uploadFleetDocumentByAdmin } from "@/api/busOwnerFleetApi";
+import { notifyAdminCreatedFleet, updateFleetByAdmin, uploadFleetDocumentByAdmin } from "@/api/busOwnerFleetApi";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/date-picker";
 import AdminFleetSeatLayoutStep from "@/features/admin-fleet-seat-layout/AdminFleetSeatLayoutStep";
 import { persistFleetLayoutChoice } from "@/features/admin-fleet-seat-layout/persistFleetLayoutChoice";
 import type { AdminFleetLayoutChoice } from "@/features/admin-fleet-seat-layout/types";
@@ -66,6 +67,33 @@ function getFleetErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Fleet seat layout could not be saved.";
 }
 
+function isCurrentOrFutureDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const selected = new Date(`${value}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return !Number.isNaN(selected.getTime()) && selected >= today;
+}
+
+function routeRequestStops(value: string): string[] {
+  return value.split(",").map((stop) => stop.trim()).filter(Boolean);
+}
+
+function dateInputValue(value: string): Date | undefined {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return undefined;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function dateStorageValue(value?: Date): string {
+  if (!value) return "";
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   isOpen,
   onClose,
@@ -73,6 +101,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   brandId
 }) => {
   const createMutation = useCreateOwnerFleet();
+  const queryClient = useQueryClient();
   const { data: corridorsData } = useFetchAllCorridors();
   const { data: globalAmenitiesData } = useQuery({
     queryKey: ["availableAmenities", ownerId],
@@ -140,6 +169,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   const [requestViaStops, setRequestViaStops] = useState("");
   const [draftHydrated, setDraftHydrated] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -262,6 +292,14 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
         toast.error("Please upload all 4 required legal documents.");
         return;
       }
+      if (insurancePolicyNumber.trim().length < 3) {
+        toast.error("Add the insurance policy number.");
+        return;
+      }
+      if (![fitnessCertValidTill, insuranceValidTill, routePermitValidTill].every(isCurrentOrFutureDate)) {
+        toast.error("Choose a valid current or future expiry date for fitness, insurance and route permit.");
+        return;
+      }
     }
     setStep((prev) => Math.min(prev + 1, 5));
   };
@@ -278,6 +316,18 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
     }
     if (!fitnessCert || !insurance || !bluebook || !routePermit) {
       toast.error("Please upload all 4 required legal documents.");
+      return;
+    }
+    if (insurancePolicyNumber.trim().length < 3) {
+      toast.error("Add the insurance policy number.");
+      return;
+    }
+    if (![fitnessCertValidTill, insuranceValidTill, routePermitValidTill].every(isCurrentOrFutureDate)) {
+      toast.error("Choose a valid current or future expiry date for fitness, insurance and route permit.");
+      return;
+    }
+    if (isRequestingRoute && (!requestOriginCity.trim() || !requestDestinationCity.trim())) {
+      toast.error("Add both cities for the new route request.");
       return;
     }
 
@@ -297,18 +347,24 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
     if (isRequestingRoute && requestOriginCity && requestDestinationCity) {
       formData.append("requestOriginCity", requestOriginCity);
       formData.append("requestDestinationCity", requestDestinationCity);
-      if (requestViaStops) formData.append("requestViaStops", requestViaStops);
+      const viaStops = routeRequestStops(requestViaStops);
+      if (viaStops.length > 0) formData.append("requestViaStops", JSON.stringify(viaStops));
     } else if (selectedCorridorId) {
       formData.append("corridorId", selectedCorridorId);
     }
 
     try {
+      setIsSubmitting(true);
       let fleetId = createdFleetId;
       if (!fleetId) {
         const created = await createMutation.mutateAsync(formData);
         fleetId = created?.data?._id || created?.data?.id || null;
         if (!fleetId) throw new Error("Fleet was created but its identifier was not returned.");
         setCreatedFleetId(fleetId);
+      } else {
+        // A previous attempt may have created the server draft before a later
+        // document/layout step failed. Persist any edits made before retrying.
+        await updateFleetByAdmin(fleetId, formData);
       }
       if (!imageFront || !imageSide || !imageBack || !imageInside) {
         throw new Error("Front, side, back and inside photos are required.");
@@ -339,11 +395,17 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
       } catch {
         toast.warning("Fleet created, but the owner notification could not be confirmed.");
       }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["ownerFleets"] }),
+        queryClient.invalidateQueries({ queryKey: ["fleets"] }),
+      ]);
       await deleteAdminFleetDraft(ownerId, brandId);
       resetForm();
       onClose();
     } catch (error: unknown) {
       toast.error(getFleetErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -590,7 +652,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest">Valid Till</Label>
-                        <Input type="date" value={fitnessCertValidTill} onChange={(e) => setFitnessCertValidTill(e.target.value)} required />
+                        <DatePicker date={dateInputValue(fitnessCertValidTill)} setDate={(date) => setFitnessCertValidTill(dateStorageValue(date))} placeholder="Choose expiry date" disablePast />
                       </div>
                     </div>
                     <div className="p-4 bg-muted/10 border rounded-xl grid sm:grid-cols-3 gap-4">
@@ -605,7 +667,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest">Valid Till</Label>
-                        <Input type="date" value={insuranceValidTill} onChange={(e) => setInsuranceValidTill(e.target.value)} required />
+                        <DatePicker date={dateInputValue(insuranceValidTill)} setDate={(date) => setInsuranceValidTill(dateStorageValue(date))} placeholder="Choose expiry date" disablePast />
                       </div>
                     </div>
                     <div className="p-4 bg-muted/10 border rounded-xl grid sm:grid-cols-2 gap-4">
@@ -616,7 +678,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                       </div>
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black uppercase tracking-widest">Valid Till</Label>
-                        <Input type="date" value={routePermitValidTill} onChange={(e) => setRoutePermitValidTill(e.target.value)} required />
+                        <DatePicker date={dateInputValue(routePermitValidTill)} setDate={(date) => setRoutePermitValidTill(dateStorageValue(date))} placeholder="Choose expiry date" disablePast />
                       </div>
                     </div>
                     <div className="p-4 bg-muted/10 border rounded-xl">
@@ -747,8 +809,8 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
             {step < 5 ? (
               <Button type="submit" className="font-bold h-11 px-8">Next Step <ChevronRight className="w-4 h-4 ml-2" /></Button>
             ) : (
-              <Button type="submit" className="font-black uppercase tracking-widest text-xs h-11 px-8 shadow-lg shadow-primary/20 hover:tracking-[0.1em] transition-all" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Processing..." : "Complete Registration"}
+              <Button type="submit" className="font-black uppercase tracking-widest text-xs h-11 px-8 shadow-lg shadow-primary/20 hover:tracking-[0.1em] transition-all" disabled={isSubmitting || createMutation.isPending}>
+                {isSubmitting || createMutation.isPending ? "Processing..." : "Complete Registration"}
               </Button>
             )}
           </DialogFooter>
