@@ -2,6 +2,7 @@ import {
   adoptSeatLayoutForOperator,
   assignInitialFleetSeatLayout,
   createInitialFleetSeatLayout,
+  getFleetSeatLayoutAssignment,
   listSeatLayoutTemplates,
 } from "@/api/seatLayoutV3Api";
 import type { AdminFleetLayoutChoice } from "./types";
@@ -29,6 +30,12 @@ export async function persistFleetLayoutChoice(input: {
   choice: AdminFleetLayoutChoice;
 }) {
   const { fleetId, ownerId, busName, choice } = input;
+  // Creation is intentionally retryable. A later upload or notification may
+  // fail after the initial layout has already been persisted, so do not try to
+  // create the immutable initial assignment a second time.
+  const current = await getFleetSeatLayoutAssignment(fleetId).catch(() => null);
+  if (current?.assignment) return current.assignment;
+
   if (!choice.customized && choice.templateId && choice.revisionId) {
     const existing = await findPublishedAdoption(ownerId, choice.templateId);
     if (existing?.currentPublishedRevisionId) {
