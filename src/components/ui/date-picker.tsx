@@ -15,13 +15,17 @@ interface DatePickerProps {
   setDate: (date?: Date) => void
   placeholder?: string
   className?: string
+  disablePast?: boolean
 }
 
-export function DatePicker({ date, setDate, placeholder = "Pick a date", className }: DatePickerProps) {
+export function DatePicker({ date, setDate, placeholder = "Pick a date", className, disablePast = false }: DatePickerProps) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant={"outline"}
           className={cn(
             "w-full justify-start text-left font-bold h-11 border-2 px-3",
@@ -40,6 +44,7 @@ export function DatePicker({ date, setDate, placeholder = "Pick a date", classNa
           mode="single"
           selected={date}
           onSelect={setDate}
+          disabled={disablePast ? { before: today } : undefined}
           initialFocus
         />
       </PopoverContent>
