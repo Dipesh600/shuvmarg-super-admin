@@ -39,7 +39,7 @@ const AmenitiesTab = ({ ownerId }: { ownerId: string }) => {
     try {
       await deleteMutation.mutateAsync(deleteId);
       setDeleteId(null);
-    } catch (error) {
+    } catch {
       // Error handled by mutation
     }
   };
@@ -91,15 +91,15 @@ const AmenitiesTab = ({ ownerId }: { ownerId: string }) => {
               <Zap className="h-6 w-6 text-primary" />
            </div>
            <div>
-              <h3 className="text-2xl font-black tracking-tighter">Amenity Configurations</h3>
-              <p className="text-sm text-muted-foreground font-medium italic opacity-70">Define and manage sets of services offered across your fleet</p>
+              <h3 className="text-2xl font-black tracking-tighter">Custom Amenities</h3>
+              <p className="text-sm text-muted-foreground font-medium opacity-70">Operator-only facilities. Platform amenities are inherited automatically.</p>
            </div>
         </div>
         <Button 
           onClick={() => setIsCreateModalOpen(true)}
           className="relative z-10 gap-3 h-14 px-8 font-black uppercase text-xs tracking-widest transition-all hover:tracking-[0.2em] shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 rounded-2xl"
         >
-          <Plus className="h-5 w-5" /> New Configuration
+          <Plus className="h-5 w-5" /> Add Amenity
         </Button>
       </div>
 
@@ -142,9 +142,9 @@ const AmenitiesTab = ({ ownerId }: { ownerId: string }) => {
                   <AlertTriangle className="h-8 w-8" />
                </div>
                <div className="space-y-1">
-                  <DialogTitle className="text-2xl font-black tracking-tighter">Remove Configuration?</DialogTitle>
+                  <DialogTitle className="text-2xl font-black tracking-tighter">Delete this amenity?</DialogTitle>
                   <DialogDescription className="text-muted-foreground font-medium italic">
-                    This action is permanent. All amenities within this group will be detached from your fleet records.
+                    Only an unused amenity can be deleted. If a fleet already uses it, deactivate it instead so historical records remain intact.
                   </DialogDescription>
                </div>
             </div>
@@ -157,7 +157,7 @@ const AmenitiesTab = ({ ownerId }: { ownerId: string }) => {
                   disabled={deleteMutation.isPending}
                   className="h-12 font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-destructive/20"
                >
-                  {deleteMutation.isPending ? "Removing..." : "Delete Permanently"}
+                  {deleteMutation.isPending ? "Removing..." : "Delete if unused"}
                </Button>
             </div>
           </div>

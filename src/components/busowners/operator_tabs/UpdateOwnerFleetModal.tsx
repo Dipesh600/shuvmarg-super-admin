@@ -32,19 +32,28 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
   id, 
   isOpen, 
   onClose,
-  ownerId: _ownerId
+  ownerId
 }) => {
   const { data: response, isLoading: isFleetLoading, isError, refetch } = useFetchFleetDetail(id || "");
   const updateMutation = useUpdateOwnerFleet(id || "");
 
   const { data: corridorsData } = useFetchAllCorridors();
-  const { data: globalAmenitiesData } = useQuery({
-    queryKey: ["globalAmenities"],
-    queryFn: async () => { const { data } = await api.get("/amenities/global"); return data; },
+  const { data: availableAmenitiesData } = useQuery({
+    queryKey: ["amenities", "available", ownerId],
+    queryFn: async () => { const { data } = await api.get(`/amenities/owner/${ownerId}`); return data; },
+    enabled: isOpen && !!ownerId,
     staleTime: 60_000,
   });
 
-  const globalAmenities: any[] = Array.isArray(globalAmenitiesData?.data) ? globalAmenitiesData.data : [];
+  const availableAmenities: any[] = Array.isArray(availableAmenitiesData?.data) ? availableAmenitiesData.data : [];
+  const currentAmenityRecords: any[] = Array.isArray(response?.data?.vehicle?.features)
+    ? response.data.vehicle.features
+    : Array.isArray(response?.data?.features)
+      ? response.data.features
+      : Array.isArray(response?.data?.amenityIds) ? response.data.amenityIds.filter((item: unknown) => typeof item === "object" && item !== null) : [];
+  const amenityOptions = [...availableAmenities, ...currentAmenityRecords.filter((current) =>
+    !availableAmenities.some((item) => String(item._id || item.id) === String(current._id || current.id))
+  )];
   const corridorsList: any[] = Array.isArray(corridorsData?.data) ? corridorsData.data : [];
 
   const [activeTab, setActiveTab] = useState("identity");
@@ -82,9 +91,10 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
       setVehicleType(data.vehicleType || "bus");
       setRegistrationYear(data.registrationYear?.toString() || "");
       let parsedAmenities: any[] = [];
-      if (data.amenityIds) {
+      const rawAmenities = data.amenityIds || data.vehicle?.features || data.features;
+      if (rawAmenities) {
         try {
-          parsedAmenities = typeof data.amenityIds === "string" ? JSON.parse(data.amenityIds) : data.amenityIds;
+          parsedAmenities = typeof rawAmenities === "string" ? JSON.parse(rawAmenities) : rawAmenities;
         } catch (e) { console.error("Failed to parse amenityIds", e); }
       }
 
@@ -272,21 +282,22 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
                           <span className="ml-2 normal-case font-medium text-primary/60">{selectedAmenityIds.length} active</span>
                         )}
                       </Label>
-                      {globalAmenities.length === 0 ? (
+                      {amenityOptions.length === 0 ? (
                         <p className="text-xs text-muted-foreground italic p-3 border-2 border-dashed rounded-xl">
                           No amenities in the catalog. Add some from the Amenities Catalog page first.
                         </p>
                       ) : (
                         <div className="flex flex-wrap gap-2 p-4 border-2 border-muted rounded-xl bg-muted/10 min-h-36 content-start">
-                          {globalAmenities.map((a: any) => {
-                            const isSelected = selectedAmenityIds.includes(a._id);
+                          {amenityOptions.map((a: any) => {
+                            const amenityId = a._id || a.id;
+                            const isSelected = selectedAmenityIds.includes(amenityId);
                             return (
                               <button
-                                key={a._id}
+                                key={amenityId}
                                 type="button"
                                 onClick={() =>
                                   setSelectedAmenityIds((prev) =>
-                                    isSelected ? prev.filter((id) => id !== a._id) : [...prev, a._id]
+                                    isSelected ? prev.filter((id) => id !== amenityId) : [...prev, amenityId]
                                   )
                                 }
                                 className={cn(
@@ -298,6 +309,7 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
                               >
                                 {isSelected && <span className="text-[10px]">✓</span>}
                                 {a.name}
+                                {a.status === false && <span className="opacity-60">(inactive)</span>}
                               </button>
                             );
                           })}
