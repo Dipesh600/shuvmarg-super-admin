@@ -41,6 +41,13 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
   const qc = useQueryClient();
   const { data: response, isLoading, isError, refetch } = useFetchFleetDetail(id || "");
   const data = response?.data;
+  const selectedAmenities: any[] = Array.isArray(data?.vehicle?.features)
+    ? data.vehicle.features
+    : Array.isArray(data?.features)
+      ? data.features
+    : Array.isArray(data?.amenityIds)
+      ? data.amenityIds
+      : Array.isArray(data?.amenitiesId?.amenities) ? data.amenitiesId.amenities : [];
   const approvalStatus = data?.approvalStatus ?? "PENDING";
   const { data: seatAssignment } = useQuery({
     queryKey: ["seat-layout-v3", "fleet-assignment", id],
@@ -381,15 +388,15 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                   <p className="text-[10px] font-black uppercase tracking-widest opacity-50 flex items-center gap-1.5 ml-1">
                     <Wifi className="h-3 w-3" /> Amenities Bundle
                   </p>
-                  {data.amenitiesId ? (
+                  {selectedAmenities.length > 0 ? (
                     <div className="bg-muted/10 border p-3 rounded-xl">
                       <ul className="space-y-2">
-                        {data.amenitiesId.amenities?.map((am: any, idx: number) => (
-                          <li key={idx} className="flex gap-2 items-start text-xs border-b border-muted/50 pb-2 last:border-0 last:pb-0">
+                        {selectedAmenities.map((am: any, idx: number) => (
+                          <li key={am.id || am._id || idx} className="flex gap-2 items-start text-xs border-b border-muted/50 pb-2 last:border-0 last:pb-0">
                             <span className="h-4 w-4 bg-primary/10 rounded flex items-center justify-center flex-shrink-0 mt-0.5"><Wifi className="h-2 w-2 text-primary" /></span>
                             <div>
-                              <p className="font-bold">{am.name}</p>
-                              <p className="text-[9px] text-muted-foreground opacity-80">{am.description}</p>
+                              <p className="font-bold">{typeof am === "string" ? am : am.name}</p>
+                              {typeof am !== "string" && am.description && <p className="text-[9px] text-muted-foreground opacity-80">{am.description}</p>}
                             </div>
                           </li>
                         ))}

@@ -58,6 +58,13 @@ const BusDetail = () => {
     }
 
     const fleet = fleetResponse?.data;
+    const selectedAmenities: any[] = Array.isArray(fleet?.vehicle?.features)
+        ? fleet.vehicle.features
+        : Array.isArray(fleet?.features)
+            ? fleet.features
+        : Array.isArray(fleet?.amenityIds)
+            ? fleet.amenityIds
+            : Array.isArray(fleet?.amenitiesId?.amenities) ? fleet.amenitiesId.amenities : [];
 
     const getStatusVariant = (status: string) => {
         switch (status.toUpperCase()) {
@@ -241,17 +248,18 @@ const BusDetail = () => {
                             </CardHeader>
                             <CardContent className="pt-2">
                                 <div className="flex flex-wrap gap-3">
-                                    {fleet.amenitiesId?.amenities?.map((amenity: any) => (
-                                        <div key={amenity._id} className="flex items-center gap-3 p-3 pr-5 bg-background border border-primary/5 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/20 transition-all group cursor-default">
+                                    {selectedAmenities.map((amenity: any, index: number) => (
+                                        <div key={amenity.id || amenity._id || index} className="flex items-center gap-3 p-3 pr-5 bg-background border border-primary/5 rounded-2xl shadow-sm hover:shadow-md hover:border-primary/20 transition-all group cursor-default">
                                             <div className="p-2.5 rounded-xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
-                                                {getAmenityIcon(amenity.name)}
+                                                {getAmenityIcon(typeof amenity === "string" ? amenity : amenity.name)}
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="font-bold text-sm tracking-tight">{amenity.name}</span>
+                                                <span className="font-bold text-sm tracking-tight">{typeof amenity === "string" ? amenity : amenity.name}</span>
                                                 <span className="text-[9px] text-muted-foreground uppercase tracking-widest font-medium opacity-50">Included</span>
                                             </div>
                                         </div>
                                     ))}
+                                    {selectedAmenities.length === 0 && <p className="text-sm text-muted-foreground">No amenities selected for this fleet.</p>}
                                 </div>
                             </CardContent>
                         </Card>

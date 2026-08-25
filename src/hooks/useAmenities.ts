@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
-    getAmenitiesByOwner, 
+    getOwnerCustomAmenities,
     getAmenityById, 
     createAmenity, 
     updateAmenity, 
@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export const useFetchAmenitiesByOwner = (ownerId: string) => {
     return useQuery({
         queryKey: ["amenities", "owner", ownerId],
-        queryFn: () => getAmenitiesByOwner(ownerId),
+        queryFn: () => getOwnerCustomAmenities(ownerId),
         enabled: !!ownerId,
     });
 };
