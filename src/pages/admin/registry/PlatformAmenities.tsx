@@ -192,13 +192,13 @@ const AmenityCard = ({
       {/* Status dot */}
       <div className={cn(
         "absolute top-3 right-3 w-2 h-2 rounded-full",
-        amenity.status ? "bg-[#D3D925]/100" : "bg-white/5-foreground/30"
+        amenity.status ? "bg-[#D3D925]" : "bg-white/30"
       )} />
 
       {/* Icon + Name */}
       <div className="flex items-start gap-4">
         <div className="p-3 rounded-xl bg-[#D3D925]/10 border border-[#D3D925]/20 text-[#D3D925] shrink-0 group-hover:bg-[#D3D925] group-hover:text-black transition-all duration-300">
-          <Icon className="h-5 w-5" />
+          {React.createElement(Icon, { className: "h-5 w-5" })}
         </div>
         <div className="min-w-0">
           <p className="font-bold text-sm leading-tight truncate">{amenity.name}</p>
@@ -222,7 +222,7 @@ const AmenityCard = ({
           </button>
           <button
             onClick={() => onDelete(amenity._id, amenity.name)}
-            className="p-1.5 rounded-lg hover:bg-white/5 hover:bg-white/5 text-white/50 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/5 text-white/50 hover:text-white transition-colors"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -415,9 +415,9 @@ const DeleteConfirmModal = ({
             <AlertTriangle className="h-8 w-8 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold">Remove Amenity?</h3>
+            <h3 className="text-lg font-bold">Delete this amenity?</h3>
             <p className="text-sm text-white/50 mt-1">
-              <strong>"{target?.name}"</strong> will be removed from the global catalog. Fleets that currently reference this amenity won't be affected.
+              <strong>"{target?.name}"</strong> can only be deleted when no fleet uses it. Deactivate it to hide it from new selections while preserving existing fleet records.
             </p>
           </div>
         </div>
@@ -429,7 +429,7 @@ const DeleteConfirmModal = ({
             disabled={isPending}
             className="font-bold min-w-[120px]"
           >
-            {isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Removing...</> : "Yes, Remove"}
+            {isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Checking...</> : "Delete if unused"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -522,7 +522,7 @@ const PlatformAmenities = () => {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4 border-2 border-dashed rounded-3xl">
           <div className="p-5 rounded-2xl bg-white/[0.04]">
-            <Zap className="h-10 w-10 text-white/50/40" />
+            <Zap className="h-10 w-10 text-white/40" />
           </div>
           <div className="text-center">
             <p className="font-bold text-lg">

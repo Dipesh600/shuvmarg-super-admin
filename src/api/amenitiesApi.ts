@@ -30,6 +30,11 @@ export const getAmenitiesByOwner = async (ownerId: string) => {
     }
 };
 
+export const getOwnerCustomAmenities = async (ownerId: string) => {
+    const { data } = await api.get(`/amenities/owner/${ownerId}/custom`);
+    return data;
+};
+
 export const getAmenityById = async (id: string) => {
     try {
         const { data } = await api.get(`/amenities/${id}`);
