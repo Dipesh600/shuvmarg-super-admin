@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,26 +32,26 @@ export function ReviewRefundDialog() {
   const queryClient = useQueryClient();
 
   const [remarks, setRemarks] = useState("");
-  const [gateway, setGateway] = useState("bank_transfer");
+  const [gateway, setGateway] = useState("");
   const [gatewayId, setGatewayId] = useState("");
 
   const isModelOpen = isOpen && type === "editRefundProccess";
 
-  // Reset fields on open
-  useEffect(() => {
-    if (isModelOpen) {
-      setRemarks("");
-      setGateway(data.refundGateway || "bank_transfer");
-      setGatewayId("");
-    }
-  }, [isModelOpen, data]);
+  const selectedGateway = gateway || data?.refundGateway || "bank_transfer";
+
+  const handleClose = () => {
+    setRemarks("");
+    setGateway("");
+    setGatewayId("");
+    onClose();
+  };
 
   const { mutate: mutateStatus, isPending } = useMutation({
     mutationFn: updateRefundStatus,
     onSuccess: () => {
       toast.success("Refund status successfully updated");
       queryClient.invalidateQueries({ queryKey: ["refund-queue"] });
-      onClose();
+      handleClose();
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to update refund");
@@ -74,7 +74,7 @@ export function ReviewRefundDialog() {
       refundId: data._id,
       status,
       remarks: remarks || undefined,
-      refundGateway: status === "completed" ? gateway as any : undefined,
+      refundGateway: status === "completed" ? selectedGateway : undefined,
       refundGatewayId: status === "completed" ? gatewayId : undefined,
     });
   };
@@ -87,7 +87,7 @@ export function ReviewRefundDialog() {
   };
 
   return (
-    <Dialog open={isModelOpen} onOpenChange={onClose}>
+    <Dialog open={isModelOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[550px] overflow-y-auto max-h-[90vh] bg-[#121212]/95 border-white/5 backdrop-blur-xl shadow-2xl text-white">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -264,7 +264,7 @@ export function ReviewRefundDialog() {
                   <Label htmlFor="gateway" className="text-xs text-white/80">
                     Payout Destination Gateway
                   </Label>
-                  <Select value={gateway} onValueChange={setGateway}>
+                  <Select value={selectedGateway} onValueChange={setGateway}>
                     <SelectTrigger id="gateway" className="bg-white/5 border-white/10 text-white focus:ring-[#D3D925]">
                       <SelectValue />
                     </SelectTrigger>
@@ -330,7 +330,7 @@ export function ReviewRefundDialog() {
         </div>
 
         <DialogFooter className="border-t border-white/5 pt-3">
-          <Button variant="outline" onClick={onClose} disabled={isPending} className="w-full sm:w-auto bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white">
+          <Button variant="outline" onClick={handleClose} disabled={isPending} className="w-full sm:w-auto bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white">
             Close
           </Button>
         </DialogFooter>
