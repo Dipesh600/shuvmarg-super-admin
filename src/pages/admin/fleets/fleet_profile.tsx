@@ -24,7 +24,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useModal } from "@/hooks/use-model-store";
 import { SuspendDialog } from "@/components/models/suspended-model";
-import { fetchFleetById } from "@/hooks/useFetchAllFleets";
+import { useFleetById } from "@/hooks/useFetchAllFleets";
 import FleetProfileSkeleton from "@/components/Skeletion_Loading/FleetProfileSkeleton";
 
 const BusDetail = () => {
@@ -32,7 +32,7 @@ const BusDetail = () => {
     const navigate = useNavigate();
     const { onOpen } = useModal();
 
-    const { data: fleetResponse, isLoading, isError, error } = fetchFleetById(id as string);
+    const { data: fleetResponse, isLoading, isError, error } = useFleetById(id as string);
 
     const getAmenityIcon = (name: string) => {
         const lowerName = name.toLowerCase();

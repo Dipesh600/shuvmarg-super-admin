@@ -1,22 +1,10 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useModal } from "@/hooks/use-model-store";
+import { RefundPolicyAction, type RefundPolicyActionData } from "./RefundPolicyAction";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { Pencil } from "lucide-react";
 
-interface RefundPolicy {
-    id:string,
-  policyName: string;
-  refundPercentage: number;
-  deductionPercentage: number;
-  description: string;
-  minHours: number;
-  maxHours: number;
-  color: string;
-}
-export const refundPolicyColumns: ColumnDef<RefundPolicy>[] = [
+export const refundPolicyColumns: ColumnDef<RefundPolicyActionData>[] = [
   {
     accessorKey: "policyName",
     header: "Policy Name",
@@ -81,40 +69,6 @@ export const refundPolicyColumns: ColumnDef<RefundPolicy>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => {
-      const { onOpen } = useModal();
-      const {
-        color,
-        deductionPercentage,
-        description,
-        maxHours,
-        minHours,
-        policyName,
-        refundPercentage,
-        id
-      } = row.original;
-      return (
-        <Button
-          onClick={() =>
-            onOpen("editRefundPolicy", {
-              color,
-              deductionPercentage,
-              description,
-              maxHours,
-              minHours,
-              policyName,
-              refundPercentage,
-              id
-            })
-          }
-          className="cursor-pointer"
-          variant="ghost"
-          size="sm"
-        >
-          <Pencil className="h-3 w-3" />
-          <span>Edit</span>
-        </Button>
-      );
-    },
+    cell: ({ row }) => <RefundPolicyAction policy={row.original} />,
   },
 ];
