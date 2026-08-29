@@ -36,7 +36,7 @@ export interface CreateCouponPayload {
   };
 }
 
-export interface UpdateCouponPayload extends Partial<CreateCouponPayload> {}
+export type UpdateCouponPayload = Partial<CreateCouponPayload>;
 
 export const getAllCoupons = async (params?: {
   status?: string;

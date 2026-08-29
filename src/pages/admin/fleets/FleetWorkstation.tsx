@@ -29,7 +29,7 @@ const FleetWorkstation = () => {
         );
     }
 
-    const { fleet, today, schedules, recentTrips, upcomingTrips, completedTrips, cancelledTrips, financials, crew: _crew } = response?.data || {};
+    const { fleet, today, schedules, recentTrips, upcomingTrips, financials } = response?.data || {};
     if (!fleet) return null;
 
     const corridor = fleet.corridorId;
@@ -114,16 +114,16 @@ const FleetWorkstation = () => {
                 </TabsList>
 
                 <TabsContent value="operations" className="mt-6">
-                    <OperationsTab today={today} upcomingTrips={upcomingTrips} completedTrips={completedTrips} cancelledTrips={cancelledTrips} recentTrips={recentTrips} fleet={fleet} fleetId={id as string} schedules={schedules} />
+                    <OperationsTab today={today} recentTrips={recentTrips} fleet={fleet} fleetId={id as string} schedules={schedules} />
                 </TabsContent>
                 <TabsContent value="schedule" className="mt-6">
-                    <ScheduleTab schedules={schedules} fleet={fleet} />
+                    <ScheduleTab schedules={schedules} />
                 </TabsContent>
                 <TabsContent value="timeline" className="mt-6">
-                    <TimelineTab schedules={schedules} recentTrips={recentTrips || []} upcomingTrips={upcomingTrips || []} fleet={fleet} />
+                    <TimelineTab schedules={schedules} recentTrips={recentTrips || []} upcomingTrips={upcomingTrips || []} />
                 </TabsContent>
                 <TabsContent value="financial" className="mt-6">
-                    <FinancialTab financials={financials} recentTrips={recentTrips} fleet={fleet} />
+                    <FinancialTab financials={financials} recentTrips={recentTrips} />
                 </TabsContent>
                 <TabsContent value="crew" className="mt-6">
                     <ComingSoonTab icon={Users} title="Crew Accountability" description="Driver assignment tracking, license monitoring, and trip-level accountability ledger." />

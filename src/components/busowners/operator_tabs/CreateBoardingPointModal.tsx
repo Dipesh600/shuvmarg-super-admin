@@ -71,7 +71,7 @@ const CreateBoardingPointModal: React.FC<CreateBoardingPointModalProps> = ({
       setCity("");
       setDescription("");
       setBoardingPoints([{ pointName: "", landmark: "", time: "", contactNumber: "" }]);
-    } catch (error) {
+    } catch {
       // Error handled by mutation hook
     }
   };

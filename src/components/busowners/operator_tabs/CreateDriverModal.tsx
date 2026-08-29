@@ -22,7 +22,7 @@ const FilePicker: React.FC<{
   currentUrl?: string;
   onChange: (f: File | null) => void;
   icon?: React.ReactNode;
-}> = ({ label, accept = "image/*,application/pdf", value, currentUrl: _currentUrl, onChange, icon }) => {
+}> = ({ label, accept = "image/*,application/pdf", value, currentUrl, onChange, icon }) => {
   const ref = React.useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-1">
@@ -36,7 +36,7 @@ const FilePicker: React.FC<{
       >
         {icon || <Upload className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
         <span className="text-xs text-muted-foreground truncate min-w-0">
-          {value ? value.name : "Click to upload"}
+          {value ? value.name : currentUrl ? "Current file attached" : "Click to upload"}
         </span>
         {value && (
           <button

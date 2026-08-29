@@ -144,7 +144,7 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
     try {
       await updateMutation.mutateAsync(formData);
       onClose();
-    } catch (error) {
+    } catch {
        // Handled by hook
     }
   };

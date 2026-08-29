@@ -25,7 +25,6 @@ interface TimelineTabProps {
     schedules: any[];
     recentTrips: any[];
     upcomingTrips: any[];
-    fleet: any;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -133,11 +132,10 @@ function DateHeader({ originDate }: { originDate: Date }) {
 }
 
 // ─── Schedule Row ─────────────────────────────────────────────────────────────
-function ScheduleRow({ sched, trips, originDate, todayPx: _todayPx }: {
+function ScheduleRow({ sched, trips, originDate }: {
     sched: any;
     trips: any[];
     originDate: Date;
-    todayPx: number;
 }) {
     const colors = SCHED_COLORS[sched.status] || SCHED_COLORS.DRAFT;
 
@@ -234,7 +232,7 @@ const LegendItem = ({ color, label }: { color: string; label: string }) => (
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const TimelineTab = ({ schedules, recentTrips, upcomingTrips, fleet: _fleet }: TimelineTabProps) => {
+const TimelineTab = ({ schedules, recentTrips, upcomingTrips }: TimelineTabProps) => {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Origin = PAST_DAYS before today
@@ -368,7 +366,6 @@ const TimelineTab = ({ schedules, recentTrips, upcomingTrips, fleet: _fleet }: T
                                         sched={sched}
                                         trips={allTrips}
                                         originDate={originDate}
-                                        todayPx={todayPx}
                                     />
                                 ))}
                             </div>

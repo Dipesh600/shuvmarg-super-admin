@@ -80,7 +80,7 @@ const UpdateBusRouteModal: React.FC<UpdateBusRouteModalProps> = ({
     try {
       await updateMutation.mutateAsync(payload);
       onClose();
-    } catch (error) {
+    } catch {
       // Error handled by mutation hook
     }
   };

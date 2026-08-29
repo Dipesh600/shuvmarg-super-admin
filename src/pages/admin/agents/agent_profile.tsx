@@ -53,7 +53,7 @@ const AgentDetail = () => {
 };
   const {onOpen} = useModal();
   const navigate = useNavigate();
-  const [agentStatus, _] = useState(agentData.status);
+  const [agentStatus] = useState(agentData.status);
   if (isError) {
     return (
       <div>
