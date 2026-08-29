@@ -1,6 +1,26 @@
 import { api } from "./axios";
 
-export const createBusRoute = async (payload: any) => {
+export interface BusRouteStopInput {
+    name: string;
+    estimatedMinutes: number;
+    fareOffset: number;
+}
+
+export interface BusRoutePayload {
+    routeName: string;
+    from: string;
+    to: string;
+    distance: string;
+    duration: string;
+    basePrice: number;
+    isRoundTrip: boolean;
+    returnRouteId: string | null;
+    ownerId?: string;
+    status?: "ACTIVE" | "INACTIVE";
+    stops?: BusRouteStopInput[];
+}
+
+export const createBusRoute = async (payload: BusRoutePayload) => {
     try {
         const { data } = await api.post("/busRoutes/create", payload);
         return data;
@@ -10,7 +30,7 @@ export const createBusRoute = async (payload: any) => {
     }
 };
 
-export const createGlobalRoute = async (payload: any) => {
+export const createGlobalRoute = async (payload: Record<string, unknown>) => {
     try {
         const { data } = await api.post("/busRoutes/createGlobal", payload);
         return data;
@@ -50,7 +70,7 @@ export const getBusRouteById = async (id: string) => {
     }
 };
 
-export const updateBusRoute = async (id: string, payload: any) => {
+export const updateBusRoute = async (id: string, payload: BusRoutePayload) => {
     try {
         // According to the user, the backend uses patch
         const { data } = await api.patch(`/busRoutes/${id}`, payload);

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { reuploadKycDocument } from "@/api/busOwnerApi";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/error-message";
 
 export const useReuploadKycDocument = () => {
   const queryClient = useQueryClient();
@@ -34,10 +35,8 @@ export const useReuploadKycDocument = () => {
         queryClient.invalidateQueries({ queryKey: ["ownerKyc"] });
       }
     },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to re-upload document."
-      );
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to re-upload document."));
     },
   });
 };

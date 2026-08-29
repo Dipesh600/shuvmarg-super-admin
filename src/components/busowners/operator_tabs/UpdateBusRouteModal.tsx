@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Route, MapPin, Navigation, Clock, Loader2 } from "lucide-react";
 import { useFetchBusRouteById, useUpdateBusRoute } from "@/hooks/useBusRoutes";
+import type { BusRoutePayload } from "@/api/busRouteApi";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
@@ -68,7 +69,7 @@ const UpdateBusRouteModalInstance: React.FC<UpdateBusRouteModalProps> = ({
     e.preventDefault();
     if (!id) return;
 
-    const payload = {
+    const payload: BusRoutePayload = {
       routeName,
       from,
       to,
