@@ -78,13 +78,18 @@ const UpdateBoardingPointModal: React.FC<UpdateBoardingPointModalProps> = ({
       city,
       description,
       status,
-      boardingPoints: boardingPoints.map(({ _id, ...rest }) => rest)
+      boardingPoints: boardingPoints.map(({ pointName, landmark, time, contactNumber }) => ({
+        pointName,
+        landmark,
+        time,
+        contactNumber,
+      }))
     };
 
     try {
       await updateMutation.mutateAsync(payload);
       onClose();
-    } catch (error) {
+    } catch {
       // Error handled by mutation hook
     }
   };
