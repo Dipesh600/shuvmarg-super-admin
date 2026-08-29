@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useModal } from "@/hooks/use-model-store";
 import { useReuploadKycDocument } from "@/hooks/useReuploadKycDocument";
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { Loader2, UploadCloud, FileText, X } from "lucide-react";
 
 const formSchema = z.object({
@@ -47,13 +47,6 @@ export const ReuploadKycDocumentModal = () => {
     },
   });
 
-  useEffect(() => {
-    if (!isModalOpen) {
-      reset();
-      setSelectedFileName(null);
-    }
-  }, [isModalOpen, reset]);
-
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     if (!documentType || !busOwnerId) return;
 
@@ -65,14 +58,14 @@ export const ReuploadKycDocumentModal = () => {
 
     reupload(formData, {
       onSuccess: () => {
-        reset();
-        onClose();
+        handleClose();
       },
     });
   };
 
   const handleClose = () => {
     reset();
+    setSelectedFileName(null);
     onClose();
   };
 
@@ -82,7 +75,7 @@ export const ReuploadKycDocumentModal = () => {
   };
 
   return (
-    <Dialog open={isModalOpen} onOpenChange={handleClose}>
+    <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle>
@@ -132,6 +125,7 @@ export const ReuploadKycDocumentModal = () => {
                   type="file" 
                   accept=".pdf,.jpg,.jpeg,.png" 
                   className="hidden" 
+                  onClick={(event) => { event.currentTarget.value = ""; }}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
