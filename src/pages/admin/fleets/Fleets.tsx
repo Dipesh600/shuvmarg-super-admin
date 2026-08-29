@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Bus, CheckCircle2, Wrench, Clock, AlertTriangle } from "lucide-react";
 import { columns } from "@/components/data_tables/fleet/columns";
 import { DataTable } from "@/components/DataTable";
-import { fetchAllFleets, fetchFleetDashboard } from "@/hooks/useFetchAllFleets";
+import { useAllFleets, useFleetDashboard } from "@/hooks/useFetchAllFleets";
 import KYCVerificationSkeleton from "@/components/Skeletion_Loading/KycVerificationSkeleton";
 
 const Fleet = () => {
-  const { data, isLoading, error, isError } = fetchAllFleets();
-  const { data: dashboardData, isLoading: isDashboardLoading } = fetchFleetDashboard();
+  const { data, isLoading, error, isError } = useAllFleets();
+  const { data: dashboardData, isLoading: isDashboardLoading } = useFleetDashboard();
 
   const fleets = data?.data ?? [];
   const d = dashboardData?.data;
