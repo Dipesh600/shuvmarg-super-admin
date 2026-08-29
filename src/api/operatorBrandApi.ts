@@ -33,7 +33,15 @@ export const updateBrandStatus = async (brandId: string, payload: { status: stri
     return data;
 };
 
-export const updateBrand = async (brandId: string, payload: any) => {
+export interface BrandUpdatePayload {
+    brandName: string;
+    baseCity: string;
+    contactEmail: string;
+    contactPhone: string;
+    commissionRate: number;
+}
+
+export const updateBrand = async (brandId: string, payload: BrandUpdatePayload) => {
     const { data } = await api.patch(`/brands/${brandId}`, payload);
     return data;
 };

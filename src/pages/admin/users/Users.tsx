@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Filter, Download } from "lucide-react";
-import { columns } from "@/components/data_tables/users/columns";
+import { columns, type User } from "@/components/data_tables/users/columns";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Users as UsersIcon, CheckCircle, TrendingUp, Activity } from "lucide-react";
 import { DataTable } from "@/components/DataTable";
@@ -41,7 +41,7 @@ const Users = () => {
 
   // Map API response to table data — all real data, no hardcoded values
   const userTableData = useMemo(() => {
-    return data?.data?.map((user: any) => ({
+    return data?.data?.map((user): User => ({
       id: user._id,
       name: user.name,
       phone: user.phone,
@@ -52,15 +52,12 @@ const Users = () => {
       bookings: user.bookingCount ?? 0,
       totalSpent: user.totalSpent ?? 0,
       joined: user.createdAt,
-      role: user.role,
-      roles: user.roles,
-      lastLoginAt: user.lastLoginAt,
     }));
   }, [data]);
 
   // Verified count from real isVerified field
   const verifiedUsers = useMemo(() => {
-    return userTableData?.filter((user: any) => user.verified === true).length ?? 0;
+    return userTableData?.filter((user) => user.verified === true).length ?? 0;
   }, [userTableData]);
 
   if (isError) {
@@ -139,12 +136,12 @@ const Users = () => {
         <CardContent>
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-            <DataTable columns={columns as any} data={userTableData ?? []} />
+            <DataTable columns={columns} data={userTableData ?? []} />
           </div>
 
           {/* Mobile Cards — uses real data, not placeholder array */}
           <div className="md:hidden flex flex-col gap-3">
-            {(userTableData ?? []).map((user: any) => (
+            {(userTableData ?? []).map((user) => (
               <div
                 key={user.id}
                 className="border rounded-lg p-3 shadow-sm bg-background space-y-2 cursor-pointer"

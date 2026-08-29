@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { getBrandById, updateBrand, getBrandFinancials } from "@/api/operatorBrandApi";
+import { getBrandById, updateBrand, getBrandFinancials, type BrandUpdatePayload } from "@/api/operatorBrandApi";
+import { getErrorMessage } from "@/lib/error-message";
 import FleetTab from "@/components/busowners/operator_tabs/FleetTab";
 import BrandServicesTab from "@/components/busowners/operator_tabs/BrandServicesTab";
 import BrandSchedulesTab from "@/components/busowners/operator_tabs/BrandSchedulesTab";
@@ -237,13 +238,13 @@ const OperatorDetails = () => {
     const brand = data?.data;
 
     const editMutation = useMutation({
-        mutationFn: (payload: any) => updateBrand(id!, payload),
+        mutationFn: (payload: BrandUpdatePayload) => updateBrand(id!, payload),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["brand", id] });
             toast.success("Brand updated successfully");
             setEditOpen(false);
         },
-        onError: (e: any) => toast.error(e.response?.data?.message || e.message),
+        onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to update brand")),
     });
 
     const handleEditClick = () => {

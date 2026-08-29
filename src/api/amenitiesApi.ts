@@ -1,6 +1,14 @@
 import { api } from "./axios";
 
-export const createAmenity = async (payload: any) => {
+export interface AmenityPayload {
+    name: string;
+    description: string;
+    icon: string;
+    ownerId?: string;
+    status?: boolean;
+}
+
+export const createAmenity = async (payload: AmenityPayload) => {
     try {
         const { data } = await api.post("/amenities/create", payload);
         return data;
@@ -10,7 +18,7 @@ export const createAmenity = async (payload: any) => {
     }
 };
 
-export const createGlobalAmenity = async (payload: any) => {
+export const createGlobalAmenity = async (payload: Record<string, unknown>) => {
     try {
         const { data } = await api.post("/amenities/createGlobal", payload);
         return data;
@@ -45,7 +53,7 @@ export const getAmenityById = async (id: string) => {
     }
 };
 
-export const updateAmenity = async (id: string, payload: any) => {
+export const updateAmenity = async (id: string, payload: AmenityPayload) => {
     try {
         const { data } = await api.patch(`/amenities/${id}`, payload);
         return data;

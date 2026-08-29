@@ -7,6 +7,7 @@ import {
     deleteTripByAdmin 
 } from "@/api/tripApi";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/error-message";
 
 export const useFetchTripsByOwner = (ownerId: string) => {
     return useQuery({
@@ -32,8 +33,8 @@ export const useCreateTrip = () => {
             queryClient.invalidateQueries({ queryKey: ["trips"] });
             toast.success("Trip created successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to create trip");
+        onError: (error: unknown) => {
+            toast.error(getErrorMessage(error, "Failed to create trip"));
         },
     });
 };
@@ -41,13 +42,13 @@ export const useCreateTrip = () => {
 export const useUpdateTrip = (id: string) => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (payload: any) => updateTripByAdmin(id, payload),
+        mutationFn: (payload: Record<string, unknown>) => updateTripByAdmin(id, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["trips"] });
             toast.success("Trip updated successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to update trip");
+        onError: (error: unknown) => {
+            toast.error(getErrorMessage(error, "Failed to update trip"));
         },
     });
 };
@@ -60,8 +61,8 @@ export const useDeleteTrip = () => {
             queryClient.invalidateQueries({ queryKey: ["trips"] });
             toast.success("Trip deleted successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to delete trip");
+        onError: (error: unknown) => {
+            toast.error(getErrorMessage(error, "Failed to delete trip"));
         },
     });
 };
