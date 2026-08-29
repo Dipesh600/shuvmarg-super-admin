@@ -89,10 +89,10 @@ export function RouteStopReviewMap({ selectedRoute, candidates }: RouteStopRevie
   const [error, setError] = useState("");
 
   const routeKey = selectedRoute?.id || "";
-  if (prevRouteKeyRef.current !== routeKey) {
+  useEffect(() => {
     prevRouteKeyRef.current = routeKey;
     hasFittedBoundsRef.current = false;
-  }
+  }, [routeKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -177,7 +177,6 @@ export function RouteStopReviewMap({ selectedRoute, candidates }: RouteStopRevie
       }
     };
 
-    setState("loading");
     void render();
 
     return () => {

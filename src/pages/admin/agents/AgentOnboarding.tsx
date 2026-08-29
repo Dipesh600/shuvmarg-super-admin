@@ -26,7 +26,7 @@ import {
   getAllAgents,
   getAgentDashboardData,
 } from "@/api/agentApi";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/auth-context";
 
 // ── Status definitions ────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<
@@ -68,6 +68,7 @@ const STATUS_CONFIG: Record<
 type FilterTab = "ALL" | "PENDING" | "MORE_INFO" | "APPROVED" | "REJECTED";
 
 export default function AgentOnboarding() {
+  const [renderedAt] = useState(() => Date.now());
   const navigate = useNavigate();
   const { token } = useAuth();
 
@@ -98,7 +99,7 @@ export default function AgentOnboarding() {
   const dash = dashData?.data;
 
   // ── Filter + search agents ────────────────────────────────────────────────
-  const agents: any[] = allData?.data ?? [];
+  const agents: any[] = useMemo(() => allData?.data ?? [], [allData?.data]);
 
   const filtered = useMemo(() => {
     let list = agents;
@@ -306,7 +307,7 @@ export default function AgentOnboarding() {
                 const submittedDate = agent.submittedAt ?? agent.createdAt;
                 const daysAgo = submittedDate
                   ? Math.floor(
-                      (Date.now() - new Date(submittedDate).getTime()) /
+                      (renderedAt - new Date(submittedDate).getTime()) /
                         (1000 * 60 * 60 * 24)
                     )
                   : null;

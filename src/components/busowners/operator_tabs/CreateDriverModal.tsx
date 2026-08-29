@@ -61,9 +61,10 @@ const FilePicker: React.FC<{
 
 // ── Expiry status pill ──────────────────────────────────────────────────────────
 const ExpiryStatus: React.FC<{ dateStr?: string | null }> = ({ dateStr }) => {
+  const [renderedAt] = useState(() => Date.now());
   if (!dateStr) return null;
   const expiry = new Date(dateStr);
-  const diff = Math.ceil((expiry.getTime() - Date.now()) / 86400000);
+  const diff = Math.ceil((expiry.getTime() - renderedAt) / 86400000);
   if (diff < 0) return (
     <span className="flex items-center gap-1 text-[10px] font-black text-red-600">
       <AlertTriangle className="h-3 w-3" /> EXPIRED

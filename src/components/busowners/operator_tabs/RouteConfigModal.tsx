@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -87,13 +87,18 @@ const CustomTimePicker = ({ value, onChange }: { value: string, onChange: (v: st
   );
 };
 
-export default function RouteConfigModal({ isOpen, onClose, brandId, editConfig }: RouteConfigModalProps) {
+export default function RouteConfigModal(props: RouteConfigModalProps) {
+  const instanceKey = props.isOpen ? `open-${props.editConfig?._id || "create"}` : "closed";
+  return <RouteConfigModalInstance key={instanceKey} {...props} />;
+}
+
+function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: RouteConfigModalProps) {
   const qc = useQueryClient();
   const isEditMode = !!editConfig;
 
   // In create mode: user picks a variant. In edit mode: locked to editConfig's variantId.
-  const [selectedVariant, setSelectedVariant] = useState<string>("");
-  const [patternName, setPatternName] = useState<string>("Standard");
+  const [selectedVariant, setSelectedVariant] = useState<string>(() => String(editConfig?.variantId?._id || ""));
+  const [patternName, setPatternName] = useState<string>(() => editConfig?.patternName || "Standard");
 
   // direction tab: "outbound" | "return"
   const [direction, setDirection] = useState<"outbound" | "return">("outbound");
@@ -112,32 +117,9 @@ export default function RouteConfigModal({ isOpen, onClose, brandId, editConfig 
     stopId: string; estimatedArrival: string; estimatedDeparture?: string;
     haltDuration?: number; dayOffset: number; stopBehavior: string;
   }>>();
-  const [returnOverridden, setReturnOverridden] = useState(false);
-
-  // Set variant when edit mode activates
-  useEffect(() => {
-    if (isEditMode && editConfig?.variantId?._id) {
-      setSelectedVariant(String(editConfig.variantId._id));
-    }
-  }, [isEditMode, editConfig]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setSelectedVariant("");
-      setPatternName("Standard");
-      setDirection("outbound");
-      setActiveStops([]);
-      setBoardingConfig([]);
-      setTimingConfig(undefined);
-      setReturnActiveStops([]);
-      setReturnBoardingConfig([]);
-      setReturnTimingConfig(undefined);
-      setReturnOverridden(false);
-    } else if (isEditMode && editConfig) {
-      setPatternName(editConfig.patternName || "Standard");
-      setReturnOverridden(editConfig.returnOverridden || false);
-    }
-  }, [isOpen]);
+  const [returnOverridden, setReturnOverridden] = useState(() => editConfig?.returnOverridden || false);
+  const [initializedStops, setInitializedStops] = useState<unknown>(null);
+  const [initializedReturnStops, setInitializedReturnStops] = useState<unknown>(null);
 
   // Only fetch variant list in CREATE mode
   const { data: variantsData, isLoading: loadingVariants } = useQuery({
@@ -165,9 +147,9 @@ export default function RouteConfigModal({ isOpen, onClose, brandId, editConfig 
   const returnStops: any[] = returnStopsResult?.stops || [];
   const hasReturnVariant: boolean = returnStopsResult?.hasReturnVariant ?? false;
 
-  // Pre-fill OUTBOUND state when stops load
-  useEffect(() => {
-    if (stops.length > 0) {
+  // Initialize each server snapshot once; subsequent changes are user edits.
+  if (stops.length > 0 && initializedStops !== stops) {
+      setInitializedStops(stops);
       setActiveStops(stops.filter((s: any) => s.isActive).map((s: any) => s.stopId._id));
       setBoardingConfig(stops.map((s: any) => ({ stopId: s.stopId._id, boardingPointIds: s.boardingPoints?.map((bp: any) => bp._id) || [] })));
       setTimingConfig(stops.map((s: any) => ({
@@ -178,12 +160,10 @@ export default function RouteConfigModal({ isOpen, onClose, brandId, editConfig 
         dayOffset: s.timing?.dayOffset || 0,
         stopBehavior: s.timing?.stopBehavior || "BOTH",
       })));
-    }
-  }, [stops]);
+  }
 
-  // Pre-fill RETURN state when return stops load
-  useEffect(() => {
-    if (returnStops.length > 0) {
+  if (returnStops.length > 0 && initializedReturnStops !== returnStops) {
+      setInitializedReturnStops(returnStops);
       setReturnActiveStops(returnStops.filter((s: any) => s.isActive).map((s: any) => s.stopId._id));
       setReturnBoardingConfig(returnStops.map((s: any) => ({ stopId: s.stopId._id, boardingPointIds: s.boardingPoints?.map((bp: any) => bp._id) || [] })));
       setReturnTimingConfig(returnStops.map((s: any) => ({
@@ -194,8 +174,7 @@ export default function RouteConfigModal({ isOpen, onClose, brandId, editConfig 
         dayOffset: s.timing?.dayOffset || 0,
         stopBehavior: s.timing?.stopBehavior || "BOTH",
       })));
-    }
-  }, [returnStops]);
+  }
 
   // Re-derive return from current outbound — reverses stops and swaps arrival↔departure
   const handleRederive = () => {

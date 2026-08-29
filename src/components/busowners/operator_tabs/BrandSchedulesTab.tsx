@@ -99,7 +99,7 @@ const BrandSchedulesTab = ({ brandId, ownerId }: { brandId: string, ownerId: str
         },
     });
 
-    const schedules = data?.data || [];
+    const schedules = useMemo(() => data?.data || [], [data?.data]);
 
     const groupedSchedules = useMemo(() => {
         if (!schedules.length) return [];

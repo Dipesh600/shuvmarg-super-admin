@@ -1,7 +1,6 @@
 import {
-  createContext,
-  useContext,
   useEffect,
+  useCallback,
   useRef,
   useState,
   type ReactNode,
@@ -9,6 +8,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { type Admin } from "../api/authApi";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "@/providers/auth-context";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 /** Session token key in sessionStorage (tab-scoped, wiped on tab close) */
@@ -27,18 +27,6 @@ const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
   "scroll",
   "click",
 ];
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-type AuthContextType = {
-  admin: Admin | null;
-  isAuthenticated: boolean;
-  token: string | null;
-  loading: boolean;
-  login: (token: string, data: Admin) => void;
-  logout: (reason?: string) => void;
-};
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -61,7 +49,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   // ── Logout ──────────────────────────────────────────────────────────────────
-  const logout = (reason = "manual") => {
+  const logout = useCallback((reason = "manual") => {
     sessionStorage.removeItem(SESSION_TOKEN_KEY);
     sessionStorage.removeItem(SESSION_USER_KEY);
     setToken(null);
@@ -70,10 +58,18 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     console.info(`[Auth] Session ended — reason: ${reason}`);
     navigate("/auth/login", { replace: true });
-  };
+  }, [navigate, qc]);
+
+  // ── Inactivity timer ────────────────────────────────────────────────────────
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    inactivityTimer.current = setTimeout(() => {
+      logout("inactivity");
+    }, INACTIVITY_MS);
+  }, [logout]);
 
   // ── Login ───────────────────────────────────────────────────────────────────
-  const login = (newToken: string, data: Admin) => {
+  const login = useCallback((newToken: string, data: Admin) => {
     sessionStorage.setItem(SESSION_TOKEN_KEY, newToken);
     sessionStorage.setItem(SESSION_USER_KEY, JSON.stringify(data));
     setToken(newToken);
@@ -81,15 +77,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     qc.invalidateQueries({ queryKey: ["admin"] });
     resetInactivityTimer();
     navigate("/admin", { replace: true });
-  };
-
-  // ── Inactivity timer ────────────────────────────────────────────────────────
-  const resetInactivityTimer = () => {
-    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-    inactivityTimer.current = setTimeout(() => {
-      logout("inactivity");
-    }, INACTIVITY_MS);
-  };
+  }, [navigate, qc, resetInactivityTimer]);
 
   // ── Activity listeners ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -109,7 +97,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
-  }, [token]);
+  }, [resetInactivityTimer, token]);
 
   // ── Tab visibility: pause/resume inactivity on tab switch ───────────────────
   useEffect(() => {
@@ -126,7 +114,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     document.addEventListener("visibilitychange", handleVisibility);
     return () =>
       document.removeEventListener("visibilitychange", handleVisibility);
-  }, [token]);
+  }, [resetInactivityTimer, token]);
 
   // ── Initial guard: redirect if not authenticated ─────────────────────────────
   useEffect(() => {
@@ -139,7 +127,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!loading && !token && !isPublicAuthPage) {
       navigate("/auth/login", { replace: true });
     }
-  }, [loading, token]);
+  }, [loading, navigate, token]);
 
   return (
     <AuthContext.Provider
@@ -158,9 +146,3 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export default AuthProvider;
-
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
-  return ctx;
-};

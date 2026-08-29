@@ -72,12 +72,13 @@ const DriverCard: React.FC<{
   onEdit:     (driver: DriverProfile) => void;
   approving:  boolean;
 }> = ({ driver, onApprove, onReject, onEdit, approving }) => {
-  const licenseExpired   = driver.licenseExpiry   && new Date(driver.licenseExpiry)   < new Date();
-  const medicalExpired   = driver.medicalCertExpiry && new Date(driver.medicalCertExpiry) < new Date();
+  const [renderedAt] = useState(() => Date.now());
+  const licenseExpired   = driver.licenseExpiry   && new Date(driver.licenseExpiry).getTime() < renderedAt;
+  const medicalExpired   = driver.medicalCertExpiry && new Date(driver.medicalCertExpiry).getTime() < renderedAt;
   const licenseExpiring  = !licenseExpired && driver.licenseExpiry &&
-    Math.ceil((new Date(driver.licenseExpiry).getTime() - Date.now()) / 86400000) < 30;
+    Math.ceil((new Date(driver.licenseExpiry).getTime() - renderedAt) / 86400000) < 30;
   const medicalExpiring  = !medicalExpired && driver.medicalCertExpiry &&
-    Math.ceil((new Date(driver.medicalCertExpiry).getTime() - Date.now()) / 86400000) < 30;
+    Math.ceil((new Date(driver.medicalCertExpiry).getTime() - renderedAt) / 86400000) < 30;
   const hasCompliance    = licenseExpired || medicalExpired || licenseExpiring || medicalExpiring;
 
   return (

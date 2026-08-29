@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/auth-context";
 import { useMutation } from "@tanstack/react-query";
 import { loginAdmin } from "@/api/authApi";
 import { toast } from "sonner";

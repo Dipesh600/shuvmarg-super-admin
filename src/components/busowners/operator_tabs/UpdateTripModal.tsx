@@ -26,7 +26,11 @@ interface UpdateTripModalProps {
   ownerId: string;
 }
 
-const UpdateTripModal: React.FC<UpdateTripModalProps> = ({ 
+const UpdateTripModal: React.FC<UpdateTripModalProps> = (props) => (
+  <UpdateTripModalInstance key={props.isOpen ? `open-${props.id || "new"}` : "closed"} {...props} />
+);
+
+const UpdateTripModalInstance: React.FC<UpdateTripModalProps> = ({
   id, 
   isOpen, 
   onClose, 
@@ -52,6 +56,7 @@ const UpdateTripModal: React.FC<UpdateTripModalProps> = ({
   const [tripFare, setTripFare] = useState("");
   const [recurrence, setRecurrence] = useState("daily");
   const [autoGenerateUntil, setAutoGenerateUntil] = useState<Date | undefined>(undefined);
+  const [syncedData, setSyncedData] = useState<unknown>(null);
 
   useEffect(() => {
     if (isOpen && id) {
@@ -59,8 +64,8 @@ const UpdateTripModal: React.FC<UpdateTripModalProps> = ({
     }
   }, [isOpen, id, refetch]);
 
-  useEffect(() => {
-    if (tripResponse?.data && isOpen) {
+  if (tripResponse?.data && isOpen && syncedData !== tripResponse.data) {
+      setSyncedData(tripResponse.data);
       const d = tripResponse.data;
       setBusId(d.busId?._id || d.busId || "");
       setRouteId(d.routeId?._id || d.routeId || "");
@@ -71,8 +76,7 @@ const UpdateTripModal: React.FC<UpdateTripModalProps> = ({
       setTripFare(d.tripFare?.toString() || "");
       setRecurrence(d.recurrence || "daily");
       setAutoGenerateUntil(d.autoGenerateUntil ? parseISO(d.autoGenerateUntil) : undefined);
-    }
-  }, [tripResponse, isOpen]);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

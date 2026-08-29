@@ -22,7 +22,7 @@ interface ScratchPreviewProps {
   height?: number;
 }
 
-export default function ScratchPreview({
+function ScratchPreviewInstance({
   imageUrl,
   amount = 15,
   width = 300,
@@ -85,8 +85,6 @@ export default function ScratchPreview({
    * Load the texture image and draw overlay once loaded.
    */
   useEffect(() => {
-    setIsRevealed(false);
-    setScratchPercent(0);
     overlayReadyRef.current = false;
 
     if (imageUrl) {
@@ -319,4 +317,8 @@ export default function ScratchPreview({
       </div>
     </div>
   );
+}
+
+export default function ScratchPreview(props: ScratchPreviewProps) {
+  return <ScratchPreviewInstance key={props.imageUrl || "default-overlay"} {...props} />;
 }

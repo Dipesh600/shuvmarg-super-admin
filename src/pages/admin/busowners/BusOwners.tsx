@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { columns, type BusOwnerTableRow } from "@/components/data_tables/owner/columns";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { DataTable } from "@/components/DataTable";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { getAllBusOwners, getBusOwnerDashboardData } from "@/api/busOwnerApi";
 import AgentsSkeleton from "@/components/Skeletion_Loading/AgentsSkeletion";

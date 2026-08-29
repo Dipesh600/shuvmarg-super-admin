@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,39 +11,32 @@ import { useModal } from "@/hooks/use-model-store";
 const allAmenities = ["AC", "WiFi", "USB Charging", "Reclining Seats", "Blankets", "TV", "Toilet"];
 
 export function EditBusDialog() {
+  const { isOpen, type, data } = useModal();
+  const bus = data?.bus;
+  const instanceKey = isOpen && type === "editBus"
+    ? `open-${bus?.id || bus?._id || "bus"}`
+    : "closed";
+
+  return <EditBusDialogInstance key={instanceKey} />;
+}
+
+function EditBusDialogInstance() {
   const { isOpen, type, onClose, data } = useModal();
   const isModelOpen = isOpen && type === "editBus";
   const bus = data?.bus;
 
-  const [formData, setFormData] = useState({
-    id: "",
-    type: "Standard",
-    route: "",
-    capacity: 0,
-    manufacturingYear: new Date().getFullYear(),
-    chassisNumber: "",
-    engineNumber: "",
-    gpsDeviceId: "",
-    amenities: [] as string[],
-    status: "Active",
-  });
-
-  useEffect(() => {
-    if (bus) {
-      setFormData({
-        id: bus.id || "",
-        type: bus.type || "Standard",
-        route: bus.route || "",
-        capacity: bus.capacity || 0,
-        manufacturingYear: bus.manufacturingYear || new Date().getFullYear(),
-        chassisNumber: bus.chassisNumber || "",
-        engineNumber: bus.engineNumber || "",
-        gpsDeviceId: bus.gpsDeviceId || "",
-        amenities: bus.amenities || [],
-        status: bus.status || "Active",
-      });
-    }
-  }, [bus, isModelOpen]);
+  const [formData, setFormData] = useState(() => ({
+    id: bus?.id || "",
+    type: bus?.type || "Standard",
+    route: bus?.route || "",
+    capacity: bus?.capacity || 0,
+    manufacturingYear: bus?.manufacturingYear || new Date().getFullYear(),
+    chassisNumber: bus?.chassisNumber || "",
+    engineNumber: bus?.engineNumber || "",
+    gpsDeviceId: bus?.gpsDeviceId || "",
+    amenities: (bus?.amenities || []) as string[],
+    status: bus?.status || "Active",
+  }));
   const handleAmenityChange = (amenity: string, checked: boolean) => {
     if (checked) {
       setFormData({ ...formData, amenities: [...formData.amenities, amenity] });
