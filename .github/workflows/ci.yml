@@ -1,0 +1,50 @@
+name: Build and Security
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - staging
+      - main
+  push:
+    branches:
+      - dev
+      - staging
+
+permissions:
+  contents: read
+
+concurrency:
+  group: admin-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      VITE_API_URL: https://api-staging.shuvmarg.com
+      VITE_GOOGLE_MAPS_API_KEY: ci-placeholder-not-a-secret
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate deployment security configuration
+        run: npm test
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Build production application
+        run: npm run build
