@@ -1,8 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TableNavigateAction } from "@/components/data_tables/TableNavigateAction";
 import { type ColumnDef } from "@tanstack/react-table";
-import { ArrowRight, MapPin, CalendarClock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { MapPin, CalendarClock } from "lucide-react";
 
 export type UserBooking = {
   id: string;
@@ -97,19 +96,8 @@ export const UserBooking: ColumnDef<UserBooking>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => {
-      const { id } = row.original;
-      const navigate = useNavigate();
-      return (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 rounded-full text-white hover:bg-white/10"
-          onClick={() => navigate(`/admin/bookings/${id}`)}
-        >
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      );
-    },
+    cell: ({ row }) => (
+      <TableNavigateAction to={`/admin/bookings/${row.original.id}`} label="View booking details" />
+    ),
   },
 ];

@@ -1,8 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TableNavigateAction } from "@/components/data_tables/TableNavigateAction";
 import type { ColumnDef } from "@tanstack/react-table";
-import { useNavigate } from "react-router-dom";
-import { ShieldCheck, Clock, XCircle, ArrowRight } from "lucide-react";
+import { ShieldCheck, Clock, XCircle } from "lucide-react";
 
 /* ─── Status Badge helpers ──────────────────────────────────────── */
 
@@ -95,19 +94,13 @@ export const busOwnerColumns: ColumnDef<any>[] = [
   {
     id: "actions",
     header: "Action",
-    cell: ({ row }) => {
-      const navigate = useNavigate();
-      return (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
-          onClick={() => navigate(`/admin/kyc/bus-owner/${row.original.ownerId}`)}
-        >
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      );
-    },
+    cell: ({ row }) => (
+      <TableNavigateAction
+        to={`/admin/kyc/bus-owner/${row.original.ownerId}`}
+        label="Review bus owner KYC"
+        muted
+      />
+    ),
   },
 ];
 
@@ -151,19 +144,13 @@ export const agentColumns: ColumnDef<any>[] = [
   {
     id: "actions",
     header: "Action",
-    cell: ({ row }) => {
-      const navigate = useNavigate();
-      return (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
-          onClick={() => navigate(`/admin/kyc/agent/${row.original.id}`)}
-        >
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      );
-    },
+    cell: ({ row }) => (
+      <TableNavigateAction
+        to={`/admin/kyc/agent/${row.original.id}`}
+        label="Review agent KYC"
+        muted
+      />
+    ),
   },
 ];
 
@@ -227,18 +214,12 @@ export const fleetColumns: ColumnDef<any>[] = [
   {
     id: "actions",
     header: "Action",
-    cell: ({ row }) => {
-      const navigate = useNavigate();
-      return (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
-          onClick={() => navigate(`/admin/kyc/fleet/${row.original.id}`)}
-        >
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      );
-    },
+    cell: ({ row }) => (
+      <TableNavigateAction
+        to={`/admin/kyc/fleet/${row.original.id}`}
+        label="Review fleet KYC"
+        muted
+      />
+    ),
   },
 ];
