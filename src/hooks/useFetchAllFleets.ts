@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 // ── Live Dispatch Board ──────────────────────────────────────────────────────────
 // Only returns APPROVED, setupComplete:true buses — the live fleet.
 // Used by: /admin/fleets (Fleet Management page)
-export const fetchAllFleets = () => {
+export const useAllFleets = () => {
     return useQuery({
         queryKey: ["getOperationalFleets"],
         queryFn: getOperationalFleets,
@@ -16,7 +16,7 @@ export const fetchAllFleets = () => {
 // ── Brand Asset Registry ─────────────────────────────────────────────────────────
 // Returns ALL buses for a brand regardless of lifecycle state.
 // Used by: Bus Owner detail panel (Fleet tab)
-export const fetchBrandFleets = (brandId: string) => {
+export const useBrandFleets = (brandId: string) => {
     return useQuery({
         queryKey: ["getBrandFleets", brandId],
         queryFn: () => getBrandFleets(brandId),
@@ -26,7 +26,7 @@ export const fetchBrandFleets = (brandId: string) => {
     });
 };
 
-export const fetchFleetById = (id: string) => {
+export const useFleetById = (id: string) => {
     return useQuery({
         queryKey: ["getFleetById", id],
         queryFn: () => getFleetById(id),
@@ -37,7 +37,7 @@ export const fetchFleetById = (id: string) => {
     });
 };
 
-export const fetchFleetDashboard = () => {
+export const useFleetDashboard = () => {
     return useQuery({
         queryKey: ["getFleetDashboard"],
         queryFn: getFleetDashboardData,

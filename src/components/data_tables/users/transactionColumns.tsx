@@ -1,8 +1,7 @@
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TableNavigateAction } from "@/components/data_tables/TableNavigateAction";
 import { type ColumnDef } from "@tanstack/react-table";
-import { ArrowRight, CalendarClock, CreditCard } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { CalendarClock, CreditCard } from "lucide-react";
 
 export type PaymentMethod = "esewa" | "khalti" | "upi" | "card";
 export type TransactionType = "none" | "refund";
@@ -96,21 +95,12 @@ export const UserTranscation: ColumnDef<UserTranscation>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => {
-      const { transactionId } = row.original;
-      const navigate = useNavigate();
-      return (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 rounded-full text-white hover:bg-white/10"
-          onClick={() => navigate(`/admin/transactions/${transactionId}`)}
-          title="View Transaction Details"
-        >
-          <ArrowRight className="h-4 w-4" />
-          <span className="sr-only">View Details</span>
-        </Button>
-      );
-    },
+    cell: ({ row }) => (
+      <TableNavigateAction
+        to={`/admin/transactions/${row.original.transactionId}`}
+        label="View transaction details"
+        title="View Transaction Details"
+      />
+    ),
   },
 ];
