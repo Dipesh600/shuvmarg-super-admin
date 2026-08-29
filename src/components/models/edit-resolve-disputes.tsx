@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -41,16 +41,15 @@ export function ResolveDisputeDialog() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset state when modal opens/closes
-  useEffect(() => {
-    if (isModelOpen) {
-      setRefundNote("");
-      setRefundStatus("COMPLETED");
-      setProofFile(null);
-      setImagePreview(null);
-      setNotifyUser(true);
-    }
-  }, [isModelOpen]);
+  const handleClose = () => {
+    setRefundNote("");
+    setRefundStatus("COMPLETED");
+    setProofFile(null);
+    setImagePreview(null);
+    setNotifyUser(true);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    onClose();
+  };
 
   // Handle image preview
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,9 +109,9 @@ export function ResolveDisputeDialog() {
       // Invalidate both disputes and active alerts lists
       queryClient.invalidateQueries({ queryKey: ["disputes"] });
       queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
-      onClose();
+      handleClose();
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast({
         title: "Resolution Failed",
         description: err.message || "An error occurred while resolving this dispute.",
@@ -164,7 +163,7 @@ export function ResolveDisputeDialog() {
     : "N/A";
 
   return (
-    <Dialog open={isModelOpen} onOpenChange={onClose}>
+    <Dialog open={isModelOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto border-white/5 bg-[#121212]/95 backdrop-blur-xl shadow-2xl text-white">
         <DialogHeader>
           <div className="flex items-center gap-2 text-rose-500 font-semibold mb-1">
@@ -335,7 +334,7 @@ export function ResolveDisputeDialog() {
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isPending}
               className="bg-[#121212]/30 border-white/5 text-white hover:bg-white/10 hover:text-white"
             >
