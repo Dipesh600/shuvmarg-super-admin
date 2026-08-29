@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -64,7 +64,7 @@ const getRoleBadge = (role: string) => {
 export default function PushNotifications() {
    const {data,isLoading} =   useUsersFetch();
   const [searchTerm, setSearchTerm] = useState("");
-  const [users,setUsers] = useState<User[]>([]);
+  const users: User[] = data || [];
 
   const filteredUsers = users.filter(
     (user) =>
@@ -78,11 +78,6 @@ export default function PushNotifications() {
   // const bannedUsers = users.filter((u) => u.status === "banned").length;
 
 
-  useEffect(()=>{
-    if(data){
-        setUsers(data)
-    }
-},[data])
 if(isLoading) {
     return (
         <PushNotificationsSkeleton/>

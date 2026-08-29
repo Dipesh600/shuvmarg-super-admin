@@ -28,7 +28,11 @@ interface UpdateOwnerFleetModalProps {
   ownerId: string;
 }
 
-const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({ 
+const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = (props) => (
+  <UpdateOwnerFleetModalInstance key={props.isOpen ? `open-${props.id || "new"}` : "closed"} {...props} />
+);
+
+const UpdateOwnerFleetModalInstance: React.FC<UpdateOwnerFleetModalProps> = ({
   id, 
   isOpen, 
   onClose,
@@ -69,6 +73,7 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
   const [selectedCorridorId, setSelectedCorridorId] = useState<string>("");
   const [fleetImages, setFleetImages] = useState<FileList | null>(null);
   const [status, setStatus] = useState(true);
+  const [syncedData, setSyncedData] = useState<unknown>(null);
   const { data: seatAssignment, isLoading: isSeatAssignmentLoading } = useQuery({
     queryKey: ["seat-layout-v3", "fleet-assignment", id],
     queryFn: () => getFleetSeatLayoutAssignment(id!),
@@ -78,12 +83,11 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
   useEffect(() => {
     if (isOpen && id) {
       refetch();
-      setActiveTab("identity");
     }
   }, [isOpen, id, refetch]);
 
-  useEffect(() => {
-    if (response?.data && isOpen) {
+  if (response?.data && isOpen && syncedData !== response.data) {
+      setSyncedData(response.data);
       const data = response.data;
       setBusName(data.busName || "");
       setBusNumber(data.busNumber || "");
@@ -108,8 +112,7 @@ const UpdateOwnerFleetModal: React.FC<UpdateOwnerFleetModalProps> = ({
       setSelectedCorridorId(data.corridorId?._id || data.corridorId || "");
       setStatus(data.status === "ACTIVE");
       setFleetImages(null);
-    }
-  }, [response, isOpen]);
+  }
 
   const isApproved = response?.data?.approvalStatus === "APPROVED";
 

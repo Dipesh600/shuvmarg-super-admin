@@ -35,7 +35,7 @@ import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/agents/columns";
 import { DataTable } from "@/components/DataTable";
 import { getAllAgents, getAgentDashboardData } from "@/api/agentApi";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/auth-context";
 import AgentsSkeleton from "@/components/Skeletion_Loading/AgentsSkeletion";
 
 // ── Application status config ─────────────────────────────────────────────────
@@ -60,6 +60,7 @@ const mobileAgents = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 const Agents = () => {
+  const [renderedAt] = useState(() => Date.now());
   const { onOpen } = useModal();
   const { token } = useAuth();
   const navigate = useNavigate();
@@ -87,7 +88,7 @@ const Agents = () => {
   });
 
   const agentDashboard = dashboardData?.data;
-  const allAgents: any[] = data?.data ?? [];
+  const allAgents: any[] = useMemo(() => data?.data ?? [], [data?.data]);
 
   // ── Directory table data ─────────────────────────────────────────────────────
   const agentTableData = allAgents
@@ -381,7 +382,7 @@ const Agents = () => {
                     const needsAction = agent.applicationStatus === "PENDING" || agent.applicationStatus === "MORE_INFO";
                     const submittedDate = agent.submittedAt ?? agent.createdAt;
                     const daysAgo = submittedDate
-                      ? Math.floor((Date.now() - new Date(submittedDate).getTime()) / 86400000)
+                      ? Math.floor((renderedAt - new Date(submittedDate).getTime()) / 86400000)
                       : null;
 
                     return (

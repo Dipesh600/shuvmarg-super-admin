@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -88,6 +88,7 @@ export default function CreateOffer() {
   const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [syncedCoupon, setSyncedCoupon] = useState<unknown>(null);
   const CATEGORY_SUGGESTIONS = ["General Offer", "Operator Offer", "Exclusive"];
 
   // Fetch coupon details if in edit mode
@@ -97,10 +98,10 @@ export default function CreateOffer() {
     enabled: isEditMode,
   });
 
-  // Populate form when data arrives (edit mode)
-  useEffect(() => {
-    if (isEditMode && couponData?.data) {
+  // Adjust local editor state once when a fetched coupon version arrives.
+  if (isEditMode && couponData?.data && syncedCoupon !== couponData.data) {
       const c = couponData.data;
+      setSyncedCoupon(c);
       setForm({
         couponCode: c.couponCode,
         title: c.title,
@@ -123,8 +124,7 @@ export default function CreateOffer() {
       if (c.imageUrlResolved) {
         setLocalPreviewUrl(c.imageUrlResolved);
       }
-    }
-  }, [isEditMode, couponData]);
+  }
 
   const { mutate: createMutate, isPending: isCreating } = useMutation({
     mutationFn: createCoupon,

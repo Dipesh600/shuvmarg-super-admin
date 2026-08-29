@@ -1,24 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TableNavigateAction } from "@/components/data_tables/TableNavigateAction";
 import { type ColumnDef } from "@tanstack/react-table";
-import { ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
-const BookingActionsCell = ({ bookingId }: { bookingId: string }) => {
-  const navigate = useNavigate();
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
-      onClick={() => navigate(`/admin/bookings/${bookingId}`)}
-      title="View Details"
-    >
-      <ArrowRight className="h-4 w-4" />
-      <span className="sr-only">View Details</span>
-    </Button>
-  );
-};
 
 export type BookingRow = {
   _id: string;
@@ -129,6 +111,6 @@ export const columns: ColumnDef<BookingRow>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => <BookingActionsCell bookingId={row.original._id} />,
+    cell: ({ row }) => <TableNavigateAction to={`/admin/bookings/${row.original._id}`} label="View booking details" title="View Details" muted />,
   },
 ];

@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, ShieldCheck, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { inviteAdministrator, listAdministrators, setAdministratorStatus, type Administrator } from "@/api/adminSecurityApi";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
