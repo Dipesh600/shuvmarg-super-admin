@@ -16,9 +16,6 @@ import { ManifestDrawer } from "./ManifestDrawer";
 
 interface OperationsTabProps {
     today: any;
-    upcomingTrips: any[];
-    completedTrips: any[];
-    cancelledTrips: any[];
     recentTrips: any[];
     fleet: any;
     fleetId: string;
@@ -175,14 +172,10 @@ const CalendarView = ({
     trips,
     totalSeats,
     onTripClick,
-    onCancel: _onCancel,
-    onReschedule: _onReschedule,
 }: {
     trips: any[];
     totalSeats: number;
     onTripClick: (id: string) => void;
-    onCancel: (trip: any) => void;
-    onReschedule: (trip: any) => void;
 }) => {
     const now = new Date();
     const [viewYear, setViewYear] = useState(now.getFullYear());
@@ -404,7 +397,7 @@ const CalendarView = ({
 
 
 // ─── MAIN OPERATIONS TAB ─────────────────────────────────────────────────────
-const OperationsTab = ({ today, upcomingTrips: _upcomingTrips, completedTrips: _completedTrips, cancelledTrips: _cancelledTrips, recentTrips, fleet, fleetId, schedules }: OperationsTabProps) => {
+const OperationsTab = ({ today, recentTrips, fleet, fleetId, schedules }: OperationsTabProps) => {
     const qc = useQueryClient();
     
     // Modal states
@@ -599,8 +592,6 @@ const OperationsTab = ({ today, upcomingTrips: _upcomingTrips, completedTrips: _
                         trips={recentTrips || []}
                         totalSeats={fleet?.totalSeats || 0}
                         onTripClick={(id) => setManifestTripId(id)}
-                        onCancel={(t) => setShowCancelTripModal({ tripId: t._id, tripDate: t.tripDate })}
-                        onReschedule={(t) => setShowRescheduleModal({ tripId: t._id, tripDate: t.tripDate, departureTime: t.departureTime, arrivalTime: t.arrivalTime })}
                     />
                 </TabsContent>
             </Tabs>
@@ -617,7 +608,6 @@ const OperationsTab = ({ today, upcomingTrips: _upcomingTrips, completedTrips: _
             {showRescheduleModal && (
                 <RescheduleTripModal
                     tripId={showRescheduleModal.tripId}
-                    tripDate={showRescheduleModal.tripDate}
                     currentDep={showRescheduleModal.departureTime}
                     currentArr={showRescheduleModal.arrivalTime}
                     onClose={() => setShowRescheduleModal(null)}
@@ -662,7 +652,7 @@ function CancelTripModal({ tripId, tripDate, onClose, onSuccess }: any) {
     );
 }
 
-function RescheduleTripModal({ tripId, tripDate: _tripDate, currentDep, currentArr, onClose, onSuccess }: any) {
+function RescheduleTripModal({ tripId, currentDep, currentArr, onClose, onSuccess }: any) {
     const [newDep, setNewDep] = useState(currentDep);
     const [newArr, setNewArr] = useState(currentArr);
     const [reason, setReason] = useState("");

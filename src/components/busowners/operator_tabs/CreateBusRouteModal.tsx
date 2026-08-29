@@ -144,7 +144,7 @@ const CreateBusRouteModal: React.FC<CreateBusRouteModalProps> = ({ isOpen, onClo
       await createMutation.mutateAsync(payload);
       resetForm();
       onClose();
-    } catch (_) { /* handled by hook */ }
+    } catch { /* handled by hook */ }
   };
 
   const fmtTime = (mins: number) => {

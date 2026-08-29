@@ -15,12 +15,12 @@ function calculateDeparture(arrival12h: string, haltMins: number): string {
   const match = arrival12h.match(/(\d{2}):(\d{2}) (AM|PM)/);
   if (!match) return "";
   let h = parseInt(match[1]);
-  let m = parseInt(match[2]);
+  const m = parseInt(match[2]);
   const isPM = match[3] === "PM";
   if (h === 12) h = 0;
-  let totalMins = h * 60 + m + (isPM ? 12 * 60 : 0) + haltMins;
+  const totalMins = h * 60 + m + (isPM ? 12 * 60 : 0) + haltMins;
   let newH = Math.floor(totalMins / 60) % 24;
-  let newM = totalMins % 60;
+  const newM = totalMins % 60;
   const newPM = newH >= 12;
   if (newH === 0) newH = 12; else if (newH > 12) newH -= 12;
   return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')} ${newPM ? 'PM' : 'AM'}`;

@@ -7,7 +7,6 @@ import { TrendingUp, TrendingDown, IndianRupee, Percent, ArrowDownRight, Users, 
 interface FinancialTabProps {
     financials: any;
     recentTrips: any[];
-    fleet: any;
 }
 
 const formatCurrency = (n: number) => `₹${(n || 0).toLocaleString("en-IN")}`;
@@ -24,7 +23,7 @@ const getDirection = (variant: any) => {
     return variant.direction === "RETURN" ? `${d} → ${o}` : `${o} → ${d}`;
 };
 
-const FinancialTab = ({ financials, recentTrips, fleet: _fleet }: FinancialTabProps) => {
+const FinancialTab = ({ financials, recentTrips }: FinancialTabProps) => {
     if (!financials) return null;
 
     const periods = [
