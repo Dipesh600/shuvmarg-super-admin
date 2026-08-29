@@ -250,7 +250,7 @@ export default function CreateOffer() {
         if (data.previewUrl) {
           setLocalPreviewUrl(data.previewUrl);
         }
-      } catch (err) {
+      } catch {
         toast.error("Failed to upload image to server.");
         setIsUploadingImage(false);
         return;

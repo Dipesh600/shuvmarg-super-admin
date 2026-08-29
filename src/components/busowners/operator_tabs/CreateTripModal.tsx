@@ -90,7 +90,7 @@ const CreateTripModal: React.FC<CreateTripModalProps> = ({
       setArrivalTime("");
       setTripFare("");
       setAutoGenerateUntil(undefined);
-    } catch (error) {
+    } catch {
       // Error handled in hook
     }
   };

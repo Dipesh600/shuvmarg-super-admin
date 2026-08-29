@@ -90,7 +90,7 @@ const UpdateTripModal: React.FC<UpdateTripModalProps> = ({
         autoGenerateUntil: autoGenerateUntil ? format(autoGenerateUntil, "yyyy-MM-dd") : ""
       });
       onClose();
-    } catch (error) {
+    } catch {
       // Error handled in hook
     }
   };

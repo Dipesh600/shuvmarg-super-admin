@@ -14,7 +14,6 @@ import { toast } from "sonner";
 
 interface ScheduleTabProps {
     schedules: any[];
-    fleet: any;
 }
 
 const scheduleStatusStyles: Record<string, string> = {
@@ -465,7 +464,7 @@ function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void })
 }
 
 // ─── Main ScheduleTab ─────────────────────────────────────────────────────────
-const ScheduleTab = ({ schedules, fleet: _fleet }: ScheduleTabProps) => {
+const ScheduleTab = ({ schedules }: ScheduleTabProps) => {
     const qc = useQueryClient();
     const refresh = () => qc.invalidateQueries({ queryKey: ["fleetWorkstation"] });
 
