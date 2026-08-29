@@ -1,6 +1,6 @@
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import AppSideBar from "@/components/dashboard/Sidebar";
-import { useSidebar } from "../ui/sidebar";
+import { useSidebar } from "../ui/sidebar-context";
 import { cn } from "@/lib/utils";
 import { Outlet } from "react-router-dom";
 

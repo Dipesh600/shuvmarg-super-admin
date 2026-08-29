@@ -4,7 +4,7 @@ import { Bell, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ModeToggle } from "../mode-toggle";
 import { SidebarTrigger } from "../ui/sidebar";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/auth-context";
 // import { useMutation } from "@tanstack/react-query";
 // import { logoutAdmin } from "@/api/authApi";
 // import { toast } from "sonner";

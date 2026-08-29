@@ -17,8 +17,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 export default function KYCVerification() {
   const { data: allKyc, isLoading, isError, error } = useGetAllKyc();
 
-  // const kycData = useMemo(() => allKyc?.data ?? [], [allKyc?.data]);
-  const kycData  = allKyc?.data ?? [];
+  const kycData = useMemo(() => allKyc?.data ?? [], [allKyc?.data]);
 
   const ownersKyc = useMemo(() => {
     return kycData

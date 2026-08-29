@@ -1,4 +1,4 @@
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/auth-context";
 import { Navigate, Outlet } from "react-router-dom";
 import FullscreenLoader from "../FullscreenLoader";
 

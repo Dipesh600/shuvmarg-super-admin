@@ -32,7 +32,15 @@ interface DocumentViewerModalProps {
  *
  * The raw S3 presigned URL NEVER reaches the browser.
  */
-export default function DocumentViewerModal({
+export default function DocumentViewerModal(props: DocumentViewerModalProps) {
+  const requestKey = props.open
+    ? props.s3Key || JSON.stringify(props.documentRequest || props.fleetDocumentRequest || {})
+    : "closed";
+
+  return <DocumentViewerModalInstance key={requestKey} {...props} />;
+}
+
+function DocumentViewerModalInstance({
   s3Key,
   documentRequest = null,
   fleetDocumentRequest = null,
@@ -42,7 +50,7 @@ export default function DocumentViewerModal({
 }: DocumentViewerModalProps) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string>("application/pdf");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => open && Boolean(s3Key || documentRequest || fleetDocumentRequest));
   const [error, setError] = useState<string | null>(null);
   const [imgRotation, setImgRotation] = useState(0);
   const [imgZoom, setImgZoom] = useState(1);
@@ -51,12 +59,7 @@ export default function DocumentViewerModal({
   // Load the document whenever the modal opens with a new key
   useEffect(() => {
     if (!open || (!s3Key && !documentRequest && !fleetDocumentRequest)) return;
-
-    setLoading(true);
-    setError(null);
-    setBlobUrl(null);
-    setImgRotation(0);
-    setImgZoom(1);
+    let cancelled = false;
 
     const documentPromise = documentRequest
       ? fetchKycDocumentAsBlob(documentRequest)
@@ -64,6 +67,10 @@ export default function DocumentViewerModal({
       ? fetchFleetDocumentAsBlob(fleetDocumentRequest)
       : fetchDocumentAsBlob(s3Key!);
     documentPromise.then((result) => {
+      if (cancelled) {
+        if (result?.blobUrl) URL.revokeObjectURL(result.blobUrl);
+        return;
+      }
       setLoading(false);
       if (!result || result.error || !result.blobUrl) {
         setError(result?.error || "Failed to load document. Please try again.");
@@ -78,6 +85,7 @@ export default function DocumentViewerModal({
 
     // Revoke the blob URL when the key changes or modal closes
     return () => {
+      cancelled = true;
       if (prevBlobUrl.current) {
         URL.revokeObjectURL(prevBlobUrl.current);
         prevBlobUrl.current = null;
@@ -88,8 +96,6 @@ export default function DocumentViewerModal({
   const handleClose = () => {
     // Revoke immediately on close
     if (blobUrl) URL.revokeObjectURL(blobUrl);
-    setBlobUrl(null);
-    setError(null);
     onClose();
   };
 

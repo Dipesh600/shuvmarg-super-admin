@@ -9,8 +9,8 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  useSidebar,
 } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar-context";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -46,7 +46,7 @@ import {
 import { NavLink, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getAgentDashboardData } from "@/api/agentApi";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/auth-context";
 
 // ── Sidebar groups (order matters visually) ───────────────────────────────────
 

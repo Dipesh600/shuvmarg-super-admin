@@ -1,8 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TableNavigateAction } from "@/components/data_tables/TableNavigateAction";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 type Agent = {
   id: string;
@@ -13,22 +11,6 @@ type Agent = {
   performance: string;
   applications: number;
   profileImg: string;
-};
-
-const AgentActionsCell = ({ id }: { id: string }) => {
-  const navigate = useNavigate();
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
-      onClick={() => navigate(`/admin/agents/${id}`)}
-      title="View Profile"
-    >
-      <ArrowRight className="h-4 w-4" />
-      <span className="sr-only">View Profile</span>
-    </Button>
-  );
 };
 
 export const columns: ColumnDef<Agent>[] = [
@@ -84,6 +66,6 @@ export const columns: ColumnDef<Agent>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => <AgentActionsCell id={row.original.id} />,
+    cell: ({ row }) => <TableNavigateAction to={`/admin/agents/${row.original.id}`} label="View agent profile" title="View Profile" muted />,
   },
 ];
