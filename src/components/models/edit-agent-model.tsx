@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,37 +8,31 @@ import { toast } from "@/hooks/use-toast";
 import { useModal } from "@/hooks/use-model-store";
 
 export function EditAgentDialog() {
+  const { isOpen, type, data } = useModal();
+  const agent = data?.agent;
+  const instanceKey = isOpen && type === "editAgent"
+    ? `open-${agent?.id || agent?._id || agent?.email || "agent"}`
+    : "closed";
+
+  return <EditAgentDialogInstance key={instanceKey} />;
+}
+
+function EditAgentDialogInstance() {
   const { isOpen, type, onClose, data } = useModal();
   const isModelOpen = isOpen && type === "editAgent";
   const agent = data?.agent;
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    agencyName: "",
-    location: "",
-    commission: "",
-    panNumber: "",
-    bankDetails: "",
-    status: "Pending",
-  });
-
-  useEffect(() => {
-    if (agent) {
-      setFormData({
-        name: agent.name || "",
-        email: agent.email || "",
-        phone: agent.phone || "",
-        agencyName: agent.agencyName || "",
-        location: agent.location || "",
-        commission: agent.commission || "",
-        panNumber: agent.panNumber || "",
-        bankDetails: agent.bankDetails || "",
-        status: agent.status || "Pending",
-      });
-    }
-  }, [agent, isModelOpen]);
+  const [formData, setFormData] = useState(() => ({
+    name: agent?.name || "",
+    email: agent?.email || "",
+    phone: agent?.phone || "",
+    agencyName: agent?.agencyName || "",
+    location: agent?.location || "",
+    commission: agent?.commission || "",
+    panNumber: agent?.panNumber || "",
+    bankDetails: agent?.bankDetails || "",
+    status: agent?.status || "Pending",
+  }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

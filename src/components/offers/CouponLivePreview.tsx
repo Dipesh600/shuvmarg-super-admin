@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Smartphone, Globe, Paperclip } from "lucide-react";
 
 interface PreviewData {
@@ -137,6 +137,36 @@ interface CouponLivePreviewProps {
   data: PreviewData;
 }
 
+const OfferImage = ({
+  imageUrl,
+  className,
+  style,
+}: {
+  imageUrl?: string;
+  className: string;
+  style: React.CSSProperties;
+}) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (!imageUrl || hasError) {
+    return (
+      <span className="text-[#015db8] text-xl md:text-2xl font-black uppercase tracking-widest mt-4">
+        Offer
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={imageUrl}
+      alt="Offer visual"
+      className={className}
+      style={style}
+      onError={() => setHasError(true)}
+    />
+  );
+};
+
 const UnifiedPreview = ({ data, scale = 1 }: { data: PreviewData; scale?: number }) => {
   const isOperator = data.category === "Operator Offer";
   const isExclusive = data.category === "Exclusive";
@@ -175,16 +205,6 @@ const UnifiedPreview = ({ data, scale = 1 }: { data: PreviewData; scale?: number
   const descAlignClass = typo.descAlignment === 'center' ? 'text-center' : typo.descAlignment === 'right' ? 'text-right' : 'text-left';
   const codeAlignClass = typo.codeAlignment === 'center' ? 'self-center' : typo.codeAlignment === 'right' ? 'self-end' : 'self-start';
   
-  const fallbackImage = isExclusive ? "/images/offers/gift.webp" : isOperator ? "/images/offers/ticket.webp" : "/images/offers/bus.webp";
-  
-  const [imgError, setImgError] = useState(false);
-  
-  useEffect(() => {
-    setImgError(false);
-  }, [data.imageUrl, fallbackImage]);
-
-  const displayImageUrl = (!data.imageUrl || imgError) ? null : data.imageUrl;
-
   const title = data.title || "Offer Title";
   const code = data.couponCode || "YOURCODE";
   const desc = data.description || "Offer description will appear here";
@@ -221,24 +241,16 @@ const UnifiedPreview = ({ data, scale = 1 }: { data: PreviewData; scale?: number
            
            <div className="relative z-10 w-[45%] flex flex-col justify-between items-end h-full pt-1">
              <div className="w-full flex justify-center items-center relative flex-grow pl-2">
-               {displayImageUrl ? (
-                 <img 
-                   key={displayImageUrl} 
-                   src={displayImageUrl} 
-                   alt="Offer visual" 
-                   className={`w-full h-full ${imgFitClass} drop-shadow-md`} 
-                   style={{
-                     transform: `scale(${imgScale}) translate(${imgOffsetX}%, ${imgOffsetY}%)`,
-                     transformOrigin: 'center center',
-                     transition: 'transform 0.15s ease',
-                   }}
-                   onError={() => setImgError(true)} 
-                 />
-               ) : (
-                 <span className="text-[#015db8] text-xl md:text-2xl font-black uppercase tracking-widest mt-4">
-                   Offer
-                 </span>
-               )}
+               <OfferImage
+                 key={data.imageUrl || "offer-placeholder"}
+                 imageUrl={data.imageUrl}
+                 className={`w-full h-full ${imgFitClass} drop-shadow-md`}
+                 style={{
+                   transform: `scale(${imgScale}) translate(${imgOffsetX}%, ${imgOffsetY}%)`,
+                   transformOrigin: 'center center',
+                   transition: 'transform 0.15s ease',
+                 }}
+               />
              </div>
               <p className="text-[9px] sm:text-[10px] font-medium tracking-wide mt-2 text-right text-gray-400">
                 * T&C apply

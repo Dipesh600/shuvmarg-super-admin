@@ -1,5 +1,5 @@
 import { getAllRefundPolicy } from "@/api/refundApi";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/auth-context";
 import { useQuery } from "@tanstack/react-query";
 
 export function useRefundPolicies() {

@@ -23,7 +23,11 @@ interface UpdateBoardingPointModalProps {
   onClose: () => void;
 }
 
-const UpdateBoardingPointModal: React.FC<UpdateBoardingPointModalProps> = ({ 
+const UpdateBoardingPointModal: React.FC<UpdateBoardingPointModalProps> = (props) => (
+  <UpdateBoardingPointModalInstance key={props.isOpen ? `open-${props.id || "new"}` : "closed"} {...props} />
+);
+
+const UpdateBoardingPointModalInstance: React.FC<UpdateBoardingPointModalProps> = ({
   id, 
   isOpen, 
   onClose 
@@ -35,6 +39,7 @@ const UpdateBoardingPointModal: React.FC<UpdateBoardingPointModalProps> = ({
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState(true);
   const [boardingPoints, setBoardingPoints] = useState<any[]>([]);
+  const [syncedData, setSyncedData] = useState<unknown>(null);
 
   // Force refetch and reset local state when id changes or modal opens
   useEffect(() => {
@@ -43,16 +48,14 @@ const UpdateBoardingPointModal: React.FC<UpdateBoardingPointModalProps> = ({
     }
   }, [isOpen, id, refetch]);
 
-  // Synchronize state with fetched data
-  useEffect(() => {
-    if (response?.data && isOpen) {
+  if (response?.data && isOpen && syncedData !== response.data) {
+      setSyncedData(response.data);
       const { city, description, status, boardingPoints } = response.data;
       setCity(city || "");
       setDescription(description || "");
       setStatus(status !== undefined ? status : true);
       setBoardingPoints(boardingPoints || []);
-    }
-  }, [response, isOpen]);
+  }
 
   const addPoint = () => {
     setBoardingPoints([...boardingPoints, { pointName: "", landmark: "", time: "", contactNumber: "" }]);

@@ -1,5 +1,5 @@
 import { getOwnerDetail } from "@/api/kycApi"
-import { useAuth } from "@/providers/AuthProvider"
+import { useAuth } from "@/providers/auth-context"
 import { useQuery } from "@tanstack/react-query"
 
 export const useFetchOwnerDetail = (busOwnerId: string | undefined) => {

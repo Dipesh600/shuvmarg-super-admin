@@ -22,7 +22,11 @@ interface UpdateBusRouteModalProps {
   onClose: () => void;
 }
 
-const UpdateBusRouteModal: React.FC<UpdateBusRouteModalProps> = ({ 
+const UpdateBusRouteModal: React.FC<UpdateBusRouteModalProps> = (props) => (
+  <UpdateBusRouteModalInstance key={props.isOpen ? `open-${props.id || "new"}` : "closed"} {...props} />
+);
+
+const UpdateBusRouteModalInstance: React.FC<UpdateBusRouteModalProps> = ({
   id, 
   isOpen, 
   onClose
@@ -38,6 +42,7 @@ const UpdateBusRouteModal: React.FC<UpdateBusRouteModalProps> = ({
   const [basePrice, setBasePrice] = useState("");
   const [isRoundTrip, setIsRoundTrip] = useState(false);
   const [status, setStatus] = useState(true);
+  const [syncedData, setSyncedData] = useState<unknown>(null);
 
   // Force refetch and reset local state when id changes or modal opens
   useEffect(() => {
@@ -46,9 +51,8 @@ const UpdateBusRouteModal: React.FC<UpdateBusRouteModalProps> = ({
     }
   }, [isOpen, id, refetch]);
 
-  // Synchronize state with fetched data
-  useEffect(() => {
-    if (response?.data && isOpen) {
+  if (response?.data && isOpen && syncedData !== response.data) {
+      setSyncedData(response.data);
       const data = response.data;
       setRouteName(data.routeName || "");
       setFrom(data.from || "");
@@ -58,8 +62,7 @@ const UpdateBusRouteModal: React.FC<UpdateBusRouteModalProps> = ({
       setBasePrice(data.basePrice?.toString() || "");
       setIsRoundTrip(data.isRoundTrip || false);
       setStatus(data.status === "ACTIVE");
-    }
-  }, [response, isOpen]);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -93,15 +93,19 @@ const Transactions = () => {
   const [txnType,        setTxnType]        = useState("ALL");
   const [debouncedSearch,setDebouncedSearch] = useState("");
 
-  let debounceTimer: ReturnType<typeof setTimeout>;
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleSearch = (val: string) => {
     setSearch(val);
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
       setDebouncedSearch(val);
       setPage(1);
     }, 400);
   };
+
+  useEffect(() => () => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+  }, []);
 
   // Main ledger query
   const { data, isLoading, isError, refetch } = useQuery({

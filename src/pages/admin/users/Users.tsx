@@ -14,7 +14,7 @@ import { Users as UsersIcon, CheckCircle, TrendingUp, Activity } from "lucide-re
 import { DataTable } from "@/components/DataTable";
 import { useQuery } from "@tanstack/react-query";
 import { getAllUsers, getUserDashboardData } from "@/api/userApi";
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/auth-context";
 import { useMemo } from "react";
 import UsersSkeleton from "@/components/Skeletion_Loading/UserSkeletion";
 import { useNavigate } from "react-router-dom";

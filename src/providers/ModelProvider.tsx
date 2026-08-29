@@ -13,17 +13,7 @@ import { EditRefundPolicyDialog } from "@/components/models/edit-refund-policy-m
 import { ResolveDisputeDialog } from "@/components/models/edit-resolve-disputes";
 
 import { ReuploadKycDocumentModal } from "@/components/models/reupload-kyc-document-model";
-import { useState, useEffect } from "react";
-
-
 const ModelProvider = () => {
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-  if (!isMounted) {
-    return null;
-  }
   return (
     <>
       <AddAgentDialog />

@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SuspendDialog } from "@/components/models/suspended-model";
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getUserById } from "@/api/userApi";
 import { getUserBalance } from "@/api/walletApi";
@@ -36,7 +35,6 @@ import { UserTranscation } from "@/components/data_tables/users/transactionColum
 const UserDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [userStatus, setUserStatus] = useState("");
   const { data: bookings } = useUserBookings(id ?? "");
 
   const { data, isLoading, error, isError } = useQuery({
@@ -53,10 +51,6 @@ const UserDetail = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  useEffect(() => {
-    setUserStatus(data?.data?.profile?.status);
-  }, [data?.data?.profile?.status, id]);
-
   if (isLoading) return <UserDetailSkeleton />;
 
   if (isError) {
@@ -70,6 +64,7 @@ const UserDetail = () => {
   // Enriched response from the new backend endpoint
   const enrichedData = data?.data;
   const profile = enrichedData?.profile;
+  const userStatus = profile?.status || "";
   const metrics = enrichedData?.metrics;
   const security = enrichedData?.security;
   const referral = enrichedData?.referral;

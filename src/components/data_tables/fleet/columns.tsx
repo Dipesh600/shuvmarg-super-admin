@@ -1,8 +1,7 @@
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TableNavigateAction } from "@/components/data_tables/TableNavigateAction";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowRight, MapPin, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { MapPin, Users } from "lucide-react";
 
 export type FleetRow = {
   _id: string;
@@ -15,22 +14,6 @@ export type FleetRow = {
   busType: string;
   status: string;
   approvalStatus: string;
-};
-
-const FleetActionsCell = ({ id }: { id: string }) => {
-  const navigate = useNavigate();
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-8 w-8 rounded-full text-white/60 hover:text-white hover:bg-white/10"
-      onClick={() => navigate(`/admin/fleets/${id}/workstation`)}
-      title="Open Workstation"
-    >
-      <ArrowRight className="h-4 w-4" />
-      <span className="sr-only">Open Workstation</span>
-    </Button>
-  );
 };
 
 export const columns: ColumnDef<FleetRow>[] = [
@@ -106,6 +89,6 @@ export const columns: ColumnDef<FleetRow>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => <FleetActionsCell id={row.original._id} />,
+    cell: ({ row }) => <TableNavigateAction to={`/admin/fleets/${row.original._id}/workstation`} label="Open fleet workstation" title="Open Workstation" muted />,
   },
 ];

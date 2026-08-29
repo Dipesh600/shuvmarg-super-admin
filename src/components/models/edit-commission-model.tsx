@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,27 +16,26 @@ import { toast } from "@/hooks/use-toast";
 import { useModal } from "@/hooks/use-model-store";
 
 export function EditCommissionRateDialog() {
+  const { isOpen, type, data } = useModal();
+  const instanceKey = isOpen && type === "editCommisionRate"
+    ? `open-${data?.id || data?.type || "commission"}`
+    : "closed";
+
+  return <EditCommissionRateDialogInstance key={instanceKey} />;
+}
+
+function EditCommissionRateDialogInstance() {
   const { isOpen, onClose, type, data } = useModal();
   const isModelOpen = isOpen && type === "editCommisionRate";
 
-  const [formData, setFormData] = useState({
-    type: "",
-    rate: 0,
+  const [formData, setFormData] = useState(() => ({
+    type: data?.type || "",
+    rate: data?.rate || 0,
     minBookingValue: "",
     maxBookingValue: "",
     notes: "",
     isActive: true,
-  });
-  useEffect(() => {
-    setFormData({
-      type: data.type,
-      rate: data.rate,
-      minBookingValue: "",
-      maxBookingValue: "",
-      notes: "",
-      isActive: true,
-    });
-  }, [data]);
+  }));
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     toast({

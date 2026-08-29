@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -84,7 +84,12 @@ const detectShift = (time24: string): "day" | "night" => {
     return (hour >= 16 || hour < 4) ? "night" : "day";
 };
 
-const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusId, prefillCorridorId, isInline, onSuccess }: CreateScheduleModalProps) => {
+const CreateScheduleModal = (props: CreateScheduleModalProps) => {
+    const instanceKey = props.open ? `open-${props.prefillBusId || "new"}` : "closed";
+    return <CreateScheduleModalInstance key={instanceKey} {...props} />;
+};
+
+const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, prefillBusId, prefillCorridorId, isInline, onSuccess }: CreateScheduleModalProps) => {
     const qc = useQueryClient();
 
     const { data: fleets }    = useQuery({ queryKey: ["fleets", ownerId, brandId],        queryFn: () => getFleetsByOwner(ownerId, brandId),     enabled: open });
@@ -126,12 +131,6 @@ const CreateScheduleModal = ({ open, onOpenChange, brandId, ownerId, prefillBusI
         setHasReturn(false); setOperationalModel("TURNAROUND"); setLayoverMinutes(60);
         setReturnDepartureTime(""); setReturnArrivalTime("");
     };
-
-    useEffect(() => {
-        if (open) {
-            setBusId(prefillBusId || "");
-        }
-    }, [open, prefillBusId]);
 
     const handleRouteSelection = (configId: string, location: "ORIGIN" | "DESTINATION") => {
         setVariantId(configId); // Note: variantId state is now storing config._id for uniqueness

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,47 +10,38 @@ import { toast } from "sonner";
 import { Loader2, AlertCircle } from "lucide-react";
 
 export function EditBusOwnerDialog() {
+  const { isOpen, type, data } = useModal();
+  const busOwner = data?.busOwner;
+  const instanceKey = isOpen && type === "editBusOwner"
+    ? `open-${busOwner?.busOwnerDoc?._id || busOwner?._id || busOwner?.email || "owner"}`
+    : "closed";
+
+  return <EditBusOwnerDialogInstance key={instanceKey} />;
+}
+
+function EditBusOwnerDialogInstance() {
   const { isOpen, onClose, type, data } = useModal();
   const isModelOpen = isOpen && type === "editBusOwner";
   const queryClient = useQueryClient();
   const busOwner = data?.busOwner;
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    companyName: "",
-    panNumber: "",
-    registrationNumber: "",
-    bankName: "",
-    accountNumber: "",
-    accountHolderName: "",
-    branchName: "",
-    swiftCode: "",
+  const [formData, setFormData] = useState(() => {
+    const email = busOwner?.email || "";
+    return {
+      name: busOwner?.name || "",
+      email: email.endsWith("@shuvmarg.internal") ? "" : email,
+      phone: busOwner?.phone || "",
+      address: busOwner?.address || "",
+      companyName: busOwner?.busOwnerDoc?.companyName || "",
+      panNumber: busOwner?.busOwnerDoc?.taxRegistration?.panNumber || "",
+      registrationNumber: busOwner?.busOwnerDoc?.taxRegistration?.registrationNumber || "",
+      bankName: busOwner?.busOwnerDoc?.bankDetails?.bankName || "",
+      accountNumber: busOwner?.busOwnerDoc?.bankDetails?.accountNumber || "",
+      accountHolderName: busOwner?.busOwnerDoc?.bankDetails?.accountHolderName || "",
+      branchName: busOwner?.busOwnerDoc?.bankDetails?.branchName || "",
+      swiftCode: busOwner?.busOwnerDoc?.bankDetails?.swiftCode || "",
+    };
   });
-
-  useEffect(() => {
-    if (busOwner) {
-      const email = busOwner.email || "";
-      const displayEmail = email.endsWith("@shuvmarg.internal") ? "" : email;
-
-      setFormData({
-        name: busOwner.name || "",
-        email: displayEmail,
-        phone: busOwner.phone || "",
-        address: busOwner.address || "",
-        companyName: busOwner.busOwnerDoc?.companyName || "",
-        panNumber: busOwner.busOwnerDoc?.taxRegistration?.panNumber || "",
-        registrationNumber: busOwner.busOwnerDoc?.taxRegistration?.registrationNumber || "",
-        bankName: busOwner.busOwnerDoc?.bankDetails?.bankName || "",
-        accountNumber: busOwner.busOwnerDoc?.bankDetails?.accountNumber || "",
-        accountHolderName: busOwner.busOwnerDoc?.bankDetails?.accountHolderName || "",
-        branchName: busOwner.busOwnerDoc?.bankDetails?.branchName || "",
-        swiftCode: busOwner.busOwnerDoc?.bankDetails?.swiftCode || "",
-      });
-    }
-  }, [busOwner, isModelOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
