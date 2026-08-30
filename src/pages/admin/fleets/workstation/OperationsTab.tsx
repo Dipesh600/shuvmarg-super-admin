@@ -13,13 +13,21 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/axios";
 import { toast } from "sonner";
 import { ManifestDrawer } from "./ManifestDrawer";
+import type {
+    WorkstationFleet,
+    WorkstationSchedule,
+    WorkstationToday,
+    WorkstationTrip,
+} from "@/api/fleetWorkstationApi";
+import type { TripStatus, TripVariant } from "@/api/tripApi";
+import { getErrorMessage } from "@/lib/error-message";
 
 interface OperationsTabProps {
-    today: any;
-    recentTrips: any[];
-    fleet: any;
+    today?: WorkstationToday | null;
+    recentTrips?: WorkstationTrip[];
+    fleet: WorkstationFleet;
     fleetId: string;
-    schedules?: any[];
+    schedules?: WorkstationSchedule[];
 }
 
 // ─── STATUS HELPERS ──────────────────────────────────────────────────────────
@@ -57,7 +65,7 @@ const statusBg: Record<string, string> = {
 
 
 
-const getDirection = (variant: any, trip?: any) => {
+const getDirection = (variant?: TripVariant, trip?: WorkstationTrip) => {
     if (trip?.directionLabel) return trip.directionLabel;
     if (!variant?.corridorId) return "—";
     const o = variant.corridorId.originId?.name || "?";
@@ -109,7 +117,7 @@ const isToday = (y: number, m: number, d: number) => {
 };
 
 // ─── TRIP CARD (Calendar Cell) ───────────────────────────────────────────────
-const TripChip = ({ trip, totalSeats, onClick }: { trip: any; totalSeats: number; onClick: () => void }) => {
+const TripChip = ({ trip, totalSeats, onClick }: { trip: WorkstationTrip; totalSeats: number; onClick: () => void }) => {
     const s = trip.stats || {};
     const occ = s.occupancyPct || 0;
 
@@ -146,7 +154,7 @@ const TripChip = ({ trip, totalSeats, onClick }: { trip: any; totalSeats: number
             )}
 
             {/* Revenue for non-cancelled */}
-            {trip.status !== "cancelled" && s.revenue > 0 && (
+            {trip.status !== "cancelled" && (s.revenue ?? 0) > 0 && (
                 <p className="text-[8px] font-bold text-muted-foreground mt-0.5">
                     Rs.{s.revenue?.toLocaleString()}
                 </p>
@@ -173,7 +181,7 @@ const CalendarView = ({
     totalSeats,
     onTripClick,
 }: {
-    trips: any[];
+    trips: WorkstationTrip[];
     totalSeats: number;
     onTripClick: (id: string) => void;
 }) => {
@@ -184,7 +192,7 @@ const CalendarView = ({
 
     // Group trips by date key
     const tripsByDate = useMemo(() => {
-        const map = new Map<string, any[]>();
+        const map = new Map<string, WorkstationTrip[]>();
         for (const trip of trips) {
             const d = new Date(trip.tripDate);
             const key = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
@@ -193,7 +201,7 @@ const CalendarView = ({
         }
         // Sort each day's trips by departure time
         for (const [, dayTrips] of map) {
-            dayTrips.sort((a: any, b: any) => (a.departureTime || "").localeCompare(b.departureTime || ""));
+            dayTrips.sort((a, b) => (a.departureTime || "").localeCompare(b.departureTime || ""));
         }
         return map;
     }, [trips]);
@@ -330,11 +338,11 @@ const CalendarView = ({
                         {calendarDays.map((day, idx) => {
                             const key = dateKey(day.year, day.month, day.date);
                             const dayTrips = (tripsByDate.get(key) || []).filter(
-                                (t: any) => statusFilter === "all" || t.status === statusFilter
+                                (trip) => statusFilter === "all" || trip.status === statusFilter
                             );
                             const isTodayCell = isToday(day.year, day.month, day.date);
-                            const hasCancelled = dayTrips.some((t: any) => t.status === "cancelled");
-                            const hasScheduled = dayTrips.some((t: any) => t.status === "scheduled");
+                            const hasCancelled = dayTrips.some((trip) => trip.status === "cancelled");
+                            const hasScheduled = dayTrips.some((trip) => trip.status === "scheduled");
 
                             return (
                                 <div
@@ -360,7 +368,7 @@ const CalendarView = ({
 
                                     {/* Trip chips */}
                                     <div className="space-y-1">
-                                        {dayTrips.slice(0, 4).map((trip: any) => (
+                                        {dayTrips.slice(0, 4).map((trip) => (
                                             <TripChip
                                                 key={trip._id}
                                                 trip={trip}
@@ -399,10 +407,11 @@ const CalendarView = ({
 // ─── MAIN OPERATIONS TAB ─────────────────────────────────────────────────────
 const OperationsTab = ({ today, recentTrips, fleet, fleetId, schedules }: OperationsTabProps) => {
     const qc = useQueryClient();
+    const todayTrip = today?.trip;
     
     // Modal states
-    const [showCancelTripModal, setShowCancelTripModal] = useState<any>(null);
-    const [showRescheduleModal, setShowRescheduleModal] = useState<any>(null);
+    const [showCancelTripModal, setShowCancelTripModal] = useState<{ tripId: string; tripDate: string } | null>(null);
+    const [showRescheduleModal, setShowRescheduleModal] = useState<{ tripId: string; departureTime: string; arrivalTime: string } | null>(null);
     const [showCancelRange, setShowCancelRange]         = useState(false);
     
     // Manifest Drawer state
@@ -415,19 +424,19 @@ const OperationsTab = ({ today, recentTrips, fleet, fleetId, schedules }: Operat
     const [rangeSchedule, setRangeSchedule] = useState("");
 
     const cancelRangeMut = useMutation({
-        mutationFn: () => api.post(`/schedules/${rangeSchedule}/cancel-range`, { fromDate: rangeFrom, toDate: rangeTo, reason: rangeReason }),
-        onSuccess: (res: any) => { toast.success(res.data.message); setShowCancelRange(false); qc.invalidateQueries({ queryKey: ["fleetWorkstation"] }); },
-        onError: (e: any) => toast.error(e.response?.data?.message || "Failed to cancel date range."),
+        mutationFn: () => api.post<{ message?: string }>(`/schedules/${rangeSchedule}/cancel-range`, { fromDate: rangeFrom, toDate: rangeTo, reason: rangeReason }),
+        onSuccess: (response) => { toast.success(response.data.message || "Date-range exception applied."); setShowCancelRange(false); qc.invalidateQueries({ queryKey: ["fleetWorkstation"] }); },
+        onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to cancel date range.")),
     });
 
     const updateStatusMutation = useUpdateTripStatus();
-    const handleUpdateStatus = (tripId: string, newStatus: string, confirmationMsg: string) => {
+    const handleUpdateStatus = (tripId: string, newStatus: TripStatus, confirmationMsg: string) => {
         if (!confirm(confirmationMsg)) return;
         updateStatusMutation.mutate(
             { fleetId, tripId, payload: { status: newStatus } },
             {
                 onSuccess: () => toast.success(`Trip marked as ${newStatus}`),
-                onError: (err: any) => toast.error(err.response?.data?.message || "Failed to update trip status")
+                onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to update trip status"))
             }
         );
     };
@@ -466,8 +475,8 @@ const OperationsTab = ({ today, recentTrips, fleet, fleetId, schedules }: Operat
                                     <label className="text-xs font-black uppercase tracking-wider text-muted-foreground block mb-1">Schedule</label>
                                     <select value={rangeSchedule} onChange={e => setRangeSchedule(e.target.value)} className="w-full rounded-lg border bg-background px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/30">
                                         <option value="">Select schedule...</option>
-                                        {(schedules || []).filter((s: any) => s.status === "ACTIVE").map((s: any) => (
-                                            <option key={s._id} value={s._id}>{s.departureTime} → {s.arrivalTime} ({s.operationalModel})</option>
+                                        {(schedules || []).filter((schedule) => schedule.status === "ACTIVE").map((schedule) => (
+                                            <option key={schedule._id} value={schedule._id}>{schedule.departureTime} → {schedule.arrivalTime} ({schedule.operationalModel})</option>
                                         ))}
                                     </select>
                                 </div>
@@ -509,15 +518,15 @@ const OperationsTab = ({ today, recentTrips, fleet, fleetId, schedules }: Operat
 
                 {/* 1. TODAY TAB */}
                 <TabsContent value="today" className="mt-4 outline-none">
-                    {today?.trip ? (
+                    {todayTrip ? (
                         <div className="space-y-4">
                             {/* Pulse Stats */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <Card className="bg-white/5 border-white/10">
                                     <CardContent className="p-4 space-y-2">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-white">Departure</p>
-                                        <p className="text-2xl font-black text-white">{today.trip.departureTime}</p>
-                                        <Badge className={`text-[9px] uppercase font-bold border-0 px-2 py-0 ${statusStyles[today.trip.status]}`}>{today.trip.status}</Badge>
+                                        <p className="text-2xl font-black text-white">{todayTrip.departureTime}</p>
+                                        <Badge className={`text-[9px] uppercase font-bold border-0 px-2 py-0 ${statusStyles[todayTrip.status]}`}>{todayTrip.status}</Badge>
                                     </CardContent>
                                 </Card>
                                 <Card className="bg-white/5 border-white/10">
@@ -548,27 +557,27 @@ const OperationsTab = ({ today, recentTrips, fleet, fleetId, schedules }: Operat
                                 <CardContent className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
                                     <div className="flex items-center gap-6">
                                         <div>
-                                            <p className="text-sm font-bold">{getDirection(today.trip.variantId, today.trip)}</p>
-                                            <p className="text-xs text-muted-foreground">{today.trip.driverId?.fullName || "Unassigned"} • {today.trip.driverId?.phone}</p>
+                                            <p className="text-sm font-bold">{getDirection(todayTrip.variantId, todayTrip)}</p>
+                                            <p className="text-xs text-muted-foreground">{todayTrip.driverId?.fullName || "Unassigned"} • {todayTrip.driverId?.phone}</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button variant="outline" className="font-bold border-primary/20 text-primary hover:bg-primary/10" onClick={() => setManifestTripId(today.trip._id)}>
+                                        <Button variant="outline" className="font-bold border-primary/20 text-primary hover:bg-primary/10" onClick={() => setManifestTripId(todayTrip._id)}>
                                             <Users className="w-4 h-4 mr-2" /> View Manifest
                                         </Button>
                                         
-                                        {(today.trip.status === "scheduled" || today.trip.status === "boarding") && (
-                                            <Button variant="outline" className="font-bold border-white/10 text-white bg-white/5 hover:bg-white/5" onClick={() => handleUpdateStatus(today.trip._id, "in-transit", "Mark trip as Departed?")}>
+                                        {(todayTrip.status === "scheduled" || todayTrip.status === "boarding") && (
+                                            <Button variant="outline" className="font-bold border-white/10 text-white bg-white/5 hover:bg-white/5" onClick={() => handleUpdateStatus(todayTrip._id, "in-transit", "Mark trip as Departed?")}>
                                                 <LogOut className="w-4 h-4 mr-2" /> Mark Departed
                                             </Button>
                                         )}
-                                        {today.trip.status === "in-transit" && (
-                                            <Button variant="outline" className="font-bold border-white/10 text-white bg-white/5 hover:bg-white/5" onClick={() => handleUpdateStatus(today.trip._id, "completed", "Mark trip as Arrived?")}>
+                                        {todayTrip.status === "in-transit" && (
+                                            <Button variant="outline" className="font-bold border-white/10 text-white bg-white/5 hover:bg-white/5" onClick={() => handleUpdateStatus(todayTrip._id, "completed", "Mark trip as Arrived?")}>
                                                 <CheckCircle className="w-4 h-4 mr-2" /> Mark Arrived
                                             </Button>
                                         )}
-                                        {(today.trip.status === "scheduled" || today.trip.status === "boarding") && (
-                                            <Button variant="destructive" className="font-bold" onClick={() => handleUpdateStatus(today.trip._id, "cancelled", "Cancel this trip and trigger refunds?")}>
+                                        {(todayTrip.status === "scheduled" || todayTrip.status === "boarding") && (
+                                            <Button variant="destructive" className="font-bold" onClick={() => handleUpdateStatus(todayTrip._id, "cancelled", "Cancel this trip and trigger refunds?")}>
                                                 <XCircle className="w-4 h-4 mr-2" /> Cancel Trip
                                             </Button>
                                         )}
@@ -620,12 +629,19 @@ const OperationsTab = ({ today, recentTrips, fleet, fleetId, schedules }: Operat
 
 // ─── MODAL COMPONENTS (Internal) ─────────────────────────────────────────────
 
-function CancelTripModal({ tripId, tripDate, onClose, onSuccess }: any) {
+interface CancelTripModalProps {
+    tripId: string;
+    tripDate: string;
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+function CancelTripModal({ tripId, tripDate, onClose, onSuccess }: CancelTripModalProps) {
     const [reason, setReason] = useState("");
     const mutation = useMutation({
-        mutationFn: () => api.patch(`/trips/${tripId}/cancel`, { reason }),
-        onSuccess: (res: any) => { toast.success(res.data.message); onSuccess(); onClose(); },
-        onError: (e: any) => toast.error(e.response?.data?.message || "Failed to cancel trip."),
+        mutationFn: () => api.patch<{ message?: string }>(`/trips/${tripId}/cancel`, { reason }),
+        onSuccess: (response) => { toast.success(response.data.message || "Trip cancelled."); onSuccess(); onClose(); },
+        onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to cancel trip.")),
     });
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -652,14 +668,22 @@ function CancelTripModal({ tripId, tripDate, onClose, onSuccess }: any) {
     );
 }
 
-function RescheduleTripModal({ tripId, currentDep, currentArr, onClose, onSuccess }: any) {
+interface RescheduleTripModalProps {
+    tripId: string;
+    currentDep: string;
+    currentArr: string;
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+function RescheduleTripModal({ tripId, currentDep, currentArr, onClose, onSuccess }: RescheduleTripModalProps) {
     const [newDep, setNewDep] = useState(currentDep);
     const [newArr, setNewArr] = useState(currentArr);
     const [reason, setReason] = useState("");
     const mutation = useMutation({
-        mutationFn: () => api.patch(`/trips/${tripId}/reschedule`, { newDepartureTime: newDep, newArrivalTime: newArr, reason }),
-        onSuccess: (res: any) => { toast.success(res.data.message); onSuccess(); onClose(); },
-        onError: (e: any) => toast.error(e.response?.data?.message || "Failed to reschedule trip."),
+        mutationFn: () => api.patch<{ message?: string }>(`/trips/${tripId}/reschedule`, { newDepartureTime: newDep, newArrivalTime: newArr, reason }),
+        onSuccess: (response) => { toast.success(response.data.message || "Trip rescheduled."); onSuccess(); onClose(); },
+        onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to reschedule trip.")),
     });
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
