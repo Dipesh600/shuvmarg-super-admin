@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Bus, Users, Settings, Image as ImageIcon, Loader2, Route, CheckCircle2, LayoutGrid } from "lucide-react";
+import { Bus, Users, Settings, Image as ImageIcon, Loader2, Route, CheckCircle2, LayoutGrid, Eye } from "lucide-react";
 import { useFetchFleetDetail, useUpdateOwnerFleet } from "@/hooks/useOwnerFleets";
 import { useFetchAllCorridors } from "@/hooks/usePlatformRegistry";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +20,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { getFleetSeatLayoutAssignment } from "@/api/seatLayoutV3Api";
+import type { FleetAmenity, SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
+import DocumentViewerModal from "@/components/DocumentViewerModal";
+
+type AmenityListResponse = { data?: FleetAmenity[] };
+type CorridorOption = {
+  _id: string;
+  code?: string;
+  originId?: { name?: string };
+  destinationId?: { name?: string };
+};
 
 interface UpdateOwnerFleetModalProps {
   id: string | null;
@@ -44,21 +54,19 @@ const UpdateOwnerFleetModalInstance: React.FC<UpdateOwnerFleetModalProps> = ({
   const { data: corridorsData } = useFetchAllCorridors();
   const { data: availableAmenitiesData } = useQuery({
     queryKey: ["amenities", "available", ownerId],
-    queryFn: async () => { const { data } = await api.get(`/amenities/owner/${ownerId}`); return data; },
+    queryFn: async () => { const { data } = await api.get<AmenityListResponse>(`/amenities/owner/${ownerId}`); return data; },
     enabled: isOpen && !!ownerId,
     staleTime: 60_000,
   });
 
-  const availableAmenities: any[] = Array.isArray(availableAmenitiesData?.data) ? availableAmenitiesData.data : [];
-  const currentAmenityRecords: any[] = Array.isArray(response?.data?.vehicle?.features)
+  const availableAmenities: FleetAmenity[] = Array.isArray(availableAmenitiesData?.data) ? availableAmenitiesData.data : [];
+  const currentAmenityRecords: FleetAmenity[] = Array.isArray(response?.data?.vehicle?.features)
     ? response.data.vehicle.features
-    : Array.isArray(response?.data?.features)
-      ? response.data.features
-      : Array.isArray(response?.data?.amenityIds) ? response.data.amenityIds.filter((item: unknown) => typeof item === "object" && item !== null) : [];
+    : [];
   const amenityOptions = [...availableAmenities, ...currentAmenityRecords.filter((current) =>
     !availableAmenities.some((item) => String(item._id || item.id) === String(current._id || current.id))
   )];
-  const corridorsList: any[] = Array.isArray(corridorsData?.data) ? corridorsData.data : [];
+  const corridorsList: CorridorOption[] = Array.isArray(corridorsData?.data) ? corridorsData.data : [];
 
   const [activeTab, setActiveTab] = useState("identity");
 
@@ -74,6 +82,7 @@ const UpdateOwnerFleetModalInstance: React.FC<UpdateOwnerFleetModalProps> = ({
   const [fleetImages, setFleetImages] = useState<FileList | null>(null);
   const [status, setStatus] = useState(true);
   const [syncedData, setSyncedData] = useState<unknown>(null);
+  const [photoRequest, setPhotoRequest] = useState<SecureFleetDocumentRequest | null>(null);
   const { data: seatAssignment, isLoading: isSeatAssignmentLoading } = useQuery({
     queryKey: ["seat-layout-v3", "fleet-assignment", id],
     queryFn: () => getFleetSeatLayoutAssignment(id!),
@@ -89,27 +98,16 @@ const UpdateOwnerFleetModalInstance: React.FC<UpdateOwnerFleetModalProps> = ({
   if (response?.data && isOpen && syncedData !== response.data) {
       setSyncedData(response.data);
       const data = response.data;
-      setBusName(data.busName || "");
-      setBusNumber(data.busNumber || "");
-      setBusType(data.busType || "DELUXE");
-      setVehicleType(data.vehicleType || "bus");
-      setRegistrationYear(data.registrationYear?.toString() || "");
-      let parsedAmenities: any[] = [];
-      const rawAmenities = data.amenityIds || data.vehicle?.features || data.features;
-      if (rawAmenities) {
-        try {
-          parsedAmenities = typeof rawAmenities === "string" ? JSON.parse(rawAmenities) : rawAmenities;
-        } catch (e) { console.error("Failed to parse amenityIds", e); }
-      }
-
-      // Ensure amenities is an array of strings, not populated objects
-      const normalizedAmenities = Array.isArray(parsedAmenities) 
-        ? parsedAmenities.map((a: any) => typeof a === 'object' && a !== null ? (a._id || a.id) : a)
-        : [];
+      setBusName(data.vehicle.busName || "");
+      setBusNumber(data.vehicle.busNumber || "");
+      setBusType(data.vehicle.busType || "DELUXE");
+      setVehicleType(data.vehicle.vehicleType || "bus");
+      setRegistrationYear(data.vehicle.registrationYear?.toString() || "");
+      const normalizedAmenities = data.vehicle.features.map((amenity) => amenity.id || amenity._id || "").filter(Boolean);
 
       setSelectedAmenityIds(normalizedAmenities);
-      setTotalSeats(data.totalSeats || 0);
-      setSelectedCorridorId(data.corridorId?._id || data.corridorId || "");
+      setTotalSeats(data.vehicle.totalSeats || 0);
+      setSelectedCorridorId(data.assignment.corridor?.corridorId || "");
       setStatus(data.status === "ACTIVE");
       setFleetImages(null);
   }
@@ -168,7 +166,7 @@ const UpdateOwnerFleetModalInstance: React.FC<UpdateOwnerFleetModalProps> = ({
                </div>
                <div>
                   <DialogTitle className="text-2xl font-black tracking-tighter text-primary">Modify Fleet Profile</DialogTitle>
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-60">ID: {response?.data?.fleetId || "N/A"}</p>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-60">ID: {response?.data?.fleetCode || response?.data?.fleetId || "N/A"}</p>
                </div>
             </div>
 
@@ -291,8 +289,9 @@ const UpdateOwnerFleetModalInstance: React.FC<UpdateOwnerFleetModalProps> = ({
                         </p>
                       ) : (
                         <div className="flex flex-wrap gap-2 p-4 border-2 border-muted rounded-xl bg-muted/10 min-h-36 content-start">
-                          {amenityOptions.map((a: any) => {
+                          {amenityOptions.map((a) => {
                             const amenityId = a._id || a.id;
+                            if (!amenityId) return null;
                             const isSelected = selectedAmenityIds.includes(amenityId);
                             return (
                               <button
@@ -352,7 +351,7 @@ const UpdateOwnerFleetModalInstance: React.FC<UpdateOwnerFleetModalProps> = ({
                       </button>
 
                       <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
-                        {corridorsList.map((corridor: any) => {
+                        {corridorsList.map((corridor) => {
                           const isSelected = selectedCorridorId === corridor._id;
                           return (
                             <button key={corridor._id} type="button" onClick={() => !isApproved && setSelectedCorridorId(corridor._id)}
@@ -394,12 +393,13 @@ const UpdateOwnerFleetModalInstance: React.FC<UpdateOwnerFleetModalProps> = ({
                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest bg-muted px-2 py-0.5 rounded-full">Override Current</span>
                       </div>
                       
-                      {Array.isArray(response?.data?.fleetImages) && response.data.fleetImages.length > 0 && (
+                      {(response?.data?.documents?.fleetImages?.count || 0) > 0 && (
                         <div className="flex gap-3 flex-wrap mb-4 pb-4 border-b border-primary/10">
-                           {response.data.fleetImages.map((img: string, i: number) => (
-                             <div key={i} className="h-20 w-32 bg-muted/50 rounded-lg overflow-hidden shadow-sm border-2 border-muted relative group">
-                               <img src={img} alt={`Fleet ${i}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                             </div>
+                           {Array.from({ length: response?.data?.documents?.fleetImages?.count || 0 }, (_, index) => (
+                             <Button key={index} type="button" variant="outline" className="h-20 w-32 flex-col gap-1" onClick={() => id && setPhotoRequest({ fleetId: id, slot: "fleetImages", imageIndex: index })}>
+                               <Eye className="h-4 w-4" />
+                               <span className="text-[10px]">Photo {index + 1}</span>
+                             </Button>
                            ))}
                            <span className="text-[10px] font-black text-muted-foreground/60 uppercase self-center pl-2">Current Gallery</span>
                         </div>
@@ -436,6 +436,13 @@ const UpdateOwnerFleetModalInstance: React.FC<UpdateOwnerFleetModalProps> = ({
           </form>
         )}
       </DialogContent>
+      <DocumentViewerModal
+        open={photoRequest !== null}
+        s3Key={null}
+        fleetDocumentRequest={photoRequest}
+        title={photoRequest ? `Fleet photo ${(photoRequest.imageIndex || 0) + 1}` : "Fleet photo"}
+        onClose={() => setPhotoRequest(null)}
+      />
     </Dialog>
   );
 };

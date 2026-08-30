@@ -12,7 +12,7 @@ import {
 import DocumentViewerModal from "@/components/DocumentViewerModal";
 import { toast } from "sonner";
 import { useFetchFleetDetail } from "@/hooks/useOwnerFleets";
-import { decideFleetApproval, saveFleetReviewItem, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
+import { decideFleetApproval, saveFleetReviewItem, type FleetDocumentDescriptor, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
 import SeatLayoutCanvas from "@/features/seat-layout-v3/SeatLayoutCanvas";
@@ -46,7 +46,7 @@ export default function KYCFleetDetail() {
   /* Brand context */
   const { data: brandsData } = useQuery({
     queryKey: ["ownerBrands", fleet?.owner?.ownerId],
-    queryFn: () => getBrandsByOwner(fleet?.owner?.ownerId),
+    queryFn: () => getBrandsByOwner(fleet!.owner.ownerId),
     enabled: !!fleet?.owner?.ownerId,
   });
   const ownerBrand = brandsData?.data?.find((b: any) => b._id === fleet?.assignment?.operatorId) ?? brandsData?.data?.[0] ?? null;
@@ -54,7 +54,7 @@ export default function KYCFleetDetail() {
   /* Build document sections from fleet data */
   const documentSections = useMemo(() => {
     if (!fleet) return [];
-    const descriptor = (slot: string) => fleet.documents?.[slot] || {};
+    const descriptor = (slot: string): Partial<FleetDocumentDescriptor> => fleet.documents?.[slot] || {};
     return [
       {
         title: "Fleet Images",
@@ -480,7 +480,7 @@ export default function KYCFleetDetail() {
               <CardContent className="border-t border-white/5 p-6">
                 <div className="flex justify-center bg-black/20 p-8 rounded-xl border border-white/5 overflow-auto min-h-[300px] items-center">
                   <SeatLayoutCanvas
-                    layout={fleet?.seatLayout?.layout || fleet?.vehicle?.seatConfig}
+                    layout={(fleet.seatLayout?.layout ?? fleet.vehicle.seatConfig)!}
                     tool="SELECT"
                     selectedId={null}
                     editable={false}

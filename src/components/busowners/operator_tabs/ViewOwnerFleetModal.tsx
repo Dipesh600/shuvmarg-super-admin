@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import DocumentViewerModal from "@/components/DocumentViewerModal";
 import { getFleetSeatLayoutAssignment } from "@/api/seatLayoutV3Api";
 import type { SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
+import type { FleetAmenity } from "@/api/busOwnerFleetApi";
+import { getErrorMessage } from "@/lib/error-message";
 
 interface ViewOwnerFleetModalProps {
   id: string | null;
@@ -29,7 +31,7 @@ const fmtDate = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "N/A";
 
 // Document slots shown in the rejection review section
-const DOC_SLOTS = [
+const DOC_SLOTS: Array<{ key: SecureFleetDocumentRequest["slot"]; label: string; icon: React.ReactNode }> = [
   { key: "fleetImages",  label: "Fleet Photos",          icon: <Bus className="h-3.5 w-3.5" /> },
   { key: "fitnessCert",  label: "Fitness Certificate",   icon: <FileText className="h-3.5 w-3.5" /> },
   { key: "insurance",    label: "Insurance Certificate", icon: <FileText className="h-3.5 w-3.5" /> },
@@ -41,13 +43,9 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
   const qc = useQueryClient();
   const { data: response, isLoading, isError, refetch } = useFetchFleetDetail(id || "");
   const data = response?.data;
-  const selectedAmenities: any[] = Array.isArray(data?.vehicle?.features)
+  const selectedAmenities: Array<string | FleetAmenity> = Array.isArray(data?.vehicle?.features)
     ? data.vehicle.features
-    : Array.isArray(data?.features)
-      ? data.features
-    : Array.isArray(data?.amenityIds)
-      ? data.amenityIds
-      : Array.isArray(data?.amenitiesId?.amenities) ? data.amenitiesId.amenities : [];
+    : [];
   const approvalStatus = data?.approvalStatus ?? "PENDING";
   const { data: seatAssignment } = useQuery({
     queryKey: ["seat-layout-v3", "fleet-assignment", id],
@@ -61,30 +59,30 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
   const [viewerTitle, setViewerTitle] = useState<string>("Document");
   const [fleetDocumentRequest, setFleetDocumentRequest] = useState<SecureFleetDocumentRequest | null>(null);
 
-  const openSubmittedFleetDocument = (slot: SecureFleetDocumentRequest["slot"], label: string) => {
+  const openSubmittedFleetDocument = (slot: SecureFleetDocumentRequest["slot"], label: string, imageIndex?: number) => {
     if (!id) return;
-    setFleetDocumentRequest({ fleetId: id, slot });
+    setFleetDocumentRequest({ fleetId: id, slot, imageIndex });
     setViewerTitle(label);
     setViewerOpen(true);
   };
 
   // Re-upload mutation for a single document slot
   const reuploadMutation = useMutation({
-    mutationFn: ({ slot, files }: { slot: string; files: File[] }) =>
+    mutationFn: ({ slot, files }: { slot: SecureFleetDocumentRequest["slot"]; files: File[] }) =>
       reuploadFleetDocument(id!, slot, files),
     onSuccess: (_, { slot }) => {
       toast.success(`${slot} replaced successfully.`);
       qc.invalidateQueries({ queryKey: ["fleetDetail", id] });
       refetch();
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || "Upload failed."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Upload failed.")),
   });
 
-  const handleFileSelect = (slot: string, files: File[]) => {
+  const handleFileSelect = (slot: SecureFleetDocumentRequest["slot"], files: File[]) => {
     reuploadMutation.mutate({ slot, files });
   };
 
-  const reviews: Record<string, { status: string; reason: string | null }> = data?.reviewRequirements || data?.documentReviews || {};
+  const reviews = data?.reviewRequirements || {};
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -172,12 +170,12 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                   <div className={cn("divide-y bg-white", approvalStatus === "REJECTED" ? "divide-rose-100" : "divide-blue-100")}>
                     {DOC_SLOTS.map((slot) => {
                       const review = reviews[slot.key];
-                      const status = review?.status || "pending";
+                      const status = (review?.status || "PENDING").toUpperCase();
                       const reason = review?.reason;
-                      const isRejected = status === "rejected";
-                      const isFixed = status === "fixed";
-                      const isApproved = status === "approved";
-                      const isUploading = reuploadMutation.isPending && (reuploadMutation.variables as any)?.slot === slot.key;
+                      const isRejected = status === "REJECTED";
+                      const isFixed = status === "FIXED";
+                      const isApproved = status === "APPROVED";
+                      const isUploading = reuploadMutation.isPending && reuploadMutation.variables?.slot === slot.key;
 
                       const showUploadBtn = isRejected || approvalStatus === "APPROVED";
 
@@ -188,7 +186,7 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                             {isApproved && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
                             {isRejected && <XCircle className="h-4 w-4 text-rose-500" />}
                             {isFixed && <CheckCircle2 className="h-4 w-4 text-blue-500" />}
-                            {status === "pending" && <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />}
+                            {status === "PENDING" && <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />}
                           </div>
 
                           {/* Label + reason */}
@@ -204,7 +202,7 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                               {isApproved && (
                                 <span className="text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">Passed</span>
                               )}
-                              {status === "pending" && approvalStatus === "APPROVED" && (
+                              {status === "PENDING" && approvalStatus === "APPROVED" && (
                                 <span className="text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full">Pending Renewal</span>
                               )}
                             </div>
@@ -250,14 +248,15 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
               )}
 
               {/* Photo Gallery */}
-              {data.fleetImages && data.fleetImages.length > 0 ? (
+              {(data.documents?.fleetImages?.count || 0) > 0 ? (
                 <div className="space-y-3">
                   <p className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Fleet Images</p>
-                  <div className="flex gap-4 overflow-x-auto pb-2 snap-x hide-scrollbar">
-                    {data.fleetImages.map((img: string, i: number) => (
-                      <div key={i} className="min-w-[200px] h-32 rounded-xl border-2 border-muted overflow-hidden snap-center relative group">
-                        <img src={img} alt={`${data.busName} view ${i}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {Array.from({ length: data.documents?.fleetImages?.count || 0 }, (_, index) => (
+                      <Button key={index} variant="outline" className="h-20 flex-col gap-1" onClick={() => openSubmittedFleetDocument("fleetImages", `Fleet photo ${index + 1}`, index)}>
+                        <Eye className="h-4 w-4" />
+                        <span className="text-[10px]">Photo {index + 1}</span>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -273,11 +272,11 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl border border-muted bg-primary/5">
                   <p className="text-[10px] font-black uppercase tracking-widest text-primary opacity-70 mb-1 flex items-center gap-1.5"><Bus className="h-3 w-3" /> Bus Name</p>
-                  <h4 className="font-black text-lg tracking-tight leading-none">{data.busName}</h4>
+                  <h4 className="font-black text-lg tracking-tight leading-none">{data.vehicle.busName}</h4>
                 </div>
                 <div className="p-4 rounded-xl border border-muted bg-muted/10">
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-70 mb-1">Registration #</p>
-                  <h4 className="font-mono font-bold text-lg tracking-wider text-primary leading-none uppercase">{data.busNumber}</h4>
+                  <h4 className="font-mono font-bold text-lg tracking-wider text-primary leading-none uppercase">{data.vehicle.busNumber}</h4>
                 </div>
               </div>
 
@@ -285,7 +284,7 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1 flex items-center gap-1"><LayoutGrid className="h-3 w-3" /> Seat Configuration</p>
                 <div className="rounded-xl border bg-muted/10 p-4">
                   <p className="font-bold">{seatAssignment?.assignment ? "V3 canonical layout assigned" : "No V3 layout assigned"}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{seatAssignment?.assignment?.activeRevision?.totalPlaces ?? data.totalSeats ?? 0} passenger places</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{seatAssignment?.assignment?.activeRevision?.totalPlaces ?? data.vehicle.totalSeats ?? 0} passenger places</p>
                 </div>
               </div>
 
@@ -294,11 +293,11 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1">Specifications</p>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { icon: <Settings className="h-4 w-4" />, label: "Class", value: data.busType },
-                    { icon: <Users className="h-4 w-4" />, label: "Capacity", value: `${data.totalSeats} Seats` },
-                    { icon: <Calendar className="h-4 w-4" />, label: "Reg. Year", value: data.registrationYear },
-                    { icon: <MapPin className="h-4 w-4" />, label: "Layout", value: data.seatLayout },
-                    { icon: <Activity className="h-4 w-4" />, label: "Fleet ID", value: data.fleetId, span: 2 },
+                    { icon: <Settings className="h-4 w-4" />, label: "Class", value: data.vehicle.busType },
+                    { icon: <Users className="h-4 w-4" />, label: "Capacity", value: `${data.vehicle.totalSeats} Seats` },
+                    { icon: <Calendar className="h-4 w-4" />, label: "Reg. Year", value: data.vehicle.registrationYear },
+                    { icon: <MapPin className="h-4 w-4" />, label: "Layout", value: data.seatLayout?.assigned ? "Assigned" : "Not assigned" },
+                    { icon: <Activity className="h-4 w-4" />, label: "Fleet ID", value: data.fleetCode || data.fleetId, span: 2 },
                   ].map(({ icon, label, value, span }) => (
                     <div key={label} className={`p-3 bg-muted/20 rounded-lg border text-center ${span ? `col-span-${span}` : ""}`}>
                       <div className="flex justify-center mb-1 text-muted-foreground">{icon}</div>
@@ -314,27 +313,27 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
               {/* Route / Corridor Status */}
               <div className="space-y-2">
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-50 ml-1 flex items-center gap-1"><Route className="h-3 w-3" /> Route Assignment</p>
-                {data.corridorId ? (
+                {data.assignment.corridor ? (
                   <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
                     <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" />
                     <div>
                       <p className="font-black text-sm text-emerald-800">Corridor Assigned</p>
-                      <span className="font-mono text-xs font-bold text-emerald-800">{data.corridorId?.code}</span>
-                      {data.corridorId?.originId?.name && (
+                      <span className="font-mono text-xs font-bold text-emerald-800">{data.assignment.corridor.code}</span>
+                      {data.assignment.corridor.origin && (
                         <span className="text-[10px] text-emerald-700 block">
-                          {data.corridorId.originId.name} → {data.corridorId.destinationId?.name}
+                          {data.assignment.corridor.origin} → {data.assignment.corridor.destination}
                         </span>
                       )}
                     </div>
                   </div>
-                ) : data.routeRequestId ? (
+                ) : data.assignment.routeRequest ? (
                   <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                     <Clock className="h-5 w-5 text-amber-600 shrink-0" />
                     <div>
                       <p className="font-black text-sm text-amber-800">Route Request Pending Platform Review</p>
                       <p className="text-xs text-amber-700">
-                        {data.routeRequestId?.originCity && data.routeRequestId?.destinationCity
-                          ? `${data.routeRequestId.originCity} → ${data.routeRequestId.destinationCity}`
+                        {data.assignment.routeRequest.origin && data.assignment.routeRequest.destination
+                          ? `${data.assignment.routeRequest.origin} → ${data.assignment.routeRequest.destination}`
                           : "Request submitted — awaiting registry assignment"}
                       </p>
                     </div>
@@ -391,8 +390,8 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                   {selectedAmenities.length > 0 ? (
                     <div className="bg-muted/10 border p-3 rounded-xl">
                       <ul className="space-y-2">
-                        {selectedAmenities.map((am: any, idx: number) => (
-                          <li key={am.id || am._id || idx} className="flex gap-2 items-start text-xs border-b border-muted/50 pb-2 last:border-0 last:pb-0">
+                        {selectedAmenities.map((am, idx) => (
+                          <li key={typeof am === "string" ? am : am.id || am._id || idx} className="flex gap-2 items-start text-xs border-b border-muted/50 pb-2 last:border-0 last:pb-0">
                             <span className="h-4 w-4 bg-primary/10 rounded flex items-center justify-center flex-shrink-0 mt-0.5"><Wifi className="h-2 w-2 text-primary" /></span>
                             <div>
                               <p className="font-bold">{typeof am === "string" ? am : am.name}</p>
@@ -413,19 +412,19 @@ const ViewOwnerFleetModal: React.FC<ViewOwnerFleetModalProps> = ({ id, isOpen, o
                   <p className="text-[10px] font-black uppercase tracking-widest opacity-50 flex items-center gap-1.5 ml-1">
                     <Map className="h-3 w-3" /> Boarding Route
                   </p>
-                  {data.boardingPointId ? (
+                  {(data.route?.servedStops?.length || 0) > 0 ? (
                     <div className="bg-muted/10 border p-3 rounded-xl">
                       <div className="mb-2 pb-2 border-b">
-                        <p className="text-[10px] font-black tracking-widest uppercase opacity-40 mb-1">City Hub</p>
-                        <p className="text-sm font-bold text-primary">{data.boardingPointId.city}</p>
+                        <p className="text-[10px] font-black tracking-widest uppercase opacity-40 mb-1">Reviewed route</p>
+                        <p className="text-sm font-bold text-primary">{data.route?.origin} → {data.route?.destination}</p>
                       </div>
                       <ul className="space-y-3 pt-1">
-                        {data.boardingPointId.boardingPoints?.map((bp: any, idx: number) => (
-                          <li key={idx} className="flex gap-2 items-start text-xs">
+                        {data.route?.servedStops.map((stop, idx) => (
+                          <li key={stop.stopId || idx} className="flex gap-2 items-start text-xs">
                             <span className="h-4 w-4 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 text-[8px] font-bold text-primary mt-0.5">{idx + 1}</span>
                             <div>
-                              <p className="font-bold flex justify-between">{bp.pointName} <span className="font-mono bg-muted px-1 rounded">{bp.time}</span></p>
-                              <p className="text-[10px] text-muted-foreground opacity-80 mt-0.5">📞 {bp.contactNumber}</p>
+                              <p className="font-bold flex justify-between">{stop.name} <span className="font-mono bg-muted px-1 rounded">{stop.usage || "STOP"}</span></p>
+                              {stop.meetingDetails?.counterNumber && <p className="text-[10px] text-muted-foreground opacity-80 mt-0.5">Counter {stop.meetingDetails.counterNumber}</p>}
                             </div>
                           </li>
                         ))}
