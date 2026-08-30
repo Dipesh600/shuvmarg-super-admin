@@ -11,9 +11,53 @@ export interface TransactionFilters {
 
 export interface TransactionsResponse {
   success?: boolean;
-  data?: any[];
+  data?: AdminTransaction[];
   pagination?: { page: number; totalPages: number; total: number; limit?: number };
-  stats?: any;
+  stats?: TransactionStats;
+}
+
+export interface AdminTransaction {
+  _id: string;
+  transactionId?: string;
+  ticketId?: string;
+  userId?: { _id?: string; name?: string; phone?: string; email?: string } | null;
+  totalAmount?: number;
+  gateway?: string;
+  transactionType?: string;
+  status: string;
+  createdAt?: string;
+}
+
+export interface AdminTransactionDetail extends AdminTransaction {
+  currency?: string;
+  originalAmount?: number;
+  paidAt?: string;
+  refundStatus?: string;
+  refundNote?: string;
+  failureReason?: string;
+  disputeReason?: string;
+  resolvedAt?: string;
+  resolvedBy?: { name?: string } | null;
+  meta?: Record<string, unknown>;
+  bookingId?: {
+    _id: string; ticketId?: string; seats?: string[]; status?: string;
+    tripId?: {
+      tripDate?: string; departureTime?: string; arrivalTime?: string; fromStopName?: string; toStopName?: string;
+      routeId?: { from?: string; to?: string; distance?: string; duration?: string } | null;
+      busId?: { _id?: string; busName?: string; busNumber?: string; busType?: string } | null;
+    } | null;
+  } | null;
+}
+
+export interface TransactionStats {
+  totalCount?: number;
+  totalVolume?: number;
+  successRate?: string | number;
+  successCount?: number;
+  failedCount?: number;
+  disputedCount?: number;
+  refundedCount?: number;
+  pendingCount?: number;
 }
 
 export const getAllTransactions = async (filters: TransactionFilters = {}): Promise<TransactionsResponse> => {
@@ -30,6 +74,6 @@ export const getAllTransactions = async (filters: TransactionFilters = {}): Prom
 };
 
 export const getTransactionById = async (id: string) => {
-  const { data } = await api.get(`/transactions/${id}`);
+  const { data } = await api.get<{ data: AdminTransactionDetail }>(`/transactions/${id}`);
   return data;
 };

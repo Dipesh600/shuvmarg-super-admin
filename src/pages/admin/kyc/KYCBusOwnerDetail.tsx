@@ -398,7 +398,7 @@ export default function KYCBusOwnerDetail() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {brands.map((brand: any) => (
+                {brands.map((brand) => (
                   <div key={brand._id} className="p-4 border rounded-xl bg-muted/20 flex flex-col gap-2 relative">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">

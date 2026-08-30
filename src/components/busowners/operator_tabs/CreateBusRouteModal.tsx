@@ -16,6 +16,7 @@ import { useCreateBusRoute } from "@/hooks/useBusRoutes";
 import { useFetchBoardingPointsByOwner } from "@/hooks/useBoardingPoints";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import type { BoardingPointGroup } from "@/api/boardingPointsApi";
 
 interface CreateBusRouteModalProps {
   isOpen: boolean;
@@ -58,7 +59,7 @@ const StepIndicator: React.FC<{ step: number }> = ({ step }) => (
 const CreateBusRouteModal: React.FC<CreateBusRouteModalProps> = ({ isOpen, onClose, ownerId }) => {
   const createMutation = useCreateBusRoute();
   const { data: boardingData } = useFetchBoardingPointsByOwner(ownerId);
-  const boardingPoints: any[] = boardingData?.data || [];
+  const boardingPoints: BoardingPointGroup[] = boardingData?.data || [];
 
   const [step, setStep] = useState(1);
 
@@ -192,8 +193,8 @@ const CreateBusRouteModal: React.FC<CreateBusRouteModalProps> = ({ isOpen, onClo
                         <select className="flex h-11 w-full rounded-md border-2 border-muted bg-muted/30 px-3 py-2 text-sm font-bold focus-visible:outline-none"
                           value={from} onChange={e => setFrom(e.target.value)}>
                           <option value="">Select origin...</option>
-                          {boardingPoints.map((bp: any) => (
-                            <option key={bp._id} value={bp.name}>{bp.name}</option>
+                          {boardingPoints.map((bp) => (
+                            <option key={bp._id} value={bp.city}>{bp.city}</option>
                           ))}
                         </select>
                       ) : (
@@ -209,8 +210,8 @@ const CreateBusRouteModal: React.FC<CreateBusRouteModalProps> = ({ isOpen, onClo
                         <select className="flex h-11 w-full rounded-md border-2 border-muted bg-muted/30 px-3 py-2 text-sm font-bold focus-visible:outline-none"
                           value={to} onChange={e => setTo(e.target.value)}>
                           <option value="">Select destination...</option>
-                          {boardingPoints.map((bp: any) => (
-                            <option key={bp._id} value={bp.name}>{bp.name}</option>
+                          {boardingPoints.map((bp) => (
+                            <option key={bp._id} value={bp.city}>{bp.city}</option>
                           ))}
                         </select>
                       ) : (
@@ -275,9 +276,9 @@ const CreateBusRouteModal: React.FC<CreateBusRouteModalProps> = ({ isOpen, onClo
                             value={newStopName} onChange={e => setNewStopName(e.target.value)}>
                             <option value="">Select stop...</option>
                             {boardingPoints
-                              .filter((bp: any) => bp.name !== from && bp.name !== to)
-                              .map((bp: any) => (
-                                <option key={bp._id} value={bp.name}>{bp.name}</option>
+                              .filter((bp) => bp.city !== from && bp.city !== to)
+                              .map((bp) => (
+                                <option key={bp._id} value={bp.city}>{bp.city}</option>
                               ))}
                           </select>
                         ) : (

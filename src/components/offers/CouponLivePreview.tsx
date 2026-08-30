@@ -82,7 +82,7 @@ const getEdgeConfig = (type: string, edge: 'top'|'bottom'|'left'|'right') => {
   return { gap, mask, size, pos, repeat };
 };
 
-const generateMaskStyle = (edges: any) => {
+const generateMaskStyle = (edges?: NonNullable<PreviewData["designConfig"]>["edges"]) => {
   if (!edges) return {};
   const e = {
     top: edges.top || 'smooth',

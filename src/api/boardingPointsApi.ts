@@ -15,6 +15,14 @@ export interface BoardingPointPayload {
     boardingPoints: BoardingPointLocationInput[];
 }
 
+export interface BoardingPointGroup extends BoardingPointPayload {
+    _id: string;
+    createdAt: string;
+}
+
+type BoardingPointResponse = { data: BoardingPointGroup };
+type BoardingPointListResponse = { data: BoardingPointGroup[] };
+
 export const createBoardingPoint = async (payload: BoardingPointPayload) => {
     try {
         const { data } = await api.post("/boardingPoints/create", payload);
@@ -31,7 +39,7 @@ export const getPointsByCity = async (city: string, ownerId?: string, type?: str
         if (ownerId) params.append("ownerId", ownerId);
         if (type) params.append("type", type);
         
-        const { data } = await api.get(`/boardingPoints/city/${city}?${params.toString()}`);
+        const { data } = await api.get<BoardingPointListResponse>(`/boardingPoints/city/${city}?${params.toString()}`);
         return data;
     } catch (error) {
         console.error("Error fetching boarding points by city:", error);
@@ -41,7 +49,7 @@ export const getPointsByCity = async (city: string, ownerId?: string, type?: str
 
 export const getBoardingPointsByOwner = async (ownerId: string) => {
     try {
-        const { data } = await api.get(`/boardingPoints/owner/${ownerId}`);
+        const { data } = await api.get<BoardingPointListResponse>(`/boardingPoints/owner/${ownerId}`);
         return data;
     } catch (error) {
         console.error("Error fetching boarding points by owner:", error);
@@ -51,7 +59,7 @@ export const getBoardingPointsByOwner = async (ownerId: string) => {
 
 export const getBoardingPointById = async (id: string) => {
     try {
-        const { data } = await api.get(`/boardingPoints/${id}`);
+        const { data } = await api.get<BoardingPointResponse>(`/boardingPoints/${id}`);
         return data;
     } catch (error) {
         console.error("Error fetching boarding point by id:", error);

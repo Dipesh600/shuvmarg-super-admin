@@ -17,9 +17,7 @@ import { useState, useRef } from "react";
 import { Loader2, UploadCloud, FileText, X } from "lucide-react";
 
 const formSchema = z.object({
-  document: z.any().refine((val) => val !== undefined && val !== null, {
-    message: "A new document file is required",
-  }),
+  document: z.custom<File | undefined>().refine((value): value is File => value instanceof File, "A new document file is required"),
 });
 
 export const ReuploadKycDocumentModal = () => {
@@ -30,7 +28,7 @@ export const ReuploadKycDocumentModal = () => {
   const isModalOpen = isOpen && type === "reuploadKycDocument";
   const documentType = data?.documentType as string;
   const busOwnerId = data?.busOwnerId as string;
-  const userId = data?.userId as string;
+  const userId = typeof data?.userId === "string" ? data.userId : undefined;
   const documentLabel = data?.documentLabel as string;
 
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -48,7 +46,7 @@ export const ReuploadKycDocumentModal = () => {
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if (!documentType || !busOwnerId) return;
+    if (!documentType || !busOwnerId || !values.document) return;
 
     const formData = new FormData();
     formData.append("id", busOwnerId);

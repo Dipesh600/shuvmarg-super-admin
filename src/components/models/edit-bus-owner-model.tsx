@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateBusOwner } from "@/api/busOwnerApi";
 import { toast } from "sonner";
 import { Loader2, AlertCircle } from "lucide-react";
+import { getErrorMessage } from "@/lib/error-message";
 
 export function EditBusOwnerDialog() {
   const { isOpen, type, data } = useModal();
@@ -55,8 +56,8 @@ function EditBusOwnerDialogInstance() {
       queryClient.invalidateQueries({ queryKey: ["busOwner", busOwner?.busOwnerDoc?._id] });
       onClose();
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to update bus owner.");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update bus owner."));
     },
   });
 

@@ -18,11 +18,12 @@ export default function KYCVerification() {
   const { data: allKyc, isLoading, isError, error } = useGetAllKyc();
 
   const kycData = useMemo(() => allKyc?.data ?? [], [allKyc?.data]);
+  const dashboard = allKyc?.dashboard ?? { totalBusOwners: 0, totalAgents: 0, totalFleets: 0 };
 
   const ownersKyc = useMemo(() => {
     return kycData
-      .filter((k: any) => k.kyctype === "busowner")
-      .map((k: any) => ({
+      .filter((k) => k.kyctype === "busowner")
+      .map((k) => ({
         busownerId: k.busownerId,
         ownerId: k.data._id,
         companyname: k.companyname,
@@ -35,8 +36,8 @@ export default function KYCVerification() {
 
   const agentsKyc = useMemo(() => {
     return kycData
-      .filter((k: any) => k.kyctype === "agent")
-      .map((k: any) => ({
+      .filter((k) => k.kyctype === "agent")
+      .map((k) => ({
         id: k.data._id,
         agentId: k.agentId,
         companyname: k.companyname,
@@ -50,8 +51,8 @@ export default function KYCVerification() {
 
   const fleetsKyc = useMemo(() => {
     return kycData
-      .filter((k: any) => k.kyctype === "fleet")
-      .map((k: any) => ({
+      .filter((k) => k.kyctype === "fleet")
+      .map((k) => ({
         id: k.data._id,
         fleetId: k.fleetId,
         busName: k.data?.busName,
@@ -88,21 +89,21 @@ export default function KYCVerification() {
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
           title="Bus Owner KYC"
-          value={allKyc?.dashboard?.totalBusOwners?.toString() || "0"}
+          value={dashboard.totalBusOwners.toString()}
           icon={Building2}
           subtitle="Total verifications"
           changeType="neutral"
         />
         <StatCard
           title="Agent KYC"
-          value={allKyc?.dashboard?.totalAgents?.toString() || "0"}
+          value={dashboard.totalAgents.toString()}
           icon={Users}
           subtitle="Total verifications"
           changeType="neutral"
         />
         <StatCard
           title="Fleet KYC"
-          value={allKyc?.dashboard?.totalFleets?.toString() || "0"}
+          value={dashboard.totalFleets.toString()}
           icon={Bus}
           subtitle="Total verifications"
           changeType="neutral"
@@ -115,27 +116,27 @@ export default function KYCVerification() {
           <TabsTrigger value="bus-owners" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
             <Building2 className="h-4 w-4" />
             Bus Owners
-            {allKyc.dashboard.totalBusOwners > 0 && (
+            {dashboard.totalBusOwners > 0 && (
               <Badge variant="secondary" className="ml-1">
-                {allKyc.dashboard.totalBusOwners}
+                {dashboard.totalBusOwners}
               </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="agents" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
             <Users className="h-4 w-4" />
             Agents
-            {allKyc.dashboard.totalAgents > 0 && (
+            {dashboard.totalAgents > 0 && (
               <Badge variant="secondary" className="ml-1">
-                {allKyc.dashboard.totalAgents}
+                {dashboard.totalAgents}
               </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="fleet" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
             <Bus className="h-4 w-4" />
             Fleet
-            {allKyc.dashboard.totalFleets > 0 && (
+            {dashboard.totalFleets > 0 && (
               <Badge variant="secondary" className="ml-1">
-                {allKyc.dashboard.totalFleets}
+                {dashboard.totalFleets}
               </Badge>
             )}
           </TabsTrigger>

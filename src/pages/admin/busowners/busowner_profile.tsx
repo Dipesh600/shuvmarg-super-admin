@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, type NavigateFunction } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,10 +22,29 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BusOwnerDetailSkeleton } from "@/components/Skeletion_Loading/BusOwnerDetailSkeleton";
 import { getBrandsByOwner, createBrand } from "@/api/operatorBrandApi";
 import { StatCard } from "@/components/dashboard/StatCard";
+import type { ModalPayload, ModalType } from "@/hooks/use-model-store";
+import type { KycDocumentDescriptor } from "@/api/kycApi";
+import type { OperatorBrandSummary } from "@/api/operatorBrandApi";
+import { getErrorMessage } from "@/lib/error-message";
+
+type OwnerView = {
+  name: string; email: string; phone: string; profilePicture: string | null; status: string;
+  address: string; createdAt: string | null; userId: string | null;
+  monthlyRevenue?: string; pendingSettlement?: number; lastPayoutDate?: string; defaultCommissionRate?: number;
+  recentPayments: SettlementRow[];
+  busOwnerDoc: {
+    _id: string; busOwnerId: string | null; companyName: string; verificationStatus: string;
+    companyRegistration: KycDocumentDescriptor; ownerIdentity: KycDocumentDescriptor;
+    taxRegistration: KycDocumentDescriptor; bankDetails: KycDocumentDescriptor;
+  };
+};
+type SettlementRow = { id: string; period: string; amount: string; date: string; status: string };
+type DocumentSection = KycDocumentDescriptor & { label: string; type: string };
+type OverviewTabProps = { busOWnerDetail: OwnerView; taxReg: KycDocumentDescriptor; bankDet: KycDocumentDescriptor; ownerStatus: string; verificationStatus: string };
 
 // ── Components for different tabs ─────────────────────────────────────────────
 
-const OverviewTab = ({ busOWnerDetail, taxReg, bankDet, ownerStatus, verificationStatus }: any) => {
+const OverviewTab = ({ busOWnerDetail, taxReg, bankDet, ownerStatus, verificationStatus }: OverviewTabProps) => {
   const handleCopyBankDetails = () => {
     const details = [
       `Bank: ${bankDet.bankName || 'Not Provided'}`,
@@ -54,7 +73,7 @@ const OverviewTab = ({ busOWnerDetail, taxReg, bankDet, ownerStatus, verificatio
             <div className="relative group">
               <div className="w-24 h-24 rounded-2xl bg-primary/5 flex items-center justify-center overflow-hidden border-2 border-muted/50">
                 <Avatar className="h-full w-full rounded-none">
-                  <AvatarImage src={busOWnerDetail?.profilePicture} className="object-cover" />
+                  <AvatarImage src={busOWnerDetail?.profilePicture ?? undefined} className="object-cover" />
                   <AvatarFallback className="text-xl font-bold bg-primary/10 text-primary">
                     {busOWnerDetail.busOwnerDoc?.companyName?.substring(0, 2).toUpperCase() || "BO"}
                   </AvatarFallback>
@@ -86,7 +105,7 @@ const OverviewTab = ({ busOWnerDetail, taxReg, bankDet, ownerStatus, verificatio
             </div>
             <div className="flex items-center gap-3 text-sm">
               <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span>Joined {new Date(busOWnerDetail.createdAt).toLocaleDateString()}</span>
+              <span>Joined {busOWnerDetail.createdAt ? new Date(busOWnerDetail.createdAt).toLocaleDateString() : "—"}</span>
             </div>
           </div>
         </CardContent>
@@ -168,8 +187,8 @@ const OverviewTab = ({ busOWnerDetail, taxReg, bankDet, ownerStatus, verificatio
   );
 };
 
-const KycDocsTab = ({ verificationStatus, documentSections, busOWnerDetail, id, onOpen, navigate }: any) => {
-  const hasRejectedDocs = verificationStatus === "rejected" || documentSections.some((d: any) => d.rejectionReason);
+const KycDocsTab = ({ verificationStatus, documentSections, busOWnerDetail, id, onOpen, navigate }: { verificationStatus: string; documentSections: DocumentSection[]; busOWnerDetail: OwnerView; id?: string; onOpen: (type: ModalType, data?: ModalPayload) => void; navigate: NavigateFunction }) => {
+  const hasRejectedDocs = verificationStatus === "rejected" || documentSections.some((d) => d.rejectionReason);
   
   return (
     <Card className="border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl text-white animate-in fade-in duration-300">
@@ -190,7 +209,7 @@ const KycDocsTab = ({ verificationStatus, documentSections, busOWnerDetail, id, 
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {documentSections.map((doc: any, idx: number) => {
+          {documentSections.map((doc, idx) => {
             const isRejected = !!doc.rejectionReason;
             const isVerified = doc.verified === true;
             const isPending = doc.verified === false && !doc.rejectionReason;
@@ -251,14 +270,14 @@ const OperatorsTab = ({ ownerId }: { ownerId: string }) => {
   const brands = data?.data || [];
 
   const mutation = useMutation({
-    mutationFn: (payload: any) => createBrand({ ownerId, ...payload }),
+    mutationFn: (payload: Omit<Parameters<typeof createBrand>[0], "ownerId">) => createBrand({ ownerId, ...payload }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["owner-brands", ownerId] });
       toast.success("Operator Brand created successfully.");
       setAddOpen(false);
       setForm({ brandName: "", contactEmail: "", contactPhone: "", baseCity: "", commissionRate: "8" });
     },
-    onError: (e: any) => toast.error(e.response?.data?.message || e.message),
+    onError: (e: unknown) => toast.error(getErrorMessage(e, "Failed to create operator brand.")),
   });
 
   return (
@@ -342,7 +361,7 @@ const OperatorsTab = ({ ownerId }: { ownerId: string }) => {
                 <TableRow><TableCell colSpan={5} className="h-32 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground/40" /></TableCell></TableRow>
               ) : brands.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground">No operator brands found. Create one to get started.</TableCell></TableRow>
-              ) : brands.map((b: any) => (
+              ) : brands.map((b: OperatorBrandSummary) => (
                 <TableRow key={b._id} className="hover:bg-muted/30 transition-colors">
                   <TableCell>
                     <div>
@@ -373,7 +392,7 @@ const OperatorsTab = ({ ownerId }: { ownerId: string }) => {
   );
 };
 
-const FinancialTab = ({ busOWnerDetail, recentPayments }: any) => {
+const FinancialTab = ({ busOWnerDetail, recentPayments }: { busOWnerDetail: OwnerView; recentPayments: SettlementRow[] }) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="grid gap-4 md:grid-cols-4">
@@ -425,7 +444,7 @@ const FinancialTab = ({ busOWnerDetail, recentPayments }: any) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentPayments.length > 0 ? recentPayments.map((payment: any) => (
+                {recentPayments.length > 0 ? recentPayments.map((payment) => (
                   <TableRow key={payment.id} className="hover:bg-muted/30">
                     <TableCell className="font-medium text-sm">{payment.id}</TableCell>
                     <TableCell className="text-sm">{payment.period}</TableCell>
@@ -483,7 +502,7 @@ const BusOwnerDetail = () => {
     setSearchParams({ tab: value });
   };
 
-  const busOWnerDetail = data ? {
+  const busOWnerDetail: OwnerView | null = data ? {
     ...data.profile,
     userId: data.userId,
     address: "Not provided",

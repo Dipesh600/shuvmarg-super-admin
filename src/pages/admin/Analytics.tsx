@@ -7,14 +7,20 @@ import {
   Tooltip, XAxis, YAxis, Legend,
 } from "recharts";
 import { getAnalyticsOverview } from "@/api/analyticsApi";
+import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+type ChartPayload = { color?: string; fill?: string; name: string; value: number };
+type ChartTooltipProps = { active?: boolean; payload?: ChartPayload[]; label?: ReactNode };
+type KpiCardProps = { title: string; value: ReactNode; subtext?: ReactNode; trend?: "up" | "down"; icon: LucideIcon; isLoading?: boolean };
+
+const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-[#1e1e1e] border border-white/10 p-3 rounded-lg shadow-2xl text-sm min-w-[160px]">
         <p className="font-semibold text-white mb-2">{label}</p>
         <div className="space-y-1.5">
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index) => (
             <div key={index} className="flex items-center justify-between gap-6">
               <div className="flex items-center gap-2">
                 <div
@@ -37,7 +43,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const KPICard = ({ title, value, subtext, trend, icon: Icon, isLoading }: any) => (
+const KPICard = ({ title, value, subtext, trend, icon: Icon, isLoading }: KpiCardProps) => (
   <Card className="bg-[#121212]/30 border-white/5 backdrop-blur-md shadow-xl">
     <CardHeader className="flex flex-row items-center justify-between pb-3 pt-4 px-5 border-b border-white/5 bg-white/5">
       <CardTitle className="text-sm font-semibold text-white/80">{title}</CardTitle>

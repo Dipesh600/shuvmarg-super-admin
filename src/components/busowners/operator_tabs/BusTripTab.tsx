@@ -46,10 +46,10 @@ const BusTripTab = ({ ownerId }: { ownerId: string }) => {
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredTrips = trips.filter((t: any) => 
+  const filteredTrips = trips.filter((t) =>
     t.tripId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.busId?.busName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.routeId?.routeName.toLowerCase().includes(searchQuery.toLowerCase())
+    t.busId?.busName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.routeId?.routeName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const openDeleteConfirm = (id: string, name: string) => {
@@ -140,7 +140,7 @@ const BusTripTab = ({ ownerId }: { ownerId: string }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTrips.map((t: any) => (
+                  {filteredTrips.map((t) => (
                     <TableRow key={t._id} className="hover:bg-primary/[0.02] transition-colors border-b last:border-0 group">
                       <TableCell className="align-middle py-6">
                         <div className="flex flex-col gap-1">

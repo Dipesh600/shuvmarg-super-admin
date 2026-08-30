@@ -28,6 +28,7 @@ import {
 } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { getFinancialOverview, type FinancialOverview, type ChartPeriod } from "@/api/financialApi";
+import type { ReactNode } from "react";
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -149,12 +150,13 @@ function FlowNode({
 }
 
 // ── Custom chart tooltip ──────────────────────────────────────────────────────
-const ChartTip = ({ active, payload, label }: any) => {
+type FinancialChartPoint = { name: string; color?: string; value: number };
+const ChartTip = ({ active, payload, label }: { active?: boolean; payload?: FinancialChartPoint[]; label?: ReactNode }) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-xl border border-white/10 bg-[#121212]/95 backdrop-blur shadow-xl p-3 text-xs min-w-[170px] text-white">
       <p className="font-black mb-2 pb-2 border-b border-white/10">{label}</p>
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <div key={p.name} className="flex justify-between gap-4 py-0.5">
           <span className="flex items-center gap-1.5 text-white/60">
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.color }} />{p.name}
