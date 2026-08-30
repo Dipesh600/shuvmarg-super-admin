@@ -11,9 +11,12 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { resumeSchedule, suspendSchedule, createScheduleVersion } from "@/api/scheduleApi";
 import { toast } from "sonner";
+import type { LucideIcon } from "lucide-react";
+import type { WorkstationSchedule } from "@/api/fleetWorkstationApi";
+import { getErrorMessage } from "@/lib/error-message";
 
 interface ScheduleTabProps {
-    schedules: any[];
+    schedules: WorkstationSchedule[];
 }
 
 const scheduleStatusStyles: Record<string, string> = {
@@ -23,7 +26,7 @@ const scheduleStatusStyles: Record<string, string> = {
     INACTIVE:  "bg-white/5 text-white border-white/10",
 };
 
-const recurrenceLabel = (rec: string, days: number[]) => {
+const recurrenceLabel = (rec: string, days: number[] = []) => {
     if (rec === "DAILY") return "Every day";
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     if (days?.length) return days.map(d => dayNames[d]).join(", ");
@@ -35,7 +38,7 @@ const formatDate = (d: string | null) => {
     return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 };
 
-const getDirection = (variant: any) => {
+const getDirection = (variant?: WorkstationSchedule["variantId"]) => {
     if (!variant?.corridorId) return "—";
     const o = variant.corridorId.originId?.name || "?";
     const d = variant.corridorId.destinationId?.name || "?";
@@ -59,13 +62,13 @@ function SuspendModal({ scheduleId, onClose, onSuccess }: {
 
     const mutation = useMutation({
         mutationFn: () => suspendSchedule(scheduleId, reason, suspendUntil || undefined),
-        onSuccess: (data: any) => {
+        onSuccess: (data) => {
             toast.success(data.message || "Schedule suspended.");
             onSuccess();
             onClose();
         },
-        onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to suspend schedule.");
+        onError: (err: unknown) => {
+            toast.error(getErrorMessage(err, "Failed to suspend schedule."));
         },
     });
 
@@ -137,7 +140,7 @@ function SuspendModal({ scheduleId, onClose, onSuccess }: {
 
 // ─── Plan Version Change Modal ─────────────────────────────────────────────────
 function PlanVersionModal({ sched, onClose, onSuccess }: {
-    sched: any;
+    sched: WorkstationSchedule;
     onClose: () => void;
     onSuccess: () => void;
 }) {
@@ -148,13 +151,13 @@ function PlanVersionModal({ sched, onClose, onSuccess }: {
 
     const mutation = useMutation({
         mutationFn: () => createScheduleVersion(sched._id, { departureTime, arrivalTime, effectiveFrom, notes: notes || undefined }),
-        onSuccess: (data: any) => {
+        onSuccess: (data) => {
             toast.success(data.message || "New version planned successfully.");
             onSuccess();
             onClose();
         },
-        onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to create version.");
+        onError: (err: unknown) => {
+            toast.error(getErrorMessage(err, "Failed to create version."));
         },
     });
 
@@ -273,20 +276,20 @@ function PlanVersionModal({ sched, onClose, onSuccess }: {
 }
 
 // ─── Schedule Card ────────────────────────────────────────────────────────────
-function ScheduleCard({ sched, onAction }: { sched: any; onAction: () => void }) {
+function ScheduleCard({ sched, onAction }: { sched: WorkstationSchedule; onAction: () => void }) {
     const qc = useQueryClient();
     const [showSuspendModal, setShowSuspendModal]     = useState(false);
     const [showVersionModal, setShowVersionModal]     = useState(false);
 
     const resumeMut = useMutation({
         mutationFn: () => resumeSchedule(sched._id),
-        onSuccess: (data: any) => {
+        onSuccess: (data) => {
             toast.success(data.message || "Schedule resumed! Trips are being regenerated.");
             qc.invalidateQueries({ queryKey: ["fleetWorkstation"] });
             onAction();
         },
-        onError: (err: any) => {
-            toast.error(err.response?.data?.message || "Failed to resume schedule.");
+        onError: (err: unknown) => {
+            toast.error(getErrorMessage(err, "Failed to resume schedule."));
         },
     });
 
@@ -496,7 +499,7 @@ const ScheduleTab = ({ schedules }: ScheduleTabProps) => {
             )}
 
             <div className="grid md:grid-cols-2 gap-6">
-                {schedules.map((sched: any) => (
+                {schedules.map((sched) => (
                     <ScheduleCard key={sched._id} sched={sched} onAction={refresh} />
                 ))}
             </div>
@@ -504,7 +507,7 @@ const ScheduleTab = ({ schedules }: ScheduleTabProps) => {
     );
 };
 
-const InfoItem = ({ icon: Icon, label, value }: { icon: any; label: string; value: string }) => (
+const InfoItem = ({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) => (
     <div className="flex items-center gap-2 text-sm">
         <Icon className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
         <div>
