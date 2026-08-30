@@ -36,6 +36,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateOwnerKycStatus } from "@/api/kycApi";
 import type { SecureKycDocumentRequest } from "@/api/kycApi";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
+import { getErrorMessage } from "@/lib/error-message";
 
 /* ─── Types ─────────────────────────────────────────────────── */
 type DocumentSection = {
@@ -154,8 +155,8 @@ export default function KYCBusOwnerDetail() {
       queryClient.invalidateQueries({ queryKey: ["ownerKyc", id] }); // This detail page
       navigate("/admin/kyc");
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to update KYC status");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Failed to update KYC status"));
     },
   });
 
@@ -174,7 +175,7 @@ export default function KYCBusOwnerDetail() {
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <AlertCircle className="h-10 w-10 text-destructive" />
         <p className="text-destructive font-medium">Failed to load KYC details.</p>
-        <p className="text-sm text-muted-foreground">{(error as any)?.message}</p>
+        <p className="text-sm text-muted-foreground">{getErrorMessage(error, "An unexpected error occurred.")}</p>
         <Button variant="outline" onClick={() => navigate("/admin/kyc")}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to KYC List
         </Button>

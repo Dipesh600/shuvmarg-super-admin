@@ -6,7 +6,9 @@ import {
     updateAmenity, 
     deleteAmenity 
 } from "@/api/amenitiesApi";
+import type { AmenityPayload } from "@/api/amenitiesApi";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/error-message";
 
 export const useFetchAmenitiesByOwner = (ownerId: string) => {
     return useQuery({
@@ -32,8 +34,8 @@ export const useCreateAmenity = () => {
             queryClient.invalidateQueries({ queryKey: ["amenities"] });
             toast.success("Amenity configuration created successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to create amenity configuration");
+        onError: (error: unknown) => {
+            toast.error(getErrorMessage(error, "Failed to create amenity configuration"));
         },
     });
 };
@@ -41,13 +43,13 @@ export const useCreateAmenity = () => {
 export const useUpdateAmenity = (id: string) => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (payload: any) => updateAmenity(id, payload),
+        mutationFn: (payload: AmenityPayload) => updateAmenity(id, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["amenities"] });
             toast.success("Amenity configuration updated successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to update amenity configuration");
+        onError: (error: unknown) => {
+            toast.error(getErrorMessage(error, "Failed to update amenity configuration"));
         },
     });
 };
@@ -60,8 +62,8 @@ export const useDeleteAmenity = () => {
             queryClient.invalidateQueries({ queryKey: ["amenities"] });
             toast.success("Amenity configuration deleted successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to delete amenity configuration");
+        onError: (error: unknown) => {
+            toast.error(getErrorMessage(error, "Failed to delete amenity configuration"));
         },
     });
 };

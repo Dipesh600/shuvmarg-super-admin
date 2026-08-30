@@ -6,7 +6,9 @@ import {
     updateBusRoute, 
     deleteBusRoute 
 } from "@/api/busRouteApi";
+import type { BusRoutePayload } from "@/api/busRouteApi";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/error-message";
 
 export const useFetchBusRoutesByOwner = (ownerId: string) => {
     return useQuery({
@@ -32,8 +34,8 @@ export const useCreateBusRoute = () => {
             queryClient.invalidateQueries({ queryKey: ["busRoutes"] });
             toast.success("Bus route created successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to create bus route");
+        onError: (error: unknown) => {
+            toast.error(getErrorMessage(error, "Failed to create bus route"));
         },
     });
 };
@@ -41,13 +43,13 @@ export const useCreateBusRoute = () => {
 export const useUpdateBusRoute = (id: string) => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (payload: any) => updateBusRoute(id, payload),
+        mutationFn: (payload: BusRoutePayload) => updateBusRoute(id, payload),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["busRoutes"] });
             toast.success("Bus route updated successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to update bus route");
+        onError: (error: unknown) => {
+            toast.error(getErrorMessage(error, "Failed to update bus route"));
         },
     });
 };
@@ -60,8 +62,8 @@ export const useDeleteBusRoute = () => {
             queryClient.invalidateQueries({ queryKey: ["busRoutes"] });
             toast.success("Bus route deleted successfully");
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || "Failed to delete bus route");
+        onError: (error: unknown) => {
+            toast.error(getErrorMessage(error, "Failed to delete bus route"));
         },
     });
 };
