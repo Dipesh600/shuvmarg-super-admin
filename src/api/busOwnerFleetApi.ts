@@ -1,5 +1,6 @@
 import { api } from "./axios";
 import type { DocumentBlobResult } from "./kycApi";
+import type { SeatLayoutV3 } from "@/features/seat-layout-v3/types";
 
 export type SecureFleetDocumentRequest = {
     fleetId: string;
@@ -9,9 +10,88 @@ export type SecureFleetDocumentRequest = {
 
 export interface OwnerFleetOption {
     _id: string;
+    fleetId: string;
     busName: string;
     busNumber: string;
+    busType: string;
+    totalSeats: number;
+    seatLayout?: string | { assigned?: boolean; totalPlaces?: number; layout?: unknown };
+    registrationYear?: number;
+    status: string;
+    approvalStatus: string;
+    setupComplete?: boolean;
 }
+
+export interface FleetAmenity {
+    _id?: string;
+    id?: string;
+    name: string;
+    description?: string;
+    status?: boolean;
+}
+
+export interface FleetDocumentDescriptor {
+    present: boolean;
+    status?: string;
+    reason?: string | null;
+    validTill?: string | null;
+    policyNumber?: string | null;
+    uploadedAt?: string | null;
+    count?: number;
+}
+
+export interface FleetDetail {
+    _id?: string;
+    fleetId: string;
+    fleetCode?: string | null;
+    status: string;
+    approvalStatus: string;
+    setupComplete?: boolean;
+    owner: { ownerId: string; ownerCode?: string | null; companyName?: string; ownerName?: string; phone?: string; email?: string };
+    assignment: {
+        route?: string;
+        operatorId?: string | null;
+        operatorName?: string | null;
+        corridor?: { corridorId: string; code?: string | null; origin?: string | null; destination?: string | null; status?: string | null } | null;
+        routeRequest?: { routeRequestId: string; origin?: string | null; destination?: string | null; viaStops?: string[]; status?: string | null } | null;
+    };
+    vehicle: {
+        busName: string;
+        busNumber: string;
+        busType: string;
+        vehicleType?: string;
+        totalSeats: number;
+        registrationYear?: number | null;
+        seatConfig?: SeatLayoutV3;
+        features: FleetAmenity[];
+    };
+    documents?: Record<string, FleetDocumentDescriptor | undefined>;
+    reviewRequirements?: Record<string, { status?: string; reason?: string | null }>;
+    rejectionReason?: string | null;
+    createdAt?: string | null;
+    updatedAt?: string | null;
+    route?: {
+        origin?: string | null;
+        destination?: string | null;
+        returnEnabled?: boolean;
+        servedStops: Array<{
+            stopId?: string | null;
+            name?: string;
+            usage?: string;
+            meetingDetails?: { counterNumber?: string; contactPhone?: string };
+        }>;
+        addedPlaces: Array<{ clientKey?: string; name?: string; address?: string; usage?: string }>;
+    } | null;
+    seatLayout?: { assigned?: boolean; totalPlaces?: number; layout?: SeatLayoutV3 };
+    review?: {
+        approvedAt?: string | null;
+        rejectedAt?: string | null;
+        submittedAt?: string | null;
+        rejectionReason?: string | null;
+    };
+}
+
+export type FleetDetailResponse = { success: boolean; data: FleetDetail };
 
 type OwnerFleetListResponse = { success: boolean; data: OwnerFleetOption[] };
 
@@ -90,7 +170,7 @@ export const getFleetsByOwner = async (ownerId: string, brandId?: string) => {
 
 export const getFleetDetailById = async (id: string) => {
     try {
-        const { data } = await api.get(`/fleet/details/${id}`);
+        const { data } = await api.get<FleetDetailResponse>(`/fleet/details/${id}`);
         return data;
     } catch (error) {
         console.error("Error fetching fleet detail by id:", error);

@@ -5,6 +5,7 @@ import { columns } from "@/components/data_tables/fleet/columns";
 import { DataTable } from "@/components/DataTable";
 import { useAllFleets, useFleetDashboard } from "@/hooks/useFetchAllFleets";
 import KYCVerificationSkeleton from "@/components/Skeletion_Loading/KycVerificationSkeleton";
+import { getErrorMessage } from "@/lib/error-message";
 
 const Fleet = () => {
   const { data, isLoading, error, isError } = useAllFleets();
@@ -22,7 +23,7 @@ const Fleet = () => {
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
         <AlertTriangle className="h-12 w-12 text-destructive" />
         <h2 className="text-xl font-bold">Failed to load fleet data</h2>
-        <p className="text-muted-foreground">{(error as any)?.message || "Something went wrong"}</p>
+        <p className="text-muted-foreground">{getErrorMessage(error, "Something went wrong")}</p>
         <Button onClick={() => window.location.reload()}>Retry</Button>
       </div>
     );
