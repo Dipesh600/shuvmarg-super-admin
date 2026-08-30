@@ -21,12 +21,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { getSchedulesByBrand, activateSchedule, suspendSchedule, deactivateSchedule, deleteSchedule } from "@/api/scheduleApi";
+import { getSchedulesByBrand, activateSchedule, suspendSchedule, deactivateSchedule, deleteSchedule, type AdminSchedule } from "@/api/scheduleApi";
 import CreateScheduleModal from "./CreateScheduleModal";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
+import { getErrorMessage } from "@/lib/error-message";
+
+type SchedulePair = { primary: AdminSchedule; returnSched: AdminSchedule | null };
 
 const StatusBadge = ({ status }: { status: string }) => {
     switch (status) {
@@ -46,8 +49,8 @@ const StatusBadge = ({ status }: { status: string }) => {
 const BrandSchedulesTab = ({ brandId, ownerId }: { brandId: string, ownerId: string }) => {
     const qc = useQueryClient();
     const [createModalOpen, setCreateModalOpen] = useState(false);
-    const [deletingSched, setDeletingSched] = useState<any>(null);
-    const [deactivatingSched, setDeactivatingSched] = useState<any>(null);
+    const [deletingSched, setDeletingSched] = useState<SchedulePair | null>(null);
+    const [deactivatingSched, setDeactivatingSched] = useState<SchedulePair | null>(null);
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ["brand-schedules", brandId],
@@ -61,7 +64,7 @@ const BrandSchedulesTab = ({ brandId, ownerId }: { brandId: string, ownerId: str
             qc.invalidateQueries({ queryKey: ["brand-schedules", brandId] });
             toast.success("Schedule activated. Trips will be generated automatically.");
         },
-        onError: (e: any) => toast.error(e.response?.data?.message || "Failed to activate schedule"),
+        onError: (e: unknown) => toast.error(getErrorMessage(e, "Failed to activate schedule")),
     });
 
     const suspendMut = useMutation({
@@ -70,7 +73,7 @@ const BrandSchedulesTab = ({ brandId, ownerId }: { brandId: string, ownerId: str
             qc.invalidateQueries({ queryKey: ["brand-schedules", brandId] });
             toast.success("Schedule suspended. No further trips will be generated.");
         },
-        onError: (e: any) => toast.error(e.response?.data?.message || "Failed to suspend schedule"),
+        onError: (e: unknown) => toast.error(getErrorMessage(e, "Failed to suspend schedule")),
     });
 
     const deactivateMut = useMutation({
@@ -80,8 +83,8 @@ const BrandSchedulesTab = ({ brandId, ownerId }: { brandId: string, ownerId: str
             toast.success("Schedule deactivated permanently.");
             setDeactivatingSched(null);
         },
-        onError: (e: any) => {
-            toast.error(e.response?.data?.message || "Failed to deactivate schedule");
+        onError: (e: unknown) => {
+            toast.error(getErrorMessage(e, "Failed to deactivate schedule"));
             setDeactivatingSched(null);
         },
     });
@@ -93,8 +96,8 @@ const BrandSchedulesTab = ({ brandId, ownerId }: { brandId: string, ownerId: str
             toast.success("DRAFT schedule deleted.");
             setDeletingSched(null);
         },
-        onError: (e: any) => {
-            toast.error(e.response?.data?.message || "Failed to delete schedule");
+        onError: (e: unknown) => {
+            toast.error(getErrorMessage(e, "Failed to delete schedule"));
             setDeletingSched(null);
         },
     });
@@ -103,8 +106,8 @@ const BrandSchedulesTab = ({ brandId, ownerId }: { brandId: string, ownerId: str
 
     const groupedSchedules = useMemo(() => {
         if (!schedules.length) return [];
-        const seen = new Set();
-        const grouped = [];
+        const seen = new Set<string>();
+        const grouped: SchedulePair[] = [];
 
         for (const sched of schedules) {
             if (seen.has(sched._id)) continue;
@@ -112,7 +115,7 @@ const BrandSchedulesTab = ({ brandId, ownerId }: { brandId: string, ownerId: str
 
             let returnSched = null;
             if (sched.returnScheduleId) {
-                returnSched = schedules.find((s: any) => s._id === sched.returnScheduleId);
+                returnSched = schedules.find((s) => s._id === sched.returnScheduleId) || null;
                 if (returnSched) {
                     seen.add(returnSched._id);
                 }
@@ -198,7 +201,7 @@ const BrandSchedulesTab = ({ brandId, ownerId }: { brandId: string, ownerId: str
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {groupedSchedules.map(({ primary, returnSched }: any) => (
+                                    {groupedSchedules.map(({ primary, returnSched }) => (
                                         <TableRow key={primary._id} className="hover:bg-muted/5 font-medium transition-colors">
                                             <TableCell className="align-top py-4">
                                                 <div className="flex flex-col gap-1.5">
@@ -415,9 +418,9 @@ const BrandSchedulesTab = ({ brandId, ownerId }: { brandId: string, ownerId: str
     );
 };
 
-class ErrorBoundaryFallback extends React.Component<any, any> {
-  constructor(props: any) { super(props); this.state = { hasError: false, error: null }; }
-  static getDerivedStateFromError(error: any) { return { hasError: true, error }; }
+class ErrorBoundaryFallback extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+  state = { hasError: false, error: null as Error | null };
+  static getDerivedStateFromError(error: unknown) { return { hasError: true, error: error instanceof Error ? error : new Error(String(error)) }; }
   render() {
     if (this.state.hasError) {
       return <div className="p-10 text-red-500 bg-red-100 font-mono">ERROR: {this.state.error?.toString()}<br/>{this.state.error?.stack}</div>;

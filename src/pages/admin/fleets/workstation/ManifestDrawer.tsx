@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Users, IndianRupee, Ticket, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useTripManifest } from "@/hooks/useFleetWorkstation";
+import type { ManifestBooking } from "@/api/fleetWorkstationApi";
 
 interface ManifestDrawerProps {
     fleetId: string;
@@ -21,7 +22,15 @@ export function ManifestDrawer({ fleetId, tripId, open, onOpenChange }: Manifest
     const manifestData = response?.data;
     const trip = manifestData?.trip;
     const bookings = manifestData?.bookings || [];
-    const summary = manifestData?.summary || {};
+    const summary = manifestData?.summary || {
+        totalBookings: 0,
+        totalPassengers: 0,
+        totalRevenue: 0,
+        boardedCount: 0,
+        cancelledCount: 0,
+        noShowCount: 0,
+        refundedAmount: 0,
+    };
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -108,7 +117,7 @@ export function ManifestDrawer({ fleetId, tripId, open, onOpenChange }: Manifest
                                 </div>
                             ) : (
                                 <div className="space-y-4 pb-8">
-                                    {bookings.map((booking: any) => (
+                                    {bookings.map((booking) => (
                                         <BookingCard key={booking._id} booking={booking} />
                                     ))}
                                 </div>
@@ -123,7 +132,7 @@ export function ManifestDrawer({ fleetId, tripId, open, onOpenChange }: Manifest
 
 // ─── BOOKING CARD COMPONENT ──────────────────────────────────────────────────
 
-function BookingCard({ booking }: { booking: any }) {
+function BookingCard({ booking }: { booking: ManifestBooking }) {
     const isCancelled = booking.status === "cancelled";
     const isNoShow = booking.status === "no_show";
 
@@ -159,7 +168,7 @@ function BookingCard({ booking }: { booking: any }) {
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Passengers</p>
                             <div className="space-y-2">
-                                {booking.passengerDetails?.map((p: any, i: number) => (
+                                {booking.passengerDetails?.map((p, i) => (
                                     <div key={i} className="flex items-center justify-between bg-muted/30 rounded-md p-2 border border-border/40">
                                         <div>
                                             <p className="text-sm font-bold">{p.name}</p>
@@ -214,17 +223,17 @@ function BookingCard({ booking }: { booking: any }) {
                                     <span>Rs. {booking.originalAmount?.toLocaleString() || booking.totalAmount?.toLocaleString()}</span>
                                 </div>
                                 
-                                {booking.discountAmount > 0 && (
+                                {(booking.discountAmount || 0) > 0 && (
                                     <div className="flex justify-between text-white">
                                         <span>Discount {booking.couponCode ? `(${booking.couponCode})` : ""}</span>
-                                        <span>- Rs. {booking.discountAmount.toLocaleString()}</span>
+                                        <span>- Rs. {(booking.discountAmount || 0).toLocaleString()}</span>
                                     </div>
                                 )}
                                 
-                                {booking.smMoneyUsed > 0 && (
+                                {(booking.smMoneyUsed || 0) > 0 && (
                                     <div className="flex justify-between text-white">
                                         <span>SM Money Used</span>
-                                        <span>- Rs. {booking.smMoneyUsed.toLocaleString()}</span>
+                                        <span>- Rs. {(booking.smMoneyUsed || 0).toLocaleString()}</span>
                                     </div>
                                 )}
                                 

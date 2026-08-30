@@ -12,6 +12,7 @@ import { createSchedule, updateSchedule } from "@/api/scheduleApi";
 import { getFleetsByOwner } from "@/api/busOwnerFleetApi";
 import { getBrandRouteServices } from "@/api/operatorBrandApi";
 import { getDriversByBrand } from "@/api/driverApi";
+import { getErrorMessage } from "@/lib/error-message";
 
 interface CreateScheduleModalProps {
     open: boolean;
@@ -136,7 +137,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
         setVariantId(configId); // Note: variantId state is now storing config._id for uniqueness
         setStartLocation(location);
         
-        const config = configs?.data?.find((c: any) => String(c._id) === configId);
+        const config = configs?.data?.find((c) => String(c._id) === configId);
         if (config) {
             const oName = config.variantId?.corridorId?.originId?.name || "";
             const dName = config.variantId?.corridorId?.destinationId?.name || "";
@@ -146,7 +147,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
 
     // Restore backward compatibility: If inline returnTimingConfig is empty (old route), fallback to the ghost second record
             const returnConfigObject = config.variantId?.returnVariantId 
-                ? configs?.data?.find((c: any) => String(c.variantId?._id) === String(config.variantId.returnVariantId))
+                ? configs?.data?.find((c) => String(c.variantId?._id) === String(config.variantId?.returnVariantId))
                 : null;
             const resolvedReturnTimingConfig = (config.returnTimingConfig && config.returnTimingConfig.length > 0)
                 ? config.returnTimingConfig
@@ -185,7 +186,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
 
     const createMut = useMutation({
         mutationFn: async () => {
-            const selectedConfig = configs?.data?.find((c: any) => String(c._id) === variantId);
+            const selectedConfig = configs?.data?.find((c) => String(c._id) === variantId);
             const actualVariantId = selectedConfig?.variantId?._id ? String(selectedConfig.variantId._id) : "";
             const resolvedReturnVariantId = selectedConfig?.variantId?.returnVariantId
                 ? String(selectedConfig.variantId.returnVariantId)
@@ -249,7 +250,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
             reset();
             onOpenChange(false);
         },
-        onError: (e: any) => toast.error(e.response?.data?.message || "Failed to create schedule"),
+        onError: (e: unknown) => toast.error(getErrorMessage(e, "Failed to create schedule")),
     });
 
     const step1Valid = busId;
@@ -288,7 +289,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
                                     <Select value={busId} onValueChange={setBusId} disabled={!!prefillBusId}>
                                         <SelectTrigger className="h-10 rounded-xl"><SelectValue placeholder="Select bus" /></SelectTrigger>
                                         <SelectContent className="rounded-xl">
-                                            {fleets?.data?.map((f: any) => (
+                                            {fleets?.data?.map((f) => (
                                                 <SelectItem key={f._id} value={f._id}>{f.busNumber} · {f.busName}</SelectItem>
                                             ))}
                                         </SelectContent>
@@ -302,7 +303,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl">
                                     {configs?.data
-                        ?.filter((c: any) => {
+                        ?.filter((c) => {
                             if (c.variantId?.direction === "RETURN") return false;
                             // When launched from the wizard, restrict to the fleet's assigned corridor
                             if (prefillCorridorId && c.variantId?.corridorId) {
@@ -313,7 +314,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
                             }
                             return true;
                         })
-                        .map((c: any) => {
+                        .map((c) => {
                                                 if (!c.variantId) return null;
                                                 const corridor = c.variantId.corridorId;
                                                 const routeLabel = corridor?.originId?.name && corridor?.destinationId?.name
@@ -352,7 +353,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
                                         >
                                             <span className="text-xs font-black text-foreground">Starts at Origin</span>
                                             <span className="text-[10px] text-muted-foreground font-semibold mt-0.5 truncate max-w-full">
-                                                {configs?.data?.find((c:any) => String(c._id) === variantId)?.variantId?.corridorId?.originId?.name || "Origin"}
+                                                {configs?.data?.find((c) => String(c._id) === variantId)?.variantId?.corridorId?.originId?.name || "Origin"}
                                             </span>
                                         </button>
                                         <button
@@ -364,7 +365,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
                                         >
                                             <span className="text-xs font-black text-foreground">Starts at Destination</span>
                                             <span className="text-[10px] text-muted-foreground font-semibold mt-0.5 truncate max-w-full">
-                                                {configs?.data?.find((c:any) => String(c._id) === variantId)?.variantId?.corridorId?.destinationId?.name || "Destination"}
+                                                {configs?.data?.find((c) => String(c._id) === variantId)?.variantId?.corridorId?.destinationId?.name || "Destination"}
                                             </span>
                                         </button>
                                     </div>
@@ -377,7 +378,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
                                     <SelectTrigger className="h-10 rounded-xl"><SelectValue placeholder="Assign later" /></SelectTrigger>
                                     <SelectContent className="rounded-xl">
                                         <SelectItem value="none">No default driver</SelectItem>
-                                        {drivers?.data?.map((d: any) => (
+                                        {drivers?.data?.map((d) => (
                                             <SelectItem key={d._id} value={d._id}>
                                                 {d.fullName} · {d.licenseType}
                                             </SelectItem>
@@ -463,7 +464,7 @@ const CreateScheduleModalInstance = ({ open, onOpenChange, brandId, ownerId, pre
                                 </div>
                                 <div className="space-y-1.5">
                                     <FieldLabel>Recurrence</FieldLabel>
-                                    <Select value={recurrence} onValueChange={(v: any) => setRecurrence(v)}>
+                                    <Select value={recurrence} onValueChange={(v: "DAILY" | "WEEKLY") => setRecurrence(v)}>
                                         <SelectTrigger className="h-10 rounded-xl"><SelectValue /></SelectTrigger>
                                         <SelectContent className="rounded-xl">
                                             <SelectItem value="DAILY">Every Day</SelectItem>

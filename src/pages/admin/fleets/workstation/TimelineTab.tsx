@@ -20,11 +20,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, GitBranch, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { WorkstationSchedule, WorkstationTrip } from "@/api/fleetWorkstationApi";
 
 interface TimelineTabProps {
-    schedules: any[];
-    recentTrips: any[];
-    upcomingTrips: any[];
+    schedules: WorkstationSchedule[];
+    recentTrips: WorkstationTrip[];
+    upcomingTrips: WorkstationTrip[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -133,8 +134,8 @@ function DateHeader({ originDate }: { originDate: Date }) {
 
 // ─── Schedule Row ─────────────────────────────────────────────────────────────
 function ScheduleRow({ sched, trips, originDate }: {
-    sched: any;
-    trips: any[];
+    sched: WorkstationSchedule;
+    trips: WorkstationTrip[];
     originDate: Date;
 }) {
     const colors = SCHED_COLORS[sched.status] || SCHED_COLORS.DRAFT;
@@ -173,7 +174,7 @@ function ScheduleRow({ sched, trips, originDate }: {
                     <p className="text-muted-foreground">
                         {fmtDate(sched.effectiveFrom)} → {sched.effectiveUntil ? fmtDate(sched.effectiveUntil) : "Open-ended"}
                     </p>
-                    {sched.versionNumber > 1 && <p className="text-primary font-bold">v{sched.versionNumber}</p>}
+                    {(sched.versionNumber || 1) > 1 && <p className="text-primary font-bold">v{sched.versionNumber}</p>}
                     {sched.status === "SUSPENDED" && sched.suspensionReason && (
                         <p className="text-white font-bold">⚠ {sched.suspensionReason}</p>
                     )}
@@ -187,7 +188,7 @@ function ScheduleRow({ sched, trips, originDate }: {
                 >
                     <span className="text-[10px] font-black truncate whitespace-nowrap">
                         {sched.departureTime} → {sched.arrivalTime}
-                        {sched.versionNumber > 1 && <span className="ml-1.5 opacity-80">v{sched.versionNumber}</span>}
+                        {(sched.versionNumber || 1) > 1 && <span className="ml-1.5 opacity-80">v{sched.versionNumber}</span>}
                     </span>
                 </div>
             </Tooltip>

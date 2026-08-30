@@ -3,20 +3,22 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { TrendingUp, TrendingDown, IndianRupee, Percent, ArrowDownRight, Users, Receipt, Minus } from "lucide-react";
+import type { WorkstationFinancials, WorkstationTrip } from "@/api/fleetWorkstationApi";
+import type { TripVariant } from "@/api/tripApi";
 
 interface FinancialTabProps {
-    financials: any;
-    recentTrips: any[];
+    financials?: WorkstationFinancials | null;
+    recentTrips: WorkstationTrip[];
 }
 
-const formatCurrency = (n: number) => `₹${(n || 0).toLocaleString("en-IN")}`;
+const formatCurrency = (n?: number) => `₹${(n || 0).toLocaleString("en-IN")}`;
 
 const formatDate = (d: string) => {
     const date = new Date(d);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
-const getDirection = (variant: any) => {
+const getDirection = (variant?: TripVariant) => {
     if (!variant?.corridorId) return "—";
     const o = variant.corridorId.originId?.name || "?";
     const d = variant.corridorId.destinationId?.name || "?";
@@ -129,7 +131,7 @@ const FinancialTab = ({ financials, recentTrips }: FinancialTabProps) => {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {recentTrips.slice(0, 20).map((trip: any) => {
+                                    {recentTrips.slice(0, 20).map((trip) => {
                                         const s = trip.stats || {};
                                         return (
                                             <TableRow key={trip._id} className="hover:bg-white/5 border-white/5">

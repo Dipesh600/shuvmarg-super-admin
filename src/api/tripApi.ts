@@ -85,7 +85,7 @@ export interface AdminTrip {
     ownerId?: TripOwner;
     driverId?: TripDriver;
     variantId?: TripVariant;
-    scheduleId?: { _id: string; departureTime?: string; recurrence?: string; versionNumber?: number };
+    scheduleId?: string | { _id: string; departureTime?: string; recurrence?: string; versionNumber?: number };
     // Enriched by overview/search endpoints
     bookingStats?: BookingStats;
     refundStats?: RefundStats;
