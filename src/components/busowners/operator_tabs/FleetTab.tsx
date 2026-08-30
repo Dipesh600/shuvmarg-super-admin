@@ -51,7 +51,7 @@ const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) =
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredFleets = fleets.filter((fleet: any) =>
+  const filteredFleets = fleets.filter((fleet) =>
     fleet.busName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     fleet.busNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
     fleet.fleetId.toLowerCase().includes(searchQuery.toLowerCase())
@@ -111,7 +111,7 @@ const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) =
           </div>
           <div className="flex gap-2">
             <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
-              {filteredFleets.filter((f: any) => f.status === 'ACTIVE').length} Active
+              {filteredFleets.filter((fleet) => fleet.status === "ACTIVE").length} Active
             </span>
           </div>
         </CardHeader>
@@ -148,7 +148,7 @@ const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) =
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredFleets.map((fleet: any) => (
+                  {filteredFleets.map((fleet) => (
                   <TableRow key={fleet._id}
                     className={`font-medium transition-colors ${
                       fleet.approvalStatus === "APPROVED" ? "border-l-4 border-l-emerald-400 hover:bg-emerald-50/30" :
@@ -174,7 +174,7 @@ const FleetTab = ({ ownerId, brandId }: { ownerId: string, brandId?: string }) =
                       <TableCell className="align-top py-4 hidden md:table-cell">
                         <div className="flex flex-col gap-1.5 opacity-80 text-xs font-bold font-mono">
                           <p>{fleet.totalSeats} Seats</p>
-                          <p className="text-muted-foreground text-[10px]">{fleet.seatLayout} Layout</p>
+                          <p className="text-muted-foreground text-[10px]">{typeof fleet.seatLayout === "string" ? fleet.seatLayout : fleet.seatLayout?.assigned ? "Assigned" : "Pending"} Layout</p>
                         </div>
                       </TableCell>
 
