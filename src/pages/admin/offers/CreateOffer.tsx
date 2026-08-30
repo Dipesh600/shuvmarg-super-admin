@@ -32,6 +32,8 @@ const USER_TYPES = [
   { value: "agent", label: "Agent" },
   { value: "busOwner", label: "Bus Owner" },
 ];
+const EDGE_KEYS = ["top", "bottom", "left", "right"] as const;
+const TYPOGRAPHY_KEYS = ["titleAlignment", "descAlignment", "codeAlignment"] as const;
 
 const generateCode = () => {
   const words = ["RIDE", "SHUV", "TRIP", "DASH", "FLY", "YATRA", "SWIFT"];
@@ -178,7 +180,7 @@ export default function CreateOffer() {
   const update = (key: keyof CreateCouponPayload, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const updateDesignConfigEdge = (edge: "top"|"bottom"|"left"|"right", value: unknown) => {
+  const updateDesignConfigEdge = (edge: (typeof EDGE_KEYS)[number], value: "smooth" | "ticket" | "torn" | "jagged") => {
     setForm((prev) => ({
       ...prev,
       designConfig: {
@@ -191,7 +193,7 @@ export default function CreateOffer() {
     }));
   };
 
-  const updateDesignConfigTypo = (key: "titleAlignment"|"descAlignment"|"codeAlignment", value: unknown) => {
+  const updateDesignConfigTypo = (key: (typeof TYPOGRAPHY_KEYS)[number], value: "left" | "center" | "right") => {
     setForm((prev) => ({
       ...prev,
       designConfig: {
@@ -673,12 +675,12 @@ export default function CreateOffer() {
                 {/* EDGES TAB */}
                 <TabsContent value="edges" className="space-y-4 mt-4">
                   <div className="grid grid-cols-2 gap-4">
-                    {["top", "bottom", "left", "right"].map((edge) => (
+                    {EDGE_KEYS.map((edge) => (
                       <div key={edge} className="space-y-2">
                         <Label className="text-white capitalize">{edge} Edge</Label>
                         <Select
-                          value={form.designConfig?.edges?.[edge as keyof typeof form.designConfig.edges] || "smooth"}
-                          onValueChange={(v) => updateDesignConfigEdge(edge as any, v)}
+                          value={form.designConfig?.edges?.[edge] || "smooth"}
+                          onValueChange={(value) => updateDesignConfigEdge(edge, value as "smooth" | "ticket" | "torn" | "jagged")}
                         >
                           <SelectTrigger className="bg-white/5 border-white/10 text-white focus:ring-[#D3D925]">
                             <SelectValue />
@@ -698,7 +700,7 @@ export default function CreateOffer() {
                 {/* TYPOGRAPHY TAB */}
                 <TabsContent value="typography" className="space-y-4 mt-4">
                   <div className="grid grid-cols-2 gap-4">
-                    {Object.keys(defaultForm.designConfig?.typography || {}).map((key) => {
+                    {TYPOGRAPHY_KEYS.map((key) => {
                       const labelMap: Record<string, string> = {
                         titleAlignment: "Title Alignment",
                         descAlignment: "Description Alignment",
@@ -708,8 +710,8 @@ export default function CreateOffer() {
                         <div key={key} className="space-y-2">
                           <Label className="text-white">{labelMap[key]}</Label>
                           <Select
-                            value={form.designConfig?.typography?.[key as keyof typeof form.designConfig.typography] || "left"}
-                            onValueChange={(v) => updateDesignConfigTypo(key as any, v)}
+                            value={form.designConfig?.typography?.[key] || "left"}
+                            onValueChange={(value) => updateDesignConfigTypo(key, value as "left" | "center" | "right")}
                           >
                             <SelectTrigger className="bg-white/5 border-white/10 text-white focus:ring-[#D3D925]">
                               <SelectValue />

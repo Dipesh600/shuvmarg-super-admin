@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { api } from "@/api/axios";
 import { Landmark, Loader2, RefreshCw } from "lucide-react";
+import { getErrorMessage } from "@/lib/error-message";
 
 // Matches the structure defined in platformConfigModel.js DEFAULTS.gateway_fees
 type GatewayFeeEntry = {
@@ -96,9 +97,8 @@ const GatewayFees = () => {
       } else {
         toast.error(res.data.message || "Failed to update gateway fees");
       }
-    } catch (err: any) {
-      const serverMsg = err?.response?.data?.message;
-      toast.error(serverMsg || "Failed to update gateway fees");
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Failed to update gateway fees"));
     } finally {
       setIsSaving(false);
     }

@@ -89,7 +89,7 @@ const AgentDetail = () => {
           </Button>
           <SuspendDialog
             entityType="agent"
-            entityName={agentData.name}
+            entityName={agentData.name ?? "Unknown agent"}
             currentStatus={agentStatus}
             entityId={agentData.id}
           />

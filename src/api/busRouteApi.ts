@@ -20,6 +20,12 @@ export interface BusRoutePayload {
     stops?: BusRouteStopInput[];
 }
 
+export interface BusRouteRecord extends BusRoutePayload {
+    _id: string;
+}
+
+type BusRouteListResponse = { success?: boolean; data: BusRouteRecord[] };
+
 export const createBusRoute = async (payload: BusRoutePayload) => {
     try {
         const { data } = await api.post("/busRoutes/create", payload);
@@ -52,7 +58,7 @@ export const getGlobalRoutes = async () => {
 
 export const getBusRoutesByOwner = async (ownerId: string) => {
     try {
-        const { data } = await api.get(`/busRoutes/owner/${ownerId}`);
+        const { data } = await api.get<BusRouteListResponse>(`/busRoutes/owner/${ownerId}`);
         return data;
     } catch (error) {
         console.error("Error fetching bus routes by owner:", error);

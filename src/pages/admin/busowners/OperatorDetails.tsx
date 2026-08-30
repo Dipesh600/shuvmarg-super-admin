@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { getBrandById, updateBrand, getBrandFinancials, type BrandUpdatePayload } from "@/api/operatorBrandApi";
+import { getBrandById, updateBrand, getBrandFinancials, type BrandUpdatePayload, type OperatorBrandDetail } from "@/api/operatorBrandApi";
 import { getErrorMessage } from "@/lib/error-message";
 import FleetTab from "@/components/busowners/operator_tabs/FleetTab";
 import BrandServicesTab from "@/components/busowners/operator_tabs/BrandServicesTab";
@@ -72,7 +72,7 @@ const BarChart = ({ data }: { data: { label: string; revenue: number; bookings: 
     );
 };
 
-const FinancialTab = ({ brand }: { brand: any }) => {
+const FinancialTab = ({ brand }: { brand: OperatorBrandDetail }) => {
     const { data: fin, isLoading } = useQuery({
         queryKey: ["brand-financials", brand._id],
         queryFn:  () => getBrandFinancials(brand._id),
@@ -186,7 +186,7 @@ const FinancialTab = ({ brand }: { brand: any }) => {
                     <CardContent className="p-0">
                         {f && f.fleetBreakdown.length > 0 ? (
                             <div className="divide-y divide-border">
-                                {f.fleetBreakdown.slice(0, 5).map((fb: any, idx: number) => (
+                                {f.fleetBreakdown.slice(0, 5).map((fb, idx) => (
                                     <div key={fb.busId || idx} className="flex items-center justify-between px-5 py-3 hover:bg-muted/30 transition-colors">
                                         <div>
                                             <p className="text-sm font-black">{fb.bus?.busName || "Unknown Bus"}</p>
@@ -303,7 +303,7 @@ const OperatorDetails = () => {
                                 <p className="uppercase bg-muted/50 px-2 py-0.5 rounded-md text-primary">{brand.brandCode}</p>
                                 <p className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5" /> Owned by {brand.ownerId?.name || "Bus Owner"}</p>
                                 {brand.baseCity && <p className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {brand.baseCity}</p>}
-                                <p className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Est. {new Date(brand.createdAt).getFullYear()}</p>
+                                <p className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Est. {brand.createdAt ? new Date(brand.createdAt).getFullYear() : "—"}</p>
                             </div>
                         </div>
                     </div>
@@ -342,7 +342,7 @@ const OperatorDetails = () => {
                     <TabsContent value="fleet">
                         <div className="bg-[#121212]/30 border-white/5 border rounded-2xl p-1 shadow-sm backdrop-blur-md">
                             {/* We will update FleetTab to accept brandId later */}
-                            <FleetTab ownerId={brand.ownerId?._id} brandId={brand._id} />
+                            <FleetTab ownerId={brand.ownerId?._id ?? ""} brandId={brand._id} />
                         </div>
                     </TabsContent>
                     
@@ -354,7 +354,7 @@ const OperatorDetails = () => {
 
                     <TabsContent value="schedules">
                         <div className="bg-[#121212]/30 border-white/5 border rounded-2xl p-4 shadow-sm backdrop-blur-md">
-                            <BrandSchedulesTab brandId={brand._id} ownerId={brand.ownerId?._id} />
+                            <BrandSchedulesTab brandId={brand._id} ownerId={brand.ownerId?._id ?? ""} />
                         </div>
                     </TabsContent>
 

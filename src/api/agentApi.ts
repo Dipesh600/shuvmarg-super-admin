@@ -1,10 +1,62 @@
 import { api } from "./axios";
 
+export interface AgentListRecord {
+  _id?: string;
+  id: string;
+  agentId?: string;
+  name?: string;
+  phone?: string;
+  email?: string;
+  profileImg?: string;
+  location?: string;
+  applicationStatus: string;
+  commission?: string;
+  totalBookings?: number;
+  createdAt?: string;
+  submittedAt?: string;
+  agentType?: string;
+}
+
+export interface AgentBrandOption {
+  _id: string;
+  brandId?: string;
+  brandName: string;
+  brandCode?: string;
+  baseCity?: string;
+}
+
+export interface AgentRouteServiceOption {
+  _id?: string;
+  variantId: string;
+  origin?: string;
+  destination?: string;
+  routeName?: string;
+  patternName?: string;
+  status?: string;
+}
+
+type AgentListResponse = { data: AgentListRecord[] };
+export type AgentKycDocument = { type: string; verified?: boolean | null; rejectionReason?: string | null; previewUrl?: string; fileKey?: string };
+export type AgentKycResponse = {
+  data: {
+    profile: { name: string; phone: string; email: string; address?: string; profilePicture?: string; createdAt?: string };
+    agentDetails?: {
+      _id?: string; agentId?: string; agentType?: string; businessName?: string; businessType?: string;
+      claimedMonthlyVolume?: string; commissionRate?: number; district?: string; municipality?: string;
+      operationType?: string; shopAddress?: string; settlementMethod?: string; submittedAt?: string;
+      adminNotes?: string; moreInfoRequest?: string; rejectionReason?: string;
+      user?: { name?: string; phone?: string; email?: string };
+      documents?: AgentKycDocument[];
+      applicationStatus?: string; bankName?: string; esewaNumber?: string; khaltiNumber?: string;
+    };
+  };
+};
+
 // ── AGENT QUERIES ──────────────────────────────────────────────────────────────
 
 // get all agents (optional ?status=PENDING&type=DEFAULT)
 const getAllAgents = async (params?: { status?: string; type?: string }) => {
-  const { data } = await api.get("/getAllAgents", { params });
+  const { data } = await api.get<AgentListResponse>("/getAllAgents", { params });
   return data;
 };
 
@@ -16,19 +68,19 @@ const getAgentDashboardData = async () => {
 
 // get pending applications only
 const getPendingAgentApplications = async () => {
-  const { data } = await api.get("/getAllAgents", { params: { status: "PENDING" } });
+  const { data } = await api.get<AgentListResponse>("/getAllAgents", { params: { status: "PENDING" } });
   return data;
 };
 
 // get MORE_INFO applications
 const getMoreInfoAgentApplications = async () => {
-  const { data } = await api.get("/getAllAgents", { params: { status: "MORE_INFO" } });
+  const { data } = await api.get<AgentListResponse>("/getAllAgents", { params: { status: "MORE_INFO" } });
   return data;
 };
 
 // get agent detail by userId / agentId / Agent._id (returns profile + KYC docs with presigned URLs)
 const getAgentById = async (id: string) => {
-  const { data } = await api.post("/getAgentDetails", { id });
+  const { data } = await api.post<AgentKycResponse>("/getAgentDetails", { id });
   return data;
 };
 
@@ -87,13 +139,13 @@ const finalizeAgentSetup = async (payload: FinalizeAgentPayload) => {
 
 // Get all operator brands (for OPERATOR_LINKED agent brand selector dropdown)
 const getAllBrands = async () => {
-  const { data } = await api.get("/brands");
+  const { data } = await api.get<{ data: AgentBrandOption[] }>("/brands");
   return data;
 };
 
 // Get route services for a brand (for SPECIFIC_ROUTES picker)
 const getBrandRouteServices = async (brandId: string) => {
-  const { data } = await api.get(`/brands/${brandId}/route-services`);
+  const { data } = await api.get<{ data: AgentRouteServiceOption[] }>(`/brands/${brandId}/route-services`);
   return data;
 };
 

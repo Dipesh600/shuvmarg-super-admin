@@ -46,17 +46,21 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { api } from "@/api/axios";
+import { getErrorMessage } from "@/lib/error-message";
+
+type PlatformAmenity = { _id: string; name: string; description?: string; icon: string; status: boolean };
+type AmenityPayload = Omit<PlatformAmenity, "_id">;
 
 // ── API helpers (inline — no new file needed) ──────────────────────────────
 const getAllGlobalAmenities = async () => {
-  const { data } = await api.get("/amenities/global");
+  const { data } = await api.get<{ data: PlatformAmenity[] }>("/amenities/global");
   return data;
 };
-const createGlobalAmenity = async (payload: any) => {
+const createGlobalAmenity = async (payload: AmenityPayload) => {
   const { data } = await api.post("/amenities/createGlobal", payload);
   return data;
 };
-const updateAmenity = async ({ id, payload }: { id: string; payload: any }) => {
+const updateAmenity = async ({ id, payload }: { id: string; payload: AmenityPayload }) => {
   const { data } = await api.patch(`/amenities/${id}`, payload);
   return data;
 };
@@ -182,8 +186,8 @@ const AmenityCard = ({
   onEdit,
   onDelete,
 }: {
-  amenity: any;
-  onEdit: (a: any) => void;
+  amenity: PlatformAmenity;
+  onEdit: (amenity: PlatformAmenity) => void;
   onDelete: (id: string, name: string) => void;
 }) => {
   const Icon = iconFromValue(amenity.icon);
@@ -240,7 +244,7 @@ const AmenityFormModal = ({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  editTarget: any | null;
+  editTarget: PlatformAmenity | null;
 }) => {
   const qc = useQueryClient();
   const isEdit = !!editTarget;
@@ -265,7 +269,7 @@ const AmenityFormModal = ({
       toast.success("Amenity added to platform catalog.");
       onClose();
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message || "Failed to create amenity."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to create amenity.")),
   });
 
   const updateMutation = useMutation({
@@ -275,7 +279,7 @@ const AmenityFormModal = ({
       toast.success("Amenity updated.");
       onClose();
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message || "Failed to update amenity."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to update amenity.")),
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -404,7 +408,7 @@ const DeleteConfirmModal = ({
       toast.success(`"${target?.name}" removed from catalog.`);
       onClose();
     },
-    onError: (e: any) => toast.error(e?.response?.data?.message || "Failed to delete amenity."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to delete amenity.")),
   });
 
   return (
@@ -441,7 +445,7 @@ const DeleteConfirmModal = ({
 const PlatformAmenities = () => {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<any | null>(null);
+  const [editTarget, setEditTarget] = useState<PlatformAmenity | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -450,13 +454,13 @@ const PlatformAmenities = () => {
     staleTime: 60_000,
   });
 
-  const amenities: any[] = data?.data || [];
+  const amenities = data?.data || [];
   const filtered = amenities.filter((a) =>
     !search || a.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const openCreate = () => { setEditTarget(null); setFormOpen(true); };
-  const openEdit = (a: any) => { setEditTarget(a); setFormOpen(true); };
+  const openEdit = (amenity: PlatformAmenity) => { setEditTarget(amenity); setFormOpen(true); };
   const openDelete = (id: string, name: string) => setDeleteTarget({ id, name });
 
   const activeCount = amenities.filter((a) => a.status).length;

@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type { BoardingPointLocationInput } from "@/api/boardingPointsApi";
 
 interface UpdateBoardingPointModalProps {
   id: string | null;
@@ -38,7 +39,7 @@ const UpdateBoardingPointModalInstance: React.FC<UpdateBoardingPointModalProps> 
   const [city, setCity] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState(true);
-  const [boardingPoints, setBoardingPoints] = useState<any[]>([]);
+  const [boardingPoints, setBoardingPoints] = useState<BoardingPointLocationInput[]>([]);
   const [syncedData, setSyncedData] = useState<unknown>(null);
 
   // Force refetch and reset local state when id changes or modal opens
@@ -67,7 +68,7 @@ const UpdateBoardingPointModalInstance: React.FC<UpdateBoardingPointModalProps> 
     }
   };
 
-  const updatePoint = (index: number, field: string, value: string) => {
+  const updatePoint = (index: number, field: keyof BoardingPointLocationInput, value: string) => {
     setBoardingPoints(boardingPoints.map((point, i) => 
       i === index ? { ...point, [field]: value } : point
     ));

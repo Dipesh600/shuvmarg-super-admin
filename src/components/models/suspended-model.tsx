@@ -25,6 +25,7 @@ import { Ban, CheckCircle } from "lucide-react";
 import { useSuspendEntity } from "@/hooks/useSuspenedEntity";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { getErrorMessage } from "@/lib/error-message";
 
 interface SuspendDialogProps {
   entityType: "user" | "agent" | "bus owner" | "bus";
@@ -72,8 +73,8 @@ const queryClient = useQueryClient();
           setOpen(false);
           setReason("");
         },
-        onError: (err: any) => {
-          toast.error(err.message || "Something went wrong");
+        onError: (error: unknown) => {
+          toast.error(getErrorMessage(error, "Something went wrong"));
         },
       }
     );

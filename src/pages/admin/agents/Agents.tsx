@@ -34,7 +34,7 @@ import {
 import { useModal } from "@/hooks/use-model-store";
 import { columns } from "@/components/data_tables/agents/columns";
 import { DataTable } from "@/components/DataTable";
-import { getAllAgents, getAgentDashboardData } from "@/api/agentApi";
+import { getAllAgents, getAgentDashboardData, type AgentListRecord } from "@/api/agentApi";
 import { useAuth } from "@/providers/auth-context";
 import AgentsSkeleton from "@/components/Skeletion_Loading/AgentsSkeletion";
 
@@ -88,19 +88,19 @@ const Agents = () => {
   });
 
   const agentDashboard = dashboardData?.data;
-  const allAgents: any[] = useMemo(() => data?.data ?? [], [data?.data]);
+  const allAgents: AgentListRecord[] = useMemo(() => data?.data ?? [], [data?.data]);
 
   // ── Directory table data ─────────────────────────────────────────────────────
   const agentTableData = allAgents
     .filter((a) => a.applicationStatus === "APPROVED")
-    .map((agent: any) => ({
+    .map((agent) => ({
       id: agent.id,
-      name: agent.name,
-      profileImg: agent.profileImg,
-      email: agent.email,
-      location: agent.location,
+      name: agent.name ?? "Unknown agent",
+      profileImg: agent.profileImg ?? "",
+      email: agent.email ?? "",
+      location: agent.location ?? "—",
       status: agent.applicationStatus,
-      commission: agent.commission,
+      commission: agent.commission ?? "—",
       performance: "90%",
       applications: agent.totalBookings ?? 0,
     }));
@@ -131,7 +131,7 @@ const Agents = () => {
     return [...list].sort((a, b) => {
       const od = (order[a.applicationStatus] ?? 9) - (order[b.applicationStatus] ?? 9);
       if (od !== 0) return od;
-      return new Date(b.submittedAt ?? b.createdAt).getTime() - new Date(a.submittedAt ?? a.createdAt).getTime();
+      return new Date(b.submittedAt ?? b.createdAt ?? 0).getTime() - new Date(a.submittedAt ?? a.createdAt ?? 0).getTime();
     });
   }, [allAgents, appFilter, search]);
 

@@ -26,6 +26,16 @@ export interface UserRecord {
   totalReferrals: number;
   yatrapoints: number;
 }
+type UserAuditEntry = { _id?: string; action: string; createdAt: string; reason?: string; adminId?: { name?: string } };
+type UserDetailResponse = {
+  data: {
+    profile?: UserRecord;
+    metrics?: { bookings?: { total?: number; totalSpent?: number } };
+    security?: { lastLoginAt?: string; suspensionReason?: string; suspendedAt?: string; activeSessions?: number; failedLoginAttempts?: number; accountLocked?: boolean; forcePasswordChange?: boolean };
+    referral?: { code?: string; totalReferrals?: number };
+    auditLog?: UserAuditEntry[];
+  };
+};
 
 // Get all users with optional search, status filter, and pagination
 const getAllUsers = async (params?: {
@@ -40,7 +50,7 @@ const getAllUsers = async (params?: {
 
 // Get enriched user profile by ID
 const getUserById = async (userId: string) => {
-  const { data } = await api.post("/getuserById", {
+  const { data } = await api.post<UserDetailResponse>("/getuserById", {
     id: userId,
   });
   return data;

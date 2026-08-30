@@ -28,16 +28,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useModal } from "@/hooks/use-model-store";
-import type { ModalType } from "@/hooks/use-model-store";
+import type { ModalPayload, ModalType } from "@/hooks/use-model-store";
 import { useRefundPolicies } from "@/hooks/useRefundPolicy";
 import { useQuery } from "@tanstack/react-query";
-import { getRefundQueue } from "@/api/refundApi";
+import { getRefundQueue, type RefundPolicy } from "@/api/refundApi";
 import { format } from "date-fns";
 
 // ─── Refund Requests Tab (live data) ──────────────────────────────────────────
 
 interface RefundRequestsTabProps {
-  onOpen: (type: ModalType, data?: unknown) => void;
+  onOpen: (type: ModalType, data?: ModalPayload) => void;
 }
 
 function RefundRequestsTab({ onOpen }: RefundRequestsTabProps) {
@@ -133,7 +133,7 @@ function RefundRequestsTab({ onOpen }: RefundRequestsTabProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {refunds.map((refund: any) => (
+              {refunds.map((refund) => (
                 <TableRow key={refund._id} className="border-white/5 hover:bg-white/5">
                   <TableCell className="text-xs text-white/40">
                     {refund.booking?.ticketId || "—"}
@@ -190,17 +190,6 @@ function RefundRequestsTab({ onOpen }: RefundRequestsTabProps) {
 
 
 
-interface RefundPolicy {
-  _id: string;
-  policyName: string;
-  refundPercentage: number;
-  deductionPercentage: number;
-  description: string;
-  minHours: number;
-  maxHours: number | null;
-  color: string;
-}
-
 const Refunds = () => {
   const { onOpen } = useModal();
   const { data: policies } = useRefundPolicies();
@@ -230,7 +219,7 @@ const Refunds = () => {
     minHours: policy.minHours,
     maxHours: policy.maxHours,
     color: policy.color,
-    isActive: (policy as any).isActive,
+    isActive: policy.isActive,
   }));
   return (
     <>
@@ -344,8 +333,8 @@ const Refunds = () => {
                     </p>
                     <div className="flex w-full h-12 rounded-lg overflow-hidden border border-white/10">
                       {[...policiesTableData]
-                        .sort((a: any, b: any) => a.minHours - b.minHours)
-                        .map((policy: any) => {
+                        .sort((a, b) => a.minHours - b.minHours)
+                        .map((policy) => {
                           // calculate relative width (cap at 96hrs for visual)
                           const maxDisplay = 96;
                           const min = policy.minHours || 0;
@@ -380,8 +369,8 @@ const Refunds = () => {
                   {/* Policy Cards Grid */}
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {[...policiesTableData]
-                      .sort((a: any, b: any) => (b.maxHours ?? 999) - (a.maxHours ?? 999))
-                      .map((policy: any) => (
+                      .sort((a, b) => (b.maxHours ?? 999) - (a.maxHours ?? 999))
+                      .map((policy) => (
                         <div
                           key={policy.id}
                           className="relative rounded-xl border border-white/10 bg-white/5 p-5 space-y-3 hover:bg-white/10 transition-colors cursor-pointer"
@@ -458,8 +447,8 @@ const Refunds = () => {
                     <p className="text-sm font-medium mb-3 text-white">Example: NPR 1,000 Ticket</p>
                     <div className="grid gap-2 md:grid-cols-4">
                       {[...policiesTableData]
-                        .sort((a: any, b: any) => (b.maxHours ?? 999) - (a.maxHours ?? 999))
-                        .map((policy: any) => (
+                        .sort((a, b) => (b.maxHours ?? 999) - (a.maxHours ?? 999))
+                        .map((policy) => (
                           <div key={policy.id} className="flex items-center gap-3 text-sm">
                             <div
                               className="w-2 h-2 rounded-full shrink-0"

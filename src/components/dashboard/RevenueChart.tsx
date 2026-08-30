@@ -1,15 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from "recharts";
+import type { ReactNode } from "react";
 
+type ChartPayload = { color?: string; fill?: string; name: string; value: number };
+type ChartTooltipProps = { active?: boolean; payload?: ChartPayload[]; label?: ReactNode };
 
-
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-[#1e1e1e] border border-white/10 p-3 rounded-lg shadow-2xl text-sm min-w-[160px]">
         <p className="font-semibold text-white mb-2">{label}</p>
         <div className="space-y-1.5">
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index) => (
             <div key={index} className="flex items-center justify-between gap-6">
               <div className="flex items-center gap-2">
                 <div
@@ -32,7 +34,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export function RevenueChart({revenueData}: {revenueData?: { label: string; revenue: number }[]}) {
+export function RevenueChart({revenueData}: {revenueData?: { month: string; revenue: number; netRevenue: number }[]}) {
   return (
     <Card className="col-span-full lg:col-span-2 w-full border-white/5 bg-[#121212]/30 backdrop-blur-md shadow-xl">
       <CardHeader className="pb-2">

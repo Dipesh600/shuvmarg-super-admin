@@ -25,6 +25,7 @@ import {
 import {
   getAllAgents,
   getAgentDashboardData,
+  type AgentListRecord,
 } from "@/api/agentApi";
 import { useAuth } from "@/providers/auth-context";
 
@@ -99,7 +100,7 @@ export default function AgentOnboarding() {
   const dash = dashData?.data;
 
   // ── Filter + search agents ────────────────────────────────────────────────
-  const agents: any[] = useMemo(() => allData?.data ?? [], [allData?.data]);
+  const agents: AgentListRecord[] = useMemo(() => allData?.data ?? [], [allData?.data]);
 
   const filtered = useMemo(() => {
     let list = agents;
@@ -145,7 +146,7 @@ export default function AgentOnboarding() {
     return [...filtered].sort((a, b) => {
       const oDiff = (order[a.applicationStatus] ?? 99) - (order[b.applicationStatus] ?? 99);
       if (oDiff !== 0) return oDiff;
-      return new Date(b.submittedAt ?? b.createdAt).getTime() - new Date(a.submittedAt ?? a.createdAt).getTime();
+      return new Date(b.submittedAt ?? b.createdAt ?? 0).getTime() - new Date(a.submittedAt ?? a.createdAt ?? 0).getTime();
     });
   }, [filtered]);
 

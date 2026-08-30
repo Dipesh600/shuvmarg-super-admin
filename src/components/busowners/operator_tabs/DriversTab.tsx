@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import DriverFormModal from "./CreateDriverModal";
 import RejectDriverModal from "./RejectDriverModal";
+import { getErrorMessage } from "@/lib/error-message";
 
 interface DriversTabProps {
   brandId: string;
@@ -203,7 +204,7 @@ const DriverCard: React.FC<{
       {driver.assignedBusId && (
         <div className="mt-2 flex items-center gap-2 text-[10px] text-white/50 font-bold">
           <Clock className="h-3 w-3" />
-          Primary bus: <span className="text-white/90">{(driver.assignedBusId as any).busName} · {(driver.assignedBusId as any).busNumber}</span>
+          Primary bus: <span className="text-white/90">{driver.assignedBusId.busName} · {driver.assignedBusId.busNumber}</span>
         </div>
       )}
 
@@ -238,13 +239,13 @@ const DriversTab: React.FC<DriversTabProps> = ({ brandId, brandName }) => {
   const approveMut = useMutation({
     mutationFn: (id: string) => approveDriver(id),
     onSuccess:  () => { invalidate(); toast.success("Driver approved."); },
-    onError:    (e: any) => toast.error(e.response?.data?.message || "Approval failed"),
+    onError:    (error: unknown) => toast.error(getErrorMessage(error, "Approval failed")),
   });
 
   const rejectMut = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => rejectDriver(id, reason),
     onSuccess:  () => { invalidate(); setRejectTarget(null); toast.success("Driver rejected."); },
-    onError:    (e: any) => toast.error(e.response?.data?.message || "Rejection failed"),
+    onError:    (error: unknown) => toast.error(getErrorMessage(error, "Rejection failed")),
   });
 
   // Compliance counts for header summary

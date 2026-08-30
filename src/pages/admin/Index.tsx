@@ -38,7 +38,7 @@ const Index = () => {
     return <div>Error loading dashboard data: {(error as Error).message}</div>;
   }
   const summaryData = data?.data?.summary;
-  const revenueData = (data?.data?.revenueOverview ?? []).map((item: any) => ({
+  const revenueData = (data?.data?.revenueOverview ?? []).map((item) => ({
     month: item.label,
     revenue: item.revenue,
     netRevenue: Math.round(item.revenue * 0.85), // Estimated net revenue

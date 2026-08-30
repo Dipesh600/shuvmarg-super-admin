@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, UserCheck, Upload, FileText, ImageIcon, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/error-message";
 
 // ── File picker button ──────────────────────────────────────────────────────────
 const FilePicker: React.FC<{
@@ -132,7 +133,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
       : { ...INITIAL, brandId }
   );
 
-  const set = (key: string, value: any) =>
+  const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const [licenseDocFile,    setLicenseDocFile]    = useState<File | null>(null);
@@ -150,7 +151,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
       if (isEdit) {
         return updateDriverWithFiles(driver!._id, payload);
       }
-      return createDriverWithFiles(payload as any);
+      return createDriverWithFiles(payload);
     },
     onSuccess: () => {
       toast.success(isEdit ? "Driver updated successfully." : "Driver added. Pending document review.");
@@ -163,7 +164,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
       }
       onSuccess();
     },
-    onError: (e: any) => toast.error(e.response?.data?.message || (isEdit ? "Update failed" : "Failed to create driver")),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, isEdit ? "Update failed" : "Failed to create driver")),
   });
 
   const handleClose = () => {

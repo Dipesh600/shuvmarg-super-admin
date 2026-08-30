@@ -194,7 +194,7 @@ const Transactions = () => {
             sub:   `${stats.disputedCount ?? 0} DISPUTED → go to Disputes`,
             border: "border-l-rose-500",
             valueColor: "text-white",
-            onClick: stats.disputedCount > 0 ? () => navigate("/admin/disputes") : undefined,
+            onClick: (stats.disputedCount ?? 0) > 0 ? () => navigate("/admin/disputes") : undefined,
           },
           {
             icon:  <RefreshCw   className="h-5 w-5 text-white/60" />,
@@ -326,7 +326,7 @@ const Transactions = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {transactions.map((txn: any) => {
+                    {transactions.map((txn) => {
                       const isProblematic = txn.status === "DISPUTED" || txn.status === "PAYMENT_RECEIVED";
                       return (
                         <tr
@@ -356,7 +356,7 @@ const Transactions = () => {
                           </td>
                           <td className="py-3 pr-4">
                             <Badge variant="outline" className="text-[10px] bg-white/5 border-white/10 text-white/80">
-                              {PM[txn.gateway] ?? txn.gateway ?? "—"}
+                              {(txn.gateway ? PM[txn.gateway] : undefined) ?? txn.gateway ?? "—"}
                             </Badge>
                           </td>
                           <td className="py-3 pr-4">
@@ -404,7 +404,7 @@ const Transactions = () => {
 
               {/* Mobile cards */}
               <div className="md:hidden space-y-2">
-                {transactions.map((txn: any) => {
+                {transactions.map((txn) => {
                   const isProblematic = txn.status === "DISPUTED" || txn.status === "PAYMENT_RECEIVED";
                   return (
                     <div
@@ -429,7 +429,7 @@ const Transactions = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <Badge variant="outline" className="text-[10px] bg-white/5 border-white/10 text-white/80">
-                          {PM[txn.gateway] ?? txn.gateway ?? "—"}
+                          {(txn.gateway ? PM[txn.gateway] : undefined) ?? txn.gateway ?? "—"}
                         </Badge>
                         {txn.status === "DISPUTED" ? (
                           <Button
