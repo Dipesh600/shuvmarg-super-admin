@@ -7,6 +7,14 @@ export type SecureFleetDocumentRequest = {
     imageIndex?: number;
 };
 
+export interface OwnerFleetOption {
+    _id: string;
+    busName: string;
+    busNumber: string;
+}
+
+type OwnerFleetListResponse = { success: boolean; data: OwnerFleetOption[] };
+
 export const fetchFleetDocumentAsBlob = async (
     request: SecureFleetDocumentRequest,
 ): Promise<DocumentBlobResult> => {
@@ -72,7 +80,7 @@ export const notifyAdminCreatedFleet = async (fleetId: string) => {
 export const getFleetsByOwner = async (ownerId: string, brandId?: string) => {
     try {
         const url = brandId ? `/fleet/owner/${ownerId}?brandId=${brandId}` : `/fleet/owner/${ownerId}`;
-        const { data } = await api.get(url);
+        const { data } = await api.get<OwnerFleetListResponse>(url);
         return data;
     } catch (error) {
         console.error("Error fetching fleets by owner:", error);
