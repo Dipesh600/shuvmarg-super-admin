@@ -10,6 +10,7 @@ import ScheduleTab from "./workstation/ScheduleTab";
 import FinancialTab from "./workstation/FinancialTab";
 import TimelineTab from "./workstation/TimelineTab";
 import ComingSoonTab from "./workstation/ComingSoonTab";
+import { getErrorMessage } from "@/lib/error-message";
 
 const FleetWorkstation = () => {
     const { id } = useParams();
@@ -23,7 +24,7 @@ const FleetWorkstation = () => {
             <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
                 <XCircle className="h-16 w-16 text-destructive" />
                 <h2 className="text-2xl font-bold">Failed to load fleet workstation</h2>
-                <p className="text-muted-foreground">{(error as any)?.message || "Something went wrong"}</p>
+                <p className="text-muted-foreground">{getErrorMessage(error, "Something went wrong")}</p>
                 <Button onClick={() => navigate("/admin/fleets")}>Back to Fleets</Button>
             </div>
         );

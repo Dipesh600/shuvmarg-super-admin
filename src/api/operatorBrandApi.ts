@@ -1,4 +1,37 @@
 import { api } from "./axios";
+import type { OperatorRouteTiming } from "./platformRegistryApi";
+
+export interface BrandRouteServiceConfig {
+    _id: string;
+    patternName?: string;
+    status: string;
+    isLive?: boolean;
+    activeStops?: Array<{ _id: string; name?: string; code?: string; type?: string }>;
+    timingConfig?: OperatorRouteTiming[];
+    returnTimingConfig?: OperatorRouteTiming[];
+    returnOverridden?: boolean;
+    variantId?: {
+        _id: string;
+        name?: string;
+        code?: string;
+        type?: string;
+        direction?: string;
+        returnVariantId?: string;
+        corridorId?: {
+            _id?: string;
+            originId?: { name?: string; code?: string };
+            destinationId?: { name?: string; code?: string };
+        };
+    };
+    scheduleStats?: { total: number; active: number; suspended: number; draft: number };
+}
+
+export interface BrandRouteServicesResponse {
+    success: boolean;
+    results: number;
+    data: BrandRouteServiceConfig[];
+    summary: { totalRoutes: number; activeRoutes: number; totalSchedules: number; activeSchedules: number };
+}
 
 export const createBrand = async (payload: {
     ownerId: string;
@@ -48,7 +81,7 @@ export const updateBrand = async (brandId: string, payload: BrandUpdatePayload) 
 
 // Route Services — returns OperatorRouteConfigs with corridor, stops, and live schedule counts
 export const getBrandRouteServices = async (brandId: string) => {
-    const { data } = await api.get(`/brands/${brandId}/route-services`);
+    const { data } = await api.get<BrandRouteServicesResponse>(`/brands/${brandId}/route-services`);
     return data;
 };
 
