@@ -1,4 +1,5 @@
 import { api } from "./axios";
+import { getErrorMessage } from "@/lib/error-message";
 
 export type KycDocumentDescriptor = {
   present: boolean;
@@ -103,9 +104,9 @@ export const fetchDocumentAsBlob = async (
     const mimeType = response.headers.get("Content-Type") ?? "application/octet-stream";
     const blob = await response.blob();
     return { blobUrl: URL.createObjectURL(blob), mimeType };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[fetchDocumentAsBlob] Failed:", err);
-    return { error: err?.message || "Failed to load document." };
+    return { error: getErrorMessage(err, "Failed to load document.") };
   }
 };
 
@@ -131,9 +132,9 @@ export const fetchKycDocumentAsBlob = async (
     const mimeType = response.headers.get("Content-Type") ?? "application/octet-stream";
     const blob = await response.blob();
     return { blobUrl: URL.createObjectURL(blob), mimeType };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[fetchKycDocumentAsBlob] Failed:", err);
-    return { error: err?.message || "Failed to load document." };
+    return { error: getErrorMessage(err, "Failed to load document.") };
   }
 };
 
@@ -174,7 +175,21 @@ export const getOwnerDetail = async (busOwnerId: string): Promise<AdminBusOwnerD
   return data.data;
 };
 
-export const updateOwnerKycStatus = async (payload: any) => {
+export type KycSectionDecision = {
+  verified: boolean;
+  rejectionReason: string | null;
+};
+
+export type OwnerKycReviewPayload = {
+  id: string;
+  verificationStatus: "approved" | "rejected";
+  rejectionReason?: string;
+  companyRegistration: KycSectionDecision;
+  ownerIdentity: KycSectionDecision;
+  taxRegistration: KycSectionDecision;
+};
+
+export const updateOwnerKycStatus = async (payload: OwnerKycReviewPayload) => {
   const { data } = await api.patch("/busOwnerKycStatus", payload);
   return data;
 };

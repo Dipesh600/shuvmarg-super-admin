@@ -6,7 +6,9 @@ import {
   createBoardingPoint,
   updateBoardingPoint
 } from "@/api/boardingPointsApi";
+import type { BoardingPointPayload } from "@/api/boardingPointsApi";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/error-message";
 
 export const useFetchBoardingPointsByOwner = (ownerId: string) => {
   return useQuery({
@@ -29,13 +31,13 @@ export const useFetchBoardingPointById = (id: string) => {
 export const useCreateBoardingPoint = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: any) => createBoardingPoint(payload),
+    mutationFn: (payload: BoardingPointPayload) => createBoardingPoint(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["boardingPoints"] });
       toast.success("Boarding point created successfully!");
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Failed to create boarding point");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to create boarding point"));
     }
   });
 };
@@ -43,13 +45,13 @@ export const useCreateBoardingPoint = () => {
 export const useUpdateBoardingPoint = (id: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: any) => updateBoardingPoint(id, payload),
+    mutationFn: (payload: BoardingPointPayload) => updateBoardingPoint(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["boardingPoints"] });
       toast.success("Boarding point updated successfully!");
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Failed to update boarding point");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update boarding point"));
     }
   });
 };
@@ -62,8 +64,8 @@ export const useDeleteBoardingPoint = () => {
       queryClient.invalidateQueries({ queryKey: ["boardingPoints"] });
       toast.success("Boarding point deleted successfully!");
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Failed to delete boarding point");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to delete boarding point"));
     }
   });
 };

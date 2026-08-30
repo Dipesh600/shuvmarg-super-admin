@@ -1,6 +1,21 @@
 import { api } from "./axios";
 
-export const createBoardingPoint = async (payload: any) => {
+export interface BoardingPointLocationInput {
+    pointName: string;
+    landmark: string;
+    time: string;
+    contactNumber: string;
+}
+
+export interface BoardingPointPayload {
+    city: string;
+    description?: string;
+    ownerId?: string;
+    status?: boolean;
+    boardingPoints: BoardingPointLocationInput[];
+}
+
+export const createBoardingPoint = async (payload: BoardingPointPayload) => {
     try {
         const { data } = await api.post("/boardingPoints/create", payload);
         return data;
@@ -44,7 +59,7 @@ export const getBoardingPointById = async (id: string) => {
     }
 };
 
-export const updateBoardingPoint = async (id: string, payload: any) => {
+export const updateBoardingPoint = async (id: string, payload: BoardingPointPayload) => {
     try {
         const { data } = await api.patch(`/boardingPoints/${id}`, payload);
         return data;

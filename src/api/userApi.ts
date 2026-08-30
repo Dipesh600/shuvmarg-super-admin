@@ -2,8 +2,29 @@ import { api } from "./axios";
 
 export interface UsersResponse {
   success?: boolean;
-  data?: any[];
-  pagination?: any;
+  data?: UserRecord[];
+  pagination?: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface UserRecord {
+  _id: string;
+  name: string;
+  phone: string;
+  profilePicture: string;
+  email: string;
+  status: "active" | "inactive" | "banned";
+  isVerified: boolean;
+  bookingCount?: number;
+  totalSpent?: number;
+  createdAt: string;
+  role: string;
+  roles?: string[];
+  lastLoginAt?: string;
+  address?: string;
+  gender?: string;
+  referralCode: string;
+  totalReferrals: number;
+  yatrapoints: number;
 }
 
 // Get all users with optional search, status filter, and pagination
