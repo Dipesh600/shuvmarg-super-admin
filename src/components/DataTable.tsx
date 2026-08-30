@@ -59,10 +59,12 @@ export function DataTable<TData, TValue>({
   const filteredData = useMemo(() => {
     if (!isKyc || statusFilter === "all") return data;
 
-    return data.filter((item: any) => item?.status === statusFilter);
+    return data.filter((item) => (item as { status?: string })?.status === statusFilter);
   }, [data, isKyc, statusFilter]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState({});
+  // TanStack Table intentionally returns stateful functions; React Compiler must not memoize this hook.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: filteredData,
     columns,

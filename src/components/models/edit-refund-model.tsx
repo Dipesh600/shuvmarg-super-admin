@@ -71,7 +71,7 @@ export function ReviewRefundDialog() {
     }
 
     mutateStatus({
-      refundId: data._id,
+      refundId: data._id ?? "",
       status,
       remarks: remarks || undefined,
       refundGateway: status === "completed" ? selectedGateway : undefined,
@@ -92,7 +92,7 @@ export function ReviewRefundDialog() {
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-bold text-white">Review Refund Request</DialogTitle>
-            <Badge variant="outline" className={`${statusColors[data.status]} capitalize px-2.5 py-0.5`}>
+            <Badge variant="outline" className={`${statusColors[data.status ?? ""] ?? ""} capitalize px-2.5 py-0.5`}>
               {data.status}
             </Badge>
           </div>

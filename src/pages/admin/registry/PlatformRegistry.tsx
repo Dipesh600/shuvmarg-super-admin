@@ -14,7 +14,7 @@ const PlatformRegistry = () => {
     queryFn: () => getAllRouteRequests("PENDING"),
     staleTime: 30_000,
   });
-  const pendingRouteRequests = routeReqData?.results || 0;
+  const pendingRouteRequests = routeReqData?.data.length ?? 0;
 
   return (
     <div className="container mx-auto space-y-10 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">

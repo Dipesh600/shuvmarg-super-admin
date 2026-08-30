@@ -1,4 +1,5 @@
 import { api } from "./axios";
+import type { DriverProfile } from "./driverApi";
 
 // ── Types for Trip Control Center ────────────────────────────────────────
 
@@ -106,6 +107,19 @@ export interface TripListResponse {
     pagination: Pagination;
 }
 
+export interface LegacyOwnerTrip {
+    _id: string;
+    tripId: string;
+    busId?: { _id?: string; busName?: string; busNumber?: string } | null;
+    routeId?: { _id?: string; routeName?: string; from?: string; to?: string; distance?: string } | null;
+    tripDate?: string;
+    departureTime?: string;
+    arrivalTime?: string;
+    shift?: string;
+    status: string;
+    tripFare?: number;
+}
+
 // ── Legacy CRUD (preserved for backward compat) ──────────────────────────
 
 export const createTripForOwner = async (payload: {
@@ -125,7 +139,7 @@ export const createTripForOwner = async (payload: {
 };
 
 export const getTripsByOwner = async (ownerId: string) => {
-    const { data } = await api.get(`/trips/owner/${ownerId}`);
+    const { data } = await api.get<{ success?: boolean; data: LegacyOwnerTrip[] }>(`/trips/owner/${ownerId}`);
     return data;
 };
 
@@ -170,7 +184,7 @@ export const assignDriverToTrip = async (tripId: string, driverId: string) => {
 };
 
 export const getDriversByBrand = async (brandId: string) => {
-    const { data } = await api.get(`/brands/${brandId}/drivers`);
+    const { data } = await api.get<{ success: boolean; data: DriverProfile[] }>(`/brands/${brandId}/drivers`);
     return data;
 };
 

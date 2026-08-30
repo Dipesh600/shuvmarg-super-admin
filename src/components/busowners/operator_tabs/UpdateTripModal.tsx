@@ -43,7 +43,7 @@ const UpdateTripModalInstance: React.FC<UpdateTripModalProps> = ({
   const { data: fleetsData } = useFetchOwnerFleets(ownerId);
   const { data: routesData } = useFetchBusRoutesByOwner(ownerId);
 
-  const activeFleets = fleetsData?.data?.filter((f: any) => f.status === "ACTIVE") || [];
+  const activeFleets = fleetsData?.data?.filter((fleet) => fleet.status === "ACTIVE") || [];
   const routesRows = routesData?.data || [];
 
   // Form states
@@ -136,7 +136,7 @@ const UpdateTripModalInstance: React.FC<UpdateTripModalProps> = ({
                       required
                     >
                       <option value="">Select ACTIVE Fleet</option>
-                      {activeFleets.map((fleet: any) => (
+                      {activeFleets.map((fleet) => (
                         <option key={fleet._id} value={fleet._id}>{fleet.busName} ({fleet.busNumber})</option>
                       ))}
                     </select>
@@ -151,7 +151,7 @@ const UpdateTripModalInstance: React.FC<UpdateTripModalProps> = ({
                       required
                     >
                       <option value="">Select Route</option>
-                      {routesRows.map((route: any) => (
+                      {routesRows.map((route) => (
                         <option key={route._id} value={route._id}>{route.routeName}</option>
                       ))}
                     </select>

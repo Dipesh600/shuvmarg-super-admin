@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { assignDriverToTrip, getDriversByBrand } from "@/api/tripApi";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/error-message";
 
 
 interface ViewTripModalProps {
@@ -51,7 +52,7 @@ const ViewTripModal: React.FC<ViewTripModalProps> = ({
          toast.success("Driver assigned successfully.");
          setSelectedDriverId("");
       },
-      onError: (e: any) => toast.error(e.response?.data?.message || "Failed to assign driver"),
+      onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to assign driver")),
    });
 
    const canAssignDriver = trip && !["completed", "cancelled"].includes(trip.status);
@@ -210,8 +211,8 @@ const ViewTripModal: React.FC<ViewTripModalProps> = ({
                            {trip.driverId ? (
                               <div className="flex items-center justify-between">
                                  <div>
-                                    <p className="font-black text-lg tracking-tight">{(trip.driverId as any).fullName || "Driver Assigned"}</p>
-                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{(trip.driverId as any).licenseNumber || ""}</p>
+                                    <p className="font-black text-lg tracking-tight">{typeof trip.driverId === "object" ? trip.driverId.fullName : "Driver Assigned"}</p>
+                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{typeof trip.driverId === "object" ? trip.driverId.licenseNumber || "" : ""}</p>
                                  </div>
                                  <Badge className="bg-emerald-100 text-emerald-700 uppercase text-[9px] font-black tracking-widest border-emerald-200">Assigned</Badge>
                               </div>
@@ -230,9 +231,9 @@ const ViewTripModal: React.FC<ViewTripModalProps> = ({
                                              {drivers.length === 0 ? (
                                                 <SelectItem value="none" disabled>No drivers available</SelectItem>
                                              ) : (
-                                                drivers.map((d: any) => (
-                                                   <SelectItem key={d._id} value={d._id}>
-                                                      {d.fullName} ({d.licenseType})
+                                                drivers.map((driver) => (
+                                                   <SelectItem key={driver._id} value={driver._id}>
+                                                      {driver.fullName} ({driver.licenseType})
                                                    </SelectItem>
                                                 ))
                                              )}

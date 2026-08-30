@@ -14,13 +14,14 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { getAllCorridors, reviewRouteRequest } from "@/api/platformRegistryApi";
+import { getAllCorridors, reviewRouteRequest, type RouteRequestRecord, type RouteRequestReviewPayload } from "@/api/platformRegistryApi";
+import { getErrorMessage } from "@/lib/error-message";
 
 interface RouteRequestReviewModalProps {
   requestId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  requestData: any;
+  requestData: RouteRequestRecord | null;
 }
 
 const RouteRequestReviewModal: React.FC<RouteRequestReviewModalProps> = ({
@@ -43,17 +44,17 @@ const RouteRequestReviewModal: React.FC<RouteRequestReviewModalProps> = ({
     queryFn: getAllCorridors,
     enabled: isOpen,
   });
-  const corridors: any[] = corridorsData?.data || [];
+  const corridors = corridorsData?.data || [];
 
   const { mutate: submitReview, isPending } = useMutation({
-    mutationFn: (payload: any) => reviewRouteRequest(requestId!, payload),
+    mutationFn: (payload: RouteRequestReviewPayload) => reviewRouteRequest(requestId!, payload),
     onSuccess: (res) => {
       toast.success(res.message || "Route request reviewed successfully.");
       queryClient.invalidateQueries({ queryKey: ["routeRequests"] });
       onClose();
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || "Failed to review request.");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to review request."));
     },
   });
 
@@ -120,10 +121,10 @@ const RouteRequestReviewModal: React.FC<RouteRequestReviewModalProps> = ({
                 <ChevronRight className="h-4 w-4 text-white/50" />
                 <span className="font-bold text-sm">{req?.destinationCity}</span>
               </div>
-              {req?.viaStops?.length > 0 && (
+              {(req?.viaStops?.length ?? 0) > 0 && (
                 <div className="flex items-center gap-1 flex-wrap">
                   <MapPin className="h-3 w-3 text-white/50" />
-                  <span className="text-xs text-white/50">Via: {req.viaStops.join(", ")}</span>
+                  <span className="text-xs text-white/50">Via: {req?.viaStops?.join(", ")}</span>
                 </div>
               )}
             </div>
@@ -270,9 +271,9 @@ const RouteRequestReviewModal: React.FC<RouteRequestReviewModalProps> = ({
                           onChange={(e) => setSelectedCorridorId(e.target.value)}
                         >
                           <option value="">Choose a corridor...</option>
-                          {corridors.map((c: any) => (
-                            <option key={c._id} value={c._id}>
-                              {c.code} — {c.status}
+                          {corridors.map((corridor) => (
+                            <option key={corridor._id} value={corridor._id}>
+                              {corridor.code} — {corridor.status}
                             </option>
                           ))}
                         </select>
@@ -347,7 +348,7 @@ const RouteRequestReviewModal: React.FC<RouteRequestReviewModalProps> = ({
                     </div>
                   )}
 
-                  {req?.resolvedBy && (
+                  {req?.resolvedBy && req.resolvedAt && (
                     <div className="pt-2 border-t border-white/5">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-1">Resolved By</p>
                       <div className="flex items-center gap-1.5">

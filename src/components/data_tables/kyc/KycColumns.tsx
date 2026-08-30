@@ -6,7 +6,7 @@ import { ShieldCheck, Clock, XCircle } from "lucide-react";
 /* ─── Status Badge helpers ──────────────────────────────────────── */
 
 // Bus Owner KYC uses lowercase strings from the KYC endpoint
-const getOwnerStatusBadge = (status: string) => {
+const getOwnerStatusBadge = (status = "") => {
   switch (status?.toLowerCase()) {
     case "approved":
       return <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black text-[10px] uppercase tracking-widest">Approved</Badge>;
@@ -20,7 +20,7 @@ const getOwnerStatusBadge = (status: string) => {
 };
 
 // Fleet KYC uses UPPERCASE from approvalStatus field
-const getFleetApprovalBadge = (status: string) => {
+const getFleetApprovalBadge = (status = "") => {
   switch (status?.toUpperCase()) {
     case "APPROVED":
       return (
@@ -54,7 +54,11 @@ const fmtDate = (raw: string | undefined | null) => {
 
 /* ================= BUS OWNER ================= */
 
-export const busOwnerColumns: ColumnDef<any>[] = [
+export type BusOwnerKycRow = { busownerId?: string; ownerId: string; companyname?: string; owner?: string; submitdate?: string; documents?: number; status?: string };
+export type AgentKycRow = { id: string; agentId?: string; owner?: string; location?: string; submitdate?: string; documents?: number; status?: string };
+export type FleetKycRow = { id: string; fleetId?: string; busName?: string; busNumber?: string; brandName?: string; owner?: string; submitdate?: string; documents?: number; approvalStatus?: string };
+
+export const busOwnerColumns: ColumnDef<BusOwnerKycRow>[] = [
   {
     accessorKey: "busownerId",
     header: "KYC ID",
@@ -106,7 +110,7 @@ export const busOwnerColumns: ColumnDef<any>[] = [
 
 /* ================= AGENT ================= */
 
-export const agentColumns: ColumnDef<any>[] = [
+export const agentColumns: ColumnDef<AgentKycRow>[] = [
   {
     accessorKey: "agentId",
     header: "KYC ID",
@@ -156,7 +160,7 @@ export const agentColumns: ColumnDef<any>[] = [
 
 /* ================= FLEET ================= */
 
-export const fleetColumns: ColumnDef<any>[] = [
+export const fleetColumns: ColumnDef<FleetKycRow>[] = [
   {
     accessorKey: "fleetId",
     header: "Fleet ID",

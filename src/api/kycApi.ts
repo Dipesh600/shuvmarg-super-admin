@@ -67,6 +67,28 @@ export type AdminBusOwnerDetail = {
   updatedAt: string | null;
 };
 
+export type UnifiedKycItem = {
+  kyctype: "busowner" | "agent" | "fleet";
+  busownerId?: string;
+  agentId?: string;
+  fleetId?: string;
+  companyname?: string;
+  owner?: string;
+  location?: string;
+  submitdate?: string;
+  documents?: number;
+  status?: string;
+  data: {
+    _id: string;
+    busName?: string;
+    busNumber?: string;
+    approvalStatus?: string;
+    documentSummary?: { present?: number };
+    fleetDocuments?: Record<string, { url?: string }>;
+    fleetImages?: unknown[];
+  };
+};
+
 /**
  * Fetches a private S3 document through the secure server-side proxy.
  * Returns a temporary object URL (blob) that is only valid in the current
@@ -138,12 +160,18 @@ export const fetchKycDocumentAsBlob = async (
   }
 };
 
-export const getAllKyc = async () => {
+type UnifiedKycResponse = {
+  data: UnifiedKycItem[];
+  dashboard: { totalBusOwners: number; totalAgents: number; totalFleets: number };
+};
+
+export const getAllKyc = async (): Promise<UnifiedKycResponse> => {
   try {
-    const { data } = await api.get("/kyc/unified-list");
+    const { data } = await api.get<UnifiedKycResponse>("/kyc/unified-list");
     return data;
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };
 

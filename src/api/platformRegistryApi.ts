@@ -1,5 +1,31 @@
 import { api } from "./axios";
 
+export type RegistryCorridor = { _id: string; code?: string; status?: string; originId?: { name?: string }; destinationId?: { name?: string } };
+export type RouteRequestRecord = {
+    _id: string;
+    originCity?: string;
+    destinationCity?: string;
+    viaStops?: string[];
+    status: string;
+    createdAt?: string;
+    resolvedAt?: string;
+    rejectionReason?: string;
+    adminNotes?: string;
+    resolvedBy?: { name?: string };
+    ownerId?: { name?: string; phone?: string };
+    brandId?: { brandName?: string; brandCode?: string };
+    fleetId?: { busName?: string; busNumber?: string; approvalStatus?: string; corridorId?: RegistryCorridor };
+};
+export type RouteRequestReviewPayload = {
+    action: "APPROVE" | "REJECT";
+    corridorId?: string;
+    createCorridor?: boolean;
+    originCode?: string;
+    destinationCode?: string;
+    rejectionReason?: string;
+    adminNotes?: string;
+};
+
 // ── Stop Registry (Layer 3 — The foundation) ─────────────────────────────────
 
 export const createStop = async (payload: { 
@@ -73,7 +99,7 @@ export const createCorridor = async (payload: {
 };
 
 export const getAllCorridors = async () => {
-    const { data } = await api.get("/registry/corridors");
+    const { data } = await api.get<{ data: RegistryCorridor[] }>("/registry/corridors");
     return data;
 };
 
@@ -309,7 +335,7 @@ export const deleteRouteConfig = async (configId: string) => {
 // ── Route Requests ─────────────────────────────────────────────────────────────
 
 export const getAllRouteRequests = async (status?: string) => {
-    const { data } = await api.get("/registry/route-requests", {
+    const { data } = await api.get<{ data: RouteRequestRecord[] }>("/registry/route-requests", {
         params: status ? { status } : {},
     });
     return data;
@@ -322,15 +348,7 @@ export const getRouteRequestById = async (id: string) => {
 
 export const reviewRouteRequest = async (
     id: string,
-    payload: {
-        action: "APPROVE" | "REJECT";
-        corridorId?: string;
-        createCorridor?: boolean;
-        originCode?: string;
-        destinationCode?: string;
-        rejectionReason?: string;
-        adminNotes?: string;
-    }
+    payload: RouteRequestReviewPayload
 ) => {
     const { data } = await api.patch(`/registry/route-requests/${id}`, payload);
     return data;

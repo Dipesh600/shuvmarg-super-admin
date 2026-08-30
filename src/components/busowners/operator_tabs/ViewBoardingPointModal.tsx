@@ -13,6 +13,7 @@ import { MapPin, MapPinned, Clock, Phone, Loader2, Info, Activity, Calendar } fr
 import { useFetchBoardingPointById } from "@/hooks/useBoardingPoints";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
+import type { BoardingPointLocationInput } from "@/api/boardingPointsApi";
 
 interface ViewBoardingPointModalProps {
   id: string | null;
@@ -95,7 +96,7 @@ const ViewBoardingPointModal: React.FC<ViewBoardingPointModalProps> = ({
                   </div>
 
                   <div className="space-y-4">
-                    {data.boardingPoints?.map((point: any, index: number) => (
+                    {data.boardingPoints?.map((point: BoardingPointLocationInput, index: number) => (
                       <Card key={index} className="border-2 border-muted bg-muted/5 relative overflow-hidden group shadow-none">
                         <CardContent className="p-4">
                           <div className="flex flex-col gap-4">

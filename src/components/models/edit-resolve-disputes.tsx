@@ -146,9 +146,10 @@ export function ResolveDisputeDialog() {
   if (!disputeData) return null;
 
   // Extract user details
-  const userName = disputeData.userId?.name || "Unknown Passenger";
-  const userPhone = disputeData.userId?.phone || "N/A";
-  const userEmail = disputeData.userId?.email || "N/A";
+  const disputeUser = typeof disputeData.userId === "object" ? disputeData.userId : undefined;
+  const userName = disputeUser?.name || "Unknown Passenger";
+  const userPhone = disputeUser?.phone || "N/A";
+  const userEmail = disputeUser?.email || "N/A";
 
   // Extract trip context
   const hasTrip = !!disputeData.tripId;

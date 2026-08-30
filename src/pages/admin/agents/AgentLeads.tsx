@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/providers/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -173,12 +173,13 @@ const AgentLeads = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage]                     = useState(1);
   const [updatingId, setUpdatingId]         = useState<string | null>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search input
   const handleSearchChange = (val: string) => {
     setSearch(val);
-    clearTimeout((window as any)._leadSearchTimer);
-    (window as any)._leadSearchTimer = setTimeout(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
       setDebouncedSearch(val);
       setPage(1);
     }, 400);

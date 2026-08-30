@@ -16,6 +16,7 @@ import { decideFleetApproval, saveFleetReviewItem, type FleetDocumentDescriptor,
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
 import SeatLayoutCanvas from "@/features/seat-layout-v3/SeatLayoutCanvas";
+import { getErrorMessage } from "@/lib/error-message";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 type DocStatus = { verified: boolean; rejectionReason: string | null };
@@ -49,7 +50,7 @@ export default function KYCFleetDetail() {
     queryFn: () => getBrandsByOwner(fleet!.owner.ownerId),
     enabled: !!fleet?.owner?.ownerId,
   });
-  const ownerBrand = brandsData?.data?.find((b: any) => b._id === fleet?.assignment?.operatorId) ?? brandsData?.data?.[0] ?? null;
+  const ownerBrand = brandsData?.data?.find((b) => b._id === fleet?.assignment?.operatorId) ?? brandsData?.data?.[0] ?? null;
 
   /* Build document sections from fleet data */
   const documentSections = useMemo(() => {
@@ -167,12 +168,12 @@ export default function KYCFleetDetail() {
       setFinalApprovalDialog(false);
       navigate("/admin/kyc");
     },
-    onError: (error: any) => toast.error(error?.response?.data?.message || "Failed to update fleet status."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to update fleet status.")),
   });
   const reviewItem = useMutation({
     mutationFn: ({ key, status, reason }: { key: string; status: "APPROVED" | "REJECTED"; reason?: string }) =>
       saveFleetReviewItem(id!, key, { status, reason }),
-    onError: (error: any) => toast.error(error?.response?.data?.message || "Unable to save this review decision."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Unable to save this review decision.")),
   });
 
   /* Sections that have at least one uploaded file */
@@ -390,7 +391,7 @@ export default function KYCFleetDetail() {
                       Served Stops &amp; Places ({(fleet.route.servedStops?.length || 0) + (fleet.route.addedPlaces?.length || 0)} total)
                     </p>
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                      {(fleet.route.servedStops || []).map((stop: any, idx: number) => (
+                      {(fleet.route.servedStops || []).map((stop, idx) => (
                         <div key={stop.stopId || idx} className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs">
                           <div className="flex items-center justify-between gap-1 mb-1">
                             <span className="font-bold text-white truncate">{stop.name}</span>
@@ -408,7 +409,7 @@ export default function KYCFleetDetail() {
                           )}
                         </div>
                       ))}
-                      {(fleet.route.addedPlaces || []).map((place: any, idx: number) => (
+                      {(fleet.route.addedPlaces || []).map((place, idx) => (
                         <div key={place.clientKey || idx} className="rounded-xl border border-dashed border-amber-500/30 bg-amber-900/10 p-2.5 text-xs">
                           <div className="flex items-center gap-1 mb-0.5">
                             <span className="font-bold text-amber-300 truncate">{place.name}</span>

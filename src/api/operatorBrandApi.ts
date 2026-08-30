@@ -26,6 +26,30 @@ export interface BrandRouteServiceConfig {
     scheduleStats?: { total: number; active: number; suspended: number; draft: number };
 }
 
+export interface OperatorBrandSummary {
+    _id: string;
+    brandName: string;
+    brandCode?: string;
+    status: string;
+    fleetCount?: number;
+    commissionRate?: number;
+    logo?: string;
+    baseCity?: string; contactEmail?: string; contactPhone?: string;
+}
+export interface OperatorBrandDetail extends OperatorBrandSummary {
+    baseCity?: string; contactEmail?: string; contactPhone?: string; createdAt?: string;
+    ownerId?: { _id?: string; name?: string; phone?: string };
+    bankDetails?: { bankName?: string };
+}
+export interface BrandFinancials {
+    kpis: { totalGross: number; totalBookings: number; totalTickets: number };
+    thisMonth: { revenue: number; bookings: number };
+    settlements: { pending: number; pendingCount: number };
+    monthlyChart: Array<{ label: string; revenue: number; bookings: number }>;
+    trips: { completed: number; scheduled: number; inTransit: number; cancelled: number };
+    fleetBreakdown: Array<{ busId?: string; bus?: { busName?: string; busNumber?: string }; tickets: number; revenue: number }>;
+}
+
 export interface BrandRouteServicesResponse {
     success: boolean;
     results: number;
@@ -52,12 +76,12 @@ export const getAllBrands = async (params?: { page?: number; limit?: number; sta
 };
 
 export const getBrandById = async (brandId: string) => {
-    const { data } = await api.get(`/brands/${brandId}`);
+    const { data } = await api.get<{ data: OperatorBrandDetail }>(`/brands/${brandId}`);
     return data;
 };
 
 export const getBrandsByOwner = async (ownerId: string) => {
-    const { data } = await api.get(`/owners/${ownerId}/brands`);
+    const { data } = await api.get<{ data: OperatorBrandSummary[] }>(`/owners/${ownerId}/brands`);
     return data;
 };
 
@@ -93,6 +117,6 @@ export const getBrandSchedules = async (brandId: string, params?: { status?: str
 
 // Full financial overview for a brand (KPIs, chart, fleet breakdown, settlements)
 export const getBrandFinancials = async (brandId: string) => {
-    const { data } = await api.get(`/brands/${brandId}/financials`);
+    const { data } = await api.get<{ data: BrandFinancials }>(`/brands/${brandId}/financials`);
     return data;
 };

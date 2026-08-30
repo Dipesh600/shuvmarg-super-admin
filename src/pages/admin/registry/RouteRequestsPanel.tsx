@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAllRouteRequests } from "@/api/platformRegistryApi";
+import type { RouteRequestRecord } from "@/api/platformRegistryApi";
 import RouteRequestReviewModal from "./RouteRequestReviewModal";
 
 type StatusFilter = "ALL" | "PENDING" | "APPROVED" | "REJECTED";
@@ -32,7 +33,7 @@ const statusBadge = (status: string) => {
 const RouteRequestsPanel: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [search, setSearch] = useState("");
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<RouteRequestRecord | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -41,7 +42,7 @@ const RouteRequestsPanel: React.FC = () => {
     staleTime: 0,
   });
 
-  const allRequests: any[] = data?.data || [];
+  const allRequests = data?.data || [];
 
   // Count by status from the full list (when showing ALL)
   const pendingCount = allRequests.filter(r => r.status === "PENDING").length;
@@ -57,7 +58,7 @@ const RouteRequestsPanel: React.FC = () => {
     );
   });
 
-  const openReview = (request: any) => {
+  const openReview = (request: RouteRequestRecord) => {
     setSelectedRequest(request);
     setReviewOpen(true);
   };
@@ -160,9 +161,9 @@ const RouteRequestsPanel: React.FC = () => {
                       <ArrowRight className="h-3 w-3 text-white/50 shrink-0" />
                       <span>{req.destinationCity}</span>
                     </div>
-                    {req.viaStops?.length > 0 && (
+                    {(req.viaStops?.length ?? 0) > 0 && (
                       <p className="text-[10px] text-white/50 mt-0.5 ml-5">
-                        via {req.viaStops.slice(0, 3).join(", ")}{req.viaStops.length > 3 ? "..." : ""}
+                        via {req.viaStops?.slice(0, 3).join(", ")}{(req.viaStops?.length ?? 0) > 3 ? "..." : ""}
                       </p>
                     )}
                     {req.status === "APPROVED" && req.fleetId?.corridorId && (
@@ -209,7 +210,7 @@ const RouteRequestsPanel: React.FC = () => {
                   {/* Submitted */}
                   <TableCell>
                     <span className="text-xs text-white/50">
-                      {new Date(req.createdAt).toLocaleDateString("en-NP", { dateStyle: "medium" })}
+                      {req.createdAt ? new Date(req.createdAt).toLocaleDateString("en-NP", { dateStyle: "medium" }) : "—"}
                     </span>
                   </TableCell>
 
