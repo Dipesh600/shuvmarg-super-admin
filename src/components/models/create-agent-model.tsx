@@ -41,7 +41,10 @@ import {
   finalizeAgentSetup,
   getAllBrands,
   getBrandRouteServices,
+  type AgentBrandOption,
+  type AgentRouteServiceOption,
 } from "@/api/agentApi";
+import { getErrorMessage } from "@/lib/error-message";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -133,7 +136,7 @@ export const AddAgentDialog = () => {
     enabled: isModelOpen,
     staleTime: 5 * 60 * 1000,
   });
-  const brands: any[] = brandsData?.data ?? [];
+  const brands: AgentBrandOption[] = brandsData?.data ?? [];
 
   // ── Data: route services for selected brand ────────────────────────────────
   const { data: routesData, isLoading: routesLoading } = useQuery({
@@ -142,7 +145,7 @@ export const AddAgentDialog = () => {
     enabled: !!selectedBrandId && busScope === "SPECIFIC_ROUTES",
     staleTime: 5 * 60 * 1000,
   });
-  const routeServices: any[] = routesData?.data ?? [];
+  const routeServices: AgentRouteServiceOption[] = routesData?.data ?? [];
 
   // ── Step 1 → 2: skip to step 2 when OPERATOR_LINKED ──────────────────────
   const handleTypeSelect = (t: AgentType) => {
@@ -174,8 +177,8 @@ export const AddAgentDialog = () => {
       setCreatedAgentMongoId(res?.data?.agentMongoId ?? res?.data?.agentId);
       setStep(3);
     },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Failed to create agent account."),
+    onError: (err: unknown) =>
+      toast.error(getErrorMessage(err, "Failed to create agent account.")),
   });
 
   // ── Step 5 → 6 → submit ───────────────────────────────────────────────────
@@ -194,7 +197,7 @@ export const AddAgentDialog = () => {
         operationType: form.operationType || undefined,
         claimedMonthlyVolume: form.claimedMonthlyVolume || undefined,
         currentOperators: form.currentOperators || undefined,
-        settlementMethod: (form.settlementMethod as any) || undefined,
+        settlementMethod: form.settlementMethod || undefined,
         bankName: form.bankName || undefined,
         bankAccountNumber: form.bankAccountNumber || undefined,
         bankAccountName: form.bankAccountName || undefined,
@@ -210,8 +213,8 @@ export const AddAgentDialog = () => {
       toast.success("Operator-linked agent created and approved! They'll receive a welcome SMS.");
       handleClose();
     },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message ?? "Failed to finalize agent setup."),
+    onError: (err: unknown) =>
+      toast.error(getErrorMessage(err, "Failed to finalize agent setup.")),
   });
 
   // ── Reset & close ──────────────────────────────────────────────────────────
@@ -493,7 +496,7 @@ export const AddAgentDialog = () => {
                       <SelectValue placeholder="Select operator brand..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {brands.map((b: any) => (
+                      {brands.map((b) => (
                         <SelectItem key={b._id ?? b.brandId} value={b._id ?? b.brandId}>
                           <span className="font-semibold">{b.brandName}</span>
                           {b.brandCode && <span className="text-white/40 ml-2 text-xs">{b.brandCode}</span>}
@@ -576,7 +579,7 @@ export const AddAgentDialog = () => {
                 </div>
               ) : (
                 <div className="space-y-2 max-h-52 overflow-y-auto custom-scrollbar">
-                  {routeServices.map((route: any) => {
+                  {routeServices.map((route) => {
                     const id = route.variantId ?? route._id;
                     const selected = selectedRouteIds.includes(id);
                     return (

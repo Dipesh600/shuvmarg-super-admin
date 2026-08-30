@@ -71,8 +71,8 @@ const UserDetail = () => {
   const auditLog = enrichedData?.auditLog;
 
   const userData = {
-    id: profile?._id,
-    name: profile?.name,
+    id: profile?._id ?? "",
+    name: profile?.name ?? "Unknown user",
     email: profile?.email,
     phone: profile?.phone,
     status: profile?.status,
@@ -89,7 +89,7 @@ const UserDetail = () => {
   };
 
   // Map bookings from the getBookingsByUser endpoint
-  const userBookings = bookings?.data?.map((booking: any) => {
+  const userBookings = bookings?.data?.map((booking) => {
     const trip = booking?.tripId;
     const tripFrom = trip?.fromStopName || trip?.routeId?.from || "N/A";
     const tripTo = trip?.toStopName || trip?.routeId?.to || "N/A";
@@ -110,20 +110,20 @@ const UserDetail = () => {
         (from !== tripFrom || to !== tripTo)
           ? { from: tripFrom, to: tripTo }
           : null,
-      bookedAt: booking?.createdAt,
-      amount: booking?.totalAmount,
-      status: booking?.status,
+      bookedAt: booking?.createdAt ?? "",
+      amount: booking?.totalAmount ?? 0,
+      status: (booking?.status === "cancelled" ? "cancelled" : "booked") as "booked" | "cancelled",
     };
   });
 
   // Map transactions from the bookings data (using correct field names)
-  const userTransactions = bookings?.data?.map((booking: any) => ({
+  const userTransactions = bookings?.data?.map((booking) => ({
     id: booking?._id,
     transactionId: booking?.transactionId || "N/A",
-    type: booking?.status === "cancelled" ? "refund" : "none",
-    paymentDate: booking?.bookedAt || booking?.createdAt,
-    amount: booking?.totalAmount,
-    method: booking?.paymentMethod || "N/A",
+    type: (booking?.status === "cancelled" ? "refund" : "none") as "refund" | "none",
+    paymentDate: booking?.bookedAt || booking?.createdAt || "",
+    amount: String(booking?.totalAmount ?? 0),
+    method: ((booking?.paymentMethod || "card").toLowerCase() as "esewa" | "khalti" | "upi" | "card"),
   }));
 
   // Format role label
@@ -363,7 +363,7 @@ const UserDetail = () => {
               {auditLog && auditLog.length > 0 && (
                 <TabsContent value="auditLog" className="mt-4">
                   <div className="space-y-3">
-                    {auditLog.map((entry: any, i: number) => (
+                    {auditLog.map((entry, i) => (
                       <div key={entry._id || i} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg text-sm">
                         <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -380,7 +380,7 @@ const UserDetail = () => {
                           )}
                           {entry.adminId && (
                             <p className="text-muted-foreground text-xs mt-0.5">
-                              by {entry.adminId.email || "Admin"}
+                              by {entry.adminId.name || "Admin"}
                             </p>
                           )}
                         </div>

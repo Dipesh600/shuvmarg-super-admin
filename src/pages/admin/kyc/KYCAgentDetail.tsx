@@ -46,7 +46,9 @@ import {
   getAgentById,
   reviewAgentApplication,
   type AgentReviewPayload,
+  type AgentKycDocument,
 } from "@/api/agentApi";
+import { getErrorMessage } from "@/lib/error-message";
 
 // ── Status badge helper ──────────────────────────────────────────────────────
 const statusBadge = (status: string) => {
@@ -138,11 +140,11 @@ export default function KYCAgentDetail() {
   const [docStatuses, setDocStatuses] = useState<Record<string, DocStatus>>({});
 
   // Initialise from API data on first load
-  const documents: any[] = agentDetails?.documents ?? [];
+  const documents: AgentKycDocument[] = agentDetails?.documents ?? [];
   const initialised = Object.keys(docStatuses).length > 0;
   if (documents.length > 0 && !initialised) {
     const init: Record<string, DocStatus> = {};
-    documents.forEach((d: any) => {
+    documents.forEach((d) => {
       init[d.type] = {
         verified: d.verified ?? null,
         rejectionReason: d.rejectionReason ?? null,
@@ -189,8 +191,8 @@ export default function KYCAgentDetail() {
         toast.success("Agent updated.");
       }
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Failed to update agent application.");
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Failed to update agent application."));
     },
   });
 
@@ -335,9 +337,9 @@ export default function KYCAgentDetail() {
           </CardHeader>
           <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <InfoRow icon={<User />} label="Full Name" value={agentProfile?.name ?? (agentDetails?.user as any)?.name ?? "—"} />
-              <InfoRow icon={<Phone />} label="Phone" value={agentProfile?.phone ?? (agentDetails?.user as any)?.phone ?? "—"} />
-              <InfoRow icon={<Mail />} label="Email" value={agentProfile?.email ?? (agentDetails?.user as any)?.email ?? "—"} />
+              <InfoRow icon={<User />} label="Full Name" value={agentProfile?.name ?? agentDetails?.user?.name ?? "—"} />
+              <InfoRow icon={<Phone />} label="Phone" value={agentProfile?.phone ?? agentDetails?.user?.phone ?? "—"} />
+              <InfoRow icon={<Mail />} label="Email" value={agentProfile?.email ?? agentDetails?.user?.email ?? "—"} />
               <InfoRow
                 icon={<MapPin />}
                 label="Location"
@@ -432,7 +434,7 @@ export default function KYCAgentDetail() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {documents.map((doc: any) => {
+            {documents.map((doc) => {
               const status = docStatuses[doc.type] ?? { verified: doc.verified ?? null, rejectionReason: doc.rejectionReason ?? null };
               const url = doc.previewUrl ?? doc.fileKey;
 
@@ -809,7 +811,7 @@ export default function KYCAgentDetail() {
           <div className="py-2 space-y-2 text-sm">
             <div className="flex justify-between py-1 border-b border-white/5">
               <span className="text-white/60">Agent</span>
-              <span className="font-medium">{agentProfile?.name ?? (agentDetails?.user as any)?.name ?? "—"}</span>
+              <span className="font-medium">{agentProfile?.name ?? agentDetails?.user?.name ?? "—"}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-white/5">
               <span className="text-white/60">Commission Rate</span>

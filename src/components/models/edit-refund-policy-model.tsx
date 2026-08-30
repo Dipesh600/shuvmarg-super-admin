@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -27,8 +27,19 @@ interface RefundPolicy {
 }
 
 export const EditRefundPolicyDialog = () => {
+  const { isOpen, type, data } = useModal();
+  const instanceKey = isOpen && type === "editRefundPolicy" ? `open-${data.id ?? "policy"}` : "closed";
+  return <EditRefundPolicyDialogInstance key={instanceKey} />;
+};
+
+const EditRefundPolicyDialogInstance = () => {
   const { isOpen, onClose, type, data } = useModal();
-  const [formData, setFormData] = useState<RefundPolicy>(data);
+  const toPolicy = (): RefundPolicy => ({
+    id: data.id ?? "", policyName: data.policyName ?? "", refundPercentage: data.refundPercentage ?? 0,
+    deductionPercentage: data.deductionPercentage ?? 0, description: data.description ?? "", minHours: data.minHours ?? 0,
+    maxHours: data.maxHours ?? 0, color: data.color ?? "#000000",
+  });
+  const [formData, setFormData] = useState<RefundPolicy>(toPolicy);
   const { mutate, isPending } = useRefundPolicyUpdate();
   const isModelOpen = isOpen && type === "editRefundPolicy";
   const handleSubmit = () => {
@@ -37,7 +48,7 @@ export const EditRefundPolicyDialog = () => {
       return;
     }
     mutate(
-      { ...formData, id: data.id },
+      { ...formData, id: data.id ?? formData.id },
       {
         onSuccess: () => {
           toast.success(
@@ -51,9 +62,6 @@ export const EditRefundPolicyDialog = () => {
       }
     );
   };
-  useEffect(() => {
-    setFormData(data);
-  }, [data]);
   return (
     <Dialog open={isModelOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] bg-[#121212]/95 border-white/5 backdrop-blur-xl shadow-2xl text-white">

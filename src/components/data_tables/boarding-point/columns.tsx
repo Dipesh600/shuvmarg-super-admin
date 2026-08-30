@@ -10,15 +10,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Eye, Trash2, MapPin, Edit3 } from "lucide-react";
-
-export type BoardingPointGroup = {
-  _id: string;
-  city: string;
-  description: string;
-  status: boolean;
-  boardingPoints: any[];
-  createdAt: string;
-};
+import type { BoardingPointGroup } from "@/api/boardingPointsApi";
 
 interface ColumnProps {
   onView: (id: string) => void;

@@ -185,14 +185,14 @@ const TransactionDetail = () => {
           {
             icon:  <CreditCard className="h-5 w-5 text-[#D3D925]" />,
             label: "Gateway",
-            value: PM[txn.gateway] ?? txn.gateway ?? "—",
+            value: (txn.gateway ? PM[txn.gateway] : undefined) ?? txn.gateway ?? "—",
             sub:   txn.transactionType ?? "—",
           },
           {
             icon:  <User className="h-5 w-5 text-[#D3D925]" />,
             label: "Customer",
-            value: (user as any).name ?? "—",
-            sub:   (user as any).phone ?? "—",
+            value: user.name ?? "—",
+            sub:   user.phone ?? "—",
           },
           {
             icon:  <Ticket className="h-5 w-5 text-[#D3D925]" />,
@@ -235,7 +235,7 @@ const TransactionDetail = () => {
             <DetailRow
               icon={<CreditCard className="h-3.5 w-3.5" />}
               label="Gateway"
-              value={<Badge variant="outline" className="bg-white/5 border-white/10 text-white/80">{PM[txn.gateway] ?? txn.gateway ?? "—"}</Badge>}
+              value={<Badge variant="outline" className="bg-white/5 border-white/10 text-white/80">{(txn.gateway ? PM[txn.gateway] : undefined) ?? txn.gateway ?? "—"}</Badge>}
             />
             <DetailRow
               icon={<BadgeDollarSign className="h-3.5 w-3.5" />}
@@ -251,7 +251,7 @@ const TransactionDetail = () => {
               <DetailRow
                 icon={<BadgeDollarSign className="h-3.5 w-3.5" />}
                 label="Original Amount"
-                value={`Rs. ${txn.originalAmount.toLocaleString()}`}
+                value={`Rs. ${(txn.originalAmount ?? 0).toLocaleString()}`}
               />
             )}
             <DetailRow
@@ -310,12 +310,12 @@ const TransactionDetail = () => {
               <CardTitle className="flex items-center gap-2 text-white">
                 <User className="h-4 w-4 text-[#D3D925]" /> Customer
               </CardTitle>
-              {(user as any)._id && (
+              {user._id && (
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-7 gap-1.5 text-xs text-[#D3D925] hover:text-[#D3D925] hover:bg-white/10"
-                  onClick={() => navigate(`/admin/users/${(user as any)._id}`)}
+                  onClick={() => navigate(`/admin/users/${user._id}`)}
                 >
                   View Profile <ExternalLink className="h-3 w-3" />
                 </Button>
@@ -326,17 +326,17 @@ const TransactionDetail = () => {
             <DetailRow
               label="Full Name"
               icon={<User className="h-3.5 w-3.5" />}
-              value={(user as any).name ?? "—"}
+              value={user.name ?? "—"}
             />
             <DetailRow
               label="Phone"
               icon={<User className="h-3.5 w-3.5" />}
-              value={(user as any).phone ?? "—"}
+              value={user.phone ?? "—"}
             />
             <DetailRow
               label="Email"
               icon={<User className="h-3.5 w-3.5" />}
-              value={<span className="text-xs">{(user as any).email ?? "—"}</span>}
+              value={<span className="text-xs">{user.email ?? "—"}</span>}
             />
 
             {/* Linked booking summary */}
@@ -511,7 +511,7 @@ const TransactionDetail = () => {
               />
             )}
             {txn.resolvedBy && (
-              <DetailRow label="Resolved By" value={(txn.resolvedBy as any)?.name ?? "—"} />
+              <DetailRow label="Resolved By" value={txn.resolvedBy?.name ?? "—"} />
             )}
           </CardContent>
         </Card>

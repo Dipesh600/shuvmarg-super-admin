@@ -15,10 +15,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
-import { getBrandRouteServices } from "@/api/operatorBrandApi";
+import { getBrandRouteServices, type BrandRouteServiceConfig } from "@/api/operatorBrandApi";
 import { toggleConfigStatus, deleteRouteConfig } from "@/api/platformRegistryApi";
 import RouteConfigModal from "./RouteConfigModal";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/error-message";
 
 // ─── Status pill ────────────────────────────────────────────────────────────────
 const ConfigStatus = ({ status, isLive }: { status: string; isLive: boolean }) => {
@@ -55,8 +56,8 @@ const ScheduleStat = ({ label, value, color }: { label: string; value: number; c
 const BrandServicesTab = ({ brandId }: { brandId: string }) => {
   const qc = useQueryClient();
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [editingConfig, setEditingConfig] = useState<any>(null);
-  const [deletingConfig, setDeletingConfig] = useState<any>(null);
+  const [editingConfig, setEditingConfig] = useState<BrandRouteServiceConfig | null>(null);
+  const [deletingConfig, setDeletingConfig] = useState<BrandRouteServiceConfig | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["brand-route-services", brandId],
@@ -80,7 +81,7 @@ const BrandServicesTab = ({ brandId }: { brandId: string }) => {
       qc.invalidateQueries({ queryKey: ["brand-route-services", brandId] });
       toast.success(res?.message || "Status updated.");
     },
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to toggle status."),
+    onError: (error: unknown) => toast.error(getErrorMessage(error, "Failed to toggle status.")),
   });
 
   // Delete config
@@ -91,8 +92,8 @@ const BrandServicesTab = ({ brandId }: { brandId: string }) => {
       toast.success("Route configuration deleted.");
       setDeletingConfig(null);
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || "Failed to delete configuration.");
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to delete configuration."));
       setDeletingConfig(null);
     },
   });
@@ -163,7 +164,7 @@ const BrandServicesTab = ({ brandId }: { brandId: string }) => {
 
       {/* Config Cards */}
       <div className="space-y-4">
-        {groupedConfigs.map((config: any) => {
+        {groupedConfigs.map((config) => {
           const variant  = config.variantId;
           const corridor = variant?.corridorId;
           const sched    = config.scheduleStats || { total: 0, active: 0, suspended: 0, draft: 0 };
@@ -180,7 +181,7 @@ const BrandServicesTab = ({ brandId }: { brandId: string }) => {
             ? `${corridor.destinationId.name} → ${corridor.originId.name}`
             : "Return Route";
 
-          const hasReturnTiming = config.returnTimingConfig?.length > 0;
+          const hasReturnTiming = (config.returnTimingConfig?.length || 0) > 0;
 
           return (
             <Card key={config._id} className={`border-2 shadow-sm overflow-hidden transition-all ${isGroupLive ? "border-emerald-200" : isInactive ? "border-dashed border-muted opacity-60" : "border-border"}`}>
@@ -195,7 +196,7 @@ const BrandServicesTab = ({ brandId }: { brandId: string }) => {
                       {/* Route title + return direction */}
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <ConfigStatus status={config.status} isLive={config.isLive} />
+                          <ConfigStatus status={config.status} isLive={Boolean(config.isLive)} />
                           {config.patternName && config.patternName !== "Standard" && (
                             <span className="text-[9px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                               {config.patternName}
@@ -276,9 +277,9 @@ const BrandServicesTab = ({ brandId }: { brandId: string }) => {
                     )}
 
                     {/* Outbound stop list */}
-                    {config.activeStops?.length > 0 && (
+                    {(config.activeStops?.length || 0) > 0 && (
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        {config.activeStops.map((stop: any) => (
+                        {config.activeStops?.map((stop) => (
                           <span key={stop._id} className="inline-flex items-center gap-1 text-[10px] font-bold bg-muted/60 text-muted-foreground px-2 py-0.5 rounded-full border border-border capitalize">
                             <Navigation className="w-2.5 h-2.5" />
                             {stop.name}
@@ -321,7 +322,7 @@ const BrandServicesTab = ({ brandId }: { brandId: string }) => {
         isOpen={!!editingConfig}
         onClose={() => setEditingConfig(null)}
         brandId={brandId}
-        editConfig={editingConfig}
+        editConfig={editingConfig || undefined}
       />
 
       {/* Delete Confirmation — uses Dialog (alert-dialog not installed) */}

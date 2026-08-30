@@ -46,7 +46,7 @@ const BusRouteTab = ({ ownerId }: { ownerId: string }) => {
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredRoutes = routes.filter((route: any) =>
+  const filteredRoutes = routes.filter((route) =>
     route.routeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     route.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
     route.to.toLowerCase().includes(searchQuery.toLowerCase())
@@ -136,7 +136,7 @@ const BusRouteTab = ({ ownerId }: { ownerId: string }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRoutes.map((route: any) => (
+                  {filteredRoutes.map((route) => (
                     <TableRow key={route._id} className="hover:bg-white/5 font-medium transition-colors border-white/5">
                       <TableCell className="align-top py-4">
                         <div className="flex flex-col">
