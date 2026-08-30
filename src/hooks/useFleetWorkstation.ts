@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getFleetWorkstation, getTripManifest, updateTripStatus, reassignTripDriver } from "@/api/fleetWorkstationApi";
+import type { TripStatus } from "@/api/tripApi";
 
 /**
  * Fetch the complete Fleet Workstation payload.
@@ -32,7 +33,7 @@ export const useTripManifest = (fleetId: string, tripId: string, enabled: boolea
 export const useUpdateTripStatus = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ fleetId, tripId, payload }: { fleetId: string; tripId: string; payload: { status: string; cancellationReason?: string } }) =>
+        mutationFn: ({ fleetId, tripId, payload }: { fleetId: string; tripId: string; payload: { status: TripStatus; cancellationReason?: string } }) =>
             updateTripStatus(fleetId, tripId, payload),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ["fleetWorkstation", variables.fleetId] });

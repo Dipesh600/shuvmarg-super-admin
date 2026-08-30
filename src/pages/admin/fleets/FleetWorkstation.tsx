@@ -117,13 +117,13 @@ const FleetWorkstation = () => {
                     <OperationsTab today={today} recentTrips={recentTrips} fleet={fleet} fleetId={id as string} schedules={schedules} />
                 </TabsContent>
                 <TabsContent value="schedule" className="mt-6">
-                    <ScheduleTab schedules={schedules} />
+                    <ScheduleTab schedules={schedules || []} />
                 </TabsContent>
                 <TabsContent value="timeline" className="mt-6">
-                    <TimelineTab schedules={schedules} recentTrips={recentTrips || []} upcomingTrips={upcomingTrips || []} />
+                    <TimelineTab schedules={schedules || []} recentTrips={recentTrips || []} upcomingTrips={upcomingTrips || []} />
                 </TabsContent>
                 <TabsContent value="financial" className="mt-6">
-                    <FinancialTab financials={financials} recentTrips={recentTrips} />
+                    <FinancialTab financials={financials} recentTrips={recentTrips || []} />
                 </TabsContent>
                 <TabsContent value="crew" className="mt-6">
                     <ComingSoonTab icon={Users} title="Crew Accountability" description="Driver assignment tracking, license monitoring, and trip-level accountability ledger." />
