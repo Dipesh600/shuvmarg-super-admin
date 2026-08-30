@@ -6,9 +6,24 @@ import { Loader2, Route, MapPin, Navigation, Clock, CheckCircle2, Pencil, Rotate
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getAvailableVariants, getVariantStopsWithConfig, getReturnVariantStops, upsertOperatorConfig, updateConfig } from "@/api/platformRegistryApi";
+import {
+  getAvailableVariants,
+  getVariantStopsWithConfig,
+  getReturnVariantStops,
+  upsertOperatorConfig,
+  updateConfig,
+  type CreateOperatorRouteConfigPayload,
+  type OperatorBoardingConfig,
+  type OperatorRouteConfigEdit,
+  type OperatorRouteConfigPayload,
+  type OperatorRouteStop,
+  type OperatorRouteTiming,
+  type OperatorStopBehavior,
+  type UpdateOperatorRouteConfigPayload,
+} from "@/api/platformRegistryApi";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
+import { getErrorMessage } from "@/lib/error-message";
 
 function calculateDeparture(arrival12h: string, haltMins: number): string {
   if (!arrival12h) return "";
@@ -41,7 +56,7 @@ interface RouteConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
   brandId: string;
-  editConfig?: any; // When provided, modal operates in EDIT mode
+  editConfig?: OperatorRouteConfigEdit; // When provided, modal operates in EDIT mode
 }
 
 const CustomTimePicker = ({ value, onChange }: { value: string, onChange: (v: string) => void }) => {
@@ -104,19 +119,13 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
   const [direction, setDirection] = useState<"outbound" | "return">("outbound");
 
   const [activeStops, setActiveStops] = useState<string[]>([]);
-  const [boardingConfig, setBoardingConfig] = useState<Array<{ stopId: string; boardingPointIds: string[] }>>([]);
-  const [timingConfig, setTimingConfig] = useState<Array<{
-    stopId: string; estimatedArrival: string; estimatedDeparture?: string;
-    haltDuration?: number; dayOffset: number; stopBehavior: string;
-  }>>();
+  const [boardingConfig, setBoardingConfig] = useState<OperatorBoardingConfig[]>([]);
+  const [timingConfig, setTimingConfig] = useState<OperatorRouteTiming[]>();
 
   // Return direction state
   const [returnActiveStops, setReturnActiveStops] = useState<string[]>([]);
-  const [returnBoardingConfig, setReturnBoardingConfig] = useState<Array<{ stopId: string; boardingPointIds: string[] }>>([]);
-  const [returnTimingConfig, setReturnTimingConfig] = useState<Array<{
-    stopId: string; estimatedArrival: string; estimatedDeparture?: string;
-    haltDuration?: number; dayOffset: number; stopBehavior: string;
-  }>>();
+  const [returnBoardingConfig, setReturnBoardingConfig] = useState<OperatorBoardingConfig[]>([]);
+  const [returnTimingConfig, setReturnTimingConfig] = useState<OperatorRouteTiming[]>();
   const [returnOverridden, setReturnOverridden] = useState(() => editConfig?.returnOverridden || false);
   const [initializedStops, setInitializedStops] = useState<unknown>(null);
   const [initializedReturnStops, setInitializedReturnStops] = useState<unknown>(null);
@@ -144,15 +153,15 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
   const variants = variantsData?.data || [];
   const stops = stopsData?.data || [];
   const returnStopsResult = returnStopsData?.data;
-  const returnStops: any[] = returnStopsResult?.stops || [];
+  const returnStops = returnStopsResult?.stops || [];
   const hasReturnVariant: boolean = returnStopsResult?.hasReturnVariant ?? false;
 
   // Initialize each server snapshot once; subsequent changes are user edits.
   if (stops.length > 0 && initializedStops !== stops) {
       setInitializedStops(stops);
-      setActiveStops(stops.filter((s: any) => s.isActive).map((s: any) => s.stopId._id));
-      setBoardingConfig(stops.map((s: any) => ({ stopId: s.stopId._id, boardingPointIds: s.boardingPoints?.map((bp: any) => bp._id) || [] })));
-      setTimingConfig(stops.map((s: any) => ({
+      setActiveStops(stops.filter((s) => s.isActive).map((s) => s.stopId._id));
+      setBoardingConfig(stops.map((s) => ({ stopId: s.stopId._id, boardingPointIds: s.boardingPoints?.map((bp) => bp._id) || [] })));
+      setTimingConfig(stops.map((s) => ({
         stopId: s.stopId._id,
         estimatedArrival: s.timing?.estimatedArrival || "",
         estimatedDeparture: s.timing?.estimatedDeparture || "",
@@ -164,9 +173,9 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
 
   if (returnStops.length > 0 && initializedReturnStops !== returnStops) {
       setInitializedReturnStops(returnStops);
-      setReturnActiveStops(returnStops.filter((s: any) => s.isActive).map((s: any) => s.stopId._id));
-      setReturnBoardingConfig(returnStops.map((s: any) => ({ stopId: s.stopId._id, boardingPointIds: s.boardingPoints?.map((bp: any) => bp._id) || [] })));
-      setReturnTimingConfig(returnStops.map((s: any) => ({
+      setReturnActiveStops(returnStops.filter((s) => s.isActive).map((s) => s.stopId._id));
+      setReturnBoardingConfig(returnStops.map((s) => ({ stopId: s.stopId._id, boardingPointIds: s.boardingPoints?.map((bp) => bp._id) || [] })));
+      setReturnTimingConfig(returnStops.map((s) => ({
         stopId: s.stopId._id,
         estimatedArrival: s.timing?.estimatedArrival || "",
         estimatedDeparture: s.timing?.estimatedDeparture || "",
@@ -178,11 +187,11 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
 
   // Re-derive return from current outbound — reverses stops and swaps arrival↔departure
   const handleRederive = () => {
-    const activeList = stops.filter((s: any) => activeStops.includes(s.stopId._id)).reverse();
-    setReturnActiveStops(activeList.map((s: any) => s.stopId._id));
-    setReturnBoardingConfig(activeList.map((s: any) => ({ stopId: s.stopId._id, boardingPointIds: boardingConfig.find(b => b.stopId === s.stopId._id)?.boardingPointIds || [] })));
-    const derived = activeList.map((s: any) => {
-      const tc = (timingConfig || []).find((t: any) => t.stopId === s.stopId._id);
+    const activeList = stops.filter((s) => activeStops.includes(s.stopId._id)).reverse();
+    setReturnActiveStops(activeList.map((s) => s.stopId._id));
+    setReturnBoardingConfig(activeList.map((s) => ({ stopId: s.stopId._id, boardingPointIds: boardingConfig.find(b => b.stopId === s.stopId._id)?.boardingPointIds || [] })));
+    const derived = activeList.map((s): OperatorRouteTiming => {
+      const tc = (timingConfig || []).find((t) => t.stopId === s.stopId._id);
       return {
         stopId: s.stopId._id,
         estimatedArrival: tc?.estimatedDeparture || tc?.estimatedArrival || "",
@@ -200,29 +209,32 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
 
   // CREATE mutation
   const createMutation = useMutation({
-    mutationFn: (payload: any) => upsertOperatorConfig(payload),
+    mutationFn: (payload: CreateOperatorRouteConfigPayload) => upsertOperatorConfig(payload),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["brand-route-services", brandId] }); toast.success("Route configuration saved."); onClose(); },
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to save route configuration"),
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to save route configuration")),
   });
 
   // EDIT mutation — calls PATCH /operator-config/:configId
   const editMutation = useMutation({
-    mutationFn: (payload: any) => updateConfig(editConfig._id, payload),
+    mutationFn: (payload: UpdateOperatorRouteConfigPayload) => {
+      if (!editConfig?._id) throw new Error("Route configuration is unavailable.");
+      return updateConfig(editConfig._id, payload);
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["brand-route-services", brandId] }); toast.success("Route configuration updated."); onClose(); },
-    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to update route configuration"),
+    onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to update route configuration")),
   });
 
   const isPending = createMutation.isPending || editMutation.isPending;
 
   // Build outbound payload (same as before)
-  const buildPayload = () => {
+  const buildPayload = (): OperatorRouteConfigPayload => {
     const filteredBoarding = boardingConfig.filter(bc => activeStops.includes(bc.stopId));
-    const activeList = stops.filter((s: any) => activeStops.includes(s.stopId._id));
+    const activeList = stops.filter((s) => activeStops.includes(s.stopId._id));
     const realFirst = activeList[0]?.stopId._id;
     const realLast = activeList[activeList.length - 1]?.stopId._id;
     let currentDayOffset = 0; let previousTimeMins = -1;
-    const filteredTiming = activeList.map((s: any) => {
-      const tc = (timingConfig || []).find((t: any) => t.stopId === s.stopId._id) || { stopId: s.stopId._id, estimatedArrival: "", estimatedDeparture: "", haltDuration: 5, stopBehavior: "BOTH" };
+    const filteredTiming = activeList.map((s): OperatorRouteTiming => {
+      const tc = (timingConfig || []).find((t) => t.stopId === s.stopId._id) || { stopId: s.stopId._id, estimatedArrival: "", estimatedDeparture: "", haltDuration: 5, dayOffset: 0, stopBehavior: "BOTH" };
       const isFirst = tc.stopId === realFirst; const isLast = tc.stopId === realLast;
       let computedArrival = tc.estimatedArrival; let computedDeparture = tc.estimatedDeparture;
       if (isFirst) { computedArrival = ""; } else if (isLast) { computedDeparture = ""; } else { computedDeparture = calculateDeparture(tc.estimatedArrival, tc.haltDuration || 5); }
@@ -271,26 +283,26 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
     else setBoardingConfig(prev => prev.map(bc => bc.stopId === stopId ? { ...bc, boardingPointIds: checked ? [...bc.boardingPointIds, bpId] : bc.boardingPointIds.filter(id => id !== bpId) } : bc));
   };
 
-  const handleTimingChange = (stopId: string, field: string, value: string | number, ret = false) => {
+  const handleTimingChange = (stopId: string, field: "estimatedArrival" | "estimatedDeparture" | "haltDuration" | "stopBehavior", value: string | number, ret = false) => {
     if (ret) setReturnTimingConfig(prev => (prev || []).map(tc => tc.stopId === stopId ? { ...tc, [field]: value } : tc));
     else setTimingConfig(prev => (prev || []).map(tc => tc.stopId === stopId ? { ...tc, [field]: value } : tc));
   };
 
   // Renders the stop-card list — reused for both outbound and return tabs
-  const renderStopList = (stopList: any[], activeList: string[], boardingCfg: any[], timingCfg: any[], ret = false) => {
+  const renderStopList = (stopList: OperatorRouteStop[], activeList: string[], boardingCfg: OperatorBoardingConfig[], timingCfg: OperatorRouteTiming[], ret = false) => {
     if (!stopList.length) return <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border-2 border-dashed border-muted rounded-xl"><p className="text-sm font-black tracking-widest uppercase">No stops found</p></div>;
-    const activeStopObjs = stopList.filter((s: any) => activeList.includes(s.stopId._id));
+    const activeStopObjs = stopList.filter((s) => activeList.includes(s.stopId._id));
     const realFirst = activeStopObjs[0]?.stopId._id;
     const realLast = activeStopObjs[activeStopObjs.length - 1]?.stopId._id;
     return (
       <div className="space-y-4 relative before:absolute before:inset-y-0 before:left-[19px] before:w-0.5 before:bg-border before:-z-10">
-        {stopList.map((stop: any) => {
+        {stopList.map((stop) => {
           const realStopId = stop.stopId._id;
           const isActive = activeList.includes(realStopId);
           const isFirst = realStopId === realFirst;
           const isLast = realStopId === realLast;
           const stopBoarding = boardingCfg.find(bc => bc.stopId === realStopId);
-          const stopTiming = (timingCfg || []).find((tc: any) => tc.stopId === realStopId);
+          const stopTiming = (timingCfg || []).find((tc) => tc.stopId === realStopId);
           return (
             <div key={stop._id} className={`flex gap-4 transition-opacity ${!isActive ? 'opacity-50 grayscale' : ''}`}>
               <div className="mt-1 flex flex-col items-center shrink-0">
@@ -315,13 +327,13 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
                       {!isFirst && (<div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> Est. Arrival</Label><CustomTimePicker value={stopTiming?.estimatedArrival || ""} onChange={(val) => handleTimingChange(realStopId, 'estimatedArrival', val, ret)} /></div>)}
                       {isFirst && (<div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> Est. Departure</Label><CustomTimePicker value={stopTiming?.estimatedDeparture || ""} onChange={(val) => handleTimingChange(realStopId, 'estimatedDeparture', val, ret)} /></div>)}
                       {!isFirst && !isLast && (<div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" /> Halt Duration</Label><Select value={stopTiming?.haltDuration?.toString() || "5"} onValueChange={(val) => handleTimingChange(realStopId, 'haltDuration', parseInt(val), ret)}><SelectTrigger className="h-9 rounded-lg border-input bg-muted/30 text-sm font-bold"><SelectValue /></SelectTrigger><SelectContent>{["0","5","10","15","30","45","60"].map(v => <SelectItem key={v} value={v}>{v === "0" ? "No Halt" : v === "60" ? "1 Hour" : `${v} mins`}</SelectItem>)}</SelectContent></Select></div>)}
-                      <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Stop Behavior</Label><Select value={isFirst ? "BOARDING_ONLY" : isLast ? "DROPPING_ONLY" : (stopTiming?.stopBehavior || "BOTH")} onValueChange={(val) => handleTimingChange(realStopId, 'stopBehavior', val, ret)} disabled={isFirst || isLast}><SelectTrigger className="h-9 rounded-lg border-input bg-muted/30 text-sm font-bold"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="BOARDING_ONLY">Boarding Only</SelectItem><SelectItem value="DROPPING_ONLY">Dropping Only</SelectItem><SelectItem value="BOTH">Boarding & Dropping</SelectItem><SelectItem value="REST_STOP">Rest Stop (No Tickets)</SelectItem></SelectContent></Select></div>
+                      <div className="space-y-1.5"><Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Stop Behavior</Label><Select value={isFirst ? "BOARDING_ONLY" : isLast ? "DROPPING_ONLY" : (stopTiming?.stopBehavior || "BOTH")} onValueChange={(val) => handleTimingChange(realStopId, 'stopBehavior', val as OperatorStopBehavior, ret)} disabled={isFirst || isLast}><SelectTrigger className="h-9 rounded-lg border-input bg-muted/30 text-sm font-bold"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="BOARDING_ONLY">Boarding Only</SelectItem><SelectItem value="DROPPING_ONLY">Dropping Only</SelectItem><SelectItem value="BOTH">Boarding & Dropping</SelectItem><SelectItem value="REST_STOP">Rest Stop (No Tickets)</SelectItem></SelectContent></Select></div>
                     </div>
                     {stop.boardingPoints && stop.boardingPoints.length > 0 && (
                       <div className="space-y-2 pt-2 border-t border-border/50">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active Boarding Points</Label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {stop.boardingPoints.map((bp: any) => { const isBpActive = stopBoarding?.boardingPointIds.includes(bp._id); return (<label key={bp._id} className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${isBpActive ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 border-transparent hover:bg-muted/50'}`}><Checkbox checked={isBpActive} onCheckedChange={(checked) => handleBoardingPointToggle(realStopId, bp._id, checked as boolean, ret)} className="mt-0.5" /><div className="flex flex-col"><span className="text-xs font-bold leading-tight">{bp.name}</span>{bp.landmark && <span className="text-[9px] text-muted-foreground mt-0.5">{bp.landmark}</span>}</div></label>); })}
+                          {stop.boardingPoints.map((bp) => { const isBpActive = stopBoarding?.boardingPointIds.includes(bp._id); return (<label key={bp._id} className={`flex items-start gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${isBpActive ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 border-transparent hover:bg-muted/50'}`}><Checkbox checked={isBpActive} onCheckedChange={(checked) => handleBoardingPointToggle(realStopId, bp._id, checked as boolean, ret)} className="mt-0.5" /><div className="flex flex-col"><span className="text-xs font-bold leading-tight">{bp.name}</span>{bp.landmark && <span className="text-[9px] text-muted-foreground mt-0.5">{bp.landmark}</span>}</div></label>); })}
                         </div>
                       </div>
                     )}
@@ -390,7 +402,7 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
                       ) : variants.length === 0 ? (
                         <div className="p-4 text-center text-sm text-muted-foreground font-medium">No available routes found.</div>
                       ) : (
-                        variants.map((v: any) => (
+                        variants.map((v) => (
                           <SelectItem key={v._id} value={v._id} className="py-3">
                             <div className="flex flex-col">
                               <span className="font-bold">{v.name}</span>

@@ -165,10 +165,87 @@ export const deleteVariant = async (id: string) => {
 
 // ── Operator Route Config ──────────────────────────────────────────────────────
 
+type ApiListResponse<T> = { success: boolean; results: number; data: T[] };
+type ApiItemResponse<T> = { success: boolean; data: T };
+
+export type OperatorStopBehavior = "BOARDING_ONLY" | "DROPPING_ONLY" | "BOTH" | "REST_STOP";
+
+export interface OperatorBoardingPoint {
+    _id: string;
+    name?: string;
+    landmark?: string;
+}
+
+export interface OperatorRouteTiming {
+    stopId: string;
+    estimatedArrival: string;
+    estimatedDeparture?: string;
+    haltDuration?: number;
+    dayOffset: number;
+    stopBehavior: OperatorStopBehavior;
+}
+
+export interface OperatorBoardingConfig {
+    stopId: string;
+    boardingPointIds: string[];
+}
+
+export interface OperatorRouteStop {
+    _id: string;
+    stopId: { _id: string; name?: string; code?: string; type?: string };
+    isActive: boolean;
+    boardingPoints?: OperatorBoardingPoint[];
+    timing?: OperatorRouteTiming | null;
+}
+
+export interface AvailableOperatorVariant {
+    _id: string;
+    name: string;
+    direction?: string;
+    patternCount: number;
+    corridorId?: {
+        originId?: { name?: string };
+        destinationId?: { name?: string };
+    };
+}
+
+export interface OperatorRouteConfigEdit {
+    _id: string;
+    patternName?: string;
+    returnOverridden?: boolean;
+    variantId?: { _id: string; name?: string };
+}
+
+export interface OperatorRouteConfigPayload {
+    activeStops: string[];
+    boardingConfig: OperatorBoardingConfig[];
+    timingConfig: OperatorRouteTiming[];
+    returnActiveStops?: string[];
+    returnBoardingConfig?: OperatorBoardingConfig[];
+    returnTimingConfig?: OperatorRouteTiming[];
+    returnOverridden?: boolean;
+}
+
+export interface CreateOperatorRouteConfigPayload extends OperatorRouteConfigPayload {
+    brandId: string;
+    variantId: string;
+    patternName: string;
+}
+
+export type UpdateOperatorRouteConfigPayload = Partial<OperatorRouteConfigPayload> & { notes?: string };
+
+export interface ReturnVariantStopsResult {
+    hasReturnVariant: boolean;
+    stops: OperatorRouteStop[];
+    returnOverridden: boolean;
+    returnVariantId?: string;
+    configId?: string | null;
+}
+
 // Get all available variants an operator can choose from
 export const getAvailableVariants = async (brandId?: string) => {
     const params = brandId ? { brandId } : {};
-    const { data } = await api.get("/operator-config/variants", { params });
+    const { data } = await api.get<ApiListResponse<AvailableOperatorVariant>>("/operator-config/variants", { params });
     return data;
 };
 
@@ -181,14 +258,14 @@ export const getOperatorConfigs = async (brandId: string) => {
 // Get variant stops with brand's current selection state (configId for pattern precision)
 export const getVariantStopsWithConfig = async (brandId: string, variantId: string, configId?: string) => {
     const params = configId ? { configId } : {};
-    const { data } = await api.get(`/operator-config/${brandId}/variant/${variantId}/stops`, { params });
+    const { data } = await api.get<ApiListResponse<OperatorRouteStop>>(`/operator-config/${brandId}/variant/${variantId}/stops`, { params });
     return data;
 };
 
 // Get RETURN direction stops for a forward variant — powers the Return tab in RouteConfigModal
 export const getReturnVariantStops = async (brandId: string, variantId: string, configId?: string) => {
     const params = configId ? { configId } : {};
-    const { data } = await api.get(`/operator-config/${brandId}/variant/${variantId}/return-stops`, { params });
+    const { data } = await api.get<ApiItemResponse<ReturnVariantStopsResult>>(`/operator-config/${brandId}/variant/${variantId}/return-stops`, { params });
     return data;
 };
 
@@ -199,30 +276,13 @@ export const listPatternsForVariant = async (brandId: string, variantId: string)
 };
 
 // Save brand's service configuration for a named pattern on a variant
-export const upsertOperatorConfig = async (payload: {
-    brandId: string;
-    variantId: string;
-    patternName: string;
-    activeStops: string[];
-    boardingConfig: Array<{ stopId: string; boardingPointIds: string[] }>;
-    timingConfig: Array<{ stopId: string; estimatedArrival: string; estimatedDeparture?: string; dayOffset: number; stopBehavior: string }>;
-    // Optional: return direction. If omitted, server auto-derives from forward.
-    returnActiveStops?: string[];
-    returnBoardingConfig?: Array<{ stopId: string; boardingPointIds: string[] }>;
-    returnTimingConfig?: Array<{ stopId: string; estimatedArrival: string; estimatedDeparture?: string; dayOffset: number; stopBehavior: string }>;
-    returnOverridden?: boolean;
-}) => {
+export const upsertOperatorConfig = async (payload: CreateOperatorRouteConfigPayload) => {
     const { data } = await api.post("/operator-config", payload);
     return data;
 };
 
 // Update stops/timing on an existing config (blocked if ACTIVE schedules exist)
-export const updateConfig = async (configId: string, payload: {
-    activeStops?: string[];
-    boardingConfig?: Array<{ stopId: string; boardingPointIds: string[] }>;
-    timingConfig?: Array<{ stopId: string; estimatedArrival: string; estimatedDeparture?: string; dayOffset: number; stopBehavior: string }>;
-    notes?: string;
-}) => {
+export const updateConfig = async (configId: string, payload: UpdateOperatorRouteConfigPayload) => {
     const { data } = await api.patch(`/operator-config/${configId}`, payload);
     return data;
 };
