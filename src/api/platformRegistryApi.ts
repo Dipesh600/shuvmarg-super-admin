@@ -218,6 +218,7 @@ export interface OperatorBoardingConfig {
 
 export interface OperatorRouteStop {
     _id: string;
+    sequence?: number;
     stopId: { _id: string; name?: string; code?: string; type?: string };
     isActive: boolean;
     boardingPoints?: OperatorBoardingPoint[];
@@ -230,6 +231,7 @@ export interface AvailableOperatorVariant {
     direction?: string;
     patternCount: number;
     corridorId?: {
+        _id?: string;
         originId?: { name?: string };
         destinationId?: { name?: string };
     };
@@ -238,6 +240,8 @@ export interface AvailableOperatorVariant {
 export interface OperatorRouteConfigEdit {
     _id: string;
     patternName?: string;
+    status?: string;
+    fleetId?: string | null;
     returnOverridden?: boolean;
     variantId?: { _id: string; name?: string };
 }
@@ -256,9 +260,16 @@ export interface CreateOperatorRouteConfigPayload extends OperatorRouteConfigPay
     brandId: string;
     variantId: string;
     patternName: string;
+    fleetId?: string;
+    status?: "ACTIVE" | "DRAFT";
 }
 
-export type UpdateOperatorRouteConfigPayload = Partial<OperatorRouteConfigPayload> & { notes?: string };
+export type UpdateOperatorRouteConfigPayload = Partial<OperatorRouteConfigPayload> & {
+    notes?: string;
+    patternName?: string;
+    fleetId?: string;
+    status?: "ACTIVE" | "DRAFT";
+};
 
 export interface ReturnVariantStopsResult {
     hasReturnVariant: boolean;
@@ -269,28 +280,28 @@ export interface ReturnVariantStopsResult {
 }
 
 // Get all available variants an operator can choose from
-export const getAvailableVariants = async (brandId?: string) => {
-    const params = brandId ? { brandId } : {};
+export const getAvailableVariants = async (brandId?: string, fleetId?: string, corridorId?: string) => {
+    const params = { ...(brandId ? { brandId } : {}), ...(fleetId ? { fleetId } : {}), ...(corridorId ? { corridorId } : {}) };
     const { data } = await api.get<ApiListResponse<AvailableOperatorVariant>>("/operator-config/variants", { params });
     return data;
 };
 
 // Get all service configs for a specific brand
-export const getOperatorConfigs = async (brandId: string) => {
-    const { data } = await api.get(`/operator-config/${brandId}`);
+export const getOperatorConfigs = async (brandId: string, fleetId?: string) => {
+    const { data } = await api.get(`/operator-config/${brandId}`, { params: fleetId ? { fleetId } : {} });
     return data;
 };
 
 // Get variant stops with brand's current selection state (configId for pattern precision)
-export const getVariantStopsWithConfig = async (brandId: string, variantId: string, configId?: string) => {
-    const params = configId ? { configId } : {};
+export const getVariantStopsWithConfig = async (brandId: string, variantId: string, configId?: string, fleetId?: string) => {
+    const params = { ...(configId ? { configId } : {}), ...(fleetId ? { fleetId } : {}) };
     const { data } = await api.get<ApiListResponse<OperatorRouteStop>>(`/operator-config/${brandId}/variant/${variantId}/stops`, { params });
     return data;
 };
 
 // Get RETURN direction stops for a forward variant — powers the Return tab in RouteConfigModal
-export const getReturnVariantStops = async (brandId: string, variantId: string, configId?: string) => {
-    const params = configId ? { configId } : {};
+export const getReturnVariantStops = async (brandId: string, variantId: string, configId?: string, fleetId?: string) => {
+    const params = { ...(configId ? { configId } : {}), ...(fleetId ? { fleetId } : {}) };
     const { data } = await api.get<ApiItemResponse<ReturnVariantStopsResult>>(`/operator-config/${brandId}/variant/${variantId}/return-stops`, { params });
     return data;
 };

@@ -5,6 +5,9 @@ import { api } from "./axios";
 export type DriverApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type DriverStatus = "AVAILABLE" | "ON_DUTY" | "OFF_DUTY" | "SUSPENDED" | "INACTIVE";
 export type LicenseType = "HV" | "LV" | "TRK";
+export type DriverAccessStatus = "NOT_LINKED" | "INVITED" | "ACTIVE" | "SUSPENDED" | "REMOVED";
+export type DriverNotificationStatus = "QUEUED" | "FAILED" | "NOT_REQUESTED";
+export type DriverInvitationDeliveryStatus = "NOT_REQUIRED" | "PENDING" | "QUEUED" | "FAILED";
 
 export interface DriverProfile {
   _id: string;
@@ -31,46 +34,73 @@ export interface DriverProfile {
   rejectionReason?: string;
   notes?: string;
   createdAt: string;
+  userId?: string | null;
+  accessStatus: DriverAccessStatus;
+  invitationDeliveryStatus: DriverInvitationDeliveryStatus;
+  phoneVerified?: boolean;
+  invitedAt?: string | null;
+  activatedAt?: string | null;
+  invitationLastAttemptAt?: string | null;
+  removedAt?: string | null;
+  documents?: {
+    license?: { url?: string | null };
+    medical?: { url?: string | null };
+  };
+}
+
+export interface DriverAccessResult {
+  userId: string;
+  profileId: string;
+  activationRequired: boolean;
+  notificationStatus: DriverNotificationStatus;
+}
+
+export interface DriverWriteResponse {
+  success: boolean;
+  message?: string;
+  data: DriverProfile | DriverAccessResult;
 }
 
 export interface CreateDriverPayload {
   brandId: string;
   fullName: string;
   phone: string;
-  email?: string;
-  gender?: string;
-  address?: string;
+  gender: "male" | "female" | "other" | "";
+  experienceYears: number;
   licenseNumber: string;
   licenseType: LicenseType;
   licenseExpiry: string;
-  medicalCertExpiry?: string;
-  experienceYears?: number;
-  previousEmployer?: string;
-  notes?: string;
   licenseDoc?: File | null;
-  medicalCertDoc?: File | null;
-  photo?: File | null;
 }
 
 export interface UpdateDriverPayload {
   fullName?: string;
   phone?: string;
-  email?: string;
-  gender?: string;
-  address?: string;
+  gender?: "male" | "female" | "other" | "";
+  experienceYears?: number;
   licenseNumber?: string;
   licenseType?: LicenseType;
   licenseExpiry?: string;
-  medicalCertExpiry?: string;
-  experienceYears?: number;
-  previousEmployer?: string;
-  notes?: string;
   status?: DriverStatus;
-  // File references returned after upload
   licenseDoc?: File | null;
-  medicalCertDoc?: File | null;
-  photo?: File | null;
 }
+
+export interface SecureDriverDocumentRequest {
+  driverId: string;
+  slot: "license" | "medical" | "photo";
+}
+
+export const fetchDriverDocumentAsBlob = async (request: SecureDriverDocumentRequest) => {
+  try {
+    const response = await api.get<Blob>(
+      `/drivers/${encodeURIComponent(request.driverId)}/documents/${request.slot}/view`,
+      { responseType: "blob" },
+    );
+    return { blobUrl: URL.createObjectURL(response.data), mimeType: response.data.type, error: null };
+  } catch {
+    return { blobUrl: null, mimeType: null, error: "Unable to load this document. It may need to be uploaded again." };
+  }
+};
 
 // ─── API Functions ────────────────────────────────────────────────────────────
 
@@ -83,14 +113,13 @@ export const createDriver = async (payload: CreateDriverPayload): Promise<{ succ
 /** Create driver with optional file uploads — sends FormData */
 export const createDriverWithFiles = async (
   payload: CreateDriverPayload
-): Promise<{ success: boolean; data: DriverProfile }> => {
+): Promise<DriverWriteResponse> => {
   const fd = new FormData();
 
   // Append scalar fields
   const scalarKeys: Array<keyof CreateDriverPayload> = [
-    "brandId", "fullName", "phone", "email", "gender", "address",
+    "brandId", "fullName", "phone", "gender", "experienceYears",
     "licenseNumber", "licenseType", "licenseExpiry",
-    "medicalCertExpiry", "experienceYears", "previousEmployer", "notes",
   ];
   for (const key of scalarKeys) {
     const val = payload[key];
@@ -100,10 +129,30 @@ export const createDriverWithFiles = async (
   }
 
   // Append file fields
-  if (payload.licenseDoc instanceof File)    fd.append("licenseDoc",    payload.licenseDoc);
-  if (payload.medicalCertDoc instanceof File) fd.append("medicalCertDoc", payload.medicalCertDoc);
-  if (payload.photo instanceof File)          fd.append("photo",          payload.photo);
+  if (payload.licenseDoc instanceof File) fd.append("licenseDoc", payload.licenseDoc);
 
+  const { data } = await api.post("/drivers", fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+};
+
+/** Re-send setup instructions for invited accounts or login instructions for existing accounts. */
+export const resendDriverAccessMessage = async (driver: DriverProfile): Promise<DriverWriteResponse> => {
+  const brandId = typeof driver.brandId === "string" ? driver.brandId : driver.brandId._id;
+  const fd = new FormData();
+  const values = {
+    brandId,
+    fullName: driver.fullName,
+    phone: driver.phone,
+    gender: driver.gender || "other",
+    experienceYears: driver.experienceYears || 0,
+    licenseNumber: driver.licenseNumber,
+    licenseType: driver.licenseType,
+    licenseExpiry: driver.licenseExpiry,
+    resendInvite: true,
+  };
+  Object.entries(values).forEach(([key, value]) => fd.append(key, String(value)));
   const { data } = await api.post("/drivers", fd, {
     headers: { "Content-Type": "multipart/form-data" },
   });
@@ -138,14 +187,13 @@ export const updateDriver = async (
 export const updateDriverWithFiles = async (
   driverId: string,
   payload: Partial<UpdateDriverPayload>
-): Promise<{ success: boolean; data: DriverProfile }> => {
+): Promise<{ success: boolean; message?: string; data: DriverProfile }> => {
   const fd = new FormData();
 
   // Append scalar fields
   const scalarKeys: Array<keyof UpdateDriverPayload> = [
-    "fullName", "phone", "email", "gender", "address",
-    "licenseNumber", "licenseType", "licenseExpiry",
-    "medicalCertExpiry", "experienceYears", "previousEmployer", "notes", "status",
+    "fullName", "phone", "gender", "experienceYears",
+    "licenseNumber", "licenseType", "licenseExpiry", "status",
   ];
   for (const key of scalarKeys) {
     const val = payload[key];
@@ -155,19 +203,11 @@ export const updateDriverWithFiles = async (
   }
 
   // Append file fields
-  if (payload.licenseDoc instanceof File)    fd.append("licenseDoc",    payload.licenseDoc);
-  if (payload.medicalCertDoc instanceof File) fd.append("medicalCertDoc", payload.medicalCertDoc);
-  if (payload.photo instanceof File)          fd.append("photo",          payload.photo);
+  if (payload.licenseDoc instanceof File) fd.append("licenseDoc", payload.licenseDoc);
 
   const { data } = await api.patch(`/drivers/${driverId}`, fd, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-  return data;
-};
-
-/** Admin approves a driver — makes them AVAILABLE for schedule assignment */
-export const approveDriver = async (driverId: string): Promise<{ success: boolean; data: DriverProfile }> => {
-  const { data } = await api.patch(`/drivers/${driverId}/approve`);
   return data;
 };
 

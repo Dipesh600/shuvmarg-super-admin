@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, ChevronRight, Route, Bus, Users, Calendar, Power, ArrowRight, AlertTriangle } from "lucide-react";
+import { Loader2, CheckCircle2, ChevronRight, Route, Bus, Users, Calendar, Power, ArrowRight, AlertTriangle, Lock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getFleetSetupStatus } from "@/api/busOwnerFleetApi";
 import { activateSchedule, goLiveSchedule } from "@/api/scheduleApi";
@@ -15,6 +15,7 @@ import type { FleetSetupStepKey } from "@/api/busOwnerFleetApi";
 import UpdateOwnerFleetModal from "./UpdateOwnerFleetModal";
 import DriverFormModal from "./CreateDriverModal";
 import CreateScheduleModal from "./CreateScheduleModal";
+import RouteConfigModal from "./RouteConfigModal";
 
 interface FleetSetupWizardProps {
   isOpen: boolean;
@@ -25,11 +26,11 @@ interface FleetSetupWizardProps {
 }
 
 const SETUP_STEPS = [
-  { id: "routeAssigned", label: "Route Assignment", icon: Route, description: "Fleet mapped to a platform corridor" },
-  { id: "routeConfigured", label: "Route Validation", icon: Route, description: "Verify brand-specific stops exist" },
-  { id: "driverAssigned", label: "Crew Assignment", icon: Users, description: "Assign primary driver & crew" },
-  { id: "scheduleCreated", label: "Service Scheduling", icon: Calendar, description: "Create operational timeline" },
-  { id: "activated", label: "Dispatch Overview", icon: Power, description: "Final review & activation" },
+  { id: "routeAssigned", label: "Approved route", icon: Route, description: "Where this bus is allowed to operate" },
+  { id: "routeConfigured", label: "Stops & timings", icon: Route, description: "Choose served stops and arrival times" },
+  { id: "driverAssigned", label: "Driver", icon: Users, description: "Choose the primary approved driver" },
+  { id: "scheduleCreated", label: "Schedule", icon: Calendar, description: "Set the first service dates and times" },
+  { id: "activated", label: "Review & go live", icon: Power, description: "Confirm everything before bookings open" },
 ] as const satisfies ReadonlyArray<{ id: FleetSetupStepKey; label: string; icon: typeof Route; description: string }>;
 
 function apiErrorMessage(error: unknown, fallback: string) {
@@ -211,11 +212,11 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-white flex items-center gap-2">
               <Bus className="w-5 h-5 text-emerald-400" /> 
-              Fleet Activation Wizard
+              Get bus ready
             </DialogTitle>
           </DialogHeader>
           <DialogDescription className="text-slate-400 mt-2">
-            Complete the operational setup to activate this bus and start receiving bookings.
+            Finish the remaining steps for this bus before opening bookings.
           </DialogDescription>
         </div>
 
@@ -230,19 +231,25 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
               steps.map((step, idx) => {
                 const isCompleted = status?.steps?.[step.id];
                 const isActive = idx === activeIndex;
+                const firstIncomplete = steps.findIndex((item) => !status?.steps?.[item.id]);
+                const canOpen = Boolean(isCompleted) || idx === firstIncomplete || firstIncomplete === -1;
                 
                 return (
-                  <div 
+                  <button
+                    type="button"
                     key={step.id} 
-                    onClick={() => setActiveIndex(idx)}
-                    className={`flex gap-3 p-3 rounded-xl transition-all cursor-pointer hover:bg-muted/50 ${
+                    onClick={() => canOpen && setActiveIndex(idx)}
+                    disabled={!canOpen}
+                    className={`w-full text-left flex gap-3 p-3 rounded-xl transition-all ${canOpen ? "cursor-pointer hover:bg-muted/50" : "cursor-not-allowed"} ${
                       isActive ? "bg-primary/10 border border-primary/20" : 
-                      isCompleted ? "opacity-70" : "opacity-40 hover:opacity-80"
+                      isCompleted ? "opacity-70" : "opacity-40"
                     }`}
                   >
                     <div className="mt-0.5 shrink-0">
                       {isCompleted ? (
                         <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      ) : !canOpen ? (
+                        <Lock className="w-5 h-5 text-muted-foreground" />
                       ) : (
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-black ${isActive ? 'border-primary text-primary' : 'border-muted-foreground text-muted-foreground'}`}>
                           {idx + 1}
@@ -253,7 +260,7 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
                       <h4 className={`text-sm font-bold ${isActive ? 'text-primary' : ''}`}>{step.label}</h4>
                       <p className="text-[10px] text-muted-foreground font-medium mt-0.5 leading-tight">{step.description}</p>
                     </div>
-                  </div>
+                  </button>
                 );
               })
             )}
@@ -343,7 +350,7 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
                         <Route className="w-6 h-6 text-amber-600" />
                       </div>
                       <h4 className="text-lg font-bold mb-2">
-                        {status?.steps?.routeConfigured ? "Route Validated" : "Route Not Configured"}
+                        {status?.steps?.routeConfigured ? "Stops & timings saved" : "Choose stops & timings"}
                       </h4>
                       {status?.steps?.routeConfigured && (status?.assignedRouteConfigs?.length ?? 0) > 0 ? (
                         <div className="mb-6 w-full max-w-md text-left space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
@@ -366,9 +373,12 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
                         </div>
                       ) : (
                         <div className="p-4 mb-6 rounded-xl border border-destructive/30 bg-destructive/5 text-sm text-destructive font-semibold max-w-sm">
-                          Your brand has not configured boarding/dropping stops for this corridor. Please exit this wizard and establish the Route Service in the master registry first.
+                          Choose which approved stops this bus serves and add its arrival and departure times.
                         </div>
                       )}
+                      <Button onClick={() => setActionState("routeConfigured")} className="font-bold rounded-xl h-10">
+                        {status?.steps?.routeConfigured ? "Edit stops & timings" : "Choose stops & timings"}
+                      </Button>
                     </>
                   )}
                   {steps[activeIndex].id === "driverAssigned" && (
@@ -509,7 +519,7 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
                               <div className="flex justify-between items-center mb-4">
                                   <div className="flex items-center gap-2">
                                       <Bus className="w-4 h-4 text-emerald-600" />
-                                      <span className="font-black text-sm">{status.fleetData?.busNumber || "Fleet Assigned"}</span>
+                                      <span className="font-black text-sm">{status.busNumber || "Fleet Assigned"}</span>
                                   </div>
                                   <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground bg-muted/50 px-2 py-1 rounded-md">
                                       <Users className="w-3 h-3" />
@@ -585,27 +595,8 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
               </div>
             )}
 
-            <div className="mt-6 flex items-center justify-between pt-6 border-t border-border/50">
-              <Button 
-                variant="outline" 
-                onClick={() => setActiveIndex(Math.max(0, activeIndex - 1))} 
-                disabled={activeIndex === 0} 
-                className="font-bold"
-              >
-                Previous Step
-              </Button>
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" onClick={onClose} className="font-bold">Close</Button>
-                {activeIndex < steps.length && (
-                  <Button 
-                    onClick={() => setActiveIndex(activeIndex + 1)} 
-                    className="font-bold bg-primary text-primary-foreground"
-                    disabled={!status?.steps?.[steps[activeIndex].id]}
-                  >
-                    Next Step <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
-                )}
-              </div>
+            <div className="mt-6 flex items-center justify-end pt-6 border-t border-border/50">
+              <Button variant="ghost" onClick={onClose} className="font-bold">Close</Button>
             </div>
           </div>
         </div>
@@ -630,6 +621,16 @@ export default function FleetSetupWizard({ isOpen, onClose, fleetId, brandId, ow
           isOpen={true}
           onClose={() => setActionState(null)}
           onSuccess={() => { qc.invalidateQueries({ queryKey: ["brand-drivers", brandId] }); setActionState(null); }}
+        />
+      )}
+      {actionState === "routeConfigured" && (
+        <RouteConfigModal
+          isOpen
+          brandId={brandId}
+          fleetId={fleetId}
+          fleetLabel={[status?.busName, status?.busNumber].filter(Boolean).join(" · ")}
+          onClose={() => setActionState(null)}
+          onSaved={() => qc.invalidateQueries({ queryKey: ["fleet-setup-status", fleetId] })}
         />
       )}
     </Dialog>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   getAvailableVariants,
+  getOperatorConfigs,
   getVariantStopsWithConfig,
   getReturnVariantStops,
   upsertOperatorConfig,
@@ -56,8 +57,13 @@ interface RouteConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
   brandId: string;
+  fleetId?: string;
+  fleetLabel?: string;
+  onSaved?: () => void;
   editConfig?: OperatorRouteConfigEdit; // When provided, modal operates in EDIT mode
 }
+
+const SERVICE_TYPE_OPTIONS = ["Standard", "Deluxe", "Express", "Night Bus", "Local / All-stop"] as const;
 
 const CustomTimePicker = ({ value, onChange }: { value: string, onChange: (v: string) => void }) => {
   const match = value?.match(/(\d{2}):(\d{2}) (AM|PM)/);
@@ -103,17 +109,18 @@ const CustomTimePicker = ({ value, onChange }: { value: string, onChange: (v: st
 };
 
 export default function RouteConfigModal(props: RouteConfigModalProps) {
-  const instanceKey = props.isOpen ? `open-${props.editConfig?._id || "create"}` : "closed";
+  const instanceKey = props.isOpen ? `open-${props.fleetId || props.editConfig?._id || "create"}` : "closed";
   return <RouteConfigModalInstance key={instanceKey} {...props} />;
 }
 
-function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: RouteConfigModalProps) {
+function RouteConfigModalInstance({ isOpen, onClose, brandId, fleetId, fleetLabel, onSaved, editConfig }: RouteConfigModalProps) {
   const qc = useQueryClient();
   const isEditMode = !!editConfig;
+  const isFleetSetup = Boolean(fleetId);
 
   // In create mode: user picks a variant. In edit mode: locked to editConfig's variantId.
   const [selectedVariant, setSelectedVariant] = useState<string>(() => String(editConfig?.variantId?._id || ""));
-  const [patternName, setPatternName] = useState<string>(() => editConfig?.patternName || "Standard");
+  const [patternName, setPatternName] = useState<string>(() => editConfig?.patternName || "");
 
   // direction tab: "outbound" | "return"
   const [direction, setDirection] = useState<"outbound" | "return">("outbound");
@@ -129,29 +136,44 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
   const [returnOverridden, setReturnOverridden] = useState(() => editConfig?.returnOverridden || false);
   const [initializedStops, setInitializedStops] = useState<unknown>(null);
   const [initializedReturnStops, setInitializedReturnStops] = useState<unknown>(null);
+  const [draftConfigId, setDraftConfigId] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [draftSaveState, setDraftSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   // Only fetch variant list in CREATE mode
   const { data: variantsData, isLoading: loadingVariants } = useQuery({
-    queryKey: ["available-variants", brandId],
-    queryFn: () => getAvailableVariants(brandId),
+    queryKey: ["available-variants", brandId, fleetId],
+    queryFn: () => getAvailableVariants(brandId, fleetId),
     enabled: isOpen && !!brandId && !isEditMode,
   });
 
+  const { data: configsData } = useQuery({
+    queryKey: ["operator-configs", brandId, fleetId],
+    queryFn: () => getOperatorConfigs(brandId, fleetId),
+    enabled: isOpen && isFleetSetup && !!brandId,
+  });
+
+  const variants = variantsData?.data || [];
+  const fleetConfigs = (configsData?.data || []) as OperatorRouteConfigEdit[];
+  const effectiveSelectedVariant = selectedVariant || String(fleetConfigs[0]?.variantId?._id || variants[0]?._id || "");
+  const selectedFleetConfig = fleetConfigs.find((config) => String(config.variantId?._id || "") === effectiveSelectedVariant);
+  const configId = editConfig?._id || draftConfigId || selectedFleetConfig?._id;
+  const effectivePatternName = patternName || selectedFleetConfig?.patternName || "Standard";
+
   const { data: stopsData, isLoading: loadingStops } = useQuery({
-    queryKey: ["variant-stops-config", brandId, selectedVariant, editConfig?._id],
-    queryFn: () => getVariantStopsWithConfig(brandId, selectedVariant, isEditMode ? editConfig?._id : undefined),
-    enabled: !!selectedVariant && isOpen,
+    queryKey: ["variant-stops-config", brandId, effectiveSelectedVariant, configId, fleetId],
+    queryFn: () => getVariantStopsWithConfig(brandId, effectiveSelectedVariant, configId, fleetId),
+    enabled: !!effectiveSelectedVariant && isOpen,
   });
 
   // Return direction stops — fetched from the paired return variant
   const { data: returnStopsData, isLoading: loadingReturnStops } = useQuery({
-    queryKey: ["return-variant-stops", brandId, selectedVariant, editConfig?._id],
-    queryFn: () => getReturnVariantStops(brandId, selectedVariant, isEditMode ? editConfig?._id : undefined),
-    enabled: !!selectedVariant && isOpen,
+    queryKey: ["return-variant-stops", brandId, effectiveSelectedVariant, configId, fleetId],
+    queryFn: () => getReturnVariantStops(brandId, effectiveSelectedVariant, configId, fleetId),
+    enabled: !!effectiveSelectedVariant && isOpen && !isFleetSetup,
   });
 
-  const variants = variantsData?.data || [];
-  const stops = stopsData?.data || [];
+  const stops = useMemo(() => stopsData?.data || [], [stopsData?.data]);
   const returnStopsResult = returnStopsData?.data;
   const returnStops = returnStopsResult?.stops || [];
   const hasReturnVariant: boolean = returnStopsResult?.hasReturnVariant ?? false;
@@ -210,24 +232,36 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
   // CREATE mutation
   const createMutation = useMutation({
     mutationFn: (payload: CreateOperatorRouteConfigPayload) => upsertOperatorConfig(payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["brand-route-services", brandId] }); toast.success("Route configuration saved."); onClose(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["brand-route-services", brandId] });
+      qc.invalidateQueries({ queryKey: ["fleet-setup-status", fleetId] });
+      toast.success(isFleetSetup ? "Stops and timings saved for this bus." : "Route configuration saved.");
+      onSaved?.();
+      onClose();
+    },
     onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to save route configuration")),
   });
 
   // EDIT mutation — calls PATCH /operator-config/:configId
   const editMutation = useMutation({
     mutationFn: (payload: UpdateOperatorRouteConfigPayload) => {
-      if (!editConfig?._id) throw new Error("Route configuration is unavailable.");
-      return updateConfig(editConfig._id, payload);
+      if (!configId) throw new Error("Route configuration is unavailable.");
+      return updateConfig(configId, payload);
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["brand-route-services", brandId] }); toast.success("Route configuration updated."); onClose(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["brand-route-services", brandId] });
+      qc.invalidateQueries({ queryKey: ["fleet-setup-status", fleetId] });
+      toast.success(isFleetSetup ? "Stops and timings saved for this bus." : "Route configuration updated.");
+      onSaved?.();
+      onClose();
+    },
     onError: (err: unknown) => toast.error(getErrorMessage(err, "Failed to update route configuration")),
   });
 
   const isPending = createMutation.isPending || editMutation.isPending;
 
   // Build outbound payload (same as before)
-  const buildPayload = (): OperatorRouteConfigPayload => {
+  const buildPayload = useCallback((): OperatorRouteConfigPayload => {
     const filteredBoarding = boardingConfig.filter(bc => activeStops.includes(bc.stopId));
     const activeList = stops.filter((s) => activeStops.includes(s.stopId._id));
     const realFirst = activeList[0]?.stopId._id;
@@ -250,7 +284,7 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
     });
 
     // Build return payload if operator has configured it
-    const retPayload = returnTimingConfig && returnTimingConfig.length > 0 ? {
+    const retPayload = !isFleetSetup && returnTimingConfig && returnTimingConfig.length > 0 ? {
       returnActiveStops,
       returnBoardingConfig: returnBoardingConfig.filter(bc => returnActiveStops.includes(bc.stopId)),
       returnTimingConfig,
@@ -258,32 +292,93 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
     } : {};
 
     return { activeStops, boardingConfig: filteredBoarding, timingConfig: filteredTiming, ...retPayload };
+  }, [activeStops, boardingConfig, isFleetSetup, returnActiveStops, returnBoardingConfig, returnOverridden, returnTimingConfig, stops, timingConfig]);
+
+  const saveDraft = useCallback(async (): Promise<boolean> => {
+    if (!isFleetSetup || selectedFleetConfig?.status === "ACTIVE" || !fleetId || !effectiveSelectedVariant || stops.length === 0) return true;
+    setDraftSaveState("saving");
+    try {
+      const payload = { ...buildPayload(), fleetId, patternName: effectivePatternName.trim(), status: "DRAFT" as const };
+      const response = configId
+        ? await updateConfig(configId, payload)
+        : await upsertOperatorConfig({ brandId, variantId: effectiveSelectedVariant, ...payload });
+      const savedId = response?.data?._id;
+      if (savedId) setDraftConfigId(String(savedId));
+      setHasUnsavedChanges(false);
+      setDraftSaveState("saved");
+      return true;
+    } catch (error) {
+      setDraftSaveState("error");
+      toast.error(getErrorMessage(error, "Draft could not be saved. Keep this window open and retry."));
+      return false;
+    }
+  }, [brandId, buildPayload, configId, effectivePatternName, effectiveSelectedVariant, fleetId, isFleetSetup, selectedFleetConfig?.status, stops.length]);
+
+  useEffect(() => {
+    if (!isFleetSetup || !hasUnsavedChanges || isPending || selectedFleetConfig?.status === "ACTIVE"
+      || !fleetId || !effectiveSelectedVariant || stops.length === 0) return;
+    const timer = window.setTimeout(() => {
+      void saveDraft();
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [effectiveSelectedVariant, fleetId, hasUnsavedChanges, isFleetSetup, isPending, saveDraft, selectedFleetConfig?.status, stops.length]);
+
+  const handleClose = async () => {
+    if (draftSaveState === "saving") return;
+    if (hasUnsavedChanges && !(await saveDraft())) return;
+    onClose();
   };
 
   const handleSave = () => {
-    if (!selectedVariant) { toast.error("Please select a route variant first."); return; }
-    if (!patternName.trim()) { toast.error("Pattern name is required."); return; }
-    if (activeStops.length === 0) { toast.error("You must select at least one active stop."); return; }
+    if (!effectiveSelectedVariant) { toast.error("Please select a route variant first."); return; }
+    if (!effectivePatternName.trim()) { toast.error("Choose a service type."); return; }
+    if (activeStops.length < (isFleetSetup ? 2 : 1)) { toast.error(isFleetSetup ? "Keep at least the starting and ending stops." : "You must select at least one active stop."); return; }
+    if (isFleetSetup) {
+      const firstStopId = stops[0]?.stopId._id;
+      const lastStopId = stops[stops.length - 1]?.stopId._id;
+      if (!firstStopId || !lastStopId || !activeStops.includes(firstStopId) || !activeStops.includes(lastStopId)) {
+        toast.error("The starting and ending stops are required.");
+        return;
+      }
+      const activeTiming = (timingConfig || []).filter((item) => activeStops.includes(item.stopId));
+      const missingTiming = activeTiming.some((item) =>
+        item.stopId === firstStopId ? !item.estimatedDeparture : item.stopId === lastStopId ? !item.estimatedArrival : !item.estimatedArrival
+      );
+      if (missingTiming) { toast.error("Add the departure and arrival times for every served stop."); return; }
+    }
     const payload = buildPayload();
-    if (isEditMode) {
-      editMutation.mutate(payload);
+    if (isEditMode || configId) {
+      editMutation.mutate({
+        ...payload,
+        ...(isFleetSetup ? { fleetId, patternName: effectivePatternName, status: "ACTIVE" as const } : {}),
+      });
 
     } else {
-      createMutation.mutate({ brandId, variantId: selectedVariant, patternName: patternName.trim(), ...payload });
+      createMutation.mutate({
+        brandId,
+        variantId: effectiveSelectedVariant,
+        patternName: effectivePatternName.trim(),
+        ...(isFleetSetup ? { fleetId, status: "ACTIVE" as const } : {}),
+        ...payload,
+      });
     }
   };
 
   const handleStopToggle = (stopId: string, checked: boolean, ret = false) => {
+    if (isFleetSetup && !ret && (stopId === stops[0]?.stopId._id || stopId === stops[stops.length - 1]?.stopId._id)) return;
+    if (isFleetSetup) { setHasUnsavedChanges(true); setDraftSaveState("idle"); }
     if (ret) setReturnActiveStops(checked ? [...returnActiveStops, stopId] : returnActiveStops.filter(id => id !== stopId));
     else setActiveStops(checked ? [...activeStops, stopId] : activeStops.filter(id => id !== stopId));
   };
 
   const handleBoardingPointToggle = (stopId: string, bpId: string, checked: boolean, ret = false) => {
+    if (isFleetSetup) { setHasUnsavedChanges(true); setDraftSaveState("idle"); }
     if (ret) setReturnBoardingConfig(prev => prev.map(bc => bc.stopId === stopId ? { ...bc, boardingPointIds: checked ? [...bc.boardingPointIds, bpId] : bc.boardingPointIds.filter(id => id !== bpId) } : bc));
     else setBoardingConfig(prev => prev.map(bc => bc.stopId === stopId ? { ...bc, boardingPointIds: checked ? [...bc.boardingPointIds, bpId] : bc.boardingPointIds.filter(id => id !== bpId) } : bc));
   };
 
   const handleTimingChange = (stopId: string, field: "estimatedArrival" | "estimatedDeparture" | "haltDuration" | "stopBehavior", value: string | number, ret = false) => {
+    if (isFleetSetup) { setHasUnsavedChanges(true); setDraftSaveState("idle"); }
     if (ret) setReturnTimingConfig(prev => (prev || []).map(tc => tc.stopId === stopId ? { ...tc, [field]: value } : tc));
     else setTimingConfig(prev => (prev || []).map(tc => tc.stopId === stopId ? { ...tc, [field]: value } : tc));
   };
@@ -296,11 +391,12 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
     const realLast = activeStopObjs[activeStopObjs.length - 1]?.stopId._id;
     return (
       <div className="space-y-4 relative before:absolute before:inset-y-0 before:left-[19px] before:w-0.5 before:bg-border before:-z-10">
-        {stopList.map((stop) => {
+        {stopList.map((stop, stopIndex) => {
           const realStopId = stop.stopId._id;
           const isActive = activeList.includes(realStopId);
           const isFirst = realStopId === realFirst;
           const isLast = realStopId === realLast;
+          const isRequiredEndpoint = isFleetSetup && !ret && (stopIndex === 0 || stopIndex === stopList.length - 1);
           const stopBoarding = boardingCfg.find(bc => bc.stopId === realStopId);
           const stopTiming = (timingCfg || []).find((tc) => tc.stopId === realStopId);
           return (
@@ -317,8 +413,8 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 uppercase tracking-widest"><MapPin className="w-3 h-3" /> {stop.stopId?.code} • {stop.stopId?.type}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label htmlFor={`${ret ? 'ret' : 'out'}-active-${realStopId}`} className="text-xs font-bold cursor-pointer">{isActive ? 'Active' : 'Inactive'}</Label>
-                    <Checkbox id={`${ret ? 'ret' : 'out'}-active-${realStopId}`} checked={isActive} onCheckedChange={(checked) => handleStopToggle(realStopId, checked as boolean, ret)} className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500" />
+                    <Label htmlFor={`${ret ? 'ret' : 'out'}-active-${realStopId}`} className="text-xs font-bold cursor-pointer">{isRequiredEndpoint ? "Required" : isActive ? "Served" : "Skipped"}</Label>
+                    <Checkbox id={`${ret ? 'ret' : 'out'}-active-${realStopId}`} checked={isActive} disabled={isRequiredEndpoint} onCheckedChange={(checked) => handleStopToggle(realStopId, checked as boolean, ret)} className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500" />
                   </div>
                 </div>
                 {isActive && (
@@ -349,17 +445,19 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
 
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) void handleClose(); }}>
       <DialogContent className="sm:max-w-[700px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
         <div className="bg-slate-900 p-6 text-white shrink-0">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-white flex items-center gap-2">
               {isEditMode ? <Pencil className="w-5 h-5 text-amber-400" /> : <Route className="w-5 h-5 text-emerald-400" />}
-              {isEditMode ? `Edit: ${editConfig?.variantId?.name || "Route Config"}` : "Add Route Service Configuration"}
+              {isFleetSetup ? "Choose stops & timings" : isEditMode ? `Edit: ${editConfig?.variantId?.name || "Route Config"}` : "Add Route Service Configuration"}
             </DialogTitle>
           </DialogHeader>
           <DialogDescription className="text-slate-400 mt-2">
-            {isEditMode
+            {isFleetSetup
+              ? `Set the service type and timings for ${fleetLabel || "this bus"}. The return journey follows the approved path automatically.`
+              : isEditMode
               ? "Update the active stops, boarding points, and estimated timings. Edits are blocked if active schedules exist."
               : "Select a platform route and configure the active stops, boarding points, and estimated timings for this brand."}
           </DialogDescription>
@@ -374,25 +472,42 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 mb-1">
                     <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-black text-xs">1</div>
-                    <Label className="text-sm font-black uppercase tracking-widest text-foreground">Pattern Name</Label>
+                    <Label className="text-sm font-black uppercase tracking-widest text-foreground">{isFleetSetup ? "Service type" : "Pattern Name"}</Label>
                   </div>
-                  <Input
-                    value={patternName}
-                    onChange={e => setPatternName(e.target.value)}
-                    placeholder="e.g. Standard, Express, Night Service"
-                    maxLength={40}
-                    className="h-11 rounded-xl font-bold"
-                  />
+                  {isFleetSetup ? (
+                    <Select value={effectivePatternName} onValueChange={(value) => {
+                      setPatternName(value);
+                      setHasUnsavedChanges(true);
+                      setDraftSaveState("idle");
+                    }}>
+                      <SelectTrigger className="h-11 rounded-xl font-bold"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SERVICE_TYPE_OPTIONS.map((serviceType) => <SelectItem key={serviceType} value={serviceType}>{serviceType}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      value={effectivePatternName}
+                      onChange={e => setPatternName(e.target.value)}
+                      placeholder="e.g. Standard, Express, Night Service"
+                      maxLength={40}
+                      className="h-11 rounded-xl font-bold"
+                    />
+                  )}
                   <p className="text-[10px] text-muted-foreground font-medium">
-                    Each pattern is a distinct stop configuration. A variant can have <strong>Standard</strong> (8 stops, local) and <strong>Express</strong> (5 stops, fast) simultaneously.
+                    {isFleetSetup ? "Use the same service choices shown to the bus owner." : <>Each pattern is a distinct stop configuration. A variant can have <strong>Standard</strong> (8 stops, local) and <strong>Express</strong> (5 stops, fast) simultaneously.</>}
                   </p>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 mb-1">
                     <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-black text-xs">2</div>
-                    <Label className="text-sm font-black uppercase tracking-widest text-foreground">Select Route Variant</Label>
+                    <Label className="text-sm font-black uppercase tracking-widest text-foreground">{isFleetSetup ? "Approved path" : "Select Route Variant"}</Label>
                   </div>
-                  <Select value={selectedVariant} onValueChange={setSelectedVariant}>
+                  <Select value={effectiveSelectedVariant} onValueChange={(value) => {
+                    setSelectedVariant(value);
+                    setDraftConfigId(null);
+                    if (isFleetSetup) { setHasUnsavedChanges(true); setDraftSaveState("idle"); }
+                  }}>
                     <SelectTrigger className="h-12 rounded-xl font-bold bg-muted/30">
                       <SelectValue placeholder="Select a platform route..." />
                     </SelectTrigger>
@@ -426,11 +541,11 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
             )}
 
             {/* Direction Tabs + Configure Stops */}
-            {selectedVariant && (
+            {effectiveSelectedVariant && (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
                 {/* Direction Tab Switcher */}
-                <div className="flex items-center gap-2 p-1 bg-muted/40 rounded-xl border">
+                {!isFleetSetup && <div className="flex items-center gap-2 p-1 bg-muted/40 rounded-xl border">
                   <button
                     onClick={() => setDirection("outbound")}
                     className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-black transition-all ${
@@ -456,7 +571,7 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
                         : null
                     }
                   </button>
-                </div>
+                </div>}
 
                 {direction === "outbound" && (
                   <div className="space-y-4">
@@ -499,14 +614,19 @@ function RouteConfigModalInstance({ isOpen, onClose, brandId, editConfig }: Rout
 
 
         <DialogFooter className="p-6 bg-background border-t shrink-0">
-          <Button variant="outline" onClick={onClose} className="font-bold rounded-xl h-12 px-6">Cancel</Button>
+          {isFleetSetup && <span className="mr-auto self-center text-xs font-medium text-muted-foreground">
+            {selectedFleetConfig?.status === "ACTIVE"
+              ? "Complete the step to apply changes"
+              : draftSaveState === "saving" ? "Saving draft…" : draftSaveState === "saved" ? "Draft saved" : draftSaveState === "error" ? "Draft not saved" : "Changes save automatically"}
+          </span>}
+          <Button variant="outline" onClick={() => void handleClose()} disabled={draftSaveState === "saving"} className="font-bold rounded-xl h-12 px-6">Close</Button>
           <Button
             className={`h-12 rounded-xl font-black px-8 text-white ${isEditMode ? 'bg-amber-600 hover:bg-amber-700' : 'bg-slate-900 hover:bg-slate-800'}`}
             onClick={handleSave}
-            disabled={!selectedVariant || activeStops.length === 0 || isPending}
+            disabled={!effectiveSelectedVariant || activeStops.length === 0 || isPending || draftSaveState === "saving"}
           >
             {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-            {isEditMode ? "Update Configuration" : "Save Configuration"}
+            {isFleetSetup ? "Complete stops & timings" : isEditMode ? "Update Configuration" : "Save Configuration"}
           </Button>
         </DialogFooter>
       </DialogContent>

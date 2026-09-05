@@ -31,6 +31,8 @@ export interface AdminFleetDraft {
   insuranceValidTill: string;
   routePermitValidTill: string;
   selectedCorridorId: string;
+  selectedVariantId?: string;
+  servedStopIds?: string[];
   isRequestingRoute: boolean;
   requestOriginCity: string;
   requestDestinationCity: string;
@@ -92,6 +94,8 @@ export function hasMeaningfulAdminFleetDraft(draft: AdminFleetDraft) {
     || draft.insuranceValidTill
     || draft.routePermitValidTill
     || draft.selectedCorridorId
+    || Boolean(draft.selectedVariantId)
+    || Boolean(draft.servedStopIds?.length)
     || draft.isRequestingRoute
     || draft.requestOriginCity.trim()
     || draft.requestDestinationCity.trim()
@@ -118,6 +122,8 @@ export async function loadAdminFleetDraft(ownerId: string, brandId?: string): Pr
   return {
     ...parsed.draft,
     brandId: parsed.draft.brandId || "",
+    selectedVariantId: parsed.draft.selectedVariantId || "",
+    servedStopIds: parsed.draft.servedStopIds || [],
     files: files || {
       imageFront: null, imageBack: null, imageSide: null, imageInside: null,
       fitnessCert: null, insurance: null, bluebook: null, routePermit: null,

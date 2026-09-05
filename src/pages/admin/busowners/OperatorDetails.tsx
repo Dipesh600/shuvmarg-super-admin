@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Briefcase, MapPin, Bus, Route, CreditCard, Activity, Calendar, Pencil, Loader2, Users } from "lucide-react";
+import { ArrowLeft, Briefcase, MapPin, Bus, Route, CreditCard, Activity, Calendar, Pencil, Loader2, Users, UserRoundCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -18,6 +18,7 @@ import FleetTab from "@/components/busowners/operator_tabs/FleetTab";
 import BrandServicesTab from "@/components/busowners/operator_tabs/BrandServicesTab";
 import BrandSchedulesTab from "@/components/busowners/operator_tabs/BrandSchedulesTab";
 import DriversTab from "@/components/busowners/operator_tabs/DriversTab";
+import StaffTab from "@/components/busowners/operator_tabs/StaffTab";
 import { StatCard } from "@/components/dashboard/StatCard";
 
 // ─── FinancialTab ─────────────────────────────────────────────────────────────
@@ -330,6 +331,9 @@ const OperatorDetails = () => {
                     <TabsTrigger value="drivers" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
                         <Users className="w-4 h-4" /> Drivers
                     </TabsTrigger>
+                    <TabsTrigger value="staff" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
+                        <UserRoundCheck className="w-4 h-4" /> Staff
+                    </TabsTrigger>
                     <TabsTrigger value="financial" className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md border border-transparent transition-all whitespace-nowrap">
                         <CreditCard className="w-4 h-4" /> Financials
                     </TabsTrigger>
@@ -361,6 +365,12 @@ const OperatorDetails = () => {
                     <TabsContent value="drivers">
                         <div className="bg-[#121212]/30 border-white/5 border rounded-2xl p-4 shadow-sm backdrop-blur-md">
                             <DriversTab brandId={brand._id} brandName={brand.brandName} />
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="staff">
+                        <div className="bg-[#121212]/30 border-white/5 border rounded-2xl p-4 shadow-sm backdrop-blur-md">
+                            <StaffTab brandId={brand._id} brandName={brand.brandName} />
                         </div>
                     </TabsContent>
                     
