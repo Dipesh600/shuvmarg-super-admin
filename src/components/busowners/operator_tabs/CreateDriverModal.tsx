@@ -11,9 +11,10 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Loader2, UserCheck, Upload, FileText, ImageIcon, AlertTriangle } from "lucide-react";
+import { Loader2, UserCheck, Upload, FileText, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/error-message";
+import DriverDocumentPreview from "./DriverDocumentPreview";
 
 // ── File picker button ──────────────────────────────────────────────────────────
 const FilePicker: React.FC<{
@@ -94,22 +95,18 @@ const INITIAL: CreateDriverPayload = {
   brandId: "",
   fullName: "",
   phone: "",
-  email: "",
   gender: "",
-  address: "",
+  experienceYears: 0,
   licenseNumber: "",
   licenseType: "HV",
   licenseExpiry: "",
-  medicalCertExpiry: "",
-  experienceYears: 0,
-  previousEmployer: "",
-  notes: "",
 };
 
 const DriverFormModal: React.FC<DriverFormModalProps> = ({
   brandId, brandName, driver, isOpen, onClose, onSuccess,
 }) => {
   const isEdit = !!driver;
+  const needsSecurityRefresh = driver?.approvalStatus === "PENDING";
   const [tab, setTab] = useState<Tab>("details");
   
   const [form, setForm] = useState<CreateDriverPayload & { status?: DriverStatus }>(
@@ -118,16 +115,11 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
           brandId:           brandId,
           fullName:          driver!.fullName,
           phone:             driver!.phone,
-          email:             driver!.email || "",
-          gender:            driver!.gender || "",
-          address:           driver!.address || "",
+          gender:            driver!.gender === "male" || driver!.gender === "female" || driver!.gender === "other" ? driver!.gender : "",
+          experienceYears:   driver!.experienceYears,
           licenseNumber:     driver!.licenseNumber,
           licenseType:       driver!.licenseType,
           licenseExpiry:     driver!.licenseExpiry ? driver!.licenseExpiry.split("T")[0] : "",
-          medicalCertExpiry: driver!.medicalCertExpiry ? driver!.medicalCertExpiry.split("T")[0] : "",
-          experienceYears:   driver!.experienceYears,
-          previousEmployer:  driver!.previousEmployer || "",
-          notes:             driver!.notes || "",
           status:            driver!.status,
         }
       : { ...INITIAL, brandId }
@@ -136,31 +128,39 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const [licenseDocFile,    setLicenseDocFile]    = useState<File | null>(null);
-  const [medicalCertFile,   setMedicalCertFile]   = useState<File | null>(null);
-  const [photoFile,         setPhotoFile]         = useState<File | null>(null);
+  const [licenseDocFile, setLicenseDocFile] = useState<File | null>(null);
+
+  const selectLicenseDocument = (file: File | null) => {
+    if (!file) return setLicenseDocFile(null);
+    if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type) || file.size <= 0 || file.size > 5 * 1024 * 1024) {
+      toast.error("Upload one JPG, PNG or PDF driving-licence document up to 5 MB.");
+      return setLicenseDocFile(null);
+    }
+    setLicenseDocFile(file);
+  };
 
   const mut = useMutation({
     mutationFn: () => {
       const payload = {
         ...form,
         licenseDoc: licenseDocFile,
-        medicalCertDoc: medicalCertFile,
-        photo: photoFile,
       };
       if (isEdit) {
         return updateDriverWithFiles(driver!._id, payload);
       }
       return createDriverWithFiles(payload);
     },
-    onSuccess: () => {
-      toast.success(isEdit ? "Driver updated successfully." : "Driver added. Pending document review.");
+    onSuccess: (result) => {
+      const notificationStatus = "notificationStatus" in result.data ? result.data.notificationStatus : null;
+      if (!isEdit && notificationStatus === "FAILED") {
+        toast.warning(result.message || "Driver created, but the access SMS could not be queued.");
+      } else {
+        toast.success(result.message || (isEdit ? "Driver updated successfully." : "Driver created successfully."));
+      }
       if (!isEdit) {
         setForm({ ...INITIAL, brandId });
         setTab("details");
         setLicenseDocFile(null);
-        setMedicalCertFile(null);
-        setPhotoFile(null);
       }
       onSuccess();
     },
@@ -170,15 +170,16 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
   const handleClose = () => {
     if (!isEdit) {
       setLicenseDocFile(null);
-      setMedicalCertFile(null);
-      setPhotoFile(null);
       setForm({ ...INITIAL, brandId });
       setTab("details");
     }
     onClose();
   };
 
-  const isFormValid = form.fullName.trim() && form.phone.trim() && form.licenseNumber.trim() && form.licenseType && form.licenseExpiry;
+  const isFormValid = Boolean(form.fullName.trim() && form.phone.trim() && form.gender
+    && Number.isInteger(form.experienceYears) && form.experienceYears >= 0 && form.experienceYears <= 80
+    && form.licenseNumber.trim() && form.licenseType && form.licenseExpiry
+    && ((!isEdit || needsSecurityRefresh) ? licenseDocFile : true));
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && handleClose()}>
@@ -192,7 +193,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
             </div>
             <div>
               <DialogTitle className="text-lg font-black tracking-tight text-primary uppercase">
-                {isEdit ? "Edit Driver" : "Add Driver"}
+                {needsSecurityRefresh ? "Complete Driver Security Check" : isEdit ? "Edit Driver" : "Add Driver"}
               </DialogTitle>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 {isEdit ? driver!.fullName : brandName}
@@ -248,21 +249,9 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
 
               <div className="space-y-1">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Email
+                  Gender *
                 </Label>
-                <Input
-                  value={form.email}
-                  onChange={(e) => set("email", e.target.value)}
-                  placeholder="optional"
-                  className="h-9 rounded-xl"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Gender
-                </Label>
-                <Select value={form.gender} onValueChange={(v) => set("gender", v)}>
+                <Select value={form.gender} onValueChange={(v) => set("gender", v as "male" | "female" | "other")}>
                   <SelectTrigger className="h-9 rounded-xl">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
@@ -276,7 +265,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
 
               <div className="space-y-1">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Experience (years)
+                  Experience (years) *
                 </Label>
                 <Input
                   type="number"
@@ -302,17 +291,6 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
                 </div>
               )}
 
-              <div className={isEdit ? "space-y-1" : "col-span-2 space-y-1"}>
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Previous Employer
-                </Label>
-                <Input
-                  value={form.previousEmployer}
-                  onChange={(e) => set("previousEmployer", e.target.value)}
-                  placeholder="Previous bus company (optional)"
-                  className="h-9 rounded-xl"
-                />
-              </div>
             </div>
           </div>
         )}
@@ -320,6 +298,8 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
         {/* Tab 2 — Documents */}
         {tab === "documents" && (
           <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
+            {driver && <DriverDocumentPreview driver={driver} />}
+            <p className="text-xs text-muted-foreground">The licence is checked from its actual contents, malware-scanned, and image uploads are compressed before private storage. The driver becomes ready when these checks pass.</p>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-1">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -362,32 +342,6 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
                 />
               </div>
 
-              <div className="col-span-2 space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Medical Certificate Expiry
-                </Label>
-                <Input
-                  type="date"
-                  value={form.medicalCertExpiry}
-                  onChange={(e) => set("medicalCertExpiry", e.target.value)}
-                  className="h-9 rounded-xl"
-                />
-                <p className="text-[9px] text-muted-foreground mt-1">
-                  DoTM Nepal requires a valid medical fitness certificate for heavy vehicle drivers.
-                </p>
-              </div>
-
-              <div className="col-span-2 space-y-1">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  Internal Notes
-                </Label>
-                <Input
-                  value={form.notes}
-                  onChange={(e) => set("notes", e.target.value)}
-                  placeholder="Optional admin notes"
-                  className="h-9 rounded-xl"
-                />
-              </div>
             </div>
 
             {/* Document Uploads */}
@@ -397,37 +351,13 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
                 {isEdit && <ExpiryStatus dateStr={form.licenseExpiry} />}
               </div>
               <FilePicker
-                label="License Document (PDF or Image)"
-                accept="image/*,application/pdf"
+                label={needsSecurityRefresh ? "New License Document Required (PDF or Image)" : "License Document (PDF or Image)"}
+                accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                 value={licenseDocFile}
                 currentUrl={isEdit ? driver!.licenseDoc : undefined}
-                onChange={setLicenseDocFile}
+                onChange={selectLicenseDocument}
                 icon={<FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
               />
-              
-              <div className="flex items-center justify-between mt-4 border-t pt-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-primary">Medical Certificate</p>
-                {isEdit && <ExpiryStatus dateStr={form.medicalCertExpiry} />}
-              </div>
-              <FilePicker
-                label="Medical Certificate (PDF or Image)"
-                accept="image/*,application/pdf"
-                value={medicalCertFile}
-                currentUrl={isEdit ? driver!.medicalCertDoc : undefined}
-                onChange={setMedicalCertFile}
-                icon={<FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
-              />
-
-              <div className="mt-4 border-t pt-4">
-                <FilePicker
-                  label="Driver Photo"
-                  accept="image/*"
-                  value={photoFile}
-                  currentUrl={isEdit ? driver!.photo : undefined}
-                  onChange={setPhotoFile}
-                  icon={<ImageIcon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />}
-                />
-              </div>
             </div>
           </div>
         )}
@@ -442,7 +372,7 @@ const DriverFormModal: React.FC<DriverFormModalProps> = ({
             disabled={!isFormValid || mut.isPending}
             onClick={() => mut.mutate()}
           >
-            {mut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : isEdit ? "Save Changes" : "Create Driver"}
+            {mut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : needsSecurityRefresh ? "Run Security Checks" : isEdit ? "Save Changes" : "Create Driver"}
           </Button>
         </DialogFooter>
       </DialogContent>

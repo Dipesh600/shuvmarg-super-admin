@@ -10,13 +10,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Bus, Image as ImageIcon, FileText, ChevronRight, ChevronLeft, ShieldCheck, CheckCircle2, Route } from "lucide-react";
+import { Bus, Image as ImageIcon, FileText, ChevronRight, ChevronLeft, ShieldCheck, CheckCircle2, Route, Loader2, ClipboardCheck } from "lucide-react";
 import { useCreateOwnerFleet } from "@/hooks/useOwnerFleets";
 import { useFetchAllCorridors } from "@/hooks/usePlatformRegistry";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/axios";
 import { getBrandsByOwner } from "@/api/operatorBrandApi";
-import { notifyAdminCreatedFleet, updateFleetByAdmin, uploadFleetDocumentByAdmin } from "@/api/busOwnerFleetApi";
+import { notifyAdminCreatedFleet, saveFleetRouteSetupByAdmin, updateFleetByAdmin, uploadFleetDocumentByAdmin } from "@/api/busOwnerFleetApi";
+import { getAvailableVariants, getVariantStopsWithConfig, type AvailableOperatorVariant, type OperatorRouteStop } from "@/api/platformRegistryApi";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -163,6 +164,8 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
 
   // Step 5: Route Assignment
   const [selectedCorridorId, setSelectedCorridorId] = useState<string>("");
+  const [selectedVariantId, setSelectedVariantId] = useState<string>("");
+  const [servedStopIds, setServedStopIds] = useState<string[]>([]);
   const [isRequestingRoute, setIsRequestingRoute] = useState(false);
   const [requestOriginCity, setRequestOriginCity] = useState("");
   const [requestDestinationCity, setRequestDestinationCity] = useState("");
@@ -170,6 +173,29 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
   const [draftHydrated, setDraftHydrated] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: routeVariantsData, isLoading: isLoadingRouteVariants } = useQuery({
+    queryKey: ["admin-fleet-route-variants", selectedBrandId, selectedCorridorId],
+    queryFn: () => getAvailableVariants(selectedBrandId, undefined, selectedCorridorId),
+    enabled: Boolean(isOpen && selectedBrandId && selectedCorridorId && !isRequestingRoute),
+  });
+  const routeVariants = (routeVariantsData?.data || []) as AvailableOperatorVariant[];
+  const effectiveVariantId = selectedVariantId || routeVariants[0]?._id || "";
+  const selectedVariant = routeVariants.find((variant) => variant._id === effectiveVariantId);
+  const { data: routeStopsData, isLoading: isLoadingRouteStops } = useQuery({
+    queryKey: ["admin-fleet-route-stops", selectedBrandId, effectiveVariantId],
+    queryFn: () => getVariantStopsWithConfig(selectedBrandId, effectiveVariantId),
+    enabled: Boolean(isOpen && effectiveVariantId && !isRequestingRoute),
+  });
+  const routeStops = (routeStopsData?.data || []) as OperatorRouteStop[];
+  const serverSelectedStopIds = routeStops.filter((stop) => stop.isActive).map((stop) => stop.stopId._id);
+  const effectiveServedStopIds = servedStopIds.length
+    ? servedStopIds
+    : serverSelectedStopIds.length >= 2
+      ? serverSelectedStopIds
+      : routeStops.length >= 2
+        ? [routeStops[0].stopId._id, routeStops[routeStops.length - 1].stopId._id]
+        : [];
 
   useEffect(() => {
     if (!isOpen) {
@@ -192,6 +218,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
         setInsuranceValidTill(saved.insuranceValidTill); setBluebook(saved.files.bluebook);
         setRoutePermit(saved.files.routePermit); setRoutePermitValidTill(saved.routePermitValidTill);
         setSelectedCorridorId(saved.selectedCorridorId); setIsRequestingRoute(saved.isRequestingRoute);
+        setSelectedVariantId(saved.selectedVariantId || ""); setServedStopIds(saved.servedStopIds || []);
         setRequestOriginCity(saved.requestOriginCity); setRequestDestinationCity(saved.requestDestinationCity);
         setRequestViaStops(saved.requestViaStops); setDraftSaved(true);
       }
@@ -218,7 +245,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
     const value: AdminFleetDraft = {
       step, brandId: selectedBrandId, busName, busNumber, busType, vehicleType, registrationYear, selectedAmenityIds,
       seatLayoutChoice, createdFleetId, fitnessCertValidTill, insurancePolicyNumber,
-      insuranceValidTill, routePermitValidTill, selectedCorridorId, isRequestingRoute,
+      insuranceValidTill, routePermitValidTill, selectedCorridorId, selectedVariantId, servedStopIds, isRequestingRoute,
       requestOriginCity, requestDestinationCity, requestViaStops,
       files: { imageFront, imageBack, imageSide, imageInside, fitnessCert, insurance, bluebook, routePermit },
     };
@@ -234,8 +261,8 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
     vehicleType, registrationYear, selectedAmenityIds, seatLayoutChoice, createdFleetId,
     imageFront, imageBack, imageSide, imageInside, fitnessCert, fitnessCertValidTill,
     insurance, insurancePolicyNumber, insuranceValidTill, bluebook, routePermit,
-    routePermitValidTill, selectedCorridorId, isRequestingRoute, requestOriginCity,
-    requestDestinationCity, requestViaStops]);
+    routePermitValidTill, selectedCorridorId, selectedVariantId, servedStopIds, isRequestingRoute,
+    requestOriginCity, requestDestinationCity, requestViaStops]);
 
   const resetForm = () => {
     setDraftSaved(false);
@@ -248,6 +275,8 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
     setInsurance(null); setInsurancePolicyNumber(""); setInsuranceValidTill("");
     setBluebook(null); setRoutePermit(null); setRoutePermitValidTill("");
     setSelectedCorridorId("");
+    setSelectedVariantId("");
+    setServedStopIds([]);
     setIsRequestingRoute(false);
     setRequestOriginCity("");
     setRequestDestinationCity("");
@@ -301,7 +330,23 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
         return;
       }
     }
-    setStep((prev) => Math.min(prev + 1, 5));
+    if (step === 5) {
+      if (isRequestingRoute && (!requestOriginCity.trim() || !requestDestinationCity.trim())) {
+        toast.error("Add both cities for the new route request.");
+        return;
+      }
+      if (!isRequestingRoute) {
+        const firstStopId = routeStops[0]?.stopId._id;
+        const lastStopId = routeStops[routeStops.length - 1]?.stopId._id;
+        if (!selectedCorridorId || !effectiveVariantId || !firstStopId || !lastStopId
+          || effectiveServedStopIds.length < 2 || !effectiveServedStopIds.includes(firstStopId)
+          || !effectiveServedStopIds.includes(lastStopId)) {
+          toast.error("Choose an approved path and keep its starting and ending stops.");
+          return;
+        }
+      }
+    }
+    setStep((prev) => Math.min(prev + 1, 6));
   };
 
   const handleSubmit = async () => {
@@ -329,6 +374,18 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
     if (isRequestingRoute && (!requestOriginCity.trim() || !requestDestinationCity.trim())) {
       toast.error("Add both cities for the new route request.");
       return;
+    }
+    if (!isRequestingRoute) {
+      if (!selectedCorridorId || !effectiveVariantId) {
+        toast.error("Choose the approved route and road path for this bus.");
+        return;
+      }
+      const firstStopId = routeStops[0]?.stopId._id;
+      const lastStopId = routeStops[routeStops.length - 1]?.stopId._id;
+      if (!firstStopId || !lastStopId || effectiveServedStopIds.length < 2 || !effectiveServedStopIds.includes(firstStopId) || !effectiveServedStopIds.includes(lastStopId)) {
+        toast.error("Keep the starting and ending stops in this bus service.");
+        return;
+      }
     }
 
     const formData = new FormData();
@@ -365,6 +422,30 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
         // A previous attempt may have created the server draft before a later
         // document/layout step failed. Persist any edits made before retrying.
         await updateFleetByAdmin(fleetId, formData);
+      }
+      if (!isRequestingRoute && selectedCorridorId && effectiveVariantId && selectedVariant && routeStops.length >= 2) {
+        const selectedStopSet = new Set(effectiveServedStopIds);
+        await saveFleetRouteSetupByAdmin(fleetId, {
+          brandId: selectedBrandId,
+          originStopId: routeStops[0].stopId._id,
+          destinationStopId: routeStops[routeStops.length - 1].stopId._id,
+          corridorId: selectedCorridorId,
+          variantId: effectiveVariantId,
+          direction: selectedVariant.direction === "RETURN" ? "RETURN" : "FORWARD",
+          servedStops: routeStops
+            .filter((stop) => selectedStopSet.has(stop.stopId._id))
+            .map((stop, index, selectedStops) => ({
+              stopId: stop.stopId._id,
+              sequence: stop.sequence ?? index + 1,
+              usage: index === 0 ? "PICKUP" as const : index === selectedStops.length - 1 ? "DROP" as const : "BOTH" as const,
+              boardingMode: "STOP_FALLBACK" as const,
+              boardingLocationIds: [],
+              customBoardingPoints: [] as [],
+            })),
+          returnEnabled: true,
+          resolutionStatus: "AVAILABLE",
+          unresolvedPlaces: [],
+        });
       }
       if (!imageFront || !imageSide || !imageBack || !imageInside) {
         throw new Error("Front, side, back and inside photos are required.");
@@ -413,10 +494,11 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
 
   const STEPS = [
     { id: 1, label: "Details",   icon: Bus },
-    { id: 2, label: "Seat Map",  icon: LayoutGridIcon },
-    { id: 3, label: "Images",    icon: ImageIcon },
+    { id: 2, label: "Seats",     icon: LayoutGridIcon },
+    { id: 3, label: "Photos",    icon: ImageIcon },
     { id: 4, label: "Documents", icon: FileText },
     { id: 5, label: "Route",     icon: Route },
+    { id: 6, label: "Review",    icon: ClipboardCheck },
   ];
 
   const renderStepIndicator = () => (
@@ -447,8 +529,8 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
               <Bus className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <DialogTitle className="text-2xl font-black tracking-tighter text-primary">Register New Fleet</DialogTitle>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-60">{draftSaved ? "Draft saved on this device" : "Complete the 5-step onboarding process"}</p>
+              <DialogTitle className="text-2xl font-black tracking-tighter text-primary">Add a bus</DialogTitle>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-60">{draftSaved ? "Draft saved on this device" : "Add the same details the bus owner would provide"}</p>
             </div>
           </div>
         </DialogHeader>
@@ -458,7 +540,7 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (step === 5) {
+            if (step === 6) {
               void handleSubmit();
             } else {
               handleNext();
@@ -524,15 +606,15 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-muted/10 p-4 rounded-xl border border-muted">
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">Class</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">Service Type</Label>
                       <select className="flex h-11 w-full rounded-md border-2 border-muted bg-background px-3 py-2 text-sm font-bold focus-visible:outline-none" value={busType} onChange={(e) => setBusType(e.target.value)} required>
                         <option value="AC">AC</option><option value="NON_AC">NON_AC</option><option value="DELUXE">DELUXE</option><option value="SLEEPER">SLEEPER</option><option value="SEMI_SLEEPER">SEMI_SLEEPER</option>
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">Vehicle Type</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">Bus Type</Label>
                       <select className="flex h-11 w-full rounded-md border-2 border-muted bg-background px-3 py-2 text-sm font-bold focus-visible:outline-none" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} required>
-                        <option value="bus">Bus</option><option value="hiace">Hiace</option><option value="minibus">Minibus</option>
+                        <option value="bus">Bus</option><option value="hiace">Hiace</option><option value="minibus">Minibus</option><option value="jeep">Jeep</option>
                       </select>
                     </div>
                     <div className="space-y-2">
@@ -743,27 +825,16 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                         <Button variant="link" onClick={() => setIsRequestingRoute(true)} className="text-[10px] font-bold text-primary mt-3 uppercase tracking-widest">Request a new route instead</Button>
                       </div>
                     ) : (
-                      <div className="space-y-2">
-                        {/* Skip option */}
-                        <button type="button" onClick={() => setSelectedCorridorId("")}
-                          className={cn(
-                            "w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all",
-                            selectedCorridorId === ""
-                              ? "border-muted bg-muted/20 text-muted-foreground"
-                              : "border-dashed border-muted hover:bg-muted/10 text-muted-foreground/60"
-                          )}>
-                          <div className={cn("w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
-                            selectedCorridorId === "" ? "border-muted-foreground" : "border-muted")}>
-                            {selectedCorridorId === "" && <div className="w-2 h-2 rounded-full bg-muted-foreground" />}
-                          </div>
-                          <span className="text-xs font-bold">Skip — assign route later</span>
-                        </button>
-
+                      <div className="space-y-4">
                         <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                           {corridorsList.map((corridor) => {
                             const isSelected = selectedCorridorId === corridor._id;
                             return (
-                              <button key={corridor._id} type="button" onClick={() => setSelectedCorridorId(corridor._id)}
+                              <button key={corridor._id} type="button" onClick={() => {
+                                setSelectedCorridorId(corridor._id);
+                                setSelectedVariantId("");
+                                setServedStopIds([]);
+                              }}
                                 className={cn(
                                   "w-full flex items-start gap-4 p-4 rounded-xl border-2 text-left transition-all group",
                                   isSelected
@@ -789,9 +860,95 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                             );
                           })}
                         </div>
+
+                        {selectedCorridorId && (
+                          <div className="space-y-4 rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+                            <div className="space-y-2">
+                              <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Approved road path</Label>
+                              <select
+                                className="flex h-11 w-full rounded-md border-2 border-muted bg-background px-3 py-2 text-sm font-bold focus-visible:outline-none"
+                                value={effectiveVariantId}
+                                onChange={(event) => { setSelectedVariantId(event.target.value); setServedStopIds([]); }}
+                                disabled={isLoadingRouteVariants}
+                              >
+                                {routeVariants.length === 0 && <option value="">No approved path available</option>}
+                                {routeVariants.map((variant) => <option key={variant._id} value={variant._id}>{variant.name}</option>)}
+                              </select>
+                            </div>
+
+                            {isLoadingRouteStops ? (
+                              <div className="flex items-center gap-2 py-4 text-xs font-bold text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading reviewed stops…</div>
+                            ) : routeStops.length > 0 ? (
+                              <div className="space-y-2">
+                                <div>
+                                  <p className="text-xs font-black">Stops this bus will serve</p>
+                                  <p className="text-[10px] text-muted-foreground">The starting and ending stops stay selected. The same selection will appear later in bus setup.</p>
+                                </div>
+                                <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                                  {routeStops.map((stop, index) => {
+                                    const stopId = stop.stopId._id;
+                                    const required = index === 0 || index === routeStops.length - 1;
+                                    const selected = effectiveServedStopIds.includes(stopId);
+                                    return (
+                                      <label key={stop._id} className={cn("flex items-center gap-3 rounded-lg border p-3", selected ? "border-primary/30 bg-background" : "border-muted bg-muted/20", required ? "cursor-default" : "cursor-pointer")}>
+                                        <input
+                                          type="checkbox"
+                                          checked={selected}
+                                          disabled={required}
+                                          onChange={(event) => {
+                                            const baseline = new Set(effectiveServedStopIds);
+                                            if (event.target.checked) baseline.add(stopId); else baseline.delete(stopId);
+                                            setServedStopIds([...baseline]);
+                                          }}
+                                        />
+                                        <span className="flex-1 text-xs font-bold">{stop.stopId.name || "Unnamed stop"}</span>
+                                        <span className="text-[9px] font-black uppercase text-muted-foreground">{required ? "Required" : selected ? "Served" : "Skipped"}</span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ) : effectiveVariantId ? (
+                              <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs font-bold text-destructive">This approved path has no reviewed stops yet.</p>
+                            ) : null}
+                          </div>
+                        )}
                       </div>
                     )
                   )}
+                </div>
+              )}
+
+              {/* STEP 6: Review before creating the same fleet record the operator submits */}
+              {step === 6 && (
+                <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                    <h4 className="flex items-center gap-2 text-sm font-bold text-primary"><ClipboardCheck className="h-4 w-4" /> Review bus details</h4>
+                    <p className="mt-1 text-xs text-muted-foreground">Check the same information the bus owner would review before submission.</p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-xl border p-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bus</p>
+                      <p className="mt-2 font-black">{busName} · {busNumber}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{registrationYear} · {vehicleType} · {busType}</p>
+                    </div>
+                    <div className="rounded-xl border p-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Seats & facilities</p>
+                      <p className="mt-2 font-black">{totalSeats} passenger seats</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{selectedAmenityIds.length} facilities selected</p>
+                    </div>
+                    <div className="rounded-xl border p-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Files</p>
+                      <p className="mt-2 font-black">4 photos · 4 documents</p>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">Insurance {insurancePolicyNumber} · valid to {insuranceValidTill}</p>
+                    </div>
+                    <div className="rounded-xl border p-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Route</p>
+                      <p className="mt-2 font-black">{isRequestingRoute ? `${requestOriginCity} → ${requestDestinationCity}` : selectedVariant?.name || "Approved path"}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{isRequestingRoute ? "New route requested" : `${effectiveServedStopIds.length} served stops selected`}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Nothing is sent until you choose <strong>Add bus</strong>. You can go back to correct any section.</p>
                 </div>
               )}
 
@@ -806,11 +963,11 @@ const CreateOwnerFleetModal: React.FC<CreateOwnerFleetModalProps> = ({
                 <Button type="button" variant="ghost" className="font-bold h-11 text-muted-foreground hover:text-foreground">Cancel</Button>
               </DialogClose>
             )}
-            {step < 5 ? (
+            {step < 6 ? (
               <Button type="submit" className="font-bold h-11 px-8">Next Step <ChevronRight className="w-4 h-4 ml-2" /></Button>
             ) : (
               <Button type="submit" className="font-black uppercase tracking-widest text-xs h-11 px-8 shadow-lg shadow-primary/20 hover:tracking-[0.1em] transition-all" disabled={isSubmitting || createMutation.isPending}>
-                {isSubmitting || createMutation.isPending ? "Processing..." : "Complete Registration"}
+                {isSubmitting || createMutation.isPending ? "Saving bus…" : "Add bus"}
               </Button>
             )}
           </DialogFooter>

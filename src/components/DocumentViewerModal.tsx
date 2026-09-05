@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, Download, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
 import { fetchDocumentAsBlob, fetchKycDocumentAsBlob, type SecureKycDocumentRequest } from "@/api/kycApi";
 import { fetchFleetDocumentAsBlob, type SecureFleetDocumentRequest } from "@/api/busOwnerFleetApi";
+import { fetchDriverDocumentAsBlob, type SecureDriverDocumentRequest } from "@/api/driverApi";
 
 interface DocumentViewerModalProps {
   /** S3 object key returned from the API (e.g. "owners/.../kyc/.../file.pdf") */
   s3Key: string | null;
   documentRequest?: SecureKycDocumentRequest | null;
   fleetDocumentRequest?: SecureFleetDocumentRequest | null;
+  driverDocumentRequest?: SecureDriverDocumentRequest | null;
   /** Human-readable label shown in the dialog title */
   title?: string;
   open: boolean;
@@ -34,7 +36,7 @@ interface DocumentViewerModalProps {
  */
 export default function DocumentViewerModal(props: DocumentViewerModalProps) {
   const requestKey = props.open
-    ? props.s3Key || JSON.stringify(props.documentRequest || props.fleetDocumentRequest || {})
+    ? props.s3Key || JSON.stringify(props.documentRequest || props.fleetDocumentRequest || props.driverDocumentRequest || {})
     : "closed";
 
   return <DocumentViewerModalInstance key={requestKey} {...props} />;
@@ -44,13 +46,14 @@ function DocumentViewerModalInstance({
   s3Key,
   documentRequest = null,
   fleetDocumentRequest = null,
+  driverDocumentRequest = null,
   title = "Document Viewer",
   open,
   onClose,
 }: DocumentViewerModalProps) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string>("application/pdf");
-  const [loading, setLoading] = useState(() => open && Boolean(s3Key || documentRequest || fleetDocumentRequest));
+  const [loading, setLoading] = useState(() => open && Boolean(s3Key || documentRequest || fleetDocumentRequest || driverDocumentRequest));
   const [error, setError] = useState<string | null>(null);
   const [imgRotation, setImgRotation] = useState(0);
   const [imgZoom, setImgZoom] = useState(1);
@@ -58,13 +61,15 @@ function DocumentViewerModalInstance({
 
   // Load the document whenever the modal opens with a new key
   useEffect(() => {
-    if (!open || (!s3Key && !documentRequest && !fleetDocumentRequest)) return;
+    if (!open || (!s3Key && !documentRequest && !fleetDocumentRequest && !driverDocumentRequest)) return;
     let cancelled = false;
 
     const documentPromise = documentRequest
       ? fetchKycDocumentAsBlob(documentRequest)
       : fleetDocumentRequest
       ? fetchFleetDocumentAsBlob(fleetDocumentRequest)
+      : driverDocumentRequest
+      ? fetchDriverDocumentAsBlob(driverDocumentRequest)
       : fetchDocumentAsBlob(s3Key!);
     documentPromise.then((result) => {
       if (cancelled) {
@@ -91,7 +96,7 @@ function DocumentViewerModalInstance({
         prevBlobUrl.current = null;
       }
     };
-  }, [open, s3Key, documentRequest, fleetDocumentRequest]);
+  }, [open, s3Key, documentRequest, fleetDocumentRequest, driverDocumentRequest]);
 
   const handleClose = () => {
     // Revoke immediately on close
@@ -103,7 +108,7 @@ function DocumentViewerModalInstance({
     if (!blobUrl) return;
     const link = document.createElement("a");
     link.href = blobUrl;
-    const filename = s3Key?.split("/").pop() ?? `${documentRequest?.documentType || fleetDocumentRequest?.slot || "document"}`;
+    const filename = s3Key?.split("/").pop() ?? `${documentRequest?.documentType || fleetDocumentRequest?.slot || driverDocumentRequest?.slot || "document"}`;
     link.download = filename;
     link.click();
   };

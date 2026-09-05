@@ -247,6 +247,11 @@ export type FleetSetupStepKey =
     | "activated";
 
 export interface FleetSetupStatus {
+    fleetId?: string;
+    brandId?: string | null;
+    busName?: string;
+    busNumber?: string;
+    approvalStatus?: string;
     steps: Record<FleetSetupStepKey, boolean>;
     scheduleId?: string | null;
     isFullyOperational?: boolean;
@@ -262,7 +267,6 @@ export interface FleetSetupStatus {
         activeStops?: unknown[];
     }>;
     assignedDriver?: { fullName?: string; licenseType?: string } | null;
-    fleetData?: { busNumber?: string } | null;
     outboundScheduleData?: {
         variantId?: { direction?: "FORWARD" | "RETURN" };
         status?: string;
@@ -278,5 +282,30 @@ export interface FleetSetupStatus {
 
 export const getFleetSetupStatus = async (id: string): Promise<{ success: boolean; data: FleetSetupStatus }> => {
     const { data } = await api.get(`/fleet/${id}/setup-status`);
+    return data;
+};
+
+export interface AdminFleetRouteSetupPayload {
+    brandId: string;
+    originStopId: string;
+    destinationStopId: string;
+    corridorId: string;
+    variantId: string;
+    direction: "FORWARD" | "RETURN";
+    servedStops: Array<{
+        stopId: string;
+        sequence: number;
+        usage: "PICKUP" | "DROP" | "BOTH";
+        boardingMode: "STOP_FALLBACK";
+        boardingLocationIds: string[];
+        customBoardingPoints: [];
+    }>;
+    returnEnabled: boolean;
+    resolutionStatus: "AVAILABLE";
+    unresolvedPlaces: [];
+}
+
+export const saveFleetRouteSetupByAdmin = async (fleetId: string, payload: AdminFleetRouteSetupPayload) => {
+    const { data } = await api.put(`/fleet/${fleetId}/route-setup`, payload);
     return data;
 };
